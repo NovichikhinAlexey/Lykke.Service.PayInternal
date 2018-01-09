@@ -58,7 +58,7 @@ namespace Lykke.Service.PayInternal
 
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x.PayInternalService), Log));
+                builder.RegisterModule(new ServiceModule(appSettings, Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
 
