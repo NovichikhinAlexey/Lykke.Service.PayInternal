@@ -5,10 +5,10 @@ namespace Lykke.Service.PayInternal.Core.Domain.Wallet
 {
     public interface IWalletRepository
     {
-        Task SaveAsync(IWalletEntity wallet);
+        Task SaveAsync(IWallet wallet);
 
-        Task<IEnumerable<IWalletEntity>> GetAsync();
+        Task<IEnumerable<IWallet>> GetAsync();
 
-        Task<IEnumerable<IWalletEntity>> GetByMerchantAsync(string merchantId);
+        Task<IEnumerable<IWallet>> GetByMerchantAsync(string merchantId);
     }
 }

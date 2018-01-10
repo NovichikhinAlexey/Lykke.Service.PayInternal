@@ -1,6 +1,6 @@
 ﻿namespace Lykke.Service.PayInternal.Core.Domain.Wallet
 {
-    public interface IWalletEntity
+    public interface IWallet
     {
         string MerchantId { get; set; }
         string Address { get; set; }

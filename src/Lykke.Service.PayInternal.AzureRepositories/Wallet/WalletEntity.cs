@@ -3,7 +3,7 @@ using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
 {
-    public class WalletEntity : TableEntity, IWalletEntity
+    public class WalletEntity : TableEntity, IWallet
     {
         public static class ByMerchant
         {
@@ -17,7 +17,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
                 return address;
             }
 
-            public static WalletEntity Create(IWalletEntity src)
+            public static WalletEntity Create(IWallet src)
             {
                 return new WalletEntity
                 {

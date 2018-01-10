@@ -2,7 +2,6 @@
 using System.Net;
 using System.Threading.Tasks;
 using Common.Log;
-using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Models;
 using Microsoft.AspNetCore.Mvc;

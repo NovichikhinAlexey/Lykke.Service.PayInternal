@@ -3,7 +3,9 @@ using Autofac.Extensions.DependencyInjection;
 using AzureStorage.Tables;
 using Common.Log;
 using Lykke.Bitcoin.Api.Client;
+using Lykke.Service.PayInternal.AzureRepositories.Order;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
+using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
@@ -57,6 +59,10 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterInstance<IWalletRepository>(new WalletRepository(
                 AzureTableStorage<WalletEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantWalletConnString),
                     "MerchantWallets", _log)));
+
+            builder.RegisterInstance<IOrdersRepository>(new OrdersRepository(
+                AzureTableStorage<OrderEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantWalletConnString),
+                    "MerchantOrderRequest", _log)));
         }
 
         private void RegisterAppServices(ContainerBuilder builder)
