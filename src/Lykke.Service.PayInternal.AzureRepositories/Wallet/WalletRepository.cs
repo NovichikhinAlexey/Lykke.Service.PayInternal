@@ -15,19 +15,19 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
             _tableStorage = tableStorage ?? throw new ArgumentNullException(nameof(tableStorage));
         }
 
-        public async Task SaveAsync(IWalletEntity wallet)
+        public async Task SaveAsync(IWallet wallet)
         {
             var newItem = WalletEntity.ByMerchant.Create(wallet);
 
             await _tableStorage.InsertOrMergeAsync(newItem);
         }
 
-        public async Task<IEnumerable<IWalletEntity>> GetAsync()
+        public async Task<IEnumerable<IWallet>> GetAsync()
         {
             return await _tableStorage.GetDataAsync();
         }
 
-        public async Task<IEnumerable<IWalletEntity>> GetByMerchantAsync(string merchantId)
+        public async Task<IEnumerable<IWallet>> GetByMerchantAsync(string merchantId)
         {
             return await _tableStorage.GetDataAsync(WalletEntity.ByMerchant.GeneratePartitionKey(merchantId));
         }
