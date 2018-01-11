@@ -1,8 +1,13 @@
-﻿using Autofac;
+﻿using System;
+using System.Linq;
+using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AzureStorage.Tables;
+using Common;
 using Common.Log;
 using Lykke.Bitcoin.Api.Client;
+using Lykke.Service.Assets.Client;
+using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.AzureRepositories.Order;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core.Domain.Order;
@@ -51,6 +56,8 @@ namespace Lykke.Service.PayInternal.Modules
 
             RegisterAppServices(builder);
 
+            RegisterCaches(builder);
+
             builder.Populate(_services);
         }
 
@@ -83,11 +90,43 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<MerchantWalletsService>()
                 .As<IMerchantWalletsService>();
+
+            builder.RegisterType<MerchantOrdersService>()
+                .WithParameter("orderExpiration", _settings.CurrentValue.PayInternalService.OrderExpiration)
+                .As<IMerchantOrdersService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
         {
             builder.RegisterBitcoinApiClient(_settings.CurrentValue.BitcoinCore.BitcoinCoreApiUrl);
+
+            builder.RegisterInstance<IAssetsService>(
+                new AssetsService(new Uri(_settings.CurrentValue.AssetsServiceClient.ServiceUrl)));
+        }
+
+        private void RegisterCaches(ContainerBuilder builder)
+        {
+            builder.Register(x =>
+            {
+                var assetsService = x.Resolve<IComponentContext>().Resolve<IAssetsService>();
+
+                return new CachedDataDictionary<string, Asset>
+                (
+                    async () => (await assetsService.AssetGetAllAsync()).ToDictionary(itm => itm.Id)
+                );
+            }).SingleInstance();
+
+            builder.Register(x =>
+            {
+                var assetsService = x.Resolve<IComponentContext>().Resolve<IAssetsService>();
+
+                return new CachedDataDictionary<string, AssetPair>(
+                    async () => (await assetsService.AssetPairGetAllAsync()).ToDictionary(itm => itm.Id)
+                );
+            }).SingleInstance();
+
+            builder.RegisterType<AssetsLocalCache>()
+                .As<IAssetsLocalCache>();
         }
     }
 }

@@ -5,7 +5,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Order
 {
     public interface IOrdersRepository
     {
-        Task SaveAsync(IOrder order);
+        Task<IOrder> SaveAsync(IOrder order);
 
         Task<IEnumerable<IOrder>> GetAsync();
 

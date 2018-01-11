@@ -9,11 +9,18 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public PayInternalSettings PayInternalService { get; set; }
         public SlackNotificationsSettings SlackNotifications { get; set; }
         public BitcoinCoreSettings BitcoinCore { get; set; }
+        public AssetsServiceClientSettings AssetsServiceClient { get; set; }
     }
 
     public class BitcoinCoreSettings
     {
         [HttpCheck("api/isalive")]
         public string BitcoinCoreApiUrl { get; set; }
+    }
+
+    public class AssetsServiceClientSettings
+    {
+        [HttpCheck("api/isalive")]
+        public string ServiceUrl { get; set; }
     }
 }
