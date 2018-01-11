@@ -1,11 +1,7 @@
-﻿using System;
-
-namespace Lykke.Service.PayInternal.Core.Domain.Order
+﻿namespace Lykke.Service.PayInternal.Core.Domain.Order
 {
-    public interface IOrder
+    public interface ICreateOrderRequest
     {
-        string Id { get; }
-
         string MerchantId { get; set; }
 
         string InvoiceId { get; set; }
@@ -19,8 +15,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Order
         string ExchangeAssetId { get; set; }
 
         double ExchangeAmount { get; set; }
-
-        DateTime DueDate { get; set; }
 
         double MarkupPercent { get; set; }
 

@@ -48,8 +48,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
         public string ExchangeAssetId { get; set; }
         public double ExchangeAmount { get; set; }
         public DateTime DueDate { get; set; }
-        public float MarkupPercent { get; set; }
+        public double MarkupPercent { get; set; }
         public int MarkupPips { get; set; }
-        public float MarkupFixedFee { get; set; }
+        public double MarkupFixedFee { get; set; }
     }
 }
