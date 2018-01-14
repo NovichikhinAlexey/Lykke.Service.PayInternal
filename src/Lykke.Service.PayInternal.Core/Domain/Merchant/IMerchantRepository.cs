@@ -8,5 +8,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Merchant
         Task<IMerchant> GetAsync(string id);
 
         Task<IEnumerable<IMerchant>> GetAsync();
+
+        Task<IMerchant> SaveAsync(IMerchant merchant);
     }
 }

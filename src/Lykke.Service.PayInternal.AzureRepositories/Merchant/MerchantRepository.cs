@@ -26,5 +26,14 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
         {
             return await _tableStorage.GetDataAsync(MerchantEntity.GeneratePartitionKey());
         }
+
+        public async Task<IMerchant> SaveAsync(IMerchant merchant)
+        {
+            var newItem = MerchantEntity.Create(merchant);
+
+            await _tableStorage.InsertOrMergeAsync(newItem);
+
+            return newItem;
+        }
     }
 }

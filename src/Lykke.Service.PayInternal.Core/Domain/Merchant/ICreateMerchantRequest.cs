@@ -1,12 +1,8 @@
 ﻿namespace Lykke.Service.PayInternal.Core.Domain.Merchant
 {
-    public interface IMerchant
+    public interface ICreateMerchantRequest
     {
-        string Id { get; }
-
         string Name { get; set; }
-
-        string PublicKey { get; set; }
 
         string ApiKey { get; set; }
 

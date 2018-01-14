@@ -26,7 +26,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
                 LpMarkupPercent = src.LpMarkupPercent,
                 LpMarkupPips = src.LpMarkupPips,
                 LwId = src.LwId,
-                LykkeWalletKey = src.LykkeWalletKey,
                 Name = src.Name,
                 PublicKey = src.PublicKey,
                 TimeCacheRates = src.TimeCacheRates
@@ -41,8 +40,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
 
         public string ApiKey { get; set; }
 
-        public string LykkeWalletKey { get; set; }
-
         public double DeltaSpread { get; set; }
 
         public int TimeCacheRates { get; set; }
@@ -53,4 +50,4 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
 
         public string LwId { get; set; }
     }
-}
+}
