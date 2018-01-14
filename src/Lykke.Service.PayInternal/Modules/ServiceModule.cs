@@ -8,8 +8,11 @@ using Common.Log;
 using Lykke.Bitcoin.Api.Client;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
+using Lykke.Service.MarketProfile.Client;
+using Lykke.Service.PayInternal.AzureRepositories.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.Order;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
+using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
@@ -68,8 +71,12 @@ namespace Lykke.Service.PayInternal.Modules
                     "MerchantWallets", _log)));
 
             builder.RegisterInstance<IOrdersRepository>(new OrdersRepository(
-                AzureTableStorage<OrderEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantWalletConnString),
+                AzureTableStorage<OrderEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantOrderConnString),
                     "MerchantOrderRequest", _log)));
+
+            builder.RegisterInstance<IMerchantRepository>(new MerchantRepository(
+                AzureTableStorage<MerchantEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantConnString),
+                    "Merchants", _log)));
         }
 
         private void RegisterAppServices(ContainerBuilder builder)
@@ -94,6 +101,10 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<MerchantOrdersService>()
                 .WithParameter("orderExpiration", _settings.CurrentValue.PayInternalService.OrderExpiration)
                 .As<IMerchantOrdersService>();
+
+            builder.RegisterType<RatesCalculationService>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LpMarkup))
+                .As<IRatesCalculationService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
@@ -102,6 +113,10 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterInstance<IAssetsService>(
                 new AssetsService(new Uri(_settings.CurrentValue.AssetsServiceClient.ServiceUrl)));
+
+            builder.RegisterType<LykkeMarketProfile>()
+                .As<ILykkeMarketProfile>()
+                .WithParameter("baseUri", new Uri(_settings.CurrentValue.MarketProfileServiceClient.ServiceUrl));
         }
 
         private void RegisterCaches(ContainerBuilder builder)

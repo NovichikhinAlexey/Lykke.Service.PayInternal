@@ -16,6 +16,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Order
 
         string ExchangeAssetId { get; set; }
 
-        string ExchangeAmount { get; set; }
+        double ExchangeAmount { get; set; }
+
+        string WalletAddress { get; set; }
     }
 }
