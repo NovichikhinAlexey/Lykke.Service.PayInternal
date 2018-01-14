@@ -1,4 +1,6 @@
-﻿namespace Lykke.Service.PayInternal.Core.Domain.Order
+﻿using JetBrains.Annotations;
+
+namespace Lykke.Service.PayInternal.Core.Domain.Order
 {
     public interface ICreateOrderRequest
     {
@@ -14,12 +16,16 @@
 
         string ExchangeAssetId { get; set; }
 
-        double ExchangeAmount { get; set; }
-
         double MarkupPercent { get; set; }
 
         int MarkupPips { get; set; }
 
-        double MarkupFixedFee { get; set; }
+        string SuccessUrl { get; set; }
+
+        string ErrorUrl { get; set; }
+
+        string ProgressUrl { get; set; }
+
+        [CanBeNull] string WalletAddress { get; set; }
     }
 }

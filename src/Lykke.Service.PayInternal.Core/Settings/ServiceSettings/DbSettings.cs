@@ -4,5 +4,7 @@
     {
         public string LogsConnString { get; set; }
         public string MerchantWalletConnString { get; set; }
+        public string MerchantOrderConnString { get; set; }
+        public string MerchantConnString { get; set; }
     }
 }

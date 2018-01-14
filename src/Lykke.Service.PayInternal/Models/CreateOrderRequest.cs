@@ -16,12 +16,16 @@ namespace Lykke.Service.PayInternal.Models
 
         public string ExchangeAssetId { get; set; }
 
-        public double ExchangeAmount { get; set; }
-
         public double MarkupPercent { get; set; }
 
         public int MarkupPips { get; set; }
 
-        public double MarkupFixedFee { get; set; }
+        public string SuccessUrl { get; set; }
+
+        public string ErrorUrl { get; set; }
+
+        public string ProgressUrl { get; set; }
+
+        public string WalletAddress { get; set; }
     }
 }

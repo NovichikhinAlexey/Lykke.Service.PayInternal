@@ -12,10 +12,11 @@ namespace Lykke.Service.PayInternal
                 AssetPairId = src.AssetPairId,
                 ExchangeAssetId = src.ExchangeAssetId,
                 InvoiceAssetId = src.InvoiceAssetId,
-                ExchangeAmount = src.ExchangeAssetId,
+                ExchangeAmount = src.ExchangeAmount,
                 InvoiceAmount = src.InvoiceAmount,
                 DueDate = src.DueDate,
-                OrderId = src.Id
+                OrderId = src.Id,
+                WalletAddress = src.WalletAddress
             };
         }
     }

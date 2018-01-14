@@ -17,6 +17,8 @@ namespace Lykke.Service.PayInternal.Models
 
         public string ExchangeAssetId { get; set; }
 
-        public string ExchangeAmount { get; set; }
+        public double ExchangeAmount { get; set; }
+
+        public string WalletAddress { get; set; }
     }
 }
