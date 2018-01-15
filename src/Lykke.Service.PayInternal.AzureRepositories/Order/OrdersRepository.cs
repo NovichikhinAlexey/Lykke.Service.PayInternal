@@ -20,16 +20,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
             return await _tableStorage.GetDataAsync();
         }
 
-        public async Task<IEnumerable<IOrder>> GetByMerchantIdAsync(string merchantId)
+        public async Task<IEnumerable<IOrder>> GetByWalletAsync(string address)
         {
-            return await _tableStorage.GetDataAsync(OrderEntity.ByMerchant.GeneratePartitionKey(merchantId));
+            return await _tableStorage.GetDataAsync(OrderEntity.ByWallet.GeneratePartitionKey(address));
         }
 
         public async Task<IOrder> SaveAsync(IOrder order)
         {
-            var newItem = OrderEntity.ByMerchant.Create(order);
+            var newItem = OrderEntity.ByWallet.Create(order);
 
-            await _tableStorage.InsertOrMergeAsync(newItem);
+            await _tableStorage.InsertAsync(newItem);
 
             return newItem;
         }

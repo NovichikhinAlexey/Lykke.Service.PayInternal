@@ -6,24 +6,24 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
 {
     public class OrderEntity : TableEntity, IOrder
     {
-        public static class ByMerchant
+        public static class ByWallet
         {
-            public static string GeneratePartitionKey(string merchantId)
+            public static string GeneratePartitionKey(string address)
             {
-                return merchantId;
+                return address;
             }
 
-            public static string GenerateRowKey()
+            public static string GenerateRowKey(string orderId)
             {
-                return Guid.NewGuid().ToString();
+                return orderId;
             }
 
             public static OrderEntity Create(IOrder src)
             {
                 return new OrderEntity
                 {
-                    PartitionKey = GeneratePartitionKey(src.MerchantId),
-                    RowKey = GenerateRowKey(),
+                    PartitionKey = GeneratePartitionKey(src.WalletAddress),
+                    RowKey = GenerateRowKey(src.Id),
                     MerchantId = src.MerchantId,
                     AssetPairId = src.AssetPairId,
                     DueDate = src.DueDate,
@@ -34,9 +34,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
                     InvoiceId = src.InvoiceId,
                     MarkupPercent = src.MarkupPercent,
                     MarkupPips = src.MarkupPips,
-                    ErrorUrl = src.ErrorUrl,
-                    ProgressUrl = src.ProgressUrl,
-                    SuccessUrl = src.SuccessUrl,
                     WalletAddress = src.WalletAddress
                 };
             }
@@ -53,9 +50,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
         public DateTime DueDate { get; set; }
         public double MarkupPercent { get; set; }
         public int MarkupPips { get; set; }
-        public string SuccessUrl { get; set; }
-        public string ErrorUrl { get; set; }
-        public string ProgressUrl { get; set; }
         public string WalletAddress { get; set; }
     }
 }

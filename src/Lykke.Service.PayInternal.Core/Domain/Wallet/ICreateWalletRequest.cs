@@ -2,12 +2,10 @@
 
 namespace Lykke.Service.PayInternal.Core.Domain.Wallet
 {
-    public interface IWallet
+    public interface ICreateWalletRequest
     {
         string MerchantId { get; set; }
-        string Address { get; set; }
-        string Data { get; set; }
+
         DateTime DueDate { get; set; }
-        double Amount { get; set; }
     }
 }

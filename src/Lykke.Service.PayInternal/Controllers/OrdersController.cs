@@ -6,6 +6,7 @@ using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Models;
+using Lykke.Service.PayInternal.Services.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -58,13 +59,38 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                var newOrder = await _merchantOrdersService.CreateOrder(request);
+                var newOrder = await _merchantOrdersService.CreateOrder(request.ToDomain());
 
                 return Ok(newOrder.ToApiModel());
             }
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(OrdersController), nameof(CreateOrder), request.ToJson(), ex);
+            }
+
+            return StatusCode((int) HttpStatusCode.InternalServerError);
+        }
+
+        /// <summary>
+        /// Recreates order with specified wallet address if the previous one is out of date. If not then returns it.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [SwaggerOperation("RecreateOrder")]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
+        [ProducesResponseType(typeof(CreateOrderResponse), (int) HttpStatusCode.OK)]
+        public async Task<IActionResult> ReCreateOrder(ReCreateOrderRequest request)
+        {
+            try
+            {
+                var order = await _merchantOrdersService.ReCreateOrder(request.ToDomain());
+
+                return Ok(order.ToApiModel());
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(OrdersController), nameof(ReCreateOrder), request.ToJson(), ex);
             }
 
             return StatusCode((int) HttpStatusCode.InternalServerError);

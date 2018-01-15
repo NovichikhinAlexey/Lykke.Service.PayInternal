@@ -26,12 +26,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Order
 
         int MarkupPips { get; set; }
 
-        string SuccessUrl { get; set; }
-
-        string ErrorUrl { get; set; }
-
-        string ProgressUrl { get; set; }
-
         string WalletAddress { get; set; }
     }
 }
