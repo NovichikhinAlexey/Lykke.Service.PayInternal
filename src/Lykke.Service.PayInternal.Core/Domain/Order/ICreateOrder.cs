@@ -1,8 +1,9 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace Lykke.Service.PayInternal.Core.Domain.Order
 {
-    public interface ICreateOrderRequest
+    public interface ICreateOrder
     {
         string MerchantId { get; set; }
 
@@ -21,5 +22,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Order
         int MarkupPips { get; set; }
 
         DateTime? WalletDueDate { get; set; }
+
+        [CanBeNull] string WalletAddress { get; set; }
     }
 }

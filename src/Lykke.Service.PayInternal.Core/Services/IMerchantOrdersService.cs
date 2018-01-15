@@ -5,6 +5,7 @@ namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface IMerchantOrdersService
     {
-        Task<IOrder> CreateOrder(ICreateOrderRequest request);
+        Task<IOrder> CreateOrder(ICreateOrder request);
+        Task<IOrder> ReCreateOrder(IReCreateOrder request);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Common;
 using Lykke.Bitcoin.Api.Client.BitcoinApi;
@@ -26,7 +27,7 @@ namespace Lykke.Service.PayInternal.Services
             _cryptoService = cryptoService ?? throw new ArgumentNullException(nameof(cryptoService));
         }
 
-        public async Task<string> CreateAddress(string merchantId)
+        public async Task<string> CreateAddress(ICreateWalletRequest request)
         {
             var response = await _bitcoinServiceClient.GenerateLykkePayWallet();
 
@@ -46,11 +47,28 @@ namespace Lykke.Service.PayInternal.Services
             await _walletRepository.SaveAsync(new WalletEntity
             {
                 Address = response.Address,
-                MerchantId = merchantId,
-                Data = _cryptoService.Encrypt(JsonConvert.SerializeObject(addressToSave))
+                MerchantId = request.MerchantId,
+                Data = _cryptoService.Encrypt(JsonConvert.SerializeObject(addressToSave)),
+                Amount = default(double),
+                DueDate = request.DueDate
             });
 
             return addressToReturn;
+        }
+
+        public async Task<IWallet> GetAsync(string merchantId, string address)
+        {
+            return await _walletRepository.GetAsync(merchantId, address);
+        }
+
+        public async Task<IEnumerable<IWallet>> GetAsync(string merchantId)
+        {
+            return await _walletRepository.GetByMerchantAsync(merchantId);
+        }
+
+        public async Task<IEnumerable<IWallet>> GetNonEmptyAsync(string merchantId)
+        {
+            return await _walletRepository.GetByMerchantAsync(merchantId, true);
         }
     }
 }

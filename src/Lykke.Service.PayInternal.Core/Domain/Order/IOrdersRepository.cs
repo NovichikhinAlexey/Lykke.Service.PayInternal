@@ -9,6 +9,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Order
 
         Task<IEnumerable<IOrder>> GetAsync();
 
-        Task<IEnumerable<IOrder>> GetByMerchantIdAsync(string merchantId);
+        Task<IEnumerable<IOrder>> GetByWalletAsync(string address);
     }
 }
