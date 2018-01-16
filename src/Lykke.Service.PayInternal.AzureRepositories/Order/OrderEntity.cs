@@ -13,9 +13,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
                 return address;
             }
 
-            public static string GenerateRowKey(string orderId)
+            public static string GenerateRowKey()
             {
-                return orderId;
+                return Guid.NewGuid().ToString();
             }
 
             public static OrderEntity Create(IOrder src)
@@ -23,7 +23,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
                 return new OrderEntity
                 {
                     PartitionKey = GeneratePartitionKey(src.WalletAddress),
-                    RowKey = GenerateRowKey(src.Id),
+                    RowKey = GenerateRowKey(),
                     MerchantId = src.MerchantId,
                     AssetPairId = src.AssetPairId,
                     DueDate = src.DueDate,
