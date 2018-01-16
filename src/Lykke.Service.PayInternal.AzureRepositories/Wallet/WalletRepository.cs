@@ -57,5 +57,22 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
            
             return await _tableStorage.GetDataAsync(WalletEntity.ByMerchant.GeneratePartitionKey(merchantId));
         }
+
+        public async Task<IEnumerable<IWallet>> GetNotExpired()
+        {
+            var gtDate = WalletEntity.ByDueDate.GeneratePartitionKey(DateTime.UtcNow);
+
+            // fake date to fit partitionKey format and not to get data from other partitions 
+            var ltDate = WalletEntity.ByDueDate.GeneratePartitionKey(DateTime.UtcNow.AddYears(100));
+
+            var filter = TableQuery.CombineFilters(
+                TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.GreaterThan, gtDate),
+                TableOperators.And,
+                TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.LessThan, ltDate));
+
+            var query = new TableQuery<WalletEntity>().Where(filter);
+
+            return await _tableStorage.WhereAsync(query);
+        }
     }
 }

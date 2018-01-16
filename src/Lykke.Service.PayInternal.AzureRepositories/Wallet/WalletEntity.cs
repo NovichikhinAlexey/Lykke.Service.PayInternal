@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Globalization;
+using Common;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Microsoft.WindowsAzure.Storage.Table;
 
@@ -37,7 +39,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
         {
             public static string GeneratePartitionKey(DateTime dueDate)
             {
-                return dueDate.ToUniversalTime().Ticks.ToString();
+                var dueDateIso = dueDate.ToString("O");
+
+                return $"DD_{dueDateIso}";
             }
 
             public static string GenerateRowKey(string address)
@@ -52,7 +56,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
                     PartitionKey = GeneratePartitionKey(src.DueDate),
                     RowKey = GenerateRowKey(src.Address),
                     MerchantId = src.MerchantId,
-                    Amount = src.Amount
+                    Amount = src.Amount,
+                    DueDate = src.DueDate,
+                    Address = src.Address
                 };
             }
         }

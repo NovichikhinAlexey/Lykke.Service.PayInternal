@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Common;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
@@ -61,6 +64,26 @@ namespace Lykke.Service.PayInternal.Controllers
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(BitcoinController), nameof(CreateAddress), ex);
+            }
+
+            return StatusCode((int) HttpStatusCode.InternalServerError);
+        }
+
+        [HttpGet("wallets/notExpired")]
+        [SwaggerOperation("GetNotExpiredWallets")]
+        [ProducesResponseType(typeof(IEnumerable<WalletAddressResponse>), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> GetNotExpiredWallets()
+        {
+            try
+            {
+                var wallets = await _merchantWalletsService.GetNotExpired();
+
+                return Ok(wallets.Select(x => new WalletAddressResponse {Address = x.Address}));
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(BitcoinController), nameof(GetNotExpiredWallets), ex);
             }
 
             return StatusCode((int) HttpStatusCode.InternalServerError);

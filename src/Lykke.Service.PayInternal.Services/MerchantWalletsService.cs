@@ -70,5 +70,10 @@ namespace Lykke.Service.PayInternal.Services
         {
             return await _walletRepository.GetByMerchantAsync(merchantId, true);
         }
+
+        public async Task<IEnumerable<IWallet>> GetNotExpired()
+        {
+            return await _walletRepository.GetNotExpired();
+        }
     }
 }
