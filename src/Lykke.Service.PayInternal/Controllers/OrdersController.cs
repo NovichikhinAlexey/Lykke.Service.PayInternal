@@ -40,7 +40,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         [ProducesResponseType(typeof(CreateOrderResponse), (int) HttpStatusCode.OK)]
-        public async Task<IActionResult> CreateOrder(CreateOrderRequest request)
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
         {
             if (await _assetsLocalCache.GetAssetByIdAsync(request.InvoiceAssetId) == null)
             {

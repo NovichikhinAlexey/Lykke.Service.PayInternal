@@ -32,7 +32,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("Create")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
-        public async Task<IActionResult> Create(CreateMerchantRequest request)
+        public async Task<IActionResult> Create([FromBody] CreateMerchantRequest request)
         {
             try
             {
