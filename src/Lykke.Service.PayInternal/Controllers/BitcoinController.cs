@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Common;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
@@ -37,13 +36,13 @@ namespace Lykke.Service.PayInternal.Controllers
         /// Creates new bitcoin address
         /// </summary>
         /// <returns></returns>
-        [HttpPost("address/{merchantId}")]
+        [HttpPost("address")]
         [SwaggerOperation("CreateBitcoinAddress")]
         [ProducesResponseType(typeof(WalletAddressResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NotFound)]
-        public async Task<IActionResult> CreateAddress(CreateWalletRequest request)
+        public async Task<IActionResult> CreateAddress([FromBody] CreateWalletRequest request)
         {
             if (request.DueDate <= DateTime.UtcNow)
                 return BadRequest(ErrorResponse.Create("DueDate has to be in the future"));
