@@ -45,7 +45,7 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunAsync(() => _payInternalApi.CreateAddressAsync(request));
         }
 
-        public async Task<IEnumerable<WalletAddressResponse>> GetNotExpiredWalletsAsync()
+        public async Task<IEnumerable<WalletStateResponse>> GetNotExpiredWalletsAsync()
         {
             return await _runner.RunAsync(() => _payInternalApi.GetNotExpiredWalletsAsync());
         }
