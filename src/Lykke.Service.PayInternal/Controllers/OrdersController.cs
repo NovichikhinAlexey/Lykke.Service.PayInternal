@@ -76,11 +76,11 @@ namespace Lykke.Service.PayInternal.Controllers
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        [HttpGet]
+        [HttpPost("recreate")]
         [SwaggerOperation("RecreateOrder")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         [ProducesResponseType(typeof(CreateOrderResponse), (int) HttpStatusCode.OK)]
-        public async Task<IActionResult> ReCreateOrder(ReCreateOrderRequest request)
+        public async Task<IActionResult> ReCreateOrder([FromBody] ReCreateOrderRequest request)
         {
             try
             {

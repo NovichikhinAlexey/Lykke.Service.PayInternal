@@ -19,8 +19,8 @@ namespace Lykke.Service.PayInternal.Client.Api
         [Post("/api/orders")]
         Task<CreateOrderResponse> CreateOrderAsync([Body] CreateOrderRequest request);
 
-        [Get("/api/orders")]
-        Task<CreateOrderResponse> ReCreateOrderAsync(ReCreateOrderRequest request);
+        [Post("/api/orders/recreate")]
+        Task<CreateOrderResponse> ReCreateOrderAsync([Body] ReCreateOrderRequest request);
 
         [Multipart]
         [Post("/api/merchants/{id}/publicKey")]

@@ -72,9 +72,9 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IEnumerable<IWalletState>> GetNotExpiredAsync()
         {
-            var notExpired = await _walletRepository.GetNotExpired();
+            var wallets = await _walletRepository.GetNotExpired();
 
-            return notExpired.Select(x => new WalletState
+            return wallets.Select(x => new WalletState
             {
                 Address = x.Address,
                 DueDate = x.DueDate,
