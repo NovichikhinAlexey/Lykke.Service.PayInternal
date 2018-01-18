@@ -11,7 +11,7 @@ namespace Lykke.Service.PayInternal.Client.Api
         Task<WalletAddressResponse> CreateAddressAsync([Body] CreateWalletRequest request);
 
         [Get("/api/bitcoin/wallets/notExpired")]
-        Task<IEnumerable<WalletAddressResponse>> GetNotExpiredWalletsAsync();
+        Task<IEnumerable<WalletStateResponse>> GetNotExpiredWalletsAsync();
 
         [Post("/api/merchants")]
         Task CreateMerchantAsync([Body] CreateMerchantRequest request);

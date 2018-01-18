@@ -70,15 +70,20 @@ namespace Lykke.Service.PayInternal.Controllers
 
         [HttpGet("wallets/notExpired")]
         [SwaggerOperation("GetNotExpiredWallets")]
-        [ProducesResponseType(typeof(IEnumerable<WalletAddressResponse>), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(IEnumerable<WalletStateResponse>), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetNotExpiredWallets()
         {
             try
             {
-                var wallets = await _merchantWalletsService.GetNotExpired();
+                var wallets = await _merchantWalletsService.GetNotExpiredAsync();
 
-                return Ok(wallets.Select(x => new WalletAddressResponse {Address = x.Address}));
+                return Ok(wallets.Select(x => new WalletStateResponse
+                {
+                    Address = x.Address,
+                    DueDate = x.DueDate,
+                    Transactions = x.Transactions?.Select(t => t.Id)
+                }));
             }
             catch (Exception ex)
             {
