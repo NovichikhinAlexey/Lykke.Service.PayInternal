@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Globalization;
-using Common;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Microsoft.WindowsAzure.Storage.Table;
 
@@ -28,9 +26,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
                     RowKey = GenerateRowKey(src.Address),
                     MerchantId = src.MerchantId,
                     Address = src.Address,
-                    Data = src.Data,
                     DueDate = src.DueDate,
-                    Amount = src.Amount
+                    Amount = src.Amount,
+                    PublicKey = src.PublicKey
                 };
             }
         }
@@ -65,8 +63,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
 
         public string MerchantId { get; set; }
         public string Address { get; set; }
-        public string Data { get; set; }
         public DateTime DueDate { get; set; }
         public double Amount { get; set; }
+        public string PublicKey { get; set; }
     }
 }

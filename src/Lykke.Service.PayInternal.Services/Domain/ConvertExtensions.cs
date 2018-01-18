@@ -1,4 +1,5 @@
 ﻿using System;
+using Lykke.Service.PayInternal.Contract;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 
@@ -46,6 +47,15 @@ namespace Lykke.Service.PayInternal.Services.Domain
             {
                 DueDate = src.WalletDueDate ?? orderDueDate,
                 MerchantId = src.MerchantId
+            };
+        }
+
+        public static NewWalletMessage ToNewWalletMessage(this IWallet src)
+        {
+            return new NewWalletMessage
+            {
+                Address = src.Address,
+                DueDate = src.DueDate
             };
         }
     }
