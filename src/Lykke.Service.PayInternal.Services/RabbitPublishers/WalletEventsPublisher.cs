@@ -4,25 +4,26 @@ using Lykke.RabbitMqBroker.Publisher;
 using Lykke.RabbitMqBroker.Subscriber;
 using Lykke.Service.PayInternal.Contract;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Services.RabbitPublishers
 {
     public class WalletEventsPublisher : IWalletEventsPublisher
     {
         private readonly ILog _log;
-        private readonly string _connectionString;
+        private readonly RabbitMqSettings _settings;
         private RabbitMqPublisher<NewWalletMessage> _publisher;
 
-        public WalletEventsPublisher(ILog log, string connectionString)
+        public WalletEventsPublisher(ILog log, RabbitMqSettings settings)
         {
             _log = log;
-            _connectionString = connectionString;
+            _settings = settings;
         }
 
         public void Start()
         {
             var settings = RabbitMqSubscriptionSettings
-                .CreateForPublisher(_connectionString, "pay.wallets");
+                .CreateForPublisher(_settings.ConnectionString, _settings.WalletsExchangeName);
 
             settings.MakeDurable();
 
