@@ -11,13 +11,16 @@ using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.PayInternal.AzureRepositories.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.Order;
+using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
 using Lykke.Service.PayInternal.Services;
+using Lykke.Service.PayInternal.Services.RabbitPublishers;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 using DbSettings = Lykke.Service.PayInternal.Core.Settings.ServiceSettings.DbSettings;
@@ -61,6 +64,8 @@ namespace Lykke.Service.PayInternal.Modules
 
             RegisterCaches(builder);
 
+            RegisterRabbitMqPublishers(builder);
+
             builder.Populate(_services);
         }
 
@@ -77,6 +82,11 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterInstance<IMerchantRepository>(new MerchantRepository(
                 AzureTableStorage<MerchantEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantConnString),
                     "Merchants", _log)));
+
+            builder.RegisterInstance<IBlockchainTransactionRepository>(new BlockchainTransactionRepository(
+                AzureTableStorage<BlockchainTransactionEntity>.Create(
+                    _dbSettings.ConnectionString(x => x.MerchantConnString),
+                    "MerchantWalletTransactions", _log)));
         }
 
         private void RegisterAppServices(ContainerBuilder builder)
@@ -90,10 +100,6 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<ShutdownManager>()
                 .As<IShutdownManager>();
-
-            builder.RegisterType<CryptoService>()
-                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.DataEncriptionPassword))
-                .As<ICryptoService>();
 
             builder.RegisterType<MerchantWalletsService>()
                 .As<IMerchantWalletsService>();
@@ -142,6 +148,15 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<AssetsLocalCache>()
                 .As<IAssetsLocalCache>();
+        }
+
+        private void RegisterRabbitMqPublishers(ContainerBuilder builder)
+        {
+            builder.RegisterType<WalletEventsPublisher>()
+                .As<IWalletEventsPublisher>()
+                .As<IStartable>()
+                .SingleInstance()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit.ConnectionString));
         }
     }
 }

@@ -6,7 +6,7 @@ using Lykke.Bitcoin.Api.Client.BitcoinApi;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
-using Newtonsoft.Json;
+using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -14,17 +14,18 @@ namespace Lykke.Service.PayInternal.Services
     {
         private readonly IBitcoinApiClient _bitcoinServiceClient;
         private readonly IWalletRepository _walletRepository;
-        private readonly ICryptoService _cryptoService;
+        private readonly IWalletEventsPublisher _walletEventsPublisher;
 
         public MerchantWalletsService(
             IBitcoinApiClient bitcoinServiceClient,
             IWalletRepository walletRepository,
-            ICryptoService cryptoService)
+            IWalletEventsPublisher walletEventsPublisher)
         {
             _bitcoinServiceClient =
                 bitcoinServiceClient ?? throw new ArgumentNullException(nameof(bitcoinServiceClient));
             _walletRepository = walletRepository ?? throw new ArgumentNullException(nameof(walletRepository));
-            _cryptoService = cryptoService ?? throw new ArgumentNullException(nameof(cryptoService));
+            _walletEventsPublisher =
+                walletEventsPublisher ?? throw new ArgumentNullException(nameof(walletEventsPublisher));
         }
 
         public async Task<string> CreateAddress(ICreateWalletRequest request)
@@ -36,24 +37,20 @@ namespace Lykke.Service.PayInternal.Services
                 throw new Exception(response.Error?.ToJson());
             }
 
-            var addressToReturn = response.Address;
-
-            var addressToSave = new WalletAddress
-            {
-                Address = response.Address,
-                PublicKey = response.PubKey
-            };
-
-            await _walletRepository.SaveAsync(new WalletEntity
+            var walletEntity = new WalletEntity
             {
                 Address = response.Address,
                 MerchantId = request.MerchantId,
-                Data = _cryptoService.Encrypt(JsonConvert.SerializeObject(addressToSave)),
                 Amount = default(double),
-                DueDate = request.DueDate
-            });
+                DueDate = request.DueDate,
+                PublicKey = response.PubKey
+            };
 
-            return addressToReturn;
+            await _walletRepository.SaveAsync(walletEntity);
+
+            await _walletEventsPublisher.PublishAsync(walletEntity.ToNewWalletMessage());
+
+            return response.Address;
         }
 
         public async Task<IWallet> GetAsync(string merchantId, string address)

@@ -13,4 +13,8 @@
     <PackageReference Include="Lykke.SettingsReader" Version="1.1.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Lykke.Service.PayInternal.Contract\Lykke.Service.PayInternal.Contract.csproj" />
+  </ItemGroup>
+
 </Project>
