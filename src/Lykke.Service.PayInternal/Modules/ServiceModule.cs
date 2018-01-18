@@ -156,7 +156,7 @@ namespace Lykke.Service.PayInternal.Modules
                 .As<IWalletEventsPublisher>()
                 .As<IStartable>()
                 .SingleInstance()
-                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit.ConnectionString));
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
         }
     }
 }
