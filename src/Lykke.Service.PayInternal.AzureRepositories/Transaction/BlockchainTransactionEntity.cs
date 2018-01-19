@@ -1,4 +1,5 @@
-﻿using Lykke.Service.PayInternal.Core.Domain.Transaction;
+﻿using System;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
@@ -27,8 +28,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
                     Amount = src.Amount,
                     BlockId = src.BlockId,
                     Confirmations = src.Confirmations,
-                    OrderId = src.OrderId,
-                    Status = src.Status
+                    OrderId = src.OrderId
                 };
             }
         }
@@ -38,7 +38,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         public double Amount { get; set; }
         public string BlockId { get; set; }
         public int Confirmations { get; set; }
-        public BlockchainTransactionStatus Status { get; set; }
         public string WalletAddress { get; set; }
+        public DateTime FirstSeen { get; set; }
     }
 }
