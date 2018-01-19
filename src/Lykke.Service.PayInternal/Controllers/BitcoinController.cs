@@ -78,12 +78,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 var wallets = await _merchantWalletsService.GetNotExpiredAsync();
 
-                return Ok(wallets.Select(x => new WalletStateResponse
-                {
-                    Address = x.Address,
-                    DueDate = x.DueDate,
-                    Transactions = x.Transactions?.Select(t => t.Id)
-                }));
+                return Ok(wallets.Select(x => x.ToApiModel()));
             }
             catch (Exception ex)
             {

@@ -9,6 +9,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
+using MoreLinq;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -17,17 +18,23 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IBitcoinApiClient _bitcoinServiceClient;
         private readonly IWalletRepository _walletRepository;
         private readonly IWalletEventsPublisher _walletEventsPublisher;
+        private readonly IBlockchainTransactionRepository _blockchainTransactionRepository;
+
+        private const int BatchPieceSize = 15;
 
         public MerchantWalletsService(
             IBitcoinApiClient bitcoinServiceClient,
             IWalletRepository walletRepository,
-            IWalletEventsPublisher walletEventsPublisher)
+            IWalletEventsPublisher walletEventsPublisher,
+            IBlockchainTransactionRepository blockchainTransactionRepository)
         {
             _bitcoinServiceClient =
                 bitcoinServiceClient ?? throw new ArgumentNullException(nameof(bitcoinServiceClient));
             _walletRepository = walletRepository ?? throw new ArgumentNullException(nameof(walletRepository));
             _walletEventsPublisher =
                 walletEventsPublisher ?? throw new ArgumentNullException(nameof(walletEventsPublisher));
+            _blockchainTransactionRepository = blockchainTransactionRepository ??
+                                               throw new ArgumentNullException(nameof(blockchainTransactionRepository));
         }
 
         public async Task<string> CreateAddress(ICreateWalletRequest request)
@@ -72,14 +79,27 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IEnumerable<IWalletState>> GetNotExpiredAsync()
         {
-            var wallets = await _walletRepository.GetNotExpired();
+            var wallets = (await _walletRepository.GetNotExpired()).ToList();
+
+            var transactions = new List<IBlockchainTransaction>();
+
+            foreach (var batch in wallets.Batch(BatchPieceSize))
+            {
+                await Task.WhenAll(batch.Select(x => _blockchainTransactionRepository.GetByWallet(x.Address)
+                    .ContinueWith(t =>
+                    {
+                        lock (transactions)
+                        {
+                            transactions.AddRange(t.Result);
+                        }
+                    })));
+            }
 
             return wallets.Select(x => new WalletState
             {
                 Address = x.Address,
                 DueDate = x.DueDate,
-                //todo: get current state of transactions for the wallets from trsnsactions repository
-                Transactions = new List<IBlockchainTransaction>()
+                Transactions = transactions.Where(t => t.WalletAddress == x.Address)
             });
         }
     }

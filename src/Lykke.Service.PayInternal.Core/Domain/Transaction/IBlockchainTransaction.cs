@@ -1,13 +1,7 @@
-﻿namespace Lykke.Service.PayInternal.Core.Domain.Transaction
-{
-    public enum BlockchainTransactionStatus
-    {
-        Unknown,
-        New,
-        InProgress,
-        Confirmed
-    }
+﻿using System;
 
+namespace Lykke.Service.PayInternal.Core.Domain.Transaction
+{
     public interface IBlockchainTransaction
     {
         string Id { get; }
@@ -15,7 +9,7 @@
         double Amount { get; set; }
         string BlockId { get; set; }
         int Confirmations { get; set; }
-        BlockchainTransactionStatus Status { get; set; }
         string WalletAddress { get; set; }
+        DateTime FirstSeen { get; set; }
     }
 }
