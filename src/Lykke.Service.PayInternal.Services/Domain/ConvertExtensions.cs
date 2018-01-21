@@ -1,6 +1,7 @@
 ﻿using System;
 using Lykke.Service.PayInternal.Contract;
 using Lykke.Service.PayInternal.Core.Domain.Order;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 
 namespace Lykke.Service.PayInternal.Services.Domain
@@ -56,6 +57,19 @@ namespace Lykke.Service.PayInternal.Services.Domain
             {
                 Address = src.Address,
                 DueDate = src.DueDate
+            };
+        }
+
+        public static TransactionUpdateMessage ToMessage(this IBlockchainTransaction src)
+        {
+            return new TransactionUpdateMessage
+            {
+                Id = src.Id,
+                WalletAddresss = src.WalletAddress,
+                OrderId = src.OrderId,
+                Amount = src.Amount,
+                BlockId = src.BlockId,
+                Confirmations = src.Confirmations
             };
         }
     }

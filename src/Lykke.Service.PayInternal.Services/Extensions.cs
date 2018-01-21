@@ -1,4 +1,5 @@
 ﻿using Lykke.Service.PayInternal.Core.Domain.Merchant;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
@@ -26,6 +27,31 @@ namespace Lykke.Service.PayInternal.Services
                 Name = src.Name,
                 ApiKey = src.ApiKey,
                 LwId = src.LwId
+            };
+        }
+
+        public static ICreateTransaction ToDomain(this ICreateTransactionRequest src)
+        {
+            return new CreateTransaction
+            {
+                WalletAddress = src.WalletAddress,
+                Amount = src.Amount,
+                FirstSeen = src.FirstSeen,
+                Confirmations = src.Confirmations,
+                BlockId = src.BlockId,
+                TransactionId = src.TransactionId
+            };
+        }
+
+        public static IUpdateTransaction ToDomain(this IUpdateTransactionRequest src)
+        {
+            return new UpdateTransaction
+            {
+                WalletAddress = src.WalletAddress,
+                Amount = src.Amount,
+                Confirmations = src.Confirmations,
+                BlockId = src.BlockId,
+                TransactionId = src.TransactionId
             };
         }
     }

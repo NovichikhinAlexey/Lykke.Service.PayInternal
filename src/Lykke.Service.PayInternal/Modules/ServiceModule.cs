@@ -111,6 +111,9 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<RatesCalculationService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LpMarkup))
                 .As<IRatesCalculationService>();
+
+            builder.RegisterType<TransactionsService>()
+                .As<ITransactionsService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
@@ -154,6 +157,12 @@ namespace Lykke.Service.PayInternal.Modules
         {
             builder.RegisterType<WalletEventsPublisher>()
                 .As<IWalletEventsPublisher>()
+                .As<IStartable>()
+                .SingleInstance()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
+
+            builder.RegisterType<TransactionsUpdatePublisher>()
+                .As<ITransactionUpdatesPublisher>()
                 .As<IStartable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
