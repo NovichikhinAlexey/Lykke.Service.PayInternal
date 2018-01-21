@@ -72,6 +72,16 @@ namespace Lykke.Service.PayInternal.Client
             await _runner.RunAsync(() => _payInternalApi.UpdatePublicKeyAsync(streamPart, id));
         }
 
+        public async Task CreateTransaction(CreateTransactionRequest request)
+        {
+            await _runner.RunAsync(() => _payInternalApi.CreateTransaction(request));
+        }
+
+        public async Task UpdateTransaction(UpdateTransactionRequest request)
+        {
+            await _runner.RunAsync(() => _payInternalApi.UpdateTransaction(request));
+        }
+
         public void Dispose()
         {
             _httpClient?.Dispose();

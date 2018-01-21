@@ -17,5 +17,9 @@ namespace Lykke.Service.PayInternal.Client
         Task<CreateOrderResponse> ReCreateOrderAsync(ReCreateOrderRequest request);
 
         Task UpdatePublicKeyAsync(byte[] content, string id, string fileName, string contentType);
+
+        Task CreateTransaction(CreateTransactionRequest request);
+
+        Task UpdateTransaction(UpdateTransactionRequest request);
     }
 }
