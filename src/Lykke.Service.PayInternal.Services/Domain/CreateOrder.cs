@@ -12,6 +12,7 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public string ExchangeAssetId { get; set; }
         public double MarkupPercent { get; set; }
         public int MarkupPips { get; set; }
+        public double MarkupFixedFee { get; set; }
         public DateTime? WalletDueDate { get; set; }
         public string WalletAddress { get; set; }
     }

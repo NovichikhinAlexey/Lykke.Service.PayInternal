@@ -24,6 +24,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Order
 
         int MarkupPips { get; set; }
 
+        double MarkupFixedFee { get; set; }
+
         string WalletAddress { get; set; }
     }
 }

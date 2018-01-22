@@ -18,6 +18,8 @@ namespace Lykke.Service.PayInternal.Client.Models
 
         public int MarkupPips { get; set; }
 
+        public double MarkupFixedFee { get; set; }
+
         public DateTime? WalletDueDate { get; set; }
     }
 }

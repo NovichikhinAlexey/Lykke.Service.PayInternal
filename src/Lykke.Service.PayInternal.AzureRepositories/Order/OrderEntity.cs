@@ -33,6 +33,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
                     InvoiceAssetId = src.InvoiceAssetId,
                     MarkupPercent = src.MarkupPercent,
                     MarkupPips = src.MarkupPips,
+                    MarkupFixedFee = src.MarkupFixedFee,
                     WalletAddress = src.WalletAddress
                 };
             }
@@ -48,6 +49,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
         public DateTime DueDate { get; set; }
         public double MarkupPercent { get; set; }
         public int MarkupPips { get; set; }
+        public double MarkupFixedFee { get; set; }
         public string WalletAddress { get; set; }
     }
 }
