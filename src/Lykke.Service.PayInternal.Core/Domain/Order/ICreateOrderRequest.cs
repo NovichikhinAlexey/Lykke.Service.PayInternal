@@ -6,8 +6,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Order
     {
         string MerchantId { get; set; }
 
-        string InvoiceId { get; set; }
-
         string AssetPairId { get; set; }
 
         string InvoiceAssetId { get; set; }
