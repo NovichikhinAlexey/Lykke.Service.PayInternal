@@ -42,19 +42,20 @@ namespace Lykke.Service.PayInternal.Services
 
             var merchantMarkup = (await _merchantRepository.GetAsync(request.MerchantId)).GetMarkup();
 
-            var rate = await _ratesCalculationService.GetRate(request.AssetPairId, request.MarkupPercent,
-                request.MarkupPips, merchantMarkup);
+            var exchangeAmount = await _ratesCalculationService.GetAmount(request.AssetPairId, request.InvoiceAmount,
+                request.GetMarkup(), merchantMarkup);
 
             return await _ordersRepository.SaveAsync(new OrderEntity
             {
                 AssetPairId = request.AssetPairId,
                 DueDate = dueDate,
-                ExchangeAmount = request.InvoiceAmount / rate,
+                ExchangeAmount = exchangeAmount,
                 ExchangeAssetId = request.ExchangeAssetId,
                 InvoiceAmount = request.InvoiceAmount,
                 InvoiceAssetId = request.InvoiceAssetId,
                 MarkupPercent = request.MarkupPercent,
                 MarkupPips = request.MarkupPips,
+                MarkupFixedFee = request.MarkupFixedFee,
                 MerchantId = request.MerchantId,
                 WalletAddress = walletAddress
             });
@@ -81,7 +82,8 @@ namespace Lykke.Service.PayInternal.Services
                 ExchangeAssetId = latestOrder.ExchangeAssetId,
                 AssetPairId = latestOrder.AssetPairId,
                 MarkupPips = latestOrder.MarkupPips,
-                MarkupPercent = latestOrder.MarkupPercent
+                MarkupPercent = latestOrder.MarkupPercent,
+                MarkupFixedFee = latestOrder.MarkupFixedFee
             });
         }
     }

@@ -28,6 +28,7 @@ namespace Lykke.Service.PayInternal.Services.Domain
                 AssetPairId = src.AssetPairId,
                 MarkupPips = src.MarkupPips,
                 MarkupPercent = src.MarkupPercent,
+                MarkupFixedFee = src.MarkupFixedFee,
                 WalletDueDate = src.WalletDueDate,
                 WalletAddress = null
             };
@@ -47,6 +48,16 @@ namespace Lykke.Service.PayInternal.Services.Domain
             {
                 DueDate = src.WalletDueDate ?? orderDueDate,
                 MerchantId = src.MerchantId
+            };
+        }
+
+        public static RequestMarkup GetMarkup(this ICreateOrder src)
+        {
+            return new RequestMarkup
+            {
+                Percent = src.MarkupPercent,
+                Pips = src.MarkupPips,
+                FixedFee = src.MarkupFixedFee
             };
         }
 

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.MarketProfile.Client.Models;
+using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
@@ -29,6 +30,13 @@ namespace Lykke.Service.PayInternal.Services
                                           throw new ArgumentNullException(nameof(marketProfileServiceClient));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _lpMarkupSettings = lpMarkupSettings ?? throw new ArgumentNullException(nameof(lpMarkupSettings));
+        }
+
+        public async Task<double> GetAmount(string assetPairId, double amount, IRequestMarkup requestMarkup, IMerchantMarkup merchantMarkup)
+        {
+            var rate = await GetRate(assetPairId, requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
+
+            return (amount + requestMarkup.FixedFee) / rate;
         }
 
         public async Task<double> GetRate(
