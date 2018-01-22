@@ -6,7 +6,6 @@ namespace Lykke.Service.PayInternal.Services.Domain
     public class CreateOrder : ICreateOrder
     {
         public string MerchantId { get; set; }
-        public string InvoiceId { get; set; }
         public string AssetPairId { get; set; }
         public string InvoiceAssetId { get; set; }
         public double InvoiceAmount { get; set; }

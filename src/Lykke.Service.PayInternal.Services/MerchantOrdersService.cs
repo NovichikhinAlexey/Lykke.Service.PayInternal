@@ -53,7 +53,6 @@ namespace Lykke.Service.PayInternal.Services
                 ExchangeAssetId = request.ExchangeAssetId,
                 InvoiceAmount = request.InvoiceAmount,
                 InvoiceAssetId = request.InvoiceAssetId,
-                InvoiceId = request.InvoiceId,
                 MarkupPercent = request.MarkupPercent,
                 MarkupPips = request.MarkupPips,
                 MerchantId = request.MerchantId,
@@ -82,8 +81,7 @@ namespace Lykke.Service.PayInternal.Services
                 ExchangeAssetId = latestOrder.ExchangeAssetId,
                 AssetPairId = latestOrder.AssetPairId,
                 MarkupPips = latestOrder.MarkupPips,
-                MarkupPercent = latestOrder.MarkupPercent,
-                InvoiceId = latestOrder.InvoiceId
+                MarkupPercent = latestOrder.MarkupPercent
             });
         }
     }

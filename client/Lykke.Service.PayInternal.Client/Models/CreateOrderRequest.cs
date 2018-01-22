@@ -6,8 +6,6 @@ namespace Lykke.Service.PayInternal.Client.Models
     {
         public string MerchantId { get; set; }
 
-        public string InvoiceId { get; set; }
-
         public string AssetPairId { get; set; }
 
         public string InvoiceAssetId { get; set; }

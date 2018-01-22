@@ -28,7 +28,6 @@ namespace Lykke.Service.PayInternal.Services.Domain
                 AssetPairId = src.AssetPairId,
                 MarkupPips = src.MarkupPips,
                 MarkupPercent = src.MarkupPercent,
-                InvoiceId = src.InvoiceId,
                 WalletDueDate = src.WalletDueDate,
                 WalletAddress = null
             };

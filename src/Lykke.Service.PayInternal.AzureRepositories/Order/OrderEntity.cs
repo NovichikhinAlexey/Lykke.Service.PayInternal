@@ -31,7 +31,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
                     ExchangeAssetId = src.ExchangeAssetId,
                     InvoiceAmount = src.InvoiceAmount,
                     InvoiceAssetId = src.InvoiceAssetId,
-                    InvoiceId = src.InvoiceId,
                     MarkupPercent = src.MarkupPercent,
                     MarkupPips = src.MarkupPips,
                     WalletAddress = src.WalletAddress
@@ -41,7 +40,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
         
         public string Id => RowKey;
         public string MerchantId { get; set; }
-        public string InvoiceId { get; set; }
         public string AssetPairId { get; set; }
         public string InvoiceAssetId { get; set; }
         public double InvoiceAmount { get; set; }
