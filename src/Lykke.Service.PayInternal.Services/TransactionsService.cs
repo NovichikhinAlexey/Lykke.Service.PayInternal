@@ -37,6 +37,7 @@ namespace Lykke.Service.PayInternal.Services
             var transactionEntity = new BlockchainTransactionEntity
             {
                 WalletAddress = request.WalletAddress,
+                TransactionId = request.TransactionId,
                 Amount = request.Amount,
                 Confirmations = request.Confirmations,
                 BlockId = request.BlockId,
