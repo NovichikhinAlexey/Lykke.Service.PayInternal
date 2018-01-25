@@ -8,12 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Domain\" />
-    <Folder Include="Services\" />
+    <PackageReference Include="Lykke.Common" Version="4.1.0" />
+    <PackageReference Include="Lykke.Service.Assets.Client" Version="2.1.0.120" />
+    <PackageReference Include="Lykke.SettingsReader" Version="1.1.4" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Lykke.Common" Version="4.0.0" />
+    <ProjectReference Include="..\Lykke.Service.PayInternal.Contract\Lykke.Service.PayInternal.Contract.csproj" />
   </ItemGroup>
 
 </Project>

@@ -9,10 +9,10 @@ using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Modules;
 using Lykke.SettingsReader;
 using Lykke.SlackNotification.AzureQueue;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -51,6 +51,7 @@ namespace Lykke.Service.PayInternal
                 services.AddSwaggerGen(options =>
                 {
                     options.DefaultLykkeConfiguration("v1", "PayInternal API");
+                    options.OperationFilter<FileUploadOperationFilter>();
                 });
 
                 var builder = new ContainerBuilder();
@@ -58,7 +59,7 @@ namespace Lykke.Service.PayInternal
 
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x.PayInternalService), Log));
+                builder.RegisterModule(new ServiceModule(appSettings, Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
 
