@@ -113,11 +113,13 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <param name="request">The merchant update request.</param>
         /// <response code="204">The merchant successfully updated.</response>
         /// <response code="400">Invalid model.</response>
+        /// <response code="404">The merchant not found.</response>
         [HttpPatch]
         [Route("merchants")] // TODO: merchants/{merchantId} when Refit can use path parameter and body togather
         [SwaggerOperation("MerchantsUpdate")]
         [ProducesResponseType((int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> UpdateAsync([FromBody] UpdateMerchantRequest request)
         {
             if (!ModelState.IsValid)
@@ -128,6 +130,12 @@ namespace Lykke.Service.PayInternal.Controllers
                 var merchant = Mapper.Map<Merchant>(request);
 
                 await _merchantService.UpdateAsync(merchant);
+            }
+            catch (MerchantNotFoundException exception)
+            {
+                await _log.WriteWarningAsync(nameof(MerchantsController), nameof(UpdateAsync),
+                    request.ToJson(), exception.Message);
+                return NotFound();
             }
             catch (Exception exception)
             {
@@ -148,9 +156,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [Route("merchants/{merchantId}/publickey")]
         [SwaggerOperation("MerchantsSetPublicKey")]
-        [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
+        [ProducesResponseType((int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(void), (int) HttpStatusCode.NotFound)]
+        [ProducesResponseType((int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> SetPublicKeyAsync(string merchantId, IFormFile file)
         {
             if (file == null || file.Length == 0)
