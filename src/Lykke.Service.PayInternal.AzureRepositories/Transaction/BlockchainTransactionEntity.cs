@@ -38,7 +38,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         public string Id => RowKey;
         public string TransactionId { get; set; }
         public string OrderId { get; set; }
-        public double Amount { get; set; }
+        public decimal Amount { get; set; }
         public string BlockId { get; set; }
         public int Confirmations { get; set; }
         public string WalletAddress { get; set; }

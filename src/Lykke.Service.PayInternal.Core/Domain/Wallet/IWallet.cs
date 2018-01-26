@@ -7,7 +7,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Wallet
         string MerchantId { get; set; }
         string Address { get; set; }
         DateTime DueDate { get; set; }
-        double Amount { get; set; }
+        decimal Amount { get; set; }
         string PublicKey { get; set; }
     }
 }

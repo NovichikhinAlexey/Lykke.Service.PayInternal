@@ -4,7 +4,7 @@
     {
         string TransactionId { get; set; }
         string WalletAddress { get; set; }
-        double Amount { get; set; }
+        decimal Amount { get; set; }
         int Confirmations { get; set; }
         string BlockId { get; set; }
     }

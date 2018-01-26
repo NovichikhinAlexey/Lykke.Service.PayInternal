@@ -50,7 +50,7 @@ namespace Lykke.Service.PayInternal.Services
             {
                 Address = response.Address,
                 MerchantId = request.MerchantId,
-                Amount = default(double),
+                Amount = default(decimal),
                 DueDate = request.DueDate,
                 PublicKey = response.PubKey
             };

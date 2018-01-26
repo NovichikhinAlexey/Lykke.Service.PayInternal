@@ -64,7 +64,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
         public string MerchantId { get; set; }
         public string Address { get; set; }
         public DateTime DueDate { get; set; }
-        public double Amount { get; set; }
+        public decimal Amount { get; set; }
         public string PublicKey { get; set; }
     }
 }
