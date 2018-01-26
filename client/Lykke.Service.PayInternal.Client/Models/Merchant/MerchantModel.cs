@@ -46,6 +46,11 @@
         public int LpMarkupPips { get; set; }
 
         /// <summary>
+        /// Gets or sets the merchant fixed fee.
+        /// </summary>
+        public double MarkupFixedFee { get; set; }
+        
+        /// <summary>
         /// Gets or sets the merchant Lykke wallet client id.
         /// </summary>
         public string LwId { get; set; }

@@ -29,6 +29,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
         public double LpMarkupPercent { get; set; }
 
         public int LpMarkupPips { get; set; }
+        
+        public double MarkupFixedFee { get; set; }
 
         public string LwId { get; set; }
 
@@ -38,6 +40,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
             DeltaSpread = merchant.DeltaSpread;
             LpMarkupPercent = merchant.LpMarkupPercent;
             LpMarkupPips = merchant.LpMarkupPips;
+            MarkupFixedFee = merchant.MarkupFixedFee;
             LwId = merchant.LwId;
             Name = merchant.Name;
             PublicKey = merchant.PublicKey;

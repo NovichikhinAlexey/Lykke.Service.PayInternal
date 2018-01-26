@@ -75,14 +75,6 @@ namespace Lykke.Service.PayInternal.Modules
                 AzureTableStorage<WalletEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantWalletConnString),
                     "MerchantWallets", _log)));
 
-            builder.RegisterInstance<IOrdersRepository>(new OrdersRepository(
-                AzureTableStorage<OrderEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantOrderConnString),
-                    "MerchantOrderRequest", _log)));
-
-            builder.RegisterInstance<IMerchantRepository>(new MerchantRepository(
-                AzureTableStorage<MerchantEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantConnString),
-                    "Merchants", _log)));
-
             builder.RegisterInstance<IBlockchainTransactionRepository>(new BlockchainTransactionRepository(
                 AzureTableStorage<BlockchainTransactionEntity>.Create(
                     _dbSettings.ConnectionString(x => x.MerchantConnString),
@@ -103,10 +95,6 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<MerchantWalletsService>()
                 .As<IMerchantWalletsService>();
-
-            builder.RegisterType<MerchantOrdersService>()
-                .WithParameter("orderExpiration", _settings.CurrentValue.PayInternalService.OrderExpiration)
-                .As<IMerchantOrdersService>();
 
             builder.RegisterType<RatesCalculationService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LpMarkup))

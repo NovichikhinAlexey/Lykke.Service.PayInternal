@@ -25,6 +25,9 @@ namespace Lykke.Service.PayInternal.Models
         [Required]
         public int LpMarkupPips { get; set; }
 
+        [Required]
+        public double MarkupFixedFee { get; set; }
+        
         public string LwId { get; set; }
     }
 }

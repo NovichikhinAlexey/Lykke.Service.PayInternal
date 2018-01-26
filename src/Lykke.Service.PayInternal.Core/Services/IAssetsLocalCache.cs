@@ -7,6 +7,8 @@ namespace Lykke.Service.PayInternal.Core.Services
     {
         Task<Asset> GetAssetByIdAsync(string assetId);
 
+        Task<AssetPair> GetAssetPairAsync(string baseAssetId, string quotingAssetId);
+        
         Task<AssetPair> GetAssetPairByIdAsync(string assetPairId);
     }
 }
