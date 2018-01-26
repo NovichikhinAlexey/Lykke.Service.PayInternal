@@ -5,35 +5,17 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
 {
     public class MerchantEntity : TableEntity, IMerchant
     {
-        public static string GeneratePartitionKey()
+        public MerchantEntity()
         {
-            return "M";
         }
 
-        public static string GenerateRowKey(string merchantId)
+        public MerchantEntity(string partitionKey, string rowKey)
+            : base(partitionKey, rowKey)
         {
-            return merchantId;
-        }
-
-        public static MerchantEntity Create(IMerchant src)
-        {
-            return new MerchantEntity
-            {
-                PartitionKey = GeneratePartitionKey(),
-                RowKey = GenerateRowKey(src.Id),
-                ApiKey = src.ApiKey,
-                DeltaSpread = src.DeltaSpread,
-                LpMarkupPercent = src.LpMarkupPercent,
-                LpMarkupPips = src.LpMarkupPips,
-                LwId = src.LwId,
-                Name = src.Name,
-                PublicKey = src.PublicKey,
-                TimeCacheRates = src.TimeCacheRates
-            };
         }
 
         public string Id => RowKey;
-
+        
         public string Name { get; set; }
 
         public string PublicKey { get; set; }
@@ -49,5 +31,17 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
         public int LpMarkupPips { get; set; }
 
         public string LwId { get; set; }
+
+        internal void Map(IMerchant merchant)
+        {
+            ApiKey = merchant.ApiKey;
+            DeltaSpread = merchant.DeltaSpread;
+            LpMarkupPercent = merchant.LpMarkupPercent;
+            LpMarkupPips = merchant.LpMarkupPips;
+            LwId = merchant.LwId;
+            Name = merchant.Name;
+            PublicKey = merchant.PublicKey;
+            TimeCacheRates = merchant.TimeCacheRates;
+        }
     }
 }
