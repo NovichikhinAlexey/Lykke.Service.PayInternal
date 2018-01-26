@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Api;
 using Lykke.Service.PayInternal.Client.Models;
+using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
 
@@ -14,6 +15,7 @@ namespace Lykke.Service.PayInternal.Client
     {
         private readonly HttpClient _httpClient;
         private readonly IPayInternalApi _payInternalApi;
+        private readonly IMerchantsApi _merchantsApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -37,6 +39,7 @@ namespace Lykke.Service.PayInternal.Client
             };
 
             _payInternalApi = RestService.For<IPayInternalApi>(_httpClient);
+            _merchantsApi = RestService.For<IMerchantsApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
@@ -50,11 +53,6 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunAsync(() => _payInternalApi.GetNotExpiredWalletsAsync());
         }
 
-        public async Task CreateMerchantAsync(CreateMerchantRequest request)
-        {
-            await _runner.RunAsync(() => _payInternalApi.CreateMerchantAsync(request));
-        }
-
         public async Task<CreateOrderResponse> CreateOrderAsync(CreateOrderRequest request)
         {
             return await _runner.RunAsync(() => _payInternalApi.CreateOrderAsync(request));
@@ -63,13 +61,6 @@ namespace Lykke.Service.PayInternal.Client
         public async Task<CreateOrderResponse> ReCreateOrderAsync(ReCreateOrderRequest request)
         {
             return await _runner.RunAsync(() => _payInternalApi.ReCreateOrderAsync(request));
-        }
-
-        public async Task UpdatePublicKeyAsync(byte[] content, string id, string fileName, string contentType)
-        {
-            var streamPart = new StreamPart(new MemoryStream(content), fileName, contentType);
-
-            await _runner.RunAsync(() => _payInternalApi.UpdatePublicKeyAsync(streamPart, id));
         }
 
         public async Task CreateTransaction(CreateTransactionRequest request)
@@ -82,6 +73,38 @@ namespace Lykke.Service.PayInternal.Client
             await _runner.RunAsync(() => _payInternalApi.UpdateTransaction(request));
         }
 
+        public async Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync()
+        {
+            return await _runner.RunAsync(() => _merchantsApi.GetAllAsync());
+        }
+        
+        public async Task<MerchantModel> GetMerchantByIdAsync(string merchantId)
+        {
+            return await _runner.RunAsync(() => _merchantsApi.GetByIdAsync(merchantId));
+        }
+
+        public async Task<MerchantModel> CreateMerchantAsync(CreateMerchantRequest request)
+        {
+            return await _runner.RunAsync(() => _merchantsApi.CreateAsync(request));
+        }
+
+        public async Task UpdateMerchantAsync(UpdateMerchantRequest request)
+        {
+            await _runner.RunAsync(() => _merchantsApi.UpdateAsync(request));
+        }
+
+        public async Task SetMerchantPublicKeyAsync(string merchantId, byte[] content)
+        {
+            var streamPart = new StreamPart(new MemoryStream(content), "public.key");
+
+            await _runner.RunAsync(() => _merchantsApi.SetPublicKeyAsync(merchantId, streamPart));
+        }
+
+        public async Task DeleteMerchantAsync(string merchantId)
+        {
+            await _runner.RunAsync(() => _merchantsApi.DeleteAsync(merchantId));
+        }
+        
         public void Dispose()
         {
             _httpClient?.Dispose();

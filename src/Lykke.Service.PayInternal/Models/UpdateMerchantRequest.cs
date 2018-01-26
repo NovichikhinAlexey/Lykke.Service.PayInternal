@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
 
 namespace Lykke.Service.PayInternal.Models
 {
-    public class CreateMerchantRequest : ICreateMerchantRequest
+    public class UpdateMerchantRequest
     {
+        [Required]
+        public string Id { get; set; }
+
         [Required]
         public string Name { get; set; }
 
@@ -23,7 +25,6 @@ namespace Lykke.Service.PayInternal.Models
         [Required]
         public int LpMarkupPips { get; set; }
 
-        [Required]
         public string LwId { get; set; }
     }
 }
