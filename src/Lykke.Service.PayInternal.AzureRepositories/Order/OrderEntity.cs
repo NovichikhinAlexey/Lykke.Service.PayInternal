@@ -1,55 +1,39 @@
 ﻿using System;
+using Lykke.AzureStorage.Tables;
 using Lykke.Service.PayInternal.Core.Domain.Order;
-using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Order
 {
-    public class OrderEntity : TableEntity, IOrder
+    public class OrderEntity : AzureTableEntity, IOrder
     {
-        public static class ByWallet
+        public OrderEntity()
         {
-            public static string GeneratePartitionKey(string address)
-            {
-                return address;
-            }
-
-            public static string GenerateRowKey()
-            {
-                return Guid.NewGuid().ToString();
-            }
-
-            public static OrderEntity Create(IOrder src)
-            {
-                return new OrderEntity
-                {
-                    PartitionKey = GeneratePartitionKey(src.WalletAddress),
-                    RowKey = GenerateRowKey(),
-                    MerchantId = src.MerchantId,
-                    AssetPairId = src.AssetPairId,
-                    DueDate = src.DueDate,
-                    ExchangeAmount = src.ExchangeAmount,
-                    ExchangeAssetId = src.ExchangeAssetId,
-                    InvoiceAmount = src.InvoiceAmount,
-                    InvoiceAssetId = src.InvoiceAssetId,
-                    MarkupPercent = src.MarkupPercent,
-                    MarkupPips = src.MarkupPips,
-                    MarkupFixedFee = src.MarkupFixedFee,
-                    WalletAddress = src.WalletAddress
-                };
-            }
         }
-        
+
+        public OrderEntity(string partitionKey, string rowKey)
+        {
+            PartitionKey = partitionKey;
+            RowKey = rowKey;
+        }
+
         public string Id => RowKey;
         public string MerchantId { get; set; }
+        public string PaymentRequestId { get; set; }
         public string AssetPairId { get; set; }
-        public string InvoiceAssetId { get; set; }
-        public double InvoiceAmount { get; set; }
-        public string ExchangeAssetId { get; set; }
-        public double ExchangeAmount { get; set; }
+        public double SettlementAmount { get; set; }
+        public double PaymentAmount { get; set; }
         public DateTime DueDate { get; set; }
-        public double MarkupPercent { get; set; }
-        public int MarkupPips { get; set; }
-        public double MarkupFixedFee { get; set; }
-        public string WalletAddress { get; set; }
+        public DateTime CreatedDate { get; set; }
+
+        internal void Map(IOrder order)
+        {
+            MerchantId = order.MerchantId;
+            PaymentRequestId = order.PaymentRequestId;
+            AssetPairId = order.AssetPairId;
+            SettlementAmount = order.SettlementAmount;
+            PaymentAmount = order.PaymentAmount;
+            DueDate = order.DueDate;
+            CreatedDate = order.CreatedDate;
+        }
     }
 }

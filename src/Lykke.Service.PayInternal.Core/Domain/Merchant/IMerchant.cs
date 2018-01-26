@@ -18,6 +18,8 @@
 
         int LpMarkupPips { get; set; }
 
+        double MarkupFixedFee { get; set; }
+        
         string LwId { get; set; }
     }
 }

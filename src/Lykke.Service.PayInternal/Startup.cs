@@ -68,7 +68,12 @@ namespace Lykke.Service.PayInternal
 
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new Services.AutofacModule());
+                builder.RegisterModule(new AzureRepositories.AutofacModule(
+                    appSettings.Nested(o => o.PayInternalService.Db.MerchantOrderConnString),
+                    appSettings.Nested(o => o.PayInternalService.Db.MerchantConnString),
+                    appSettings.Nested(o => o.PayInternalService.Db.PaymentRequestConnString),
+                    Log));
+                builder.RegisterModule(new Services.AutofacModule(appSettings.CurrentValue.PayInternalService.OrderExpiration));
                 builder.RegisterModule(new ServiceModule(appSettings, Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();

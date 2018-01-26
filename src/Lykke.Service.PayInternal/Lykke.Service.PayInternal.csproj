@@ -53,6 +53,9 @@
     <ProjectReference Include="..\Lykke.Service.PayInternal.Core\Lykke.Service.PayInternal.Core.csproj" />
     <ProjectReference Include="..\Lykke.Service.PayInternal.Services\Lykke.Service.PayInternal.Services.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
   <Target Name="PrepublishScript" BeforeTargets="PrepareForPublish">
     <ItemGroup>
       <DocFile Include="$(OutputPath)$(AssemblyName).xml" />

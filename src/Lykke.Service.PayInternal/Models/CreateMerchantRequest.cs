@@ -3,7 +3,7 @@ using Lykke.Service.PayInternal.Core.Domain.Merchant;
 
 namespace Lykke.Service.PayInternal.Models
 {
-    public class CreateMerchantRequest : ICreateMerchantRequest
+    public class CreateMerchantRequest
     {
         [Required]
         public string Name { get; set; }
@@ -23,6 +23,9 @@ namespace Lykke.Service.PayInternal.Models
         [Required]
         public int LpMarkupPips { get; set; }
 
+        [Required]
+        public double MarkupFixedFee { get; set; }
+        
         public string LwId { get; set; }
     }
 }

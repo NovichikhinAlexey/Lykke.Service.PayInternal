@@ -16,20 +16,6 @@ namespace Lykke.Service.PayInternal.Services
             };
         }
 
-        public static IMerchant GetMerchant(this ICreateMerchantRequest src)
-        {
-            return new Merchant
-            {
-                DeltaSpread = src.DeltaSpread,
-                LpMarkupPercent = src.LpMarkupPercent,
-                LpMarkupPips = src.LpMarkupPips,
-                TimeCacheRates = src.TimeCacheRates,
-                Name = src.Name,
-                ApiKey = src.ApiKey,
-                LwId = src.LwId
-            };
-        }
-
         public static ICreateTransaction ToDomain(this ICreateTransactionRequest src)
         {
             return new CreateTransaction

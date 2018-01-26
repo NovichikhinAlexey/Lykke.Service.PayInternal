@@ -1,37 +1,45 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Order
 {
-    public class OrdersRepository : IOrdersRepository
+    public class OrdersRepository : IOrderRepository
     {
-        private readonly INoSQLTableStorage<OrderEntity> _tableStorage;
+        private readonly INoSQLTableStorage<OrderEntity> _storage;
 
-        public OrdersRepository(INoSQLTableStorage<OrderEntity> tableStorage)
+        public OrdersRepository(INoSQLTableStorage<OrderEntity> storage)
         {
-            _tableStorage = tableStorage ?? throw new ArgumentNullException(nameof(tableStorage));
+            _storage = storage;
         }
 
-        public async Task<IEnumerable<IOrder>> GetAsync()
+        public async Task<IReadOnlyList<IOrder>> GetAsync(string paymentRequestId)
         {
-            return await _tableStorage.GetDataAsync();
+            IEnumerable<OrderEntity> entities = await _storage.GetDataAsync(GetPartitionKey(paymentRequestId));
+
+            return entities.ToList();
         }
 
-        public async Task<IEnumerable<IOrder>> GetByWalletAsync(string address)
+        public async Task<IOrder> InsertAsync(IOrder order)
         {
-            return await _tableStorage.GetDataAsync(OrderEntity.ByWallet.GeneratePartitionKey(address));
+            var entity = new OrderEntity(GetPartitionKey(order.PaymentRequestId), GetRowKey());
+            entity.Map(order);
+            
+            await _storage.InsertAsync(entity);
+
+            return entity;
         }
+        
+        private static string GetPartitionKey(string paymentRequestId)
+            => paymentRequestId;
 
-        public async Task<IOrder> SaveAsync(IOrder order)
-        {
-            var newItem = OrderEntity.ByWallet.Create(order);
+        private static string GetRowKey(string orderId)
+            => orderId;
 
-            await _tableStorage.InsertAsync(newItem);
-
-            return newItem;
-        }
+        private static string GetRowKey()
+            => Guid.NewGuid().ToString("D");
     }
 }
