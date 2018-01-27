@@ -23,6 +23,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
             DestinationAddress = transferInfo.DestinationAddress;
             Amount = transferInfo.Amount;
             Currency = transferInfo.Currency;
+            ETag = "*";
         }
 
         public string TransferId { get => PartitionKey; set => PartitionKey = value;}
