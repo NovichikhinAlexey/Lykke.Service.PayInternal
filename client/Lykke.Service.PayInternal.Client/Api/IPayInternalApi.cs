@@ -13,19 +13,6 @@ namespace Lykke.Service.PayInternal.Client.Api
         [Get("/api/bitcoin/wallets/notExpired")]
         Task<IEnumerable<WalletStateResponse>> GetNotExpiredWalletsAsync();
 
-        [Post("/api/merchants")]
-        Task CreateMerchantAsync([Body] CreateMerchantRequest request);
-
-        [Post("/api/orders")]
-        Task<CreateOrderResponse> CreateOrderAsync([Body] CreateOrderRequest request);
-
-        [Post("/api/orders/recreate")]
-        Task<CreateOrderResponse> ReCreateOrderAsync([Body] ReCreateOrderRequest request);
-
-        [Multipart]
-        [Post("/api/merchants/{id}/publicKey")]
-        Task UpdatePublicKeyAsync([AliasAs("file")] StreamPart stream, string id);
-
         [Post("/api/transactions")]
         Task CreateTransaction([Body] CreateTransactionRequest request);
 

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using AutoMapper;
 using AzureStorage.Tables;
 using Common.Log;
 using Lykke.Common.ApiLibrary.Middleware;
@@ -52,13 +53,27 @@ namespace Lykke.Service.PayInternal
                 {
                     options.DefaultLykkeConfiguration("v1", "PayInternal API");
                     options.OperationFilter<FileUploadOperationFilter>();
+                    
                 });
 
+                Mapper.Initialize(cfg =>
+                {
+                    cfg.AddProfiles(typeof(AutoMapperProfile));
+                });
+
+                Mapper.AssertConfigurationIsValid();
+                
                 var builder = new ContainerBuilder();
                 var appSettings = Configuration.LoadSettings<AppSettings>();
 
                 Log = CreateLogWithSlack(services, appSettings);
 
+                builder.RegisterModule(new AzureRepositories.AutofacModule(
+                    appSettings.Nested(o => o.PayInternalService.Db.MerchantOrderConnString),
+                    appSettings.Nested(o => o.PayInternalService.Db.MerchantConnString),
+                    appSettings.Nested(o => o.PayInternalService.Db.PaymentRequestConnString),
+                    Log));
+                builder.RegisterModule(new Services.AutofacModule(appSettings.CurrentValue.PayInternalService.OrderExpiration));
                 builder.RegisterModule(new ServiceModule(appSettings, Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();

@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Log;
 using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Order;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
 
@@ -13,21 +16,23 @@ namespace Lykke.Service.PayInternal.Services
     public class TransactionsService : ITransactionsService
     {
         private readonly IBlockchainTransactionRepository _transactionRepository;
-        private readonly IOrdersRepository _ordersRepository;
+        private readonly IPaymentRequestRepository _paymentRequestRepository;
+        private readonly IOrderRepository _orderRepository;
         private readonly ITransactionUpdatesPublisher _updatesPublisher;
         private readonly ILog _log;
 
         public TransactionsService(
-            IBlockchainTransactionRepository transactionRepository, 
-            IOrdersRepository ordersRepository,
+            IBlockchainTransactionRepository transactionRepository,
+            IPaymentRequestRepository paymentRequestRepository,
+            IOrderRepository ordersRepository,
             ITransactionUpdatesPublisher updatesPublisher,
             ILog log)
         {
-            _transactionRepository =
-                transactionRepository ?? throw new ArgumentNullException(nameof(transactionRepository));
-            _ordersRepository = ordersRepository ?? throw new ArgumentNullException(nameof(ordersRepository));
-            _updatesPublisher = updatesPublisher ?? throw new ArgumentNullException(nameof(updatesPublisher));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _transactionRepository = transactionRepository;
+            _paymentRequestRepository = paymentRequestRepository;
+            _orderRepository = ordersRepository;
+            _updatesPublisher = updatesPublisher;
+            _log = log;
         }
 
         public async Task Create(ICreateTransaction request)
@@ -70,9 +75,14 @@ namespace Lykke.Service.PayInternal.Services
 
         private async Task<IOrder> FindTransactionOrderByDate(string walletAddress, DateTime date)
         {
-            var walletOrders = await _ordersRepository.GetByWalletAsync(walletAddress);
+            IPaymentRequest paymentRequest = await _paymentRequestRepository.FindAsync(walletAddress);
+            
+            if(paymentRequest == null)
+                throw new PaymentRequestNotFoundException(walletAddress);
+            
+            IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequest.Id);
 
-            var dueDateOrders = walletOrders.Where(x => date < x.DueDate).ToList();
+            IReadOnlyList<IOrder> dueDateOrders = orders.Where(x => date < x.DueDate).ToList();
 
             if (!dueDateOrders.Any())
                 throw new Exception("There is no order with suitable DueDate");

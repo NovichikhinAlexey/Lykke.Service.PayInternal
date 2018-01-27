@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
@@ -7,33 +9,59 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
 {
     public class MerchantRepository : IMerchantRepository
     {
-        private readonly INoSQLTableStorage<MerchantEntity> _tableStorage;
+        private readonly INoSQLTableStorage<MerchantEntity> _storage;
 
         public MerchantRepository(
-            INoSQLTableStorage<MerchantEntity> tableStorage)
+            INoSQLTableStorage<MerchantEntity> storage)
         {
-            _tableStorage = tableStorage;
+            _storage = storage;
         }
 
-        public async Task<IMerchant> GetAsync(string id)
+        public async Task<IReadOnlyList<IMerchant>> GetAsync()
         {
-            return await _tableStorage.GetDataAsync(
-                MerchantEntity.GeneratePartitionKey(),
-                MerchantEntity.GenerateRowKey(id));
+            IEnumerable<MerchantEntity> entities =
+                await _storage.GetDataAsync(GetPartitionKey());
+
+            return entities.ToList();
+        }
+        
+        public async Task<IMerchant> GetAsync(string merchantId)
+        {
+            return await _storage.GetDataAsync(GetPartitionKey(), GetRowKey(merchantId));
         }
 
-        public async Task<IEnumerable<IMerchant>> GetAsync()
+        public async Task<IMerchant> InsertAsync(IMerchant merchant)
         {
-            return await _tableStorage.GetDataAsync(MerchantEntity.GeneratePartitionKey());
+            var entity = new MerchantEntity(GetPartitionKey(), GetRowKey());
+            entity.Map(merchant);
+
+            await _storage.InsertAsync(entity);
+
+            return entity;
+        }
+        
+        public async Task ReplaceAsync(IMerchant merchant)
+        {
+            var entity = new MerchantEntity(GetPartitionKey(), GetRowKey(merchant.Id));
+            entity.Map(merchant);
+            
+            entity.ETag = "*";
+            
+            await _storage.ReplaceAsync(entity);
         }
 
-        public async Task<IMerchant> SaveAsync(IMerchant merchant)
+        public async Task DeleteAsync(string merchantId)
         {
-            var newItem = MerchantEntity.Create(merchant);
-
-            await _tableStorage.InsertOrMergeAsync(newItem);
-
-            return newItem;
+            await _storage.DeleteAsync(GetPartitionKey(), GetRowKey(merchantId));
         }
+
+        private static string GetPartitionKey()
+            => "M"; // TODO: Change to 'Merchant'
+
+        private static string GetRowKey(string merchantId)
+            => merchantId;
+
+        private static string GetRowKey()
+            => Guid.NewGuid().ToString("D");
     }
 }

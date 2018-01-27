@@ -29,6 +29,15 @@ namespace Lykke.Service.PayInternal.Services
             return cachedValues.FirstOrDefault(x => x.Id == assetId);
         }
 
+        public async Task<AssetPair> GetAssetPairAsync(string baseAssetId, string quotingAssetId)
+        {
+            if (string.IsNullOrEmpty(baseAssetId) || string.IsNullOrEmpty(quotingAssetId)) return null;
+            
+            var cachedValues = await _assetPairsCache.Values();
+
+            return cachedValues.FirstOrDefault(x => x.BaseAssetId == baseAssetId && x.QuotingAssetId == quotingAssetId);
+        }
+        
         public async Task<AssetPair> GetAssetPairByIdAsync(string assetPairId)
         {
             if (string.IsNullOrEmpty(assetPairId)) return null;
