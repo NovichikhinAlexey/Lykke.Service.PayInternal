@@ -17,7 +17,6 @@ namespace Lykke.Service.PayInternal.Services
     public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepository;
-        private readonly IPaymentRequestRepository _paymentRequestRepository;
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IMerchantRepository _merchantRepository;
         private readonly IRatesCalculationService _ratesCalculationService;
@@ -26,7 +25,6 @@ namespace Lykke.Service.PayInternal.Services
 
         public OrderService(
             IOrderRepository orderRepository,
-            IPaymentRequestRepository paymentRequestRepository,
             IAssetsLocalCache assetsLocalCache,
             IMerchantRepository merchantRepository,
             IRatesCalculationService ratesCalculationService,
@@ -34,25 +32,22 @@ namespace Lykke.Service.PayInternal.Services
             TimeSpan orderExpiration)
         {
             _orderRepository = orderRepository;
-            _paymentRequestRepository = paymentRequestRepository;
             _assetsLocalCache = assetsLocalCache;
             _merchantRepository = merchantRepository;
             _ratesCalculationService = ratesCalculationService;
             _log = log;
             _orderExpiration = orderExpiration;
         }
-        
-        public async Task<IOrder> GetAsync(string merchantId, string paymentRequestId)
+
+        public async Task<IOrder> GetAsync(string paymentRequestId, string orderId)
         {
-            IPaymentRequest paymentRequest = await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
+            return await _orderRepository.GetAsync(paymentRequestId, orderId);
+        }
 
-            if(paymentRequest == null)
-                throw new PaymentRequestNotFoundException(merchantId, paymentRequestId);
-
-            IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequestId);
-            
-            // TODO: check payment request status
-            
+        public async Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest)
+        {
+            IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequest.Id);
+           
             IOrder latestOrder = orders.OrderByDescending(x => x.DueDate).FirstOrDefault();
             
             if (latestOrder?.DueDate > DateTime.UtcNow) 
@@ -80,7 +75,7 @@ namespace Lykke.Service.PayInternal.Services
                 FixedFee = merchant.MarkupFixedFee
             };
 
-            double paymentAmount = await _ratesCalculationService
+            decimal paymentAmount = await _ratesCalculationService
                 .GetAmount(assetPair.Id, paymentRequest.Amount, requestMarkup, merchantMarkup);
 
             var order = new Order
@@ -96,7 +91,7 @@ namespace Lykke.Service.PayInternal.Services
 
             IOrder createdOrder = await _orderRepository.InsertAsync(order);
 
-            await _log.WriteInfoAsync(nameof(OrderService), nameof(GetAsync), order.ToJson(), "Order created.");
+            await _log.WriteInfoAsync(nameof(OrderService), nameof(GetLatestOrCreateAsync), order.ToJson(), "Order created.");
             
             return createdOrder;
         }

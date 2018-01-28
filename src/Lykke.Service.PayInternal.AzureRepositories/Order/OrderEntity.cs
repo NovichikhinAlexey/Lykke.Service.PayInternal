@@ -20,8 +20,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
         public string MerchantId { get; set; }
         public string PaymentRequestId { get; set; }
         public string AssetPairId { get; set; }
-        public double SettlementAmount { get; set; }
-        public double PaymentAmount { get; set; }
+        public decimal SettlementAmount { get; set; }
+        public decimal PaymentAmount { get; set; }
         public DateTime DueDate { get; set; }
         public DateTime CreatedDate { get; set; }
 

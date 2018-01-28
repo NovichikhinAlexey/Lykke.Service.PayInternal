@@ -16,6 +16,11 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
             _storage = storage;
         }
 
+        public async Task<IOrder> GetAsync(string paymentRequestId, string orderId)
+        {
+            return await _storage.GetDataAsync(GetPartitionKey(paymentRequestId), GetRowKey(orderId));
+        }
+
         public async Task<IReadOnlyList<IOrder>> GetAsync(string paymentRequestId)
         {
             IEnumerable<OrderEntity> entities = await _storage.GetDataAsync(GetPartitionKey(paymentRequestId));

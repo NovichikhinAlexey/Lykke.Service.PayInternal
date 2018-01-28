@@ -1,12 +1,10 @@
 ﻿using System.Threading.Tasks;
-using Autofac;
-using Common;
-using Lykke.Service.PayInternal.Contract;
+using Lykke.Service.PayInternal.Core.Domain.Wallet;
 
 namespace Lykke.Service.PayInternal.Core.Services
 {
-    public interface IWalletEventsPublisher : IStartable, IStopable
+    public interface IWalletEventsPublisher
     {
-        Task PublishAsync(NewWalletMessage message);
+        Task PublishAsync(IWallet wallet);
     }
 }

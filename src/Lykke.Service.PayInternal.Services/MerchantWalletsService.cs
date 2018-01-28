@@ -57,7 +57,7 @@ namespace Lykke.Service.PayInternal.Services
 
             await _walletRepository.SaveAsync(walletEntity);
 
-            await _walletEventsPublisher.PublishAsync(walletEntity.ToNewWalletMessage());
+            await _walletEventsPublisher.PublishAsync(walletEntity);
 
             return response.Address;
         }

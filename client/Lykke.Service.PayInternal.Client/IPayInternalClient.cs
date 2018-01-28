@@ -58,12 +58,12 @@ namespace Lykke.Service.PayInternal.Client
 
 
         /// <summary>
-        /// Returns an acrive order if exist, otherwise creates new one.
+        /// Returns an order by id.
         /// </summary>
-        /// <param name="merchantId">The merchant id.</param>
         /// <param name="paymentRequestId">The payment request id.</param>
-        /// <returns>The payment request active order.</returns>
-        Task<OrderModel> GetActiveOrderAsync(string merchantId, string paymentRequestId);
+        /// <param name="orderId">The order id.</param>
+        /// <returns>The payment request order.</returns>
+        Task<OrderModel> GetOrderAsync(string paymentRequestId, string orderId);
         
         /// <summary>
         /// Returns merchant payment requests.
@@ -86,5 +86,11 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="model">The payment request creation information.</param>
         /// <returns>The payment request.</returns>
         Task<PaymentRequestModel> CreatePaymentRequestAsync(CreatePaymentRequestModel model);
+
+        /// <summary>
+        /// Creates an order if it does not exist or expired and returns payment request details.
+        /// </summary>
+        /// <returns>The payment request details.</returns>
+        Task<PaymentRequestDetailsModel> ChechoutAsync(string merchantId, string paymentRequestId);
     }
 }

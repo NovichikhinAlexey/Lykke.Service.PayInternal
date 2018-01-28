@@ -101,9 +101,9 @@ namespace Lykke.Service.PayInternal.Client
             await _runner.RunAsync(() => _merchantsApi.DeleteAsync(merchantId));
         }
         
-        public async Task<OrderModel> GetActiveOrderAsync(string merchantId, string paymentRequestId)
+        public async Task<OrderModel> GetOrderAsync(string merchantId, string paymentRequestId)
         {
-            return await _runner.RunAsync(() => _ordersApi.GetAsync(merchantId, paymentRequestId));
+            return await _runner.RunAsync(() => _ordersApi.GetByIdAsync(merchantId, paymentRequestId));
         }
 
         public async Task<IReadOnlyList<PaymentRequestModel>> GetPaymentRequestsAsync(string merchantId)
@@ -119,6 +119,11 @@ namespace Lykke.Service.PayInternal.Client
         public async Task<PaymentRequestModel> CreatePaymentRequestAsync(CreatePaymentRequestModel model)
         {
             return await _runner.RunAsync(() => _paymentRequestsApi.CreateAsync(model));
+        }
+
+        public async Task<PaymentRequestDetailsModel> ChechoutAsync(string merchantId, string paymentRequestId)
+        {
+            return await _runner.RunAsync(() => _paymentRequestsApi.ChechoutAsync(merchantId, paymentRequestId));
         }
 
         public void Dispose()

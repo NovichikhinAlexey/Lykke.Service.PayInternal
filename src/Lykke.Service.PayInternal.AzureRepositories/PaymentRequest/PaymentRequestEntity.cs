@@ -18,7 +18,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
 
         public string Id => RowKey;
         public string MerchantId { get; set; }
-        public double Amount { get; set; }
+        public string OrderId { get; set; }
+        public decimal Amount { get; set; }
         public string SettlementAssetId { get; set; }
         public string PaymentAssetId { get; set; }
         public DateTime DueDate { get; set; }
@@ -26,13 +27,14 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         public int MarkupPips { get; set; }
         public string WalletAddress { get; set; }
         public PaymentRequestStatus Status { get; set; }
-        public double PaidAmount { get; set; }
+        public decimal PaidAmount { get; set; }
         public DateTime? PaidDate { get; set; }
         public string Error { get; set; }
         
         internal void Map(IPaymentRequest paymentRequest)
         {
             MerchantId = paymentRequest.MerchantId;
+            OrderId = paymentRequest.OrderId;
             Amount = paymentRequest.Amount;
             SettlementAssetId = paymentRequest.SettlementAssetId;
             PaymentAssetId = paymentRequest.PaymentAssetId;

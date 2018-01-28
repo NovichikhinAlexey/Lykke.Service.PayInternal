@@ -58,7 +58,17 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
             
             return entity;
         }
-        
+
+        public async Task UpdateAsync(IPaymentRequest paymentRequest)
+        {
+            var entity = new PaymentRequestEntity(GetPartitionKey(paymentRequest.MerchantId), GetRowKey(paymentRequest.Id));
+            entity.Map(paymentRequest);
+
+            entity.ETag = "*";
+            
+            await _storage.ReplaceAsync(entity);
+        }
+
         private static string GetPartitionKey(string merchantId)
             => merchantId;
 
