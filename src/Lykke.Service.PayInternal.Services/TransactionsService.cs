@@ -9,7 +9,6 @@ using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -45,7 +44,7 @@ namespace Lykke.Service.PayInternal.Services
             {
                 WalletAddress = request.WalletAddress,
                 TransactionId = request.TransactionId,
-                Amount = request.Amount,
+                Amount = (decimal)request.Amount,
                 Confirmations = request.Confirmations,
                 BlockId = request.BlockId,
                 FirstSeen = request.FirstSeen,
@@ -64,7 +63,7 @@ namespace Lykke.Service.PayInternal.Services
             if (transaction == null)
                 throw new Exception($"Transaction with id {request.TransactionId} doesn't exist");
 
-            transaction.Amount = request.Amount;
+            transaction.Amount = (decimal)request.Amount;
             transaction.BlockId = request.BlockId;
             transaction.Confirmations = request.Confirmations;
 

@@ -12,9 +12,9 @@ namespace Lykke.Service.PayInternal.Core.Domain.Order
 
         string AssetPairId { get; set; }
        
-        double SettlementAmount { get; set; }
+        decimal SettlementAmount { get; set; }
 
-        double PaymentAmount { get; set; }
+        decimal PaymentAmount { get; set; }
 
         DateTime DueDate { get; set; }
 

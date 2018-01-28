@@ -75,7 +75,7 @@ namespace Lykke.Service.PayInternal.Services
                 FixedFee = merchant.MarkupFixedFee
             };
 
-            double paymentAmount = await _ratesCalculationService
+            decimal paymentAmount = await _ratesCalculationService
                 .GetAmount(assetPair.Id, paymentRequest.Amount, requestMarkup, merchantMarkup);
 
             var order = new Order

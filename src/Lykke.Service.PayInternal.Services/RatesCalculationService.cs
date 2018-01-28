@@ -32,11 +32,11 @@ namespace Lykke.Service.PayInternal.Services
             _lpMarkupSettings = lpMarkupSettings ?? throw new ArgumentNullException(nameof(lpMarkupSettings));
         }
 
-        public async Task<double> GetAmount(string assetPairId, double amount, IRequestMarkup requestMarkup, IMerchantMarkup merchantMarkup)
+        public async Task<decimal> GetAmount(string assetPairId, decimal amount, IRequestMarkup requestMarkup, IMerchantMarkup merchantMarkup)
         {
             var rate = await GetRate(assetPairId, requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
 
-            return (amount + requestMarkup.FixedFee) / rate;
+            return (amount + (decimal) requestMarkup.FixedFee) / (decimal)rate;
         }
 
         public async Task<double> GetRate(

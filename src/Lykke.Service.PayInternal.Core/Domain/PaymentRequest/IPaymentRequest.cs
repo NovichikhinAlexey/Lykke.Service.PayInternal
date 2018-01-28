@@ -10,7 +10,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequest
 
         string OrderId { get; set; }
         
-        double Amount { get; set; }
+        decimal Amount { get; set; }
 
         string SettlementAssetId { get; set; }
         
@@ -26,7 +26,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequest
 
         PaymentRequestStatus Status { get; set; }
 
-        double PaidAmount { get; set; }
+        decimal PaidAmount { get; set; }
         
         DateTime? PaidDate { get; set; }
         
