@@ -12,5 +12,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequest
         Task<IPaymentRequest> GetAsync(string merchantId, string paymentRequestId);
 
         Task<IPaymentRequest> InsertAsync(IPaymentRequest paymentRequest);
+        
+        Task UpdateAsync(IPaymentRequest paymentRequest);
     }
 }

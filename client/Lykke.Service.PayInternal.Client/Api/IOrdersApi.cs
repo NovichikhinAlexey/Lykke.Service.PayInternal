@@ -6,7 +6,7 @@ namespace Lykke.Service.PayInternal.Client.Api
 {
     internal interface IOrdersApi
     {
-        [Get("/api/merchants/{merchantId}/paymentrequests/{paymentRequestId}/orders/active")]
-        Task<OrderModel> GetAsync(string merchantId, string paymentRequestId);
+        [Get("/api/merchants/paymentrequests/{paymentRequestId}/orders/{orderId}")]
+        Task<OrderModel> GetByIdAsync(string paymentRequestId, string orderId);
     }
 }

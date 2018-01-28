@@ -27,21 +27,21 @@ namespace Lykke.Service.PayInternal.Controllers
         }
 
         /// <summary>
-        /// Returns an acrive order if exist, otherwise creates new one.
+        /// Returns an order by id.
         /// </summary>
-        /// <param name="merchantId">The merchant id.</param>
         /// <param name="paymentRequestId">The payment request id.</param>
-        /// <returns>The payment request active order.</returns>
-        /// <response code="200">The payment request active order.</response>
+        /// <param name="orderId">The order id.</param>
+        /// <returns>The payment request order.</returns>
+        /// <response code="200">The payment request order.</response>
         [HttpGet]
-        [Route("merchants/{merchantId}/paymentrequests/{paymentRequestId}/orders/active")]
+        [Route("merchants/paymentrequests/{paymentRequestId}/orders/{orderId}")]
         [SwaggerOperation("OrdersGetByPaymentRequestId")]
         [ProducesResponseType(typeof(OrderModel), (int)HttpStatusCode.OK)]
-        public async Task<IActionResult> GetAsync(string merchantId, string paymentRequestId)
+        public async Task<IActionResult> GetAsync(string paymentRequestId, string orderId)
         {
             try
             {
-                IOrder order = await _orderService.GetAsync(merchantId, paymentRequestId);
+                IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequestId);
 
                 var model = Mapper.Map<OrderModel>(order);
 

@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
@@ -20,15 +23,21 @@ namespace Lykke.Service.PayInternal.Controllers
     public class PaymentRequestsController : Controller
     {
         private readonly IPaymentRequestService _paymentRequestService;
+        private readonly IOrderService _orderService;
+        private readonly ITransactionsService _transactionsService;
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly ILog _log;
 
         public PaymentRequestsController(
             IPaymentRequestService paymentRequestService,
+            IOrderService orderService,
+            ITransactionsService transactionsService,
             IAssetsLocalCache assetsLocalCache,
             ILog log)
         {
             _paymentRequestService = paymentRequestService;
+            _orderService = orderService;
+            _transactionsService = transactionsService;
             _assetsLocalCache = assetsLocalCache;
             _log = log;
         }
@@ -114,6 +123,45 @@ namespace Lykke.Service.PayInternal.Controllers
             catch (Exception exception)
             {
                 await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(CreateAsync), model.ToJson(), exception);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Creates an order if it does not exist or expired and returns payment request details.
+        /// </summary>
+        /// <returns>The payment request details.</returns>
+        /// <response code="200">The payment request details.</response>
+        [HttpPost]
+        [Route("merchants/{merchantId}/paymentrequests/{paymentRequestId}")]
+        [SwaggerOperation("PaymentRequestsCreate")]
+        [ProducesResponseType(typeof(PaymentRequestDetailsModel), (int) HttpStatusCode.OK)]
+        public async Task<IActionResult> ChechoutAsync(string merchantId, string paymentRequestId)
+        {
+            try
+            {
+                IPaymentRequest paymentRequest =
+                    await _paymentRequestService.CheckoutAsync(merchantId, paymentRequestId);
+
+                IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
+
+                IReadOnlyList<IBlockchainTransaction> transactions =
+                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
+
+                var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
+                model.Order = Mapper.Map<PaymentRequestOrderModel>(order);
+                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(transactions);
+
+                return Ok(model);
+            }
+            catch (Exception exception)
+            {
+                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(ChechoutAsync),
+                    new
+                    {
+                        MerchantId = merchantId,
+                        PaymentRequestId = paymentRequestId
+                    }.ToJson(), exception);
                 throw;
             }
         }

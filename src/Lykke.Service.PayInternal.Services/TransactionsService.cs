@@ -18,21 +18,23 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IBlockchainTransactionRepository _transactionRepository;
         private readonly IPaymentRequestRepository _paymentRequestRepository;
         private readonly IOrderRepository _orderRepository;
-        private readonly ITransactionUpdatesPublisher _updatesPublisher;
         private readonly ILog _log;
 
         public TransactionsService(
             IBlockchainTransactionRepository transactionRepository,
             IPaymentRequestRepository paymentRequestRepository,
             IOrderRepository ordersRepository,
-            ITransactionUpdatesPublisher updatesPublisher,
             ILog log)
         {
             _transactionRepository = transactionRepository;
             _paymentRequestRepository = paymentRequestRepository;
             _orderRepository = ordersRepository;
-            _updatesPublisher = updatesPublisher;
             _log = log;
+        }
+
+        public async Task<IEnumerable<IBlockchainTransaction>> GetAsync(string walletAddress)
+        {
+            return await _transactionRepository.GetByWallet(walletAddress);
         }
 
         public async Task Create(ICreateTransaction request)
@@ -50,9 +52,7 @@ namespace Lykke.Service.PayInternal.Services
                 OrderId = order.Id
             };
 
-            await Task.WhenAll(
-                _transactionRepository.SaveAsync(transactionEntity),
-                _updatesPublisher.PublishAsync(transactionEntity.ToMessage()));
+            await _transactionRepository.SaveAsync(transactionEntity);
         }
 
         public async Task Update(IUpdateTransaction request)
@@ -68,9 +68,7 @@ namespace Lykke.Service.PayInternal.Services
             transaction.BlockId = request.BlockId;
             transaction.Confirmations = request.Confirmations;
 
-            await Task.WhenAll(
-                _transactionRepository.MergeAsync(transaction),
-                _updatesPublisher.PublishAsync(transaction.ToMessage()));
+            await _transactionRepository.MergeAsync(transaction);
         }
 
         private async Task<IOrder> FindTransactionOrderByDate(string walletAddress, DateTime date)

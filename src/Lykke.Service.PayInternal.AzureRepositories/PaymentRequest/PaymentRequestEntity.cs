@@ -18,6 +18,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
 
         public string Id => RowKey;
         public string MerchantId { get; set; }
+        public string OrderId { get; set; }
         public double Amount { get; set; }
         public string SettlementAssetId { get; set; }
         public string PaymentAssetId { get; set; }
@@ -33,6 +34,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         internal void Map(IPaymentRequest paymentRequest)
         {
             MerchantId = paymentRequest.MerchantId;
+            OrderId = paymentRequest.OrderId;
             Amount = paymentRequest.Amount;
             SettlementAssetId = paymentRequest.SettlementAssetId;
             PaymentAssetId = paymentRequest.PaymentAssetId;
