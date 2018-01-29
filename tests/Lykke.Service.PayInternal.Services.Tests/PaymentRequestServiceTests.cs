@@ -97,7 +97,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
             
             var blockchainTransaction = new BlockchainTransaction
             {
-                Amount = amount,
+                Amount = amount * (decimal)Math.Pow(10, 8),
                 FirstSeen = DateTime.Now,
                 Confirmations = TransactionConfirmationsCount
             };
@@ -153,7 +153,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
             
             var blockchainTransaction = new BlockchainTransaction
             {
-                Amount = amount - .0001m,
+                Amount = (amount - .0001m) * (decimal)Math.Pow(10, 8),
                 FirstSeen = DateTime.Now,
                 Confirmations = TransactionConfirmationsCount
             };
@@ -214,7 +214,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
             
             var blockchainTransaction = new BlockchainTransaction
             {
-                Amount = amount + .0001m,
+                Amount = (amount + .0001m) * (decimal)Math.Pow(10, 8),
                 FirstSeen = DateTime.Now,
                 Confirmations = TransactionConfirmationsCount
             };
@@ -275,7 +275,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
             
             var blockchainTransaction = new BlockchainTransaction
             {
-                Amount = amount + .0001m,
+                Amount = amount,
                 FirstSeen = DateTime.Now.AddMinutes(1),
                 Confirmations = TransactionConfirmationsCount
             };

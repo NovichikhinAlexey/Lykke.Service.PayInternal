@@ -113,7 +113,7 @@ namespace Lykke.Service.PayInternal.Services
             if (paymentRequest.Status == PaymentRequestStatus.InProcess && transactions.All(o=>o.Confirmations >= _transactionConfirmationCount))
             {
                 DateTime paidDate = transactions.Max(o => o.FirstSeen);
-                decimal sum = transactions.Sum(o => o.Amount);
+                decimal sum = transactions.Sum(o => o.Amount) * (decimal) Math.Pow(10, -1 * 8);
                 
                 IOrder order = await _orderService.GetAsync(paymentRequest.Id, paidDate);
 
