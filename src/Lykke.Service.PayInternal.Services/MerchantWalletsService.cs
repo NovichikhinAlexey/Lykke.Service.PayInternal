@@ -28,13 +28,10 @@ namespace Lykke.Service.PayInternal.Services
             IWalletEventsPublisher walletEventsPublisher,
             IBlockchainTransactionRepository blockchainTransactionRepository)
         {
-            _bitcoinServiceClient =
-                bitcoinServiceClient ?? throw new ArgumentNullException(nameof(bitcoinServiceClient));
-            _walletRepository = walletRepository ?? throw new ArgumentNullException(nameof(walletRepository));
-            _walletEventsPublisher =
-                walletEventsPublisher ?? throw new ArgumentNullException(nameof(walletEventsPublisher));
-            _blockchainTransactionRepository = blockchainTransactionRepository ??
-                                               throw new ArgumentNullException(nameof(blockchainTransactionRepository));
+            _bitcoinServiceClient = bitcoinServiceClient;
+            _walletRepository = walletRepository;
+            _walletEventsPublisher = walletEventsPublisher;
+            _blockchainTransactionRepository = blockchainTransactionRepository;
         }
 
         public async Task<string> CreateAddress(ICreateWalletRequest request)
@@ -85,7 +82,7 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var batch in wallets.Batch(BatchPieceSize))
             {
-                await Task.WhenAll(batch.Select(x => _blockchainTransactionRepository.GetByWallet(x.Address)
+                await Task.WhenAll(batch.Select(x => _blockchainTransactionRepository.GetAsync(x.Address)
                     .ContinueWith(t =>
                     {
                         lock (transactions)

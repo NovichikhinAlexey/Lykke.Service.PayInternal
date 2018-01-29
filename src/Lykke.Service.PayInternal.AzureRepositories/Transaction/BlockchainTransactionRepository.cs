@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -8,57 +8,57 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 {
     public class BlockchainTransactionRepository : IBlockchainTransactionRepository
     {
-        private readonly INoSQLTableStorage<BlockchainTransactionEntity> _tableStorage;
+        private readonly INoSQLTableStorage<BlockchainTransactionEntity> _storage;
 
-        public BlockchainTransactionRepository(INoSQLTableStorage<BlockchainTransactionEntity> tableStorage)
+        public BlockchainTransactionRepository(INoSQLTableStorage<BlockchainTransactionEntity> storage)
         {
-            _tableStorage = tableStorage ?? throw new ArgumentNullException(nameof(tableStorage));
+            _storage = storage;
         }
 
-        public async Task SaveAsync(IBlockchainTransaction tx)
+        public async Task<IReadOnlyList<IBlockchainTransaction>> GetAsync(string walletAddress)
         {
-            var newItem = BlockchainTransactionEntity.ByWallet.Create(tx);
+            IEnumerable<BlockchainTransactionEntity> entities =
+                await _storage.GetDataAsync(GetPartitionKey(walletAddress));
 
-            await _tableStorage.InsertAsync(newItem);
+            return entities.ToList();
+        }
+        
+        public async Task<IBlockchainTransaction> GetAsync(string walletAddress, string transactionId)
+        {
+            return await _storage.GetDataAsync(GetPartitionKey(walletAddress), GetRowKey(transactionId));
         }
 
-        public async Task<IBlockchainTransaction> Get(string walletAddress, string txId)
+        public async Task InsertAsync(IBlockchainTransaction blockchainTransaction)
         {
-            return await _tableStorage.GetDataAsync(
-                BlockchainTransactionEntity.ByWallet.GeneratePartitionKey(walletAddress),
-                BlockchainTransactionEntity.ByWallet.GenerateRowKey(txId));
+            var entity = new BlockchainTransactionEntity(
+                GetPartitionKey(blockchainTransaction.WalletAddress),
+                GetRowKey(blockchainTransaction.TransactionId));
+            entity.Map(blockchainTransaction);
+
+            await _storage.InsertAsync(entity);
         }
 
-        public async Task<IBlockchainTransaction> InsertOrMergeAsync(IBlockchainTransaction tx)
+        public async Task UpdateAsync(IBlockchainTransaction blockchainTransaction)
         {
-            var item = BlockchainTransactionEntity.ByWallet.Create(tx);
-
-            await _tableStorage.InsertOrMergeAsync(item);
-
-            return item;
-        }
-
-        public async Task<IBlockchainTransaction> MergeAsync(IBlockchainTransaction tx)
-        {
-            return await _tableStorage.MergeAsync(
-                BlockchainTransactionEntity.ByWallet.GeneratePartitionKey(tx.WalletAddress),
-                BlockchainTransactionEntity.ByWallet.GenerateRowKey(tx.Id),
+            await _storage.MergeAsync(
+                GetPartitionKey(blockchainTransaction.WalletAddress),
+                GetRowKey(blockchainTransaction.TransactionId),
                 entity =>
                 {
-                    entity.Amount = tx.Amount;
-                    entity.BlockId = tx.BlockId;
-                    entity.Confirmations = tx.Confirmations;
-                    entity.FirstSeen = tx.FirstSeen;
-                    entity.OrderId = tx.OrderId;
+                    entity.Amount = blockchainTransaction.Amount;
+                    entity.BlockId = blockchainTransaction.BlockId;
+                    entity.Confirmations = blockchainTransaction.Confirmations;
+                    entity.FirstSeen = blockchainTransaction.FirstSeen;
+                    entity.PaymentRequestId = blockchainTransaction.PaymentRequestId;
 
                     return entity;
                 });
         }
 
-        public async Task<IEnumerable<IBlockchainTransaction>> GetByWallet(string walletAddress)
-        {
-            return await _tableStorage.GetDataAsync(
-                BlockchainTransactionEntity.ByWallet.GeneratePartitionKey(walletAddress));
-        }
+        private static string GetPartitionKey(string walletAddress)
+            => walletAddress;
+
+        private static string GetRowKey(string transactionId)
+            => transactionId;
     }
 }

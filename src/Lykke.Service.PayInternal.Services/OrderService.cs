@@ -44,6 +44,16 @@ namespace Lykke.Service.PayInternal.Services
             return await _orderRepository.GetAsync(paymentRequestId, orderId);
         }
 
+        public async Task<IOrder> GetAsync(string paymentRequestId, DateTime date)
+        {
+            IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequestId);
+
+            return orders
+                .Where(o => date < o.DueDate)
+                .OrderBy(o => o.DueDate)
+                .FirstOrDefault();
+        }
+        
         public async Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest)
         {
             IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequest.Id);
