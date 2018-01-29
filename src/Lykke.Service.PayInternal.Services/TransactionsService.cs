@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Log;
-using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -33,14 +33,14 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IEnumerable<IBlockchainTransaction>> GetAsync(string walletAddress)
         {
-            return await _transactionRepository.GetByWallet(walletAddress);
+            return await _transactionRepository.GetAsync(walletAddress);
         }
 
         public async Task Create(ICreateTransaction request)
         {
-            var order = await FindTransactionOrderByDate(request.WalletAddress, request.FirstSeen);
+            IPaymentRequest paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
 
-            var transactionEntity = new BlockchainTransactionEntity
+            var transactionEntity = new BlockchainTransaction
             {
                 WalletAddress = request.WalletAddress,
                 TransactionId = request.TransactionId,
@@ -48,17 +48,16 @@ namespace Lykke.Service.PayInternal.Services
                 Confirmations = request.Confirmations,
                 BlockId = request.BlockId,
                 FirstSeen = request.FirstSeen,
-                OrderId = order.Id
+                PaymentRequestId = paymentRequest.Id
             };
 
-            await _transactionRepository.SaveAsync(transactionEntity);
+            await _transactionRepository.InsertAsync(transactionEntity);
         }
 
         public async Task Update(IUpdateTransaction request)
         {
-            var transaction = await _transactionRepository.Get(
-                BlockchainTransactionEntity.ByWallet.GeneratePartitionKey(request.WalletAddress),
-                BlockchainTransactionEntity.ByWallet.GenerateRowKey(request.TransactionId));
+            IBlockchainTransaction transaction =
+                await _transactionRepository.GetAsync(request.WalletAddress, request.TransactionId);
 
             if (transaction == null)
                 throw new Exception($"Transaction with id {request.TransactionId} doesn't exist");
@@ -67,26 +66,7 @@ namespace Lykke.Service.PayInternal.Services
             transaction.BlockId = request.BlockId;
             transaction.Confirmations = request.Confirmations;
 
-            await _transactionRepository.MergeAsync(transaction);
-        }
-
-        private async Task<IOrder> FindTransactionOrderByDate(string walletAddress, DateTime date)
-        {
-            IPaymentRequest paymentRequest = await _paymentRequestRepository.FindAsync(walletAddress);
-            
-            if(paymentRequest == null)
-                throw new PaymentRequestNotFoundException(walletAddress);
-            
-            IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequest.Id);
-
-            IReadOnlyList<IOrder> dueDateOrders = orders.Where(x => date < x.DueDate).ToList();
-
-            if (!dueDateOrders.Any())
-                throw new Exception("There is no order with suitable DueDate");
-
-            return dueDateOrders.Count > 1
-                ? dueDateOrders.OrderBy(x => x.DueDate).First()
-                : dueDateOrders.First();
+            await _transactionRepository.UpdateAsync(transaction);
         }
     }
 }

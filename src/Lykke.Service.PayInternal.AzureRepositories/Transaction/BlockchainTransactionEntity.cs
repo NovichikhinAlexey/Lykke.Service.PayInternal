@@ -1,47 +1,77 @@
 ﻿using System;
+using Lykke.AzureStorage.Tables;
+using Lykke.AzureStorage.Tables.Entity.Annotation;
+using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
-using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 {
-    public class BlockchainTransactionEntity : TableEntity, IBlockchainTransaction
+    [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
+    public class BlockchainTransactionEntity : AzureTableEntity, IBlockchainTransaction
     {
-        public static class ByWallet
+        private decimal _amount;
+        private int _confirmations;
+        private DateTime _firstSeen;
+        
+        public BlockchainTransactionEntity()
         {
-            public static string GeneratePartitionKey(string walletAddress)
-            {
-                return walletAddress;
-            }
+        }
 
-            public static string GenerateRowKey(string txId)
-            {
-                return txId;
-            }
-
-            public static BlockchainTransactionEntity Create(IBlockchainTransaction src)
-            {
-                return new BlockchainTransactionEntity
-                {
-                    PartitionKey = GeneratePartitionKey(src.WalletAddress),
-                    RowKey = GenerateRowKey(src.TransactionId),
-                    WalletAddress = src.WalletAddress,
-                    TransactionId = src.TransactionId,
-                    Amount = src.Amount,
-                    BlockId = src.BlockId,
-                    Confirmations = src.Confirmations,
-                    OrderId = src.OrderId,
-                    FirstSeen = src.FirstSeen
-                };
-            }
+        public BlockchainTransactionEntity(string partitionKey, string rowKey)
+        {
+            PartitionKey = partitionKey;
+            RowKey = rowKey;
         }
 
         public string Id => RowKey;
+        
         public string TransactionId { get; set; }
-        public string OrderId { get; set; }
-        public decimal Amount { get; set; }
+        
+        public string PaymentRequestId { get; set; }
+
+        public decimal Amount
+        {
+            get => _amount;
+            set
+            {
+                _amount = value;
+                MarkValueTypePropertyAsDirty(nameof(Amount));
+            }
+        }
+        
         public string BlockId { get; set; }
-        public int Confirmations { get; set; }
+        
+        public int Confirmations
+        {
+            get => _confirmations;
+            set
+            {
+                _confirmations = value;
+                MarkValueTypePropertyAsDirty(nameof(Confirmations));
+            }
+        }
+        
         public string WalletAddress { get; set; }
-        public DateTime FirstSeen { get; set; }
+     
+        public DateTime FirstSeen
+        {
+            get => _firstSeen;
+            set
+            {
+                _firstSeen = value;
+                MarkValueTypePropertyAsDirty(nameof(FirstSeen));
+            }
+        }
+
+        internal void Map(IBlockchainTransaction blockchainTransaction)
+        {
+            TransactionId = blockchainTransaction.TransactionId;
+            PaymentRequestId = blockchainTransaction.PaymentRequestId;
+            Amount = blockchainTransaction.Amount;
+            BlockId = blockchainTransaction.BlockId;
+            Confirmations = blockchainTransaction.Confirmations;
+            WalletAddress = blockchainTransaction.WalletAddress;
+            FirstSeen = blockchainTransaction.FirstSeen;
+        }
     }
 }

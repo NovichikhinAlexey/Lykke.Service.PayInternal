@@ -7,10 +7,12 @@ namespace Lykke.Service.PayInternal.Services
     public class AutofacModule: Module
     {
         private readonly TimeSpan _orderExpiration;
+        private readonly int _transactionConfirmationCount;
 
-        public AutofacModule(TimeSpan orderExpiration)
+        public AutofacModule(TimeSpan orderExpiration, int transactionConfirmationCount)
         {
             _orderExpiration = orderExpiration;
+            _transactionConfirmationCount = transactionConfirmationCount;
         }
         
         protected override void Load(ContainerBuilder builder)
@@ -19,6 +21,7 @@ namespace Lykke.Service.PayInternal.Services
                 .As<IMerchantService>();
 
             builder.RegisterType<PaymentRequestService>()
+                .WithParameter(TypedParameter.From(_transactionConfirmationCount))
                 .As<IPaymentRequestService>();
 
             builder.RegisterType<OrderService>()

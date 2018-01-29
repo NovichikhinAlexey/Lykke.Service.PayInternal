@@ -5,6 +5,8 @@ using Autofac.Extensions.DependencyInjection;
 using AutoMapper;
 using AzureStorage.Tables;
 using Common.Log;
+using Lykke.AzureStorage.Tables.Entity.Metamodel;
+using Lykke.AzureStorage.Tables.Entity.Metamodel.Providers;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
@@ -56,6 +58,8 @@ namespace Lykke.Service.PayInternal
                     
                 });
 
+                EntityMetamodel.Configure(new AnnotationsBasedMetamodelProvider());
+                
                 Mapper.Initialize(cfg =>
                 {
                     cfg.AddProfiles(typeof(AutoMapperProfile));
@@ -73,7 +77,9 @@ namespace Lykke.Service.PayInternal
                     appSettings.Nested(o => o.PayInternalService.Db.MerchantConnString),
                     appSettings.Nested(o => o.PayInternalService.Db.PaymentRequestConnString),
                     Log));
-                builder.RegisterModule(new Services.AutofacModule(appSettings.CurrentValue.PayInternalService.OrderExpiration));
+                builder.RegisterModule(new Services.AutofacModule(
+                    appSettings.CurrentValue.PayInternalService.OrderExpiration,
+                    appSettings.CurrentValue.PayInternalService.TransactionConfirmationCount));
                 builder.RegisterModule(new ServiceModule(appSettings, Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
