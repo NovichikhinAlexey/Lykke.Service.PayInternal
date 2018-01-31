@@ -25,7 +25,9 @@ namespace Lykke.Service.PayInternal.Services
                 FirstSeen = src.FirstSeen,
                 Confirmations = src.Confirmations,
                 BlockId = src.BlockId,
-                TransactionId = src.TransactionId
+                TransactionId = src.TransactionId,
+                Blockchain = src.Blockchain,
+                AssetId = src.AssetId
             };
         }
 

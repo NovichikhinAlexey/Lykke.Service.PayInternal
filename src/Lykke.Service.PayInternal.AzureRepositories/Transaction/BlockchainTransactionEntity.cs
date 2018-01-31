@@ -63,6 +63,10 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             }
         }
 
+        public string AssetId { get; set; }
+
+        public string Blockchain { get; set; }
+
         internal void Map(IBlockchainTransaction blockchainTransaction)
         {
             TransactionId = blockchainTransaction.TransactionId;
@@ -72,6 +76,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             Confirmations = blockchainTransaction.Confirmations;
             WalletAddress = blockchainTransaction.WalletAddress;
             FirstSeen = blockchainTransaction.FirstSeen;
+            AssetId = blockchainTransaction.AssetId;
+            Blockchain = blockchainTransaction.Blockchain;
         }
     }
 }
