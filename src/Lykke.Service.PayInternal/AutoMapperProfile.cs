@@ -58,6 +58,8 @@ namespace Lykke.Service.PayInternal
                 .ForSourceMember(src => src.Id, opt => opt.Ignore())
                 .ForSourceMember(src => src.PaymentRequestId, opt => opt.Ignore())
                 .ForSourceMember(src => src.WalletAddress, opt => opt.Ignore())
+                .ForSourceMember(src => src.AssetId, opt => opt.Ignore())
+                .ForSourceMember(src => src.Blockchain, opt => opt.Ignore())
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId));
         }
 
@@ -77,6 +79,8 @@ namespace Lykke.Service.PayInternal
                 .ForSourceMember(src => src.Id, opt => opt.Ignore())
                 .ForSourceMember(src => src.PaymentRequestId, opt => opt.Ignore())
                 .ForSourceMember(src => src.WalletAddress, opt => opt.Ignore())
+                .ForSourceMember(src => src.AssetId, opt => opt.Ignore())
+                .ForSourceMember(src => src.Blockchain, opt => opt.Ignore())
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId));            
         }
     }
