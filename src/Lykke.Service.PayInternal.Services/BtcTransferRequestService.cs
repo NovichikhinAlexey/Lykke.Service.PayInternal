@@ -21,16 +21,16 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransferRepository _transferRepository;
         private readonly IWalletRepository _walletRepository;
         private readonly IBitcoinApiClient _bitcointApiClient;
-        private readonly WalletClient _walletClient;
+        private readonly QBitNinjaClient _ninjaClient;
         private readonly ILog _log;
 
         #region Ctr
-        public BtcTransferRequestService(ITransferRepository transferRepository, IWalletRepository walletRepository, IBitcoinApiClient bitcointApiClient, WalletClient walletClient, ILog log)
+        public BtcTransferRequestService(ITransferRepository transferRepository, IWalletRepository walletRepository, IBitcoinApiClient bitcointApiClient, QBitNinjaClient ninjaClient, ILog log)
         {
             _transferRepository = transferRepository ?? throw new ArgumentNullException(nameof(transferRepository));
             _walletRepository = walletRepository ?? throw new ArgumentNullException(nameof(walletRepository));
             _bitcointApiClient = bitcointApiClient ?? throw new ArgumentNullException(nameof(bitcointApiClient));
-            _walletClient = walletClient ?? throw new ArgumentNullException(nameof(walletClient));
+            _ninjaClient= ninjaClient  ?? throw new ArgumentNullException(nameof(ninjaClient));
             _log = log ?? throw new ArgumentNullException(nameof(log));
         }
         #endregion
@@ -306,8 +306,9 @@ namespace Lykke.Service.PayInternal.Services
             {
                 foreach (var a in addresses)
                 {
+                    var walletClient = new WalletClient(_ninjaClient, a);
                     var tAd = BitcoinAddress.Create(a); //TODO Check if we need to set Network
-                    await _walletClient.CreateAddress(tAd);
+                    await walletClient.CreateAddress(tAd);
                 }
                 return true;
             }

@@ -11,6 +11,7 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public BitcoinCoreSettings BitcoinCore { get; set; }
         public AssetsServiceClientSettings AssetsServiceClient { get; set; }
         public MarketProfileServiceClientSettings MarketProfileServiceClient { get; set; }
+        public NinjaServiceClientSettings NinjaServiceClient { get; set; }
     }
 
     public class BitcoinCoreSettings
@@ -26,6 +27,12 @@ namespace Lykke.Service.PayInternal.Core.Settings
     }
 
     public class MarketProfileServiceClientSettings
+    {
+        [HttpCheck("api/isalive")]
+        public string ServiceUrl { get; set; }
+    }
+
+    public class NinjaServiceClientSettings
     {
         [HttpCheck("api/isalive")]
         public string ServiceUrl { get; set; }
