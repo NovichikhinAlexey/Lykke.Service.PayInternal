@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
-using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
 
@@ -45,8 +43,10 @@ namespace Lykke.Service.PayInternal.Services
                 WalletAddress = request.WalletAddress,
                 TransactionId = request.TransactionId,
                 Amount = (decimal)request.Amount,
+                AssetId = request.AssetId,
                 Confirmations = request.Confirmations,
                 BlockId = request.BlockId,
+                Blockchain = request.Blockchain,
                 FirstSeen = request.FirstSeen,
                 PaymentRequestId = paymentRequest.Id
             };

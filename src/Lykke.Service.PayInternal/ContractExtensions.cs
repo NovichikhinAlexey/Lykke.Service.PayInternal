@@ -25,7 +25,9 @@ namespace Lykke.Service.PayInternal
                 WalletAddress = src.WalletAddress,
                 Amount = src.Amount,
                 Confirmations = src.Confirmations,
-                BlockId = src.BlockId
+                BlockId = src.BlockId,
+                AssetId = src.AssetId,
+                Blockchain = src.Blockchain
             };
         }
     }
