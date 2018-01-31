@@ -22,16 +22,19 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransferRepository _transferRepository;
         private readonly IWalletRepository _walletRepository;
         private readonly IBitcoinApiClient _bitcointApiClient;
-        private readonly QBitNinjaClient _ninjaClient;
         private readonly ILog _log;
 
-        #region Ctr
-        public BtcTransferRequestService(ITransferRepository transferRepository, IWalletRepository walletRepository, IBitcoinApiClient bitcointApiClient, QBitNinjaClient ninjaClient, ILog log)
+        #region .ctors
+        public BtcTransferRequestService(
+            ITransferRepository transferRepository,
+            IWalletRepository walletRepository,
+            IBitcoinApiClient bitcointApiClient,
+            QBitNinjaClient ninjaClient,
+            ILog log)
         {
             _transferRepository = transferRepository ?? throw new ArgumentNullException(nameof(transferRepository));
             _walletRepository = walletRepository ?? throw new ArgumentNullException(nameof(walletRepository));
             _bitcointApiClient = bitcointApiClient ?? throw new ArgumentNullException(nameof(bitcointApiClient));
-            _ninjaClient= ninjaClient  ?? throw new ArgumentNullException(nameof(ninjaClient));
             _log = log ?? throw new ArgumentNullException(nameof(log));
         }
         #endregion
@@ -189,7 +192,7 @@ namespace Lykke.Service.PayInternal.Services
         private async Task<ITransferInfo> CreateBtcTransfer(List<ISourceAmount> sources, string destination)
         {
             sources = sources.Where(s=>s.Amount != 0).ToList();
-            OnchainResponse r = null;
+            OnchainResponse request = null;
             var result = new TransferDto
             {
                 DestinationAddress = destination,
@@ -210,17 +213,17 @@ namespace Lykke.Service.PayInternal.Services
 
             if (sources.Count != 0)
             {
-                r = await _bitcointApiClient.TransactionMultipleTransfer(null, store.Destination, store.Asset, 0, 0, store.Sources);
+                request = await _bitcointApiClient.TransactionMultipleTransfer(null, store.Destination, store.Asset, 0, 0, store.Sources);
             }
            
           
-            if (r == null || r.HasError)
+            if (request == null || request.HasError)
             {
                
-                if (r != null && r.Error.Code == "3")
+                if (request != null && request.Error.Code == "3")
                 {
-                    var errorCode = r.Error.Code;
-                    var errorMessage = r.Error.Message;
+                    var errorCode = request.Error.Code;
+                    var errorMessage = request.Error.Message;
                     await _log.WriteWarningAsync(nameof(BtcTransferRequestService), nameof(CreateBtcTransfer), JsonConvert.SerializeObject(store), $"Invalid amount. Error on TransactionMultipletransfer: {errorMessage} ({errorCode})");
                     result.TransferStatus = TransferStatus.Error;
                     result.TransferStatusError = TransferStatusError.InvalidAmount;
@@ -243,7 +246,7 @@ namespace Lykke.Service.PayInternal.Services
                 return result;
             }
 
-            result.TransactionHash = r.Transaction.Hash;
+            result.TransactionHash = request.Transaction.Hash;
             await _log.WriteInfoAsync(nameof(BtcTransferRequestService), nameof(CreateBtcTransfer), JsonConvert.SerializeObject(result), "Transfer created");
 
             return result;
@@ -309,14 +312,13 @@ namespace Lykke.Service.PayInternal.Services
             return result.Count == 0 ? null : result;
         }
 
-        private bool CheckAddressesValid(IEnumerable<string> addresses)
+        private bool CheckAddressesValid(IReadOnlyList<string> addresses)
         {
             try
             {
-                foreach (var a in addresses)
+                foreach (var address in addresses)
                 {
-                    var walletClient = new WalletClient(_ninjaClient, a);
-                    BitcoinAddress.Create(a);
+                    BitcoinAddress.Create(address);
                 }
                 return true;
             }

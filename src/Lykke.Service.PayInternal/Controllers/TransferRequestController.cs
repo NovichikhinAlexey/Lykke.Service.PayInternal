@@ -4,10 +4,10 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
 using Lykke.Service.PayInternal.Models;
-using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -31,11 +31,11 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="200">The Transfer Info.</response>
         /// <response code="400">Invalid model.</response>
         [HttpPost]
-        [Route("merchants/{merchantId}/transferAll/{destinationAddress}")]
-        [SwaggerOperation("TransferRequestAll")]
-        [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
+        [Route("merchants/{merchantId}/transfersAll/{destinationAddress}")]
+        [SwaggerOperation("TransfersRequestAll")]
+        [ProducesResponseType(typeof(ITransfer), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> TransferRequestAllAsync(string merchantId, string destinationAddress)
+        public async Task<IActionResult> TransfersRequestAllAsync(string merchantId, string destinationAddress)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
@@ -63,11 +63,11 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="200">The Transfer Info.</response>
         /// <response code="400">Invalid model.</response>
         [HttpPost]
-        [Route("merchants/{merchantId}/transferAll/{destinationAddress}/amount/{amount}")]
-        [SwaggerOperation("TransferRequestAmountAll")]
-        [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
+        [Route("merchants/{merchantId}/transfersAll/{destinationAddress}/amount/{amount}")]
+        [SwaggerOperation("TransfersRequestAmountAll")]
+        [ProducesResponseType(typeof(ITransfer), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> TransferRequestAmountAsync(string merchantId, string destinationAddress, string amount)
+        public async Task<IActionResult> TransfersRequestAmountAsync(string merchantId, string destinationAddress, string amount)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
@@ -106,11 +106,11 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="200">The Transfer Info.</response>
         /// <response code="400">Invalid model.</response>
         [HttpPost]
-        [Route("merchants/{merchantId}/transferFromAddress/{destinationAddress}/amount/{amount}")]
-        [SwaggerOperation("FromAddress")]
-        [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
+        [Route("merchants/{merchantId}/transfersFromAddress/{destinationAddress}/amount/{amount}")]
+        [SwaggerOperation("TransfesRequestFromAddress")]
+        [ProducesResponseType(typeof(ITransfer), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> TransferRequestFromAddressAsync(string merchantId, string destinationAddress, string amount, [FromBody] string sourceAddress)
+        public async Task<IActionResult> TransfersRequestFromAddressAsync(string merchantId, string destinationAddress, string amount, [FromBody] string sourceAddress)
         {
             if(!ModelState.IsValid)
             return BadRequest(new ErrorResponse().AddErrors(ModelState));
@@ -154,11 +154,11 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="200">The Transfer Info.</response>
         /// <response code="400">Invalid model.</response>
         [HttpPost]
-        [Route("merchants/{merchantId}/transferFromAddresses/{destinationAddress}/amount/{amount}")]
-        [SwaggerOperation("TransferUpdateStatus")]
-        [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
+        [Route("merchants/{merchantId}/transfersFromAddresses/{destinationAddress}/amount/{amount}")]
+        [SwaggerOperation("TransfersRequestFromAddressAmount")]
+        [ProducesResponseType(typeof(ITransfer), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> TransferRequestFromAddressesAsync(string merchantId, string destinationAddress, string amount, [FromBody] List<string> sourceAddressesList)
+        public async Task<IActionResult> TransfersRequestFromAddressesAsync(string merchantId, string destinationAddress, string amount, [FromBody] List<string> sourceAddressesList)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
@@ -210,11 +210,11 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="200">The Transfer Info.</response>
         /// <response code="400">Invalid model.</response>
         [HttpPost]
-        [Route("merchants/{merchantId}/transferOnlyFromAddresses/{destinationAddress}")]
-        [SwaggerOperation("TransferUpdateStatus")]
-        [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
+        [Route("merchants/{merchantId}/transfersOnlyFromAddresses/{destinationAddress}")]
+        [SwaggerOperation("TransfersOnlyFromAddress")]
+        [ProducesResponseType(typeof(ITransfer), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> TransferRequestFromAddressesWithAmountAsync(string merchantId, string destinationAddress, [FromBody] List<SourceAmountModel> sourceAddressAmountList)
+        public async Task<IActionResult> TransfersRequestFromAddressesWithAmountAsync(string merchantId, string destinationAddress, [FromBody] List<SourceAmountModel> sourceAddressAmountList)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
