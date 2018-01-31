@@ -40,12 +40,7 @@ namespace Lykke.Service.PayInternal.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
 
-            if (string.IsNullOrEmpty(merchantId))
-                return BadRequest(ErrorResponse.Create("Merchant Id doesn't exist"));
-
-            if (string.IsNullOrEmpty(destinationAddress))
-                return BadRequest(ErrorResponse.Create("Destination Address doesn't exist"));
-
+            
             return Ok(await _transferRequestService.CreateTransferAsync(new TransferRequestModel
             {
                 DestinationAddress = destinationAddress,
@@ -71,15 +66,6 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
-
-            if (string.IsNullOrEmpty(merchantId))
-                return BadRequest(ErrorResponse.Create("Merchant Id doesn't exist"));
-
-            if (string.IsNullOrEmpty(destinationAddress))
-                return BadRequest(ErrorResponse.Create("Destination Address doesn't exist"));
-
-            if (string.IsNullOrEmpty(amount))
-                return BadRequest(ErrorResponse.Create("Amount doesn't exist"));
 
             decimal dAmount;
             if (!decimal.TryParse(amount, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out dAmount))
@@ -115,16 +101,7 @@ namespace Lykke.Service.PayInternal.Controllers
             if(!ModelState.IsValid)
             return BadRequest(new ErrorResponse().AddErrors(ModelState));
 
-            if (string.IsNullOrEmpty(merchantId))
-                return BadRequest(ErrorResponse.Create("Merchant Id doesn't exist"));
-
-            if (string.IsNullOrEmpty(destinationAddress))
-                return BadRequest(ErrorResponse.Create("Destination Address doesn't exist"));
-
-            if (string.IsNullOrEmpty(amount))
-                return BadRequest(ErrorResponse.Create("Amount doesn't exist"));
-
-
+           
             decimal dAmount;
             if (!decimal.TryParse(amount, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out dAmount))
             {
@@ -163,16 +140,7 @@ namespace Lykke.Service.PayInternal.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
 
-            if (string.IsNullOrEmpty(merchantId))
-                return BadRequest(ErrorResponse.Create("Merchant Id doesn't exist"));
-
-            if (string.IsNullOrEmpty(destinationAddress))
-                return BadRequest(ErrorResponse.Create("Destination Address doesn't exist"));
-
-            if (string.IsNullOrEmpty(amount))
-                return BadRequest(ErrorResponse.Create("Amount doesn't exist"));
-
-
+           
             decimal dAmount;
             if (!decimal.TryParse(amount, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out dAmount))
             {
@@ -219,12 +187,7 @@ namespace Lykke.Service.PayInternal.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
 
-            if (string.IsNullOrEmpty(merchantId))
-                return BadRequest(ErrorResponse.Create("Merchant Id doesn't exist"));
-
-            if (string.IsNullOrEmpty(destinationAddress))
-                return BadRequest(ErrorResponse.Create("Destination Address doesn't exist"));
-
+           
             if (sourceAddressAmountList == null || sourceAddressAmountList.Count == 0 ||
                 sourceAddressAmountList.Any(sa=> string.IsNullOrEmpty(sa.SourceAddress) || sa.Amount <= 0))
             {
