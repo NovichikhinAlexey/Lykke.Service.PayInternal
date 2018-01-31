@@ -7,5 +7,6 @@
         public string MerchantOrderConnString { get; set; }
         public string MerchantConnString { get; set; }
         public string PaymentRequestConnString { get; set; }
+        public string TransferConnString { get; set; }
     }
 }

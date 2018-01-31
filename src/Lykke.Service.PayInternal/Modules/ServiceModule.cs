@@ -12,10 +12,12 @@ using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.PayInternal.AzureRepositories.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.Order;
 using Lykke.Service.PayInternal.AzureRepositories.Transaction;
+using Lykke.Service.PayInternal.AzureRepositories.Transfer;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
@@ -79,6 +81,10 @@ namespace Lykke.Service.PayInternal.Modules
                 AzureTableStorage<BlockchainTransactionEntity>.Create(
                     _dbSettings.ConnectionString(x => x.MerchantConnString),
                     "MerchantWalletTransactions", _log)));
+
+            builder.RegisterInstance<ITransferRepository>(new TransferRepository(
+                AzureTableStorage<TransferEntity>.Create(_dbSettings.ConnectionString(x => x.TransferConnString),
+                    "Transfers", _log)));
         }
 
         private void RegisterAppServices(ContainerBuilder builder)
@@ -95,6 +101,9 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<MerchantWalletsService>()
                 .As<IMerchantWalletsService>();
+
+            builder.RegisterType<BtcTransferRequestService>()
+                .As<ITransferRequestService>();
 
             builder.RegisterType<RatesCalculationService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LpMarkup))
