@@ -31,7 +31,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="200">The Transfer Info.</response>
         /// <response code="400">Invalid model.</response>
         [HttpPost]
-        [Route("merchants/{merchantId}/transfer/{destinationAddress}")]
+        [Route("merchants/{merchantId}/transferAll/{destinationAddress}")]
         [SwaggerOperation("TransferRequestAll")]
         [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -63,7 +63,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="200">The Transfer Info.</response>
         /// <response code="400">Invalid model.</response>
         [HttpPost]
-        [Route("merchants/{merchantId}/transfer/{destinationAddress}")]
+        [Route("merchants/{merchantId}/transferAll/{destinationAddress}/amount/{amount}")]
         [SwaggerOperation("TransferRequestAmountAll")]
         [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -106,7 +106,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="200">The Transfer Info.</response>
         /// <response code="400">Invalid model.</response>
         [HttpPost]
-        [Route("merchants/{merchantId}/transfer/{destinationAddress}")]
+        [Route("merchants/{merchantId}/transferFromAddress/{destinationAddress}/amount/{amount}")]
         [SwaggerOperation("FromAddress")]
         [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -154,7 +154,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="200">The Transfer Info.</response>
         /// <response code="400">Invalid model.</response>
         [HttpPost]
-        [Route("merchants/{merchantId}/transfer/{destinationAddress}")]
+        [Route("merchants/{merchantId}/transferFromAddresses/{destinationAddress}/amount/{amount}")]
         [SwaggerOperation("TransferUpdateStatus")]
         [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -210,7 +210,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="200">The Transfer Info.</response>
         /// <response code="400">Invalid model.</response>
         [HttpPost]
-        [Route("merchants/{merchantId}/transfer/{destinationAddress}")]
+        [Route("merchants/{merchantId}/transferOnlyFromAddresses/{destinationAddress}")]
         [SwaggerOperation("TransferUpdateStatus")]
         [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
