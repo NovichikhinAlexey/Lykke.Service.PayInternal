@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Common;
+using Common.Log;
 using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.MarketProfile.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain;
@@ -20,21 +22,27 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ILykkeMarketProfile _marketProfileServiceClient;
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly LpMarkupSettings _lpMarkupSettings;
+        private readonly ILog _log;
 
         public RatesCalculationService(
             ILykkeMarketProfile marketProfileServiceClient,
             IAssetsLocalCache assetsLocalCache,
-            LpMarkupSettings lpMarkupSettings)
+            LpMarkupSettings lpMarkupSettings,
+            ILog log)
         {
             _marketProfileServiceClient = marketProfileServiceClient ??
                                           throw new ArgumentNullException(nameof(marketProfileServiceClient));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _lpMarkupSettings = lpMarkupSettings ?? throw new ArgumentNullException(nameof(lpMarkupSettings));
+            _log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
         public async Task<decimal> GetAmount(string assetPairId, decimal amount, IRequestMarkup requestMarkup, IMerchantMarkup merchantMarkup)
         {
             var rate = await GetRate(assetPairId, requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
+
+            await _log.WriteInfoAsync(nameof(RatesCalculationService), "Rate calculation",
+                $"assetPairId = {assetPairId}, amount = {amount}, requestMarkup = {requestMarkup.ToJson()}, merchantMarkup = {merchantMarkup.ToJson()}", $"rate = {rate}");
 
             return (amount + (decimal) requestMarkup.FixedFee) / (decimal)rate;
         }
