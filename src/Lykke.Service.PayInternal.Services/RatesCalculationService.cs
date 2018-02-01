@@ -41,8 +41,14 @@ namespace Lykke.Service.PayInternal.Services
         {
             var rate = await GetRate(assetPairId, requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
 
-            await _log.WriteInfoAsync(nameof(RatesCalculationService), "Rate calculation",
-                $"assetPairId = {assetPairId}, amount = {amount}, requestMarkup = {requestMarkup.ToJson()}, merchantMarkup = {merchantMarkup.ToJson()}", $"rate = {rate}");
+            await _log.WriteInfoAsync(nameof(RatesCalculationService), nameof(GetAmount), new
+            {
+                AssetPairId = assetPairId,
+                Amount = amount,
+                RequestMarkup = requestMarkup,
+                MerchantMarkup = merchantMarkup,
+                Rate = rate
+            }.ToJson(), "Rate calculation");
 
             return (amount + (decimal) requestMarkup.FixedFee) / (decimal)rate;
         }
