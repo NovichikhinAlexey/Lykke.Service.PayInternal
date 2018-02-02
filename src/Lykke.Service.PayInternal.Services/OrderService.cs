@@ -132,7 +132,7 @@ namespace Lykke.Service.PayInternal.Services
                     btcPaid = transactions.GetTotal().SatoshiToBtc();
                     break;
                 default:
-                    throw new Exception($"Unexpected asset {assetId}");
+                    throw new UnexpectedAssetException(assetId);
             }
 
             var paidDate = transactions.GetLatestDate();

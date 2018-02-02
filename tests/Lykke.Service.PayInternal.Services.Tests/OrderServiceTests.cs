@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Common.Log;
 using Lykke.Service.PayInternal.Core.Domain;
@@ -7,6 +8,7 @@ using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -45,6 +47,43 @@ namespace Lykke.Service.PayInternal.Services.Tests
                 _logMock.Object,
                 _orderExpiration,
                 TransactionConfirmationsCount);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(UnexpectedAssetException))]
+        public async Task GetPaymentStatus_Status_Any_Not_Btc()
+        {
+            var paymentRequest = new PaymentRequest
+            {
+                Id = "pr1",
+                Status = PaymentRequestStatus.New
+            };
+
+            var blockchainTransaction = new BlockchainTransaction
+            {
+                Amount = 10,
+                AssetId = "USD",
+                FirstSeen = DateTime.UtcNow
+            };
+            
+            // act
+            await _service.GetPaymentStatus(new List<IBlockchainTransaction> {blockchainTransaction}, paymentRequest.Id);
+        }
+
+        [TestMethod]
+        public async Task GetPaymentStatus_Status_New_No_Transactions()
+        {
+            var paymentRequest = new PaymentRequest
+            {
+                Id = "pr1",
+                Status = PaymentRequestStatus.New
+            };
+            // act
+            var paymentStatus =
+                await _service.GetPaymentStatus(Enumerable.Empty<IBlockchainTransaction>().ToList(), paymentRequest.Id);
+
+            // assert
+            Assert.AreEqual(PaymentRequestStatus.New, paymentStatus.Status);
         }
 
         [TestMethod]
