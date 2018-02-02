@@ -101,6 +101,9 @@ namespace Lykke.Service.PayInternal.Services
             PriceCalculationMethod priceValueType,
             IMerchantMarkup merchantMarkup)
         {
+            _log.WriteInfoAsync(nameof(CalculationService), nameof(GetAmountAsync), assetPairRate.ToJson(),
+                "Rate calculation").GetAwaiter().GetResult();
+
             double value = priceValueType == PriceCalculationMethod.ByBid ? assetPairRate.BidPrice : assetPairRate.AskPrice;
 
             var origValue = value;
