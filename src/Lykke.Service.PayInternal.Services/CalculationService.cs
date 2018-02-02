@@ -7,6 +7,7 @@ using Lykke.Service.MarketProfile.Client.Models;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
@@ -80,11 +81,17 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<AmountFullFillmentStatus> CalculateBtcAmountFullfillmentAsync(decimal plan, decimal fact)
         {
+            if (plan < 0)
+                throw new NegativeAmountException(plan);
+
+            if (fact < 0)
+                throw new NegativeAmountException(fact);
+
             var asset = await _assetsLocalCache.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId);
 
             decimal diff = plan - fact;
 
-            bool fullfilled = Math.Abs(diff) <= asset.Accuracy.GetMinValue();
+            bool fullfilled = Math.Abs(diff) < asset.Accuracy.GetMinValue();
 
             if (fullfilled) 
                 return AmountFullFillmentStatus.Exact;
