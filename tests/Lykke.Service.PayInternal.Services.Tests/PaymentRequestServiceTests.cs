@@ -25,6 +25,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
         private Mock<IPaymentRequestPublisher> _paymentRequestPublisherMock;
         private Mock<IAssetsLocalCache> _assetsLocalCacheMock;
         private Mock<ILog> _logMock;
+        private Mock<ICalculationService> _calculationServiceMock;
 
         private PaymentRequestService _service;
         
@@ -38,6 +39,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
             _paymentRequestPublisherMock = new Mock<IPaymentRequestPublisher>();
             _assetsLocalCacheMock = new Mock<IAssetsLocalCache>();
             _logMock = new Mock<ILog>();
+            _calculationServiceMock = new Mock<ICalculationService>();
             
             _service = new PaymentRequestService(
                 _paymentRequestRepositoryMock.Object,
@@ -47,7 +49,8 @@ namespace Lykke.Service.PayInternal.Services.Tests
                 _paymentRequestPublisherMock.Object,
                 _assetsLocalCacheMock.Object,
                 _logMock.Object,
-                TransactionConfirmationsCount);
+                TransactionConfirmationsCount,
+                _calculationServiceMock.Object);
         }
         
         [TestMethod]

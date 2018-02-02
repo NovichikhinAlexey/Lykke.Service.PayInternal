@@ -4,6 +4,7 @@ using Common;
 using Common.Log;
 using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.MarketProfile.Client.Models;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Services;
@@ -11,7 +12,7 @@ using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Services
 {
-    public class RatesCalculationService : IRatesCalculationService
+    public class CalculationService : ICalculationService
     {
         internal enum PriceCalculationMethod
         {
@@ -24,7 +25,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly LpMarkupSettings _lpMarkupSettings;
         private readonly ILog _log;
 
-        public RatesCalculationService(
+        public CalculationService(
             ILykkeMarketProfile marketProfileServiceClient,
             IAssetsLocalCache assetsLocalCache,
             LpMarkupSettings lpMarkupSettings,
@@ -41,7 +42,7 @@ namespace Lykke.Service.PayInternal.Services
         {
             var rate = await GetRate(assetPairId, requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
 
-            await _log.WriteInfoAsync(nameof(RatesCalculationService), nameof(GetAmount), new
+            await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetAmount), new
             {
                 AssetPairId = assetPairId,
                 Amount = amount,
@@ -77,6 +78,19 @@ namespace Lykke.Service.PayInternal.Services
             throw new Exception("Unknown MarketProfile API response");
         }
 
+        public async Task<AmountFullFillmentStatus> CalculateBtcAmountFullfillment(decimal plan, decimal fact)
+        {
+            var asset = await _assetsLocalCache.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId);
+
+            decimal diff = plan - fact;
+
+            bool fullfilled = Math.Abs(diff) <= asset.Accuracy.GetMinValue();
+
+            if (fullfilled) 
+                return AmountFullFillmentStatus.Exact;
+
+            return diff > 0 ? AmountFullFillmentStatus.Below : AmountFullFillmentStatus.Above;
+        }
 
         //TODO: isolated legacy code, to be optimized and rewritten
         private double CalculatePrice(

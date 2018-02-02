@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
-using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -21,9 +18,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IBlockchainTransactionRepository _transactionRepository;
         private readonly IOrderService _orderService;
         private readonly IPaymentRequestPublisher _paymentRequestPublisher;
-        private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly ILog _log;
-        private readonly int _transactionConfirmationCount;
 
         public PaymentRequestService(
             IPaymentRequestRepository paymentRequestRepository,
@@ -31,18 +26,14 @@ namespace Lykke.Service.PayInternal.Services
             IBlockchainTransactionRepository transactionRepository,
             IOrderService orderService,
             IPaymentRequestPublisher paymentRequestPublisher,
-            IAssetsLocalCache assetsLocalCache,
-            ILog log,
-            int transactionConfirmationCount)
+            ILog log)
         {
             _paymentRequestRepository = paymentRequestRepository;
             _merchantWalletsService = merchantWalletsService;
             _transactionRepository = transactionRepository;
             _orderService = orderService;
             _paymentRequestPublisher = paymentRequestPublisher;
-            _assetsLocalCache = assetsLocalCache;
             _log = log;
-            _transactionConfirmationCount = transactionConfirmationCount;
         }
         
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -107,40 +98,14 @@ namespace Lykke.Service.PayInternal.Services
             
             IReadOnlyList<IBlockchainTransaction> transactions = await _transactionRepository.GetAsync(walletAddress);
 
-            if (paymentRequest.Status == PaymentRequestStatus.New)
-                paymentRequest.Status = PaymentRequestStatus.InProcess;
+            var paymentStatusInfo = await _orderService.GetPaymentStatus(transactions, paymentRequest.Id);
 
-            if (paymentRequest.Status == PaymentRequestStatus.InProcess && transactions.All(o=>o.Confirmations >= _transactionConfirmationCount))
+            paymentRequest.Status = paymentStatusInfo.Status;
+            paymentRequest.PaidDate = paymentStatusInfo.Date;
+            paymentRequest.PaidAmount = paymentStatusInfo.Amount;
+            if (paymentRequest.Status == PaymentRequestStatus.Error)
             {
-                DateTime paidDate = transactions.Max(o => o.FirstSeen);
-                decimal sum = transactions.Sum(o => o.Amount) * (decimal) Math.Pow(10, -1 * 8);
-                
-                IOrder order = await _orderService.GetAsync(paymentRequest.Id, paidDate);
-
-                if (order == null)
-                {
-                    paymentRequest.Status = PaymentRequestStatus.Error;
-                    paymentRequest.Error = "EXPIRED";
-                }
-                else
-                {
-                    AssetPair assetPair = await _assetsLocalCache.GetAssetPairByIdAsync(order.AssetPairId);
-
-                    decimal diff = sum - order.PaymentAmount;
-
-                    if (Math.Abs(diff) <= (decimal) Math.Pow(10, -1 * assetPair.Accuracy))
-                    {
-                        paymentRequest.Status = PaymentRequestStatus.Confirmed;
-                    }
-                    else
-                    {
-                        paymentRequest.Status = PaymentRequestStatus.Error;
-                        paymentRequest.Error = diff < 0 ? "AMOUNT BELOW" : "AMOUNT ABOVE";
-                    }
-                }
-
-                paymentRequest.PaidAmount = sum;
-                paymentRequest.PaidDate = paidDate;
+                paymentRequest.Error = paymentStatusInfo.Details;
             }
 
             await _paymentRequestRepository.UpdateAsync(paymentRequest);

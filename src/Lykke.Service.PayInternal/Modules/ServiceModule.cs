@@ -92,9 +92,9 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<MerchantWalletsService>()
                 .As<IMerchantWalletsService>();
 
-            builder.RegisterType<RatesCalculationService>()
+            builder.RegisterType<CalculationService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LpMarkup))
-                .As<IRatesCalculationService>();
+                .As<ICalculationService>();
 
             builder.RegisterType<TransactionsService>()
                 .As<ITransactionsService>();
