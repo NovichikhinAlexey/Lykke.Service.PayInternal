@@ -47,10 +47,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
                 _transactionRepositoryMock.Object,
                 _orderServiceMock.Object,
                 _paymentRequestPublisherMock.Object,
-                _assetsLocalCacheMock.Object,
-                _logMock.Object,
-                TransactionConfirmationsCount,
-                _calculationServiceMock.Object);
+                _logMock.Object);
         }
         
         [TestMethod]
