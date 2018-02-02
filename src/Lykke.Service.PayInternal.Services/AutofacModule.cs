@@ -21,11 +21,11 @@ namespace Lykke.Service.PayInternal.Services
                 .As<IMerchantService>();
 
             builder.RegisterType<PaymentRequestService>()
-                .WithParameter(TypedParameter.From(_transactionConfirmationCount))
                 .As<IPaymentRequestService>();
 
             builder.RegisterType<OrderService>()
                 .WithParameter(TypedParameter.From(_orderExpiration))
+                .WithParameter(TypedParameter.From(_transactionConfirmationCount))
                 .As<IOrderService>();
         }
     }
