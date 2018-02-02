@@ -6,10 +6,10 @@ namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface ICalculationService
     {
-        Task<decimal> GetAmount(string assetPairId, decimal amount, IRequestMarkup requestMarkup, IMerchantMarkup merchantMarkup);
+        Task<decimal> GetAmountAsync(string assetPairId, decimal amount, IRequestMarkup requestMarkup, IMerchantMarkup merchantMarkup);
 
-        Task<double> GetRate(string assetPairId, double markupPercent, int markupPips, IMerchantMarkup merchantMarkup);
+        Task<double> GetRateAsync(string assetPairId, double markupPercent, int markupPips, IMerchantMarkup merchantMarkup);
 
-        Task<AmountFullFillmentStatus> CalculateBtcAmountFullfillment(decimal plan, decimal fact);
+        Task<AmountFullFillmentStatus> CalculateBtcAmountFullfillmentAsync(decimal plan, decimal fact);
     }
 }

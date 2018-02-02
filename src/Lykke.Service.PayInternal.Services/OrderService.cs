@@ -92,7 +92,7 @@ namespace Lykke.Service.PayInternal.Services
             };
 
             decimal paymentAmount = await _calculationService
-                .GetAmount(assetPair.Id, paymentRequest.Amount, requestMarkup, merchantMarkup);
+                .GetAmountAsync(assetPair.Id, paymentRequest.Amount, requestMarkup, merchantMarkup);
 
             var order = new Order
             {
@@ -149,7 +149,7 @@ namespace Lykke.Service.PayInternal.Services
 
             decimal btcToBePaid = actualOrder.PaymentAmount;
 
-            var fulfillment = await _calculationService.CalculateBtcAmountFullfillment(btcToBePaid, btcPaid);
+            var fulfillment = await _calculationService.CalculateBtcAmountFullfillmentAsync(btcToBePaid, btcPaid);
 
             switch (fulfillment)
             {

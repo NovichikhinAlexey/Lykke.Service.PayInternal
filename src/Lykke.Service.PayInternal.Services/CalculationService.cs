@@ -38,11 +38,11 @@ namespace Lykke.Service.PayInternal.Services
             _log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
-        public async Task<decimal> GetAmount(string assetPairId, decimal amount, IRequestMarkup requestMarkup, IMerchantMarkup merchantMarkup)
+        public async Task<decimal> GetAmountAsync(string assetPairId, decimal amount, IRequestMarkup requestMarkup, IMerchantMarkup merchantMarkup)
         {
-            var rate = await GetRate(assetPairId, requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
+            var rate = await GetRateAsync(assetPairId, requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
 
-            await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetAmount), new
+            await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetAmountAsync), new
             {
                 AssetPairId = assetPairId,
                 Amount = amount,
@@ -54,7 +54,7 @@ namespace Lykke.Service.PayInternal.Services
             return (amount + (decimal) requestMarkup.FixedFee) / (decimal)rate;
         }
 
-        public async Task<double> GetRate(
+        public async Task<double> GetRateAsync(
             string assetPairId, 
             double markupPercent, 
             int markupPips, 
@@ -78,7 +78,7 @@ namespace Lykke.Service.PayInternal.Services
             throw new Exception("Unknown MarketProfile API response");
         }
 
-        public async Task<AmountFullFillmentStatus> CalculateBtcAmountFullfillment(decimal plan, decimal fact)
+        public async Task<AmountFullFillmentStatus> CalculateBtcAmountFullfillmentAsync(decimal plan, decimal fact)
         {
             var asset = await _assetsLocalCache.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId);
 
