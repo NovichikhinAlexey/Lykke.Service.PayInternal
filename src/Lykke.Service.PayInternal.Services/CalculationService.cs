@@ -15,12 +15,6 @@ namespace Lykke.Service.PayInternal.Services
 {
     public class CalculationService : ICalculationService
     {
-        internal enum PriceCalculationMethod
-        {
-            ByBid,
-            ByAsk
-        }
-
         private readonly ILykkeMarketProfile _marketProfileServiceClient;
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly LpMarkupSettings _lpMarkupSettings;
@@ -82,10 +76,10 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<AmountFullFillmentStatus> CalculateBtcAmountFullfillmentAsync(decimal plan, decimal fact)
         {
             if (plan < 0)
-                throw new NegativeAmountException(plan);
+                throw new NegativeValueException(plan);
 
             if (fact < 0)
-                throw new NegativeAmountException(fact);
+                throw new NegativeValueException(fact);
 
             var asset = await _assetsLocalCache.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId);
 
@@ -99,8 +93,7 @@ namespace Lykke.Service.PayInternal.Services
             return diff > 0 ? AmountFullFillmentStatus.Below : AmountFullFillmentStatus.Above;
         }
 
-        //TODO: isolated legacy code, to be optimized and rewritten
-        private double CalculatePrice(
+        public double CalculatePrice(
             AssetPairModel assetPairRate, 
             int accuracy, 
             double markupPercent, 
@@ -111,17 +104,26 @@ namespace Lykke.Service.PayInternal.Services
             _log.WriteInfoAsync(nameof(CalculationService), nameof(GetAmountAsync), assetPairRate.ToJson(),
                 "Rate calculation").GetAwaiter().GetResult();
 
-            double value = priceValueType == PriceCalculationMethod.ByBid ? assetPairRate.BidPrice : assetPairRate.AskPrice;
+            double originalPrice = GetOriginalPriceByMethod(assetPairRate.BidPrice, assetPairRate.AskPrice, priceValueType);
 
-            var origValue = value;
-            var spread = value * (merchantMarkup.DeltaSpread/100);
-            value = priceValueType == PriceCalculationMethod.ByAsk ? (value + spread) : (value - spread);
-            double lpFee = value * (merchantMarkup.LpPercent < 0 ? _lpMarkupSettings.Percent/100 : merchantMarkup.LpPercent / 100);
-            double lpPips = Math.Pow(10, -1 * accuracy) * merchantMarkup.LpPips < 0 ? _lpMarkupSettings.Pips : merchantMarkup.LpPips;
+            var origValue = originalPrice;
 
-            var delta = spread + lpFee + lpPips;
+            var spread = GetSpread(originalPrice, merchantMarkup.DeltaSpread);
 
-            var fee = value * (markupPercent / 100);
+            originalPrice = GetPriceWithSpread(originalPrice, spread, priceValueType);
+
+            double lpFee = GetMerchantFee(originalPrice, merchantMarkup.LpPercent);
+
+            double lpPips = GetMerchantPips(merchantMarkup.LpPips);
+
+
+
+
+
+
+            var delta = spread + lpFee + lpPips * 0.001;
+
+            var fee = originalPrice * (markupPercent / 100);
             var pips =  Math.Pow(10, -1 * accuracy) * markupPips;
 
             delta += fee + pips;
@@ -143,6 +145,46 @@ namespace Lykke.Service.PayInternal.Services
             }
 
             return res;
+        }
+
+        public double GetOriginalPriceByMethod(double bid, double ask, PriceCalculationMethod method)
+        {
+            switch (method)
+            {
+                case PriceCalculationMethod.ByAsk: return ask;
+                case PriceCalculationMethod.ByBid: return bid;
+                default: throw new UnexpectedPriceCalculationMethod(method);
+            }
+        }
+
+        public double GetSpread(double originalPrice, double deltaSpreadPercent)
+        {
+            if (deltaSpreadPercent < 0)
+                throw new NegativeValueException((decimal) deltaSpreadPercent);
+
+            return originalPrice * deltaSpreadPercent / 100;
+        }
+
+        public double GetPriceWithSpread(double originalPrice, double spread, PriceCalculationMethod method)
+        {
+            switch (method)
+            {
+                case PriceCalculationMethod.ByBid: return originalPrice - spread;
+                case PriceCalculationMethod.ByAsk: return originalPrice + spread;
+                default: throw new UnexpectedPriceCalculationMethod(method);
+            }
+        }
+
+        public double GetMerchantFee(double originalPrice, double merchantPercent)
+        {
+            var percent = merchantPercent < 0 ? _lpMarkupSettings.Percent : merchantPercent;
+
+            return originalPrice * percent / 100;
+        }
+
+        public double GetMerchantPips(double merchantPips)
+        {
+            return merchantPips < 0 ? _lpMarkupSettings.Pips : merchantPips;
         }
     }
 }
