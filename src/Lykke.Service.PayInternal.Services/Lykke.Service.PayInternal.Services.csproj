@@ -15,7 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lykke.Service.PayInternal.AzureRepositories\Lykke.Service.PayInternal.AzureRepositories.csproj" />
-    <ProjectReference Include="..\Lykke.Service.PayInternal.Contract\Lykke.Service.PayInternal.Contract.csproj" />
     <ProjectReference Include="..\Lykke.Service.PayInternal.Core\Lykke.Service.PayInternal.Core.csproj" />
   </ItemGroup>
 </Project>
