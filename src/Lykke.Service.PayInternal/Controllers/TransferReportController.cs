@@ -37,12 +37,6 @@ namespace Lykke.Service.PayInternal.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
 
-            if (string.IsNullOrEmpty(model.TransferId))
-                return BadRequest(ErrorResponse.Create("Transfer id doesn't exist"));
-
-            if (string.IsNullOrEmpty(model.TransactionHash))
-                return BadRequest(ErrorResponse.Create("Transaction hash doesn't exist"));
-
             return Ok(await _transferRequestService.UpdateTransferStatusAsync(model.ToTransferRequest()));
         }
     }

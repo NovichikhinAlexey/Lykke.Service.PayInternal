@@ -109,14 +109,16 @@ namespace Lykke.Service.PayInternal.Services
             }
             t.TransferStatus = transfer.TransferStatus;
             t.TransferStatusError = transfer.TransferStatusError;
-            return await _transferRepository.SaveAsync(t);
+            return  await _transferRepository.SaveAsync(t) ?? BtcTransferRequest.CreateErrorTransferRequest(transfer.MerchantId,
+                              TransferStatusError.InternalError, transfer.TransactionRequests);
         }
 
 
 
         public async Task<ITransferRequest> UpdateTransferAsync(ITransferRequest transfer)
         {
-            return await _transferRepository.SaveAsync(transfer);
+            return await _transferRepository.SaveAsync(transfer) ?? BtcTransferRequest.CreateErrorTransferRequest(transfer.MerchantId,
+                       TransferStatusError.InternalError, transfer.TransactionRequests); 
         }
 
         public async Task<ITransferRequest> GetTransferInfoAsync(ITransferRequest transfer)

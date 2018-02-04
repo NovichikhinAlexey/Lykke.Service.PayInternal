@@ -104,7 +104,8 @@ namespace Lykke.Service.PayInternal.Modules
                 .As<IMerchantWalletsService>();
 
             builder.RegisterType<BtcTransferRequestService>()
-                .As<ITransferRequestService>();
+                .As<ITransferRequestService>()
+                .SingleInstance();
 
             builder.RegisterType<RatesCalculationService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LpMarkup))

@@ -108,8 +108,6 @@ namespace Lykke.Service.PayInternal.Controllers
                 return BadRequest(ErrorResponse.Create("Amount is not a number"));
             }
 
-            if (string.IsNullOrEmpty(sourceAddress))
-                return BadRequest(ErrorResponse.Create("Source Address doesn't exist"));
 
             return Ok(await _transferRequestService.CreateTransferAsync(new TransferSingleSourceRequestModel
             {
