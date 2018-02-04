@@ -33,7 +33,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [Route("merchants/{merchantId}/transfersAll/{destinationAddress}")]
         [SwaggerOperation("TransfersRequestAll")]
-        [ProducesResponseType(typeof(ITransfer), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> TransfersRequestAllAsync(string merchantId, string destinationAddress)
         {
@@ -45,7 +45,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 DestinationAddress = destinationAddress,
                 MerchantId = merchantId
-            }));
+            }.ToTransferRequest()));
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [Route("merchants/{merchantId}/transfersAll/{destinationAddress}/amount/{amount}")]
         [SwaggerOperation("TransfersRequestAmountAll")]
-        [ProducesResponseType(typeof(ITransfer), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> TransfersRequestAmountAsync(string merchantId, string destinationAddress, string amount)
         {
@@ -78,7 +78,7 @@ namespace Lykke.Service.PayInternal.Controllers
                 DestinationAddress = destinationAddress,
                 MerchantId = merchantId,
                 Amount = dAmount
-            }));
+            }.ToTransferRequest()));
         }
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [Route("merchants/{merchantId}/transfersFromAddress/{destinationAddress}/amount/{amount}")]
         [SwaggerOperation("TransfesRequestFromAddress")]
-        [ProducesResponseType(typeof(ITransfer), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> TransfersRequestFromAddressAsync(string merchantId, string destinationAddress, string amount, [FromBody] string sourceAddress)
         {
@@ -117,7 +117,7 @@ namespace Lykke.Service.PayInternal.Controllers
                 MerchantId = merchantId,
                 Amount = dAmount,
                 SourceAddress = sourceAddress
-            }));
+            }.ToTransferRequest()));
         }
 
         /// <summary>
@@ -133,7 +133,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [Route("merchants/{merchantId}/transfersFromAddresses/{destinationAddress}/amount/{amount}")]
         [SwaggerOperation("TransfersRequestFromAddressAmount")]
-        [ProducesResponseType(typeof(ITransfer), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> TransfersRequestFromAddressesAsync(string merchantId, string destinationAddress, string amount, [FromBody] List<string> sourceAddressesList)
         {
@@ -147,25 +147,25 @@ namespace Lykke.Service.PayInternal.Controllers
                 return BadRequest(ErrorResponse.Create("Amount is not a number"));
             }
 
-            if (sourceAddressesList == null || sourceAddressesList.Count == 0 ||
+            if (sourceAddressesList == null || sourceAddressesList.Any() ||
                 sourceAddressesList.Any(string.IsNullOrEmpty))
             {
                 return BadRequest(ErrorResponse.Create("Source Addresses list is incorrect"));
             }
                 
 
-            return Ok(await _transferRequestService.CreateTransferAsync(new TransferSourcesRequestModel
+            return Ok(await _transferRequestService.CreateTransferAsync(new TransferMultipleSourcesRequestModel
             {
                 DestinationAddress = destinationAddress,
                 MerchantId = merchantId,
                 Amount = dAmount,
                 SourceAddresses = (from s in sourceAddressesList
-                                   select new SourceAmountModel
+                                   select new SourceAmount
                                    {
                                        SourceAddress = s,
                                        Amount = 0
                                    }).ToList()
-            }));
+            }.ToTransferRequest()));
         }
 
         /// <summary>
@@ -180,9 +180,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [Route("merchants/{merchantId}/transfersOnlyFromAddresses/{destinationAddress}")]
         [SwaggerOperation("TransfersOnlyFromAddress")]
-        [ProducesResponseType(typeof(ITransfer), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> TransfersRequestFromAddressesWithAmountAsync(string merchantId, string destinationAddress, [FromBody] List<SourceAmountModel> sourceAddressAmountList)
+        public async Task<IActionResult> TransfersRequestFromAddressesWithAmountAsync(string merchantId, string destinationAddress, [FromBody] List<SourceAmount> sourceAddressAmountList)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
@@ -195,13 +195,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
 
 
-            return Ok(await _transferRequestService.CreateTransferAsync(new TransferSourcesRequestModel
+            return Ok(await _transferRequestService.CreateTransferAsync(new TransferMultipleSourcesRequestModel
             {
                 DestinationAddress = destinationAddress,
                 MerchantId = merchantId,
                 Amount = 0,
                 SourceAddresses = sourceAddressAmountList
-            }));
+            }.ToTransferRequest()));
         }
     }
 }

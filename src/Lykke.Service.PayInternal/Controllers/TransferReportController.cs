@@ -11,7 +11,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
-    [Route("api")]
+    [Route("api/transfers")]
     public class TransferReportController : Controller
     {
         private readonly ITransferRequestService _transferRequestService;
@@ -28,7 +28,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="200">The Transfer Info.</response>
         /// <response code="400">Invalid model.</response>
         [HttpPost]
-        [Route("transfers/updateStatus")]
+        [Route("updateStatus")]
         [SwaggerOperation("TransferUpdateStatus")]
         [ProducesResponseType(typeof(TransferModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -43,7 +43,7 @@ namespace Lykke.Service.PayInternal.Controllers
             if (string.IsNullOrEmpty(model.TransactionHash))
                 return BadRequest(ErrorResponse.Create("Transaction hash doesn't exist"));
 
-            return Ok(await _transferRequestService.UpdateTransferStatusAsync(model));
+            return Ok(await _transferRequestService.UpdateTransferStatusAsync(model.ToTransferRequest()));
         }
     }
 }

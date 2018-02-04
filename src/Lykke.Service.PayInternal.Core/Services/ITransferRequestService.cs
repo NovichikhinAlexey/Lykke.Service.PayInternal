@@ -16,36 +16,24 @@ namespace Lykke.Service.PayInternal.Core.Services
         /// </summary>
         /// <param name="transferRequest">transfer request</param>
         /// <returns></returns>
-        Task<ITransfer> CreateTransferAsync(ITransferRequest transferRequest);
-        /// <summary>
-        /// Create transfer request from several source addresses
-        /// </summary>
-        /// <param name="transferRequest">sources transfer request</param>
-        /// <returns></returns>
-        Task<ITransfer> CreateTransferAsync(ISourcesTransferRequest transferRequest);
-        /// <summary>
-        /// Create transfer request from single source address
-        /// </summary>
-        /// <param name="transferRequest"></param>
-        /// <returns></returns>
-        Task<ITransfer> CreateTransferAsync(ISingleSourceTransferRequest transferRequest);
+        Task<ITransferRequest> CreateTransferAsync(ITransferRequest transferRequest);
         /// <summary>
         /// Update transfer status. Other fields will be ignored
         /// </summary>
         /// <param name="transfer">Transfer</param>
         /// <returns></returns>
-        Task<ITransfer> UpdateTransferStatusAsync(ITransfer transfer);
+        Task<ITransferRequest> UpdateTransferStatusAsync(ITransferRequest transfer);
         /// <summary>
         /// Update / insert transfer entity
         /// </summary>
         /// <param name="transfer">transfer entity</param>
         /// <returns></returns>
-        Task<ITransfer> UpdateTransferAsync(ITransferInfo transfer);
+        Task<ITransferRequest> UpdateTransferAsync(ITransferRequest transfer);
         /// <summary>
         /// Get transfer entity
         /// </summary>
         /// <param name="transfer">shord transfer structure</param>
         /// <returns></returns>
-        Task<ITransferInfo> GetTransferInfoAsync(ITransfer transfer);
+        Task<ITransferRequest> GetTransferInfoAsync(ITransferRequest transfer);
     }
 }

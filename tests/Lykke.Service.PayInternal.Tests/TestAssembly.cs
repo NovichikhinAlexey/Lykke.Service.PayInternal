@@ -11,7 +11,7 @@ namespace Lykke.Service.PayInvoice.Tests
         public static void Initialize(TestContext testContext)
         {
             Mapper.Initialize(cfg => cfg.AddProfile<AutoMapperProfile>());
-            Mapper.AssertConfigurationIsValid();
+            Mapper.AssetConfigurationIsValid();
         }
     }
 }

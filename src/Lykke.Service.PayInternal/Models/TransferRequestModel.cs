@@ -1,8 +1,11 @@
-﻿using Lykke.Service.PayInternal.Core.Domain.Transfer;
+﻿using System;
+using System.Collections.Generic;
+using Lykke.Service.PayInternal.Core.Domain.Transfer;
+
 
 namespace Lykke.Service.PayInternal.Models
 {
-    public class TransferRequestModel : ITransferRequest
+    public class TransferRequestModel
     {
         public TransferRequestModel()
         {
@@ -13,5 +16,26 @@ namespace Lykke.Service.PayInternal.Models
         public string DestinationAddress { get; set; }
         public decimal Amount { get; set; }
         public string Currency { get; set; }
+
+        public virtual ITransferRequest ToTransferRequest()
+        {
+            return new TransferRequest
+            {
+                TransferId = Guid.NewGuid().ToString(),
+                TransferStatus = TransferStatus.InProgress,
+                TransferStatusError = TransferStatusError.NotError,
+                CreateDate = DateTime.Now,
+                MerchantId = MerchantId,
+                TransactionRequests = new List<ITransactionRequest>()
+                {
+                    new TransactionRequest
+                    {
+                        DestinationAddress = DestinationAddress,
+                        Amount = Amount,
+                        Currency = Currency
+                    }
+                }
+            };
+        }
     }
 }

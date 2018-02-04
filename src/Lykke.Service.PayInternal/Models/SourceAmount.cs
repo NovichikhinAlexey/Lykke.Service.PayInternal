@@ -2,7 +2,7 @@
 
 namespace Lykke.Service.PayInternal.Models
 {
-    public class SourceAmountModel : ISourceAmount
+    public class SourceAmount : ISourceAmount
     {
         public string SourceAddress { get; set; }
         public decimal Amount { get; set; }

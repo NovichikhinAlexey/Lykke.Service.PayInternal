@@ -124,9 +124,7 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<LykkeMarketProfile>()
                 .As<ILykkeMarketProfile>()
                 .WithParameter("baseUri", new Uri(_settings.CurrentValue.MarketProfileServiceClient.ServiceUrl));
-            var ninjaServiceClient = new QBitNinjaClient(_settings.CurrentValue.NinjaServiceClient.ServiceUrl);
-            builder.RegisterInstance(ninjaServiceClient)
-                .AsSelf();
+            
         }
 
         private void RegisterCaches(ContainerBuilder builder)

@@ -12,13 +12,12 @@ using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
 using NBitcoin;
 using Newtonsoft.Json;
-using QBitNinja.Client;
 
 namespace Lykke.Service.PayInternal.Services
 {
     public class BtcTransferRequestService : ITransferRequestService
     {
-        private const string BitcoinAssert = "BTC";
+        private const string BitcoinAsset = "BTC";
         private readonly ITransferRepository _transferRepository;
         private readonly IWalletRepository _walletRepository;
         private readonly IBitcoinApiClient _bitcointApiClient;
@@ -29,7 +28,6 @@ namespace Lykke.Service.PayInternal.Services
             ITransferRepository transferRepository,
             IWalletRepository walletRepository,
             IBitcoinApiClient bitcointApiClient,
-            QBitNinjaClient ninjaClient,
             ILog log)
         {
             _transferRepository = transferRepository ?? throw new ArgumentNullException(nameof(transferRepository));
@@ -39,131 +37,70 @@ namespace Lykke.Service.PayInternal.Services
         }
         #endregion
         #region public
-        public async Task<ITransfer> CreateTransferAsync(ITransferRequest transferRequest)
+        public async Task<ITransferRequest> CreateTransferAsync(ITransferRequest transferRequest)
         {
             var wallets = (await _walletRepository.GetByMerchantAsync(transferRequest.MerchantId)).ToList();
+            var transactions = new List<ITransactionRequest>();
 
-            var sources = CalculateSources(
-                from w in wallets
-                select new SourceAmount
+            foreach (var transaction in transferRequest.TransactionRequests)
+            {
+                List<ISourceAmount> sources = new List<ISourceAmount>();
+                if (transaction.SourceAmounts == null || !transaction.SourceAmounts.Any())
                 {
-                    SourceAddress = w.Address,
-                    Amount = 0
-                }, transferRequest.Amount, wallets);
-            if (sources == null)
-            {
-                return new TransferDto
-                {
-                    TransferStatus = TransferStatus.Error,
-                    TransferStatusError = TransferStatusError.InvalidAmount,
-                    DestinationAddress = transferRequest.DestinationAddress,
-                    Amount = transferRequest.Amount,
-                    Currency = BitcoinAssert
-                };
-            }
-            var transferWallets = new List<string>(sources.Select(s => s.SourceAddress))
-            {
-                transferRequest.DestinationAddress
-            };
-
-            var isAddressesValid = CheckAddressesValid(transferWallets);
-            if (!isAddressesValid)
-            {
-                return new TransferDto
-                {
-                    TransferStatus = TransferStatus.Error,
-                    TransferStatusError = TransferStatusError.InvalidAddress,
-                    DestinationAddress = transferRequest.DestinationAddress,
-                    Amount = transferRequest.Amount,
-                    Currency = BitcoinAssert
-                };
-            }
-            return await CreateBtcTransfer(sources, transferRequest.DestinationAddress);
-        }
-
-        public async Task<ITransfer> CreateTransferAsync(ISourcesTransferRequest transferRequest)
-        {
-            var wallets = (await _walletRepository.GetByMerchantAsync(transferRequest.MerchantId)).ToList();
-
-
-            var sources = CalculateSources(transferRequest.SourceAddresses, transferRequest.Amount, wallets);
-            if (sources == null)
-            {
-                return new TransferDto
-                {
-                    TransferStatus = TransferStatus.Error,
-                    TransferStatusError = TransferStatusError.InvalidAmount,
-                    DestinationAddress = transferRequest.DestinationAddress,
-                    SourceAddresses = transferRequest.SourceAddresses,
-                    Amount = transferRequest.Amount,
-                    Currency = BitcoinAssert
-                };
-            }
-            var transferWallets = new List<string>(sources.Select(s => s.SourceAddress))
-            {
-                transferRequest.DestinationAddress
-            };
-
-            var isAddressesValid = CheckAddressesValid(transferWallets);
-            if (!isAddressesValid)
-            {
-                return new TransferDto
-                {
-                    TransferStatus = TransferStatus.Error,
-                    TransferStatusError = TransferStatusError.InvalidAddress,
-                    DestinationAddress = transferRequest.DestinationAddress,
-                    SourceAddresses = transferRequest.SourceAddresses,
-                    Amount = transferRequest.Amount,
-                    Currency = BitcoinAssert
-                };
-            }
-
-            return await CreateBtcTransfer(sources, transferRequest.DestinationAddress);
-        }
-
-        public async Task<ITransfer> CreateTransferAsync(ISingleSourceTransferRequest transferRequest)
-        {
-            var wallets = (await _walletRepository.GetByMerchantAsync(transferRequest.MerchantId)).ToList();
-            if (wallets.FirstOrDefault(w => w.Address.Equals(transferRequest.SourceAddress) &&
-                                            w.Amount >= transferRequest.Amount) == null)
-
-            {
-                return new TransferDto
-                {
-                    TransferStatus = TransferStatus.Error,
-                    TransferStatusError = TransferStatusError.InvalidAmount,
-                    DestinationAddress = transferRequest.DestinationAddress,
-                    SourceAddresses = new[] { new SourceAmount { SourceAddress = transferRequest.SourceAddress, Amount = transferRequest.Amount } },
-                    Amount = transferRequest.Amount,
-                    Currency = BitcoinAssert
-                };
-            }
-            var sources = new List<ISourceAmount>
-            {
-                new SourceAmount
-                {
-                    SourceAddress = transferRequest.SourceAddress,
-                    Amount = transferRequest.Amount
+                    sources.AddRange(CalculateSources(
+                        from w in wallets
+                        select new SourceAmount
+                        {
+                            SourceAddress = w.Address,
+                            Amount = 0
+                        }, 0, wallets));
                 }
-            };
-            var isAddressesValid = CheckAddressesValid(new[]
-                {transferRequest.SourceAddress, transferRequest.DestinationAddress});
-            if (!isAddressesValid)
-            {
-                return new TransferDto
+                else
                 {
-                    TransferStatus = TransferStatus.Error,
-                    TransferStatusError = TransferStatusError.InvalidAddress,
-                    DestinationAddress = transferRequest.DestinationAddress,
-                    SourceAddresses = new[] { new SourceAmount { SourceAddress = transferRequest.SourceAddress, Amount = transferRequest.Amount } },
-                    Amount = transferRequest.Amount,
-                    Currency = BitcoinAssert
+                    sources.AddRange(CalculateSources(transaction.SourceAmounts, 0, wallets));
+                }
+
+                if (!sources.Any())
+                {
+                    await _log.WriteWarningAsync(nameof(BtcTransferRequestService), nameof(CreateTransferAsync),
+                        JsonConvert.SerializeObject(transferRequest),
+                        "Source addresses don't found or amount is not enought.");
+                    return BtcTransferRequest.CreateErrorTransferRequest(transferRequest.MerchantId,
+                        TransferStatusError.InvalidAmount, transferRequest.TransactionRequests);
+                }
+                var transferWallets = new List<string>(sources.Select(s => s.SourceAddress))
+                {
+                    transaction.DestinationAddress
                 };
+
+                var isAddressesValid = CheckAddressesValid(transferWallets);
+                if (!isAddressesValid)
+                {
+                    await _log.WriteWarningAsync(nameof(BtcTransferRequestService), nameof(CreateTransferAsync),
+                        JsonConvert.SerializeObject(transferRequest),
+                        "Source addresses don't found or amount is not enought.");
+                    return BtcTransferRequest.CreateErrorTransferRequest(transferRequest.MerchantId,
+                        TransferStatusError.InvalidAddress, transferRequest.TransactionRequests);
+                }
+                var result = await CreateBtcTransfer(sources, transaction.DestinationAddress);
+                if (result.Item2 != TransferStatusError.NotError)
+                {
+                    await _log.WriteWarningAsync(nameof(BtcTransferRequestService), nameof(CreateTransferAsync),
+                        JsonConvert.SerializeObject(transferRequest),
+                        "Create transfer error occurs.");
+                    return BtcTransferRequest.CreateErrorTransferRequest(transferRequest.MerchantId,
+                        result.Item2, transferRequest.TransactionRequests);
+                }
+                transactions.Add(result.Item1);
             }
-            return await CreateBtcTransfer(sources, transferRequest.DestinationAddress);
+
+            return BtcTransferRequest.CreateTransferRequest(transferRequest.MerchantId, transactions);
+
         }
 
-        public async Task<ITransfer> UpdateTransferStatusAsync(ITransfer transfer)
+
+
+        public async Task<ITransferRequest> UpdateTransferStatusAsync(ITransferRequest transfer)
         {
             var t = await GetTransferInfoAsync(transfer);
             if (t == null)
@@ -177,79 +114,66 @@ namespace Lykke.Service.PayInternal.Services
 
 
 
-        public async Task<ITransfer> UpdateTransferAsync(ITransferInfo transfer)
+        public async Task<ITransferRequest> UpdateTransferAsync(ITransferRequest transfer)
         {
             return await _transferRepository.SaveAsync(transfer);
         }
 
-        public async Task<ITransferInfo> GetTransferInfoAsync(ITransfer transfer)
+        public async Task<ITransferRequest> GetTransferInfoAsync(ITransferRequest transfer)
         {
-            return await _transferRepository.GetAsync(transfer.TransferId, transfer.TransactionHash);
+            return await _transferRepository.GetAsync(transfer.TransferId);
         }
         #endregion
         #region private
 
-        private async Task<ITransferInfo> CreateBtcTransfer(List<ISourceAmount> sources, string destination)
+        private async Task<Tuple<ITransactionRequest, TransferStatusError>> CreateBtcTransfer(List<ISourceAmount> sources, string destination)
         {
-            sources = sources.Where(s=>s.Amount != 0).ToList();
+            sources = sources.Where(s => s.Amount > 0).ToList();
             OnchainResponse request = null;
-            var result = new TransferDto
+            var result = new TransactionRequest
             {
                 DestinationAddress = destination,
                 Amount = sources.Sum(s => s.Amount),
-                Currency = BitcoinAssert,
-                SourceAddresses = sources,
-                TransferStatus = TransferStatus.InProgress,
-                TransferStatusError = TransferStatusError.NotError
+                Currency = BitcoinAsset,
+                SourceAmounts = sources,
+                CountConfirm = 1
             };
 
             var store = new MultipleTransferRequest
             {
-                Asset = BitcoinAssert,
+                Asset = BitcoinAsset,
                 Destination = destination,
                 Sources = (from s in sources
-                    select new ToOneAddress(s.SourceAddress, s.Amount)).ToList()
+                           select new ToOneAddress(s.SourceAddress, s.Amount)).ToList()
             };
 
-            if (sources.Count != 0)
+            if (sources.Any())
             {
                 request = await _bitcointApiClient.TransactionMultipleTransfer(null, store.Destination, store.Asset, 0, 0, store.Sources);
             }
-           
-          
+
+
             if (request == null || request.HasError)
             {
-               
-                if (request != null && request.Error.Code == "3")
+
+                if (request?.Error?.ErrorCode == ErrorCode.NotEnoughBitcoinAvailable)
                 {
                     var errorCode = request.Error.Code;
                     var errorMessage = request.Error.Message;
                     await _log.WriteWarningAsync(nameof(BtcTransferRequestService), nameof(CreateBtcTransfer), JsonConvert.SerializeObject(store), $"Invalid amount. Error on TransactionMultipletransfer: {errorMessage} ({errorCode})");
-                    result.TransferStatus = TransferStatus.Error;
-                    result.TransferStatusError = TransferStatusError.InvalidAmount;
-                    if (await _transferRepository.SaveAsync(result) == null)
-                    {
-                        result.TransferStatusError = TransferStatusError.InternalError;
-                    }
-                    return result;
+
+                    return new Tuple<ITransactionRequest, TransferStatusError>(result, TransferStatusError.InvalidAddress);
                 }
 
                 await _log.WriteWarningAsync(nameof(BtcTransferRequestService), nameof(CreateBtcTransfer), JsonConvert.SerializeObject(store), "Transaction not confirmed.");
 
-                await _log.WriteWarningAsync(nameof(BtcTransferRequestService), nameof(CreateBtcTransfer), JsonConvert.SerializeObject(store), "Transaction not confirmed.");
-                result.TransferStatus = TransferStatus.Error;
-                result.TransferStatusError = TransferStatusError.NotConfirmed;
-                if (await _transferRepository.SaveAsync(result) == null)
-                {
-                    result.TransferStatusError = TransferStatusError.InternalError;
-                }
-                return result;
+                return new Tuple<ITransactionRequest, TransferStatusError>(result, TransferStatusError.NotConfirmed);
             }
 
             result.TransactionHash = request.Transaction.Hash;
             await _log.WriteInfoAsync(nameof(BtcTransferRequestService), nameof(CreateBtcTransfer), JsonConvert.SerializeObject(result), "Transfer created");
 
-            return result;
+            return new Tuple<ITransactionRequest, TransferStatusError>(result, TransferStatusError.NotError);
 
         }
 
@@ -261,20 +185,20 @@ namespace Lykke.Service.PayInternal.Services
             if (sourcesList.Count == 0)
             {
                 sourceToCalc.AddRange(from w in wallets
-                    select new SourceAmount { SourceAddress = w.Address, Amount = w.Amount });
+                                      select new SourceAmount { SourceAddress = w.Address, Amount = w.Amount });
             }
             else if (sourcesList.All(s => s.Amount == 0))
             {
                 sourceToCalc.AddRange(from s in sourcesList
-                    join w in wallets on s.SourceAddress equals w.Address
-                    select new SourceAmount { SourceAddress = s.SourceAddress, Amount = w.Amount });
+                                      join w in wallets on s.SourceAddress equals w.Address
+                                      select new SourceAmount { SourceAddress = s.SourceAddress, Amount = w.Amount });
             }
             else
             {
                 sourceToCalc.AddRange(from s in sourcesList
-                    join w in wallets on s.SourceAddress equals w.Address
-                    where s.Amount <= w.Amount
-                    select new SourceAmount { SourceAddress = s.SourceAddress, Amount = w.Amount });
+                                      join w in wallets on s.SourceAddress equals w.Address
+                                      where s.Amount <= w.Amount
+                                      select new SourceAmount { SourceAddress = s.SourceAddress, Amount = w.Amount });
                 if (result.Count != sourcesList.Count)
                 {
                     result.Clear();

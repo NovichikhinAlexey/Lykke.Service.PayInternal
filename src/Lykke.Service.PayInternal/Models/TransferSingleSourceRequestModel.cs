@@ -1,10 +1,28 @@
-﻿using Lykke.Service.PayInternal.Core.Domain.Transfer;
-using Lykke.Service.PayInternal.Models;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Lykke.Service.PayInternal.Core.Domain.Transfer;
 
-namespace Lykke.Service.PayInternal.Controllers
+namespace Lykke.Service.PayInternal.Models
 {
-    public class TransferSingleSourceRequestModel : TransferRequestModel, ISingleSourceTransferRequest
+    public class TransferSingleSourceRequestModel : TransferRequestModel
     {
         public string SourceAddress { get; set; }
+
+        public override ITransferRequest ToTransferRequest()
+        {
+            var result = base.ToTransferRequest();
+            result.TransactionRequests.First().SourceAmounts = new List<ISourceAmount>()
+            {
+                new SourceAmount
+                {
+                    SourceAddress = SourceAddress,
+                    Amount = 0
+                }
+            };
+
+            return result;
+        }
+
+        
     }
 }
