@@ -81,14 +81,15 @@ namespace Lykke.Service.PayInternal.Services
             {
                 LpPercent = merchant.LpMarkupPercent,
                 DeltaSpread = merchant.DeltaSpread,
-                LpPips = merchant.LpMarkupPips
+                LpPips = merchant.LpMarkupPips,
+                LpFixedFee = merchant.MarkupFixedFee
             };
 
             var requestMarkup = new RequestMarkup
             {
                 Percent = paymentRequest.MarkupPercent,
                 Pips = paymentRequest.MarkupPips,
-                FixedFee = merchant.MarkupFixedFee
+                FixedFee = paymentRequest.MarkupFixedFee
             };
 
             decimal paymentAmount = await _calculationService
