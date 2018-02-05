@@ -3,7 +3,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transfer;
 
 namespace Lykke.Service.PayInternal.Models
 {
-    public class TransferSourcesRequestModel : TransferRequestModel, ISourcesTransferRequest
+    public class TransferSourcesRequestModel : TransferRequestModel
     {
         public IEnumerable<ISourceAmount> SourceAddresses { get; set; }
     }
