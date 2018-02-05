@@ -14,6 +14,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         private double _markupPercent;
         private int _markupPips;
         private decimal _paidAmount;
+        private double _markupFixedFee;
         
         public PaymentRequestEntity()
         {
@@ -74,6 +75,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
                 MarkValueTypePropertyAsDirty(nameof(MarkupPips));
             }
         }
+
+        public double MarkupFixedFee
+        {
+            get => _markupFixedFee;
+            set
+            {
+                _markupFixedFee = value;
+                MarkValueTypePropertyAsDirty(nameof(MarkupFixedFee));
+            }
+        }
         
         public string WalletAddress { get; set; }
         
@@ -103,6 +114,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
             DueDate = paymentRequest.DueDate;
             MarkupPercent = paymentRequest.MarkupPercent;
             MarkupPips = paymentRequest.MarkupPips;
+            MarkupFixedFee = paymentRequest.MarkupFixedFee;
             WalletAddress = paymentRequest.WalletAddress;
             Status = paymentRequest.Status;
             PaidAmount = paymentRequest.PaidAmount;
