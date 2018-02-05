@@ -16,6 +16,11 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         /// Gets or sets the amount.
         /// </summary>
         public double Amount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the external order id
+        /// </summary>
+        public string OrderId { get; set; }
         
         /// <summary>
         /// Gets or sets the settlement asset id.
@@ -41,5 +46,10 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         /// Gets or sets the markup pips.
         /// </summary>
         public int MarkupPips { get; set; }
+
+        /// <summary>
+        /// Gets or sets markup fixed fee
+        /// </summary>
+        public double MarkupFixedFee { get; set; }
     }
 }

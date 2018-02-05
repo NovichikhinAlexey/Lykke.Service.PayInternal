@@ -386,6 +386,11 @@
             Gets or sets the amount.
             </summary>
         </member>
+        <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.CreatePaymentRequestModel.OrderId">
+            <summary>
+            Gets or sets the external order id
+            </summary>
+        </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.CreatePaymentRequestModel.SettlementAssetId">
             <summary>
             Gets or sets the settlement asset id.
@@ -411,6 +416,11 @@
             Gets or sets the markup pips.
             </summary>
         </member>
+        <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.CreatePaymentRequestModel.MarkupFixedFee">
+            <summary>
+            Gets or sets markup fixed fee
+            </summary>
+        </member>
         <member name="T:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel">
             <summary>
             Represent a payment request.
@@ -429,6 +439,11 @@
         <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel.Amount">
             <summary>
             Gets or sets the amount.
+            </summary>
+        </member>
+        <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel.OrderId">
+            <summary>
+            Gets or sets the order id
             </summary>
         </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel.SettlementAssetId">
@@ -454,6 +469,11 @@
         <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel.MarkupPips">
             <summary>
             Gets or sets the markup pips.
+            </summary>
+        </member>
+        <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel.MarkupFixedFee">
+            <summary>
+            Gets or sets markup fixed fee
             </summary>
         </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel.WalletAddress">
