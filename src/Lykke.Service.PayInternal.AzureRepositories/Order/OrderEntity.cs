@@ -1,55 +1,83 @@
 ﻿using System;
+using Lykke.AzureStorage.Tables;
+using Lykke.AzureStorage.Tables.Entity.Annotation;
+using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
 using Lykke.Service.PayInternal.Core.Domain.Order;
-using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Order
 {
-    public class OrderEntity : TableEntity, IOrder
+    [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
+    public class OrderEntity : AzureTableEntity, IOrder
     {
-        public static class ByWallet
+        private decimal _settlementAmount;
+        private decimal _paymentAmount;
+        private DateTime _dueDate;
+        private DateTime _createdDate;
+
+        public OrderEntity()
         {
-            public static string GeneratePartitionKey(string address)
-            {
-                return address;
-            }
+        }
 
-            public static string GenerateRowKey()
-            {
-                return Guid.NewGuid().ToString();
-            }
+        public OrderEntity(string partitionKey, string rowKey)
+        {
+            PartitionKey = partitionKey;
+            RowKey = rowKey;
+        }
 
-            public static OrderEntity Create(IOrder src)
+        public string Id => RowKey;
+        public string MerchantId { get; set; }
+        public string PaymentRequestId { get; set; }
+        public string AssetPairId { get; set; }
+        
+        public decimal SettlementAmount
+        {
+            get => _settlementAmount;
+            set
             {
-                return new OrderEntity
-                {
-                    PartitionKey = GeneratePartitionKey(src.WalletAddress),
-                    RowKey = GenerateRowKey(),
-                    MerchantId = src.MerchantId,
-                    AssetPairId = src.AssetPairId,
-                    DueDate = src.DueDate,
-                    ExchangeAmount = src.ExchangeAmount,
-                    ExchangeAssetId = src.ExchangeAssetId,
-                    InvoiceAmount = src.InvoiceAmount,
-                    InvoiceAssetId = src.InvoiceAssetId,
-                    MarkupPercent = src.MarkupPercent,
-                    MarkupPips = src.MarkupPips,
-                    MarkupFixedFee = src.MarkupFixedFee,
-                    WalletAddress = src.WalletAddress
-                };
+                _settlementAmount = value;
+                MarkValueTypePropertyAsDirty(nameof(SettlementAmount));
             }
         }
         
-        public string Id => RowKey;
-        public string MerchantId { get; set; }
-        public string AssetPairId { get; set; }
-        public string InvoiceAssetId { get; set; }
-        public double InvoiceAmount { get; set; }
-        public string ExchangeAssetId { get; set; }
-        public double ExchangeAmount { get; set; }
-        public DateTime DueDate { get; set; }
-        public double MarkupPercent { get; set; }
-        public int MarkupPips { get; set; }
-        public double MarkupFixedFee { get; set; }
-        public string WalletAddress { get; set; }
+        public decimal PaymentAmount
+        {
+            get => _paymentAmount;
+            set
+            {
+                _paymentAmount = value;
+                MarkValueTypePropertyAsDirty(nameof(PaymentAmount));
+            }
+        }
+        
+        public DateTime DueDate
+        {
+            get => _dueDate;
+            set
+            {
+                _dueDate = value;
+                MarkValueTypePropertyAsDirty(nameof(DueDate));
+            }
+        }
+        
+        public DateTime CreatedDate
+        {
+            get => _createdDate;
+            set
+            {
+                _createdDate = value;
+                MarkValueTypePropertyAsDirty(nameof(CreatedDate));
+            }
+        }
+
+        internal void Map(IOrder order)
+        {
+            MerchantId = order.MerchantId;
+            PaymentRequestId = order.PaymentRequestId;
+            AssetPairId = order.AssetPairId;
+            SettlementAmount = order.SettlementAmount;
+            PaymentAmount = order.PaymentAmount;
+            DueDate = order.DueDate;
+            CreatedDate = order.CreatedDate;
+        }
     }
 }

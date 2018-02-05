@@ -7,25 +7,17 @@ namespace Lykke.Service.PayInternal.Core.Domain.Order
         string Id { get; }
 
         string MerchantId { get; set; }
+        
+        string PaymentRequestId { get; set; }
 
         string AssetPairId { get; set; }
+       
+        decimal SettlementAmount { get; set; }
 
-        string InvoiceAssetId { get; set; }
-
-        double InvoiceAmount { get; set; }
-
-        string ExchangeAssetId { get; set; }
-
-        double ExchangeAmount { get; set; }
+        decimal PaymentAmount { get; set; }
 
         DateTime DueDate { get; set; }
 
-        double MarkupPercent { get; set; }
-
-        int MarkupPips { get; set; }
-
-        double MarkupFixedFee { get; set; }
-
-        string WalletAddress { get; set; }
+        DateTime CreatedDate { get; set; }        
     }
 }

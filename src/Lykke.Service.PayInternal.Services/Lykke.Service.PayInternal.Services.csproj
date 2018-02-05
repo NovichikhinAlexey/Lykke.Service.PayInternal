@@ -7,14 +7,13 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Lykke.Bitcoin.Api.Client" Version="1.0.16" />
-    <PackageReference Include="Lykke.Common" Version="4.2.0" />
+    <PackageReference Include="Lykke.Common" Version="4.4.0" />
     <PackageReference Include="Lykke.RabbitMqBroker" Version="4.3.1" />
     <PackageReference Include="Lykke.Service.Assets.Client" Version="2.1.0.120" />
     <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.0.20" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lykke.Service.PayInternal.AzureRepositories\Lykke.Service.PayInternal.AzureRepositories.csproj" />
-    <ProjectReference Include="..\Lykke.Service.PayInternal.Contract\Lykke.Service.PayInternal.Contract.csproj" />
     <ProjectReference Include="..\Lykke.Service.PayInternal.Core\Lykke.Service.PayInternal.Core.csproj" />
   </ItemGroup>
 </Project>
