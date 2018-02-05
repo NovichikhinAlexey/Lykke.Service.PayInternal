@@ -47,7 +47,7 @@ namespace Lykke.Service.PayInternal.Services
                 Rate = rate
             }.ToJson(), "Rate calculation");
 
-            return (amount + (decimal) requestMarkup.FixedFee) / rate;
+            return (amount + (decimal) requestMarkup.FixedFee + (decimal) merchantMarkup.LpFixedFee) / rate;
         }
 
         public async Task<decimal> GetRateAsync(
