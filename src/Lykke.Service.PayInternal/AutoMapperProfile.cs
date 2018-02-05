@@ -31,12 +31,10 @@ namespace Lykke.Service.PayInternal
 
         private void PaymentRequestApiModels()
         {
-            CreateMap<IPaymentRequest, PaymentRequestModel>(MemberList.Source)
-                .ForSourceMember(dest => dest.OrderId, opt => opt.Ignore());
+            CreateMap<IPaymentRequest, PaymentRequestModel>(MemberList.Source);
             
             CreateMap<CreatePaymentRequestModel, PaymentRequest>(MemberList.Destination)
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.OrderId, opt => opt.Ignore())
                 .ForMember(dest => dest.WalletAddress, opt => opt.Ignore())
                 .ForMember(dest => dest.Status, opt => opt.Ignore())
                 .ForMember(dest => dest.PaidAmount, opt => opt.Ignore())

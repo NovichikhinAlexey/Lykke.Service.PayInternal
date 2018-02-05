@@ -14,6 +14,7 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public DateTime DueDate { get; set; }
         public double MarkupPercent { get; set; }
         public int MarkupPips { get; set; }
+        public double MarkupFixedFee { get; set; }
         public string WalletAddress { get; set; }
         public PaymentRequestStatus Status { get; set; }
         public decimal PaidAmount { get; set; }

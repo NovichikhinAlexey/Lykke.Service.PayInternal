@@ -10,6 +10,8 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         
         [Required]
         public decimal Amount { get; set; }
+
+        public string OrderId { get; set; }
         
         [Required]
         public string SettlementAssetId{ get; set; }
@@ -25,5 +27,8 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         
         [Required]
         public int MarkupPips { get; set; }
+
+        [Required]
+        public double MarkupFixedFee { get; set; }
     }
 }
