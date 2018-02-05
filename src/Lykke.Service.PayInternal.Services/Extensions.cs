@@ -1,4 +1,8 @@
-﻿using Lykke.Service.PayInternal.Core.Domain.Merchant;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Services.Domain;
 
@@ -25,7 +29,9 @@ namespace Lykke.Service.PayInternal.Services
                 FirstSeen = src.FirstSeen,
                 Confirmations = src.Confirmations,
                 BlockId = src.BlockId,
-                TransactionId = src.TransactionId
+                TransactionId = src.TransactionId,
+                Blockchain = src.Blockchain,
+                AssetId = src.AssetId
             };
         }
 

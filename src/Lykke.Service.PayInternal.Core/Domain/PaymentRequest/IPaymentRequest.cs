@@ -8,7 +8,9 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequest
 
         string MerchantId { get; set; }
 
-        double Amount { get; set; }
+        string OrderId { get; set; }
+        
+        decimal Amount { get; set; }
 
         string SettlementAssetId { get; set; }
         
@@ -19,12 +21,14 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequest
         double MarkupPercent { get; set; }
 
         int MarkupPips { get; set; }
+
+        double MarkupFixedFee { get; set; }
         
         string WalletAddress { get; set; }
 
         PaymentRequestStatus Status { get; set; }
 
-        double PaidAmount { get; set; }
+        decimal PaidAmount { get; set; }
         
         DateTime? PaidDate { get; set; }
         

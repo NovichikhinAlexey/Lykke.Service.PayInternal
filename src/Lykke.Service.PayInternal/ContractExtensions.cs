@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
@@ -24,9 +23,11 @@ namespace Lykke.Service.PayInternal
             {
                 Id = src.Id,
                 WalletAddress = src.WalletAddress,
-                Amount = src.Amount,
+                Amount = (double)src.Amount,
                 Confirmations = src.Confirmations,
-                BlockId = src.BlockId
+                BlockId = src.BlockId,
+                AssetId = src.AssetId,
+                Blockchain = src.Blockchain
             };
         }
     }

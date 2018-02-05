@@ -8,6 +8,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public RabbitMqSettings Rabbit { get; set; }
         public TimeSpan OrderExpiration { get; set; }
         public LpMarkupSettings LpMarkup { get; set; }
+        public int TransactionConfirmationCount { get; set; }
     }
 
     public class LpMarkupSettings
