@@ -371,6 +371,11 @@
             Gets or sets the order created date.
             </summary>
         </member>
+        <member name="P:Lykke.Service.PayInternal.Client.Models.Order.OrderModel.ExchangeRate">
+            <summary>
+            Gets or sets the order echange rate
+            </summary>
+        </member>
         <member name="T:Lykke.Service.PayInternal.Client.Models.PaymentRequest.CreatePaymentRequestModel">
             <summary>
             Represent a payment request creation information.

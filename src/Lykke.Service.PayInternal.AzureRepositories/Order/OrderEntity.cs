@@ -13,6 +13,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
         private decimal _paymentAmount;
         private DateTime _dueDate;
         private DateTime _createdDate;
+        private decimal _exchangeRate;
 
         public OrderEntity()
         {
@@ -69,6 +70,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
             }
         }
 
+        public decimal ExchangeRate
+        {
+            get => _exchangeRate;
+            set
+            {
+                _exchangeRate = value;
+                MarkValueTypePropertyAsDirty(nameof(ExchangeRate));
+            }
+        }
+
         internal void Map(IOrder order)
         {
             MerchantId = order.MerchantId;
@@ -78,6 +89,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
             PaymentAmount = order.PaymentAmount;
             DueDate = order.DueDate;
             CreatedDate = order.CreatedDate;
+            ExchangeRate = order.ExchangeRate;
         }
     }
 }
