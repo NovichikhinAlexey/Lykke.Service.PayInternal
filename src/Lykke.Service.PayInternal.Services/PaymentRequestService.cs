@@ -46,6 +46,11 @@ namespace Lykke.Service.PayInternal.Services
             return await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
         }
 
+        public async Task<IPaymentRequest> FindAsync(string walletAddress)
+        {
+            return await _paymentRequestRepository.FindAsync(walletAddress);
+        }
+
         public async Task<IPaymentRequest> CreateAsync(IPaymentRequest paymentRequest)
         {
             paymentRequest.Status = PaymentRequestStatus.New;

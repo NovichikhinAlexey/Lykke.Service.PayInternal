@@ -95,6 +95,9 @@ namespace Lykke.Service.PayInternal.Services
             decimal paymentAmount = await _calculationService
                 .GetAmountAsync(assetPair.Id, paymentRequest.Amount, requestMarkup, merchantMarkup);
 
+            decimal rate = await _calculationService.GetRateAsync(assetPair.Id, requestMarkup.Percent,
+                requestMarkup.Pips, merchantMarkup);
+
             var order = new Order
             {
                 MerchantId = paymentRequest.MerchantId,
@@ -103,7 +106,8 @@ namespace Lykke.Service.PayInternal.Services
                 SettlementAmount = paymentRequest.Amount,
                 PaymentAmount = paymentAmount,
                 DueDate = DateTime.UtcNow.Add(_orderExpiration),
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = DateTime.UtcNow,
+                ExchangeRate = rate
             };
 
             IOrder createdOrder = await _orderRepository.InsertAsync(order);

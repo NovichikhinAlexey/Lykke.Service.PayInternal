@@ -15,6 +15,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
+using Lykke.Service.PayInternal.Mapping;
 using Lykke.Service.PayInternal.Rabbit.Publishers;
 using Lykke.Service.PayInternal.Services;
 using Lykke.SettingsReader;
@@ -61,6 +62,8 @@ namespace Lykke.Service.PayInternal.Modules
             RegisterCaches(builder);
 
             RegisterRabbitMqPublishers(builder);
+
+            RegisterMapperValueResolvers(builder);
 
             builder.Populate(_services);
         }
@@ -150,6 +153,14 @@ namespace Lykke.Service.PayInternal.Modules
                 .As<IStartable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
+        }
+
+        private void RegisterMapperValueResolvers(ContainerBuilder builder)
+        {
+            builder.RegisterType<TransactionUrlValueResolver>()
+                .AsSelf()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LykkeBlockchainExplorer))
+                .SingleInstance();
         }
     }
 }
