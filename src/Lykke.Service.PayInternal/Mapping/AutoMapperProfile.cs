@@ -9,7 +9,7 @@ using Lykke.Service.PayInternal.Models.Orders;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Lykke.Service.PayInternal.Services.Domain;
 
-namespace Lykke.Service.PayInternal
+namespace Lykke.Service.PayInternal.Mapping
 {
     public class AutoMapperProfile : Profile
     {
@@ -55,9 +55,10 @@ namespace Lykke.Service.PayInternal
                 .ForSourceMember(src => src.Id, opt => opt.Ignore())
                 .ForSourceMember(src => src.PaymentRequestId, opt => opt.Ignore())
                 .ForSourceMember(src => src.WalletAddress, opt => opt.Ignore())
-                .ForSourceMember(src => src.AssetId, opt => opt.Ignore())
                 .ForSourceMember(src => src.Blockchain, opt => opt.Ignore())
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId));
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId))
+                .ForMember(dest => dest.Url, opt => opt.ResolveUsing<TransactionUrlValueResolver>())
+                .ForMember(dest => dest.RefundUrl, opt => opt.Ignore());
         }
 
         private void PaymentRequestMessages()

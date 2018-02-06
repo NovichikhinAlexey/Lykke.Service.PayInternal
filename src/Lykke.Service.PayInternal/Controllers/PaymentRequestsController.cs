@@ -87,6 +87,72 @@ namespace Lykke.Service.PayInternal.Controllers
         }
 
         /// <summary>
+        /// Returns merchant payment request details.
+        /// </summary>
+        /// <param name="merchantId">The merchant id.</param>
+        /// <param name="paymentRequestId">The payment request id.</param>
+        /// <returns>The payment request details.</returns>
+        /// <response code="200">The payment request.</response>
+        /// <response code="404">Payment request not found.</response>
+        [HttpGet]
+        [Route("merchants/{merchantId}/paymentrequests/details/{paymentRequestId}")]
+        [SwaggerOperation("PaymentRequestDetailsGetById")]
+        [ProducesResponseType(typeof(PaymentRequestDetailsModel), (int) HttpStatusCode.OK)]
+        [ProducesResponseType((int) HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetDetailsAsync(string merchantId, string paymentRequestId)
+        {
+            try
+            {
+                IPaymentRequest paymentRequest = await _paymentRequestService.GetAsync(merchantId, paymentRequestId);
+
+                IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
+
+                IReadOnlyList<IBlockchainTransaction> transactions =
+                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
+
+                var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
+                model.Order = Mapper.Map<PaymentRequestOrderModel>(order);
+                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(transactions);
+
+                return Ok(model);
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(GetDetailsAsync),
+                    new
+                    {
+                        MerchantId = merchantId,
+                        PaymentRequestId = paymentRequestId
+                    }.ToJson(), ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        ///  Returns merchant payment request by wallet address
+        /// </summary>
+        /// <param name="walletAddress">Wallet address</param>
+        /// <returns>The payment request.</returns>
+        /// <response code="200">The payment request.</response>
+        /// <response code="404">Payment request not found.</response>
+        [HttpGet]
+        [Route("paymentrequests/byAddress/{walletAddress}")]
+        [SwaggerOperation("PaymentRequestGetByWalletAddress")]
+        [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetByAddressAsync(string walletAddress)
+        {
+            IPaymentRequest paymentRequest = await _paymentRequestService.FindAsync(walletAddress);
+
+            if (paymentRequest == null)
+                return NotFound();
+            
+            var model = Mapper.Map<PaymentRequestModel>(paymentRequest);
+
+            return Ok(model);
+        }
+
+        /// <summary>
         /// Creates a payment request and wallet.
         /// </summary>
         /// <param name="model">The payment request creation information.</param>
