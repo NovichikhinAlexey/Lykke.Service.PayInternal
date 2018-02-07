@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 
 
@@ -10,7 +11,7 @@ namespace Lykke.Service.PayInternal.Models
         public TransferRequestModel()
         {
             Amount = 0;
-            Currency = "BTC";
+            Currency = LykkeConstants.BitcoinAssetId;
         }
         public string MerchantId { get; set; }
         public string DestinationAddress { get; set; }

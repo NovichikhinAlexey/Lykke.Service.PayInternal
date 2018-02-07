@@ -1,14 +1,16 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
+using MoreLinq;
 
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
 {
     public class TransferRepository : ITransferRepository
     {
+        private const int BatchPieceSize = 15;
         private readonly INoSQLTableStorage<TransferEntity> _tableStorage;
         public TransferRepository(INoSQLTableStorage<TransferEntity> tableStorage)
         {
@@ -34,19 +36,20 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
         public async Task<ITransferRequest> GetAsync(string transferRequestId, string transactionHash)
         {
             var transaction = await _tableStorage.GetDataAsync(transferRequestId, transactionHash);
-            return AggregateTransactions((new []{ transaction }).ToList()).FirstOrDefault(); 
+            return AggregateTransactions(new List<TransferEntity> { transaction }).FirstOrDefault(); 
         }
 
         public async Task<ITransferRequest> SaveAsync(ITransferRequest transferInfo)
         {
             var transfers = TransferEntity.Create(transferInfo);
 
-            foreach (var transfer in transfers)
+            foreach (var batch in transfers.Batch(BatchPieceSize))
             {
                 try
                 {
-                    await _tableStorage.InsertOrMergeAsync(transfer);
+                    var tasks = batch.Select(x => _tableStorage.InsertOrMergeAsync(x));
 
+                    await Task.WhenAll(tasks);
                 }
                 catch
                 {

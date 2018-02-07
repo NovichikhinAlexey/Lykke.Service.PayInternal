@@ -34,7 +34,7 @@ namespace Lykke.Service.PayInternal.Core.Settings
 
     public class NinjaServiceClientSettings
     {
-        [HttpCheck("api/isalive")]
+        [HttpCheck("/")]
         public string ServiceUrl { get; set; }
     }
 }

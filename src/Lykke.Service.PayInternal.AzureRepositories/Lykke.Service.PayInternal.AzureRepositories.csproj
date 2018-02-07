@@ -10,5 +10,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lykke.AzureStorage" Version="5.0.1" />
+    <PackageReference Include="morelinq" Version="2.10.0" />
   </ItemGroup>
 </Project>

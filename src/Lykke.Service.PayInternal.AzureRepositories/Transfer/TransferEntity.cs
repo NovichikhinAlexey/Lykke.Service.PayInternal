@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Common;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Microsoft.WindowsAzure.Storage.Table;
 using Newtonsoft.Json;
@@ -103,7 +104,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
 
         public string SSourceAddresses
         {
-            get => JsonConvert.SerializeObject(SourceAddresses);
+            get => SourceAddresses.ToJson();
             set
             {
                 var result = new List<ISourceAmount>();
