@@ -1,0 +1,16 @@
+﻿using System;
+using System.Collections.Generic;
+using Lykke.Service.PayInternal.Core.Domain.Transfer;
+
+namespace Lykke.Service.PayInternal.Services.Domain
+{
+    public class TransactionRequest : ITransactionRequest
+    {
+        public string TransactionHash { get; set; }
+        public List<ISourceAmount> SourceAmounts { get; set; }
+        public string DestinationAddress { get; set; }
+        public int CountConfirm { get; set; }
+        public decimal Amount { get; set; }
+        public string Currency { get; set; }
+    }
+}

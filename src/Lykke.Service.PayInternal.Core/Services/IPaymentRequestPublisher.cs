@@ -1,10 +1,9 @@
-﻿using System.Threading.Tasks;
-using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+﻿using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 
 namespace Lykke.Service.PayInternal.Core.Services
 {
-    public interface IPaymentRequestPublisher
+    public interface IPaymentRequestPublisher : IRequestPublisher<IPaymentRequest>
     {
-        Task PublishAsync(IPaymentRequest paymentRequest);
+        
     }
 }

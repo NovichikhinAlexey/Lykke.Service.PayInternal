@@ -12,7 +12,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         private decimal _amount;
         private int _confirmations;
         private DateTime _firstSeen;
-        
+
         public BlockchainTransactionEntity()
         {
         }
@@ -24,9 +24,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         }
 
         public string Id => RowKey;
-        
+
         public string TransactionId { get; set; }
-        
+
         public string PaymentRequestId { get; set; }
 
         public decimal Amount
@@ -38,9 +38,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
                 MarkValueTypePropertyAsDirty(nameof(Amount));
             }
         }
-        
+
         public string BlockId { get; set; }
-        
+
         public int Confirmations
         {
             get => _confirmations;
@@ -50,9 +50,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
                 MarkValueTypePropertyAsDirty(nameof(Confirmations));
             }
         }
-        
+
         public string WalletAddress { get; set; }
-     
+
         public DateTime FirstSeen
         {
             get => _firstSeen;

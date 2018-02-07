@@ -14,25 +14,31 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
         /// Get all transfers
         /// </summary>
         /// <returns></returns>
-        Task<IEnumerable<ITransferInfo>> GetAllAsync();
+
+        Task<IEnumerable<ITransferRequest>> GetAllAsync();
         /// <summary>
-        /// Get all transfers entity if transactions are more than one for the transfer
+        /// Get a transfer entity with all transactions
         /// </summary>
         /// <param name="transferRequestId">Transfer Id</param>
         /// <returns></returns>
-        Task<IEnumerable<ITransferInfo>> GetAsync(string transferRequestId);
+        Task<ITransferRequest> GetAsync(string transferRequestId);
         /// <summary>
-        /// Get transfer for exact transaction hash
+        /// et a transfer entity with a specify transaction
+
         /// </summary>
         /// <param name="transferRequestId">Transfer Id</param>
         /// <param name="transactionHash">PRC Transaction Hash</param>
         /// <returns></returns>
-        Task<ITransferInfo> GetAsync(string transferRequestId, string transactionHash);
+
+        Task<ITransferRequest> GetAsync(string transferRequestId, string transactionHash);
+
         /// <summary>
         /// Save transfer info
         /// </summary>
         /// <param name="transferInfo">Transfer info</param>
         /// <returns></returns>
-        Task<ITransferInfo> SaveAsync(ITransferInfo transferInfo);
+
+        Task<ITransferRequest> SaveAsync(ITransferRequest transferInfo);
+
     }
 }

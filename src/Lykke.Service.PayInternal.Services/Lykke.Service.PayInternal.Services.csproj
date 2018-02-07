@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <AssemblyName>Lykke.Service.PayInternal.Services</AssemblyName>
@@ -11,6 +11,7 @@
     <PackageReference Include="Lykke.RabbitMqBroker" Version="5.0.0" />
     <PackageReference Include="Lykke.Service.Assets.Client" Version="3.2.0" />
     <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.0.20" />
+    <PackageReference Include="NBitcoin" Version="4.0.0.54" />
     <PackageReference Include="QBitNinja.Client" Version="1.0.3.46" />
   </ItemGroup>
   <ItemGroup>
