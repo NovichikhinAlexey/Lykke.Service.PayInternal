@@ -24,18 +24,22 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransferRepository _transferRepository;
         private readonly IWalletRepository _walletRepository;
         private readonly IBitcoinApiClient _bitcointApiClient;
+        private readonly ITransferRequestPublisher _transferRequestPublisher;
         private readonly ILog _log;
+
 
         #region .ctors
         public BtcTransferRequestService(
             ITransferRepository transferRepository,
             IWalletRepository walletRepository,
             IBitcoinApiClient bitcointApiClient,
+            ITransferRequestPublisher transferRequestPublisher,
             ILog log)
         {
             _transferRepository = transferRepository ?? throw new ArgumentNullException(nameof(transferRepository));
             _walletRepository = walletRepository ?? throw new ArgumentNullException(nameof(walletRepository));
             _bitcointApiClient = bitcointApiClient ?? throw new ArgumentNullException(nameof(bitcointApiClient));
+            _transferRequestPublisher = transferRequestPublisher ?? throw new ArgumentNullException(nameof(transferRequestPublisher));
             _log = log ?? throw new ArgumentNullException(nameof(log));
         }
         #endregion
@@ -113,8 +117,11 @@ namespace Lykke.Service.PayInternal.Services
             t.TransferStatus = transfer.TransferStatus;
             t.TransferStatusError = transfer.TransferStatusError;
 
-            return  await _transferRepository.SaveAsync(t) ?? BtcTransferRequest.CreateErrorTransferRequest(transfer.MerchantId,
+            var result =  await _transferRepository.SaveAsync(t) ?? BtcTransferRequest.CreateErrorTransferRequest(transfer.MerchantId,
                               TransferStatusError.InternalError, transfer.TransactionRequests);
+            await _transferRequestPublisher.PublishAsync(result);
+
+            return result;
 
         }
 
@@ -123,8 +130,12 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<ITransferRequest> UpdateTransferAsync(ITransferRequest transfer)
         {
-            return await _transferRepository.SaveAsync(transfer) ?? BtcTransferRequest.CreateErrorTransferRequest(transfer.MerchantId,
-                       TransferStatusError.InternalError, transfer.TransactionRequests); 
+            var result = await _transferRepository.SaveAsync(transfer) ?? BtcTransferRequest.CreateErrorTransferRequest(transfer.MerchantId,
+                       TransferStatusError.InternalError, transfer.TransactionRequests);
+
+            await _transferRequestPublisher.PublishAsync(result);
+
+            return result;
         }
 
         public async Task<ITransferRequest> GetTransferInfoAsync(ITransferRequest transfer)

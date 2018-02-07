@@ -61,14 +61,14 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
             _publisher?.Stop();
         }
 
-        public async Task PublishAsync(IPaymentRequest paymentRequest)
+        public async Task PublishAsync(IPaymentRequest request)
         {
-            IOrder order = await _orderService.GetAsync(paymentRequest.Id, paymentRequest.OrderId);
+            IOrder order = await _orderService.GetAsync(request.Id, request.OrderId);
 
             IReadOnlyList<IBlockchainTransaction> transactions =
-                (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
+                (await _transactionsService.GetAsync(request.WalletAddress)).ToList();
 
-            var message = Mapper.Map<PaymentRequestDetailsMessage>(paymentRequest);
+            var message = Mapper.Map<PaymentRequestDetailsMessage>(request);
             message.Order = Mapper.Map<PaymentRequestOrder>(order);
             message.Transactions = Mapper.Map<List<PaymentRequestTransaction>>(transactions);
 
