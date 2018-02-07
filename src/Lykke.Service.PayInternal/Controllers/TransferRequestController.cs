@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -201,5 +201,6 @@ namespace Lykke.Service.PayInternal.Controllers
                 SourceAddresses = sourceAddressAmountList
             }.ToTransferRequest()));
         }
+
     }
 }

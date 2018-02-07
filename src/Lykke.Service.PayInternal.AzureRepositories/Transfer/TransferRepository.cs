@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
+
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
 {
@@ -13,13 +14,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
         {
             _tableStorage = tableStorage;
         }
+
         public async Task<IEnumerable<ITransferRequest>> GetAllAsync()
         {
             var transactions = await _tableStorage.GetDataAsync();
             return AggregateTransactions(transactions);
+
         }
 
     
+
 
     public async Task<ITransferRequest> GetAsync(string transferRequestId)
         {
@@ -80,6 +84,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
 
                                               }).ToList()
                     }).ToList();
+
         }
     }
 }

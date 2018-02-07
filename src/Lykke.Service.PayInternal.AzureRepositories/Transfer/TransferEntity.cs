@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
 {
+
     public class TransferEntity : TableEntity
     {
         public static List<TransferEntity> Create(ITransferRequest transferRequest)
@@ -45,6 +46,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
 
 
         public TransferEntity(TransferEntity transferInfo)
+
         {
             TransferId = transferInfo.TransferId;
             TransactionHash = transferInfo.TransactionHash;
@@ -54,6 +56,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
             DestinationAddress = transferInfo.DestinationAddress;
             Amount = transferInfo.Amount;
             Currency = transferInfo.Currency;
+
 
         }
 
@@ -70,6 +73,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
         public decimal Amount { get; set; }
         public string Currency { get; set; }
         public int CountConfirm { get; set; }
+
         public string STransferStatus
         {
             get => TransferStatus.ToString();
@@ -112,6 +116,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
                     }
                     result.AddRange(JsonConvert.DeserializeObject<List<SourceAmount>>(value));
                 }
+
                 catch
                 {
 
@@ -121,6 +126,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
             }
         }
 
-       
+  
     }
 }

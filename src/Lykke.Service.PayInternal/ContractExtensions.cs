@@ -23,7 +23,7 @@ namespace Lykke.Service.PayInternal
             {
                 Id = src.Id,
                 WalletAddress = src.WalletAddress,
-                Amount = (double)src.Amount,
+                Amount = src.Amount,
                 Confirmations = src.Confirmations,
                 BlockId = src.BlockId,
                 AssetId = src.AssetId,

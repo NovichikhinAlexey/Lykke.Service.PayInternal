@@ -46,5 +46,10 @@ namespace Lykke.Service.PayInternal.Client.Models.Order
         /// Gets or sets the order created date.
         /// </summary>
         public DateTime CreatedDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the order echange rate
+        /// </summary>
+        public decimal ExchangeRate { get; set; }
     }
 }

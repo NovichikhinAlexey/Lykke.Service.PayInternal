@@ -14,6 +14,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
         /// Get all transfers
         /// </summary>
         /// <returns></returns>
+
         Task<IEnumerable<ITransferRequest>> GetAllAsync();
         /// <summary>
         /// Get a transfer entity with all transactions
@@ -23,16 +24,21 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
         Task<ITransferRequest> GetAsync(string transferRequestId);
         /// <summary>
         /// et a transfer entity with a specify transaction
+
         /// </summary>
         /// <param name="transferRequestId">Transfer Id</param>
         /// <param name="transactionHash">PRC Transaction Hash</param>
         /// <returns></returns>
+
         Task<ITransferRequest> GetAsync(string transferRequestId, string transactionHash);
+
         /// <summary>
         /// Save transfer info
         /// </summary>
         /// <param name="transferInfo">Transfer info</param>
         /// <returns></returns>
+
         Task<ITransferRequest> SaveAsync(ITransferRequest transferInfo);
+
     }
 }

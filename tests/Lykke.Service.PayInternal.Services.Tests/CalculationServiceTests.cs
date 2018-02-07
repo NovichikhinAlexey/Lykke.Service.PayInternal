@@ -174,7 +174,8 @@ namespace Lykke.Service.PayInternal.Services.Tests
             {
                 LpPercent = 9,
                 LpPips = 9,
-                DeltaSpread = 1.4
+                DeltaSpread = 1.4,
+                LpFixedFee = 0
             };
 
             IRequestMarkup requestMarkup = new RequestMarkup
