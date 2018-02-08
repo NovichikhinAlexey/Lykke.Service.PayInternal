@@ -7,5 +7,7 @@
         double LpPercent { get; set; }
 
         double LpPips { get; set; }
+
+        double LpFixedFee { get; set; }
     }
 }

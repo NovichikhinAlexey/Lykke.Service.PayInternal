@@ -13,6 +13,7 @@ using Lykke.Logs;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
 using Lykke.Service.PayInternal.Filters;
+using Lykke.Service.PayInternal.Mapping;
 using Lykke.Service.PayInternal.Modules;
 using Lykke.SettingsReader;
 using Lykke.SlackNotification.AzureQueue;
@@ -59,14 +60,7 @@ namespace Lykke.Service.PayInternal
                 });
 
                 EntityMetamodel.Configure(new AnnotationsBasedMetamodelProvider());
-                
-                Mapper.Initialize(cfg =>
-                {
-                    cfg.AddProfiles(typeof(AutoMapperProfile));
-                });
 
-                Mapper.AssertConfigurationIsValid();
-                
                 var builder = new ContainerBuilder();
                 var appSettings = Configuration.LoadSettings<AppSettings>();
 
@@ -83,6 +77,14 @@ namespace Lykke.Service.PayInternal
                 builder.RegisterModule(new ServiceModule(appSettings, Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
+
+                Mapper.Initialize(cfg =>
+                {
+                    cfg.ConstructServicesUsing(ApplicationContainer.Resolve);
+                    cfg.AddProfiles(typeof(AutoMapperProfile));
+                });
+
+                Mapper.AssertConfigurationIsValid();
 
                 return new AutofacServiceProvider(ApplicationContainer);
             }

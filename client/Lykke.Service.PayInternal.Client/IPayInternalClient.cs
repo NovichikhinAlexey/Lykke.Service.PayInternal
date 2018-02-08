@@ -79,6 +79,21 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="paymentRequestId">The payment request id.</param>
         /// <returns>The payment request.</returns>
         Task<PaymentRequestModel> GetPaymentRequestAsync(string merchantId, string paymentRequestId);
+
+        /// <summary>
+        /// Returns merchant payment request details.
+        /// </summary>
+        /// <param name="merchantId">The merchant id.</param>
+        /// <param name="paymentRequestId">The payment request id.</param>
+        /// <returns>The payment request details.</returns>
+        Task<PaymentRequestDetailsModel> GetPaymentRequestDetailsAsync(string merchantId, string paymentRequestId);
+
+        /// <summary>
+        ///  Returns merchant payment request by wallet address.
+        /// </summary>
+        /// <param name="walletAddress">Wallet address</param>
+        /// <returns>The payment request.</returns>
+        Task<PaymentRequestModel> GetPaymentRequestByAddressAsync(string walletAddress);
         
         /// <summary>
         /// Creates a payment request and wallet.

@@ -116,6 +116,16 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunAsync(() => _paymentRequestsApi.GetAsync(merchantId, paymentRequestId));
         }
 
+        public async Task<PaymentRequestDetailsModel> GetPaymentRequestDetailsAsync(string merchantId, string paymentRequestId)
+        {
+            return await _runner.RunAsync(() => _paymentRequestsApi.GetDetailsAsync(merchantId, paymentRequestId));
+        }
+
+        public async Task<PaymentRequestModel> GetPaymentRequestByAddressAsync(string walletAddress)
+        {
+            return await _runner.RunAsync(() => _paymentRequestsApi.GetByAddressAsync(walletAddress));
+        }
+
         public async Task<PaymentRequestModel> CreatePaymentRequestAsync(CreatePaymentRequestModel model)
         {
             return await _runner.RunAsync(() => _paymentRequestsApi.CreateAsync(model));
