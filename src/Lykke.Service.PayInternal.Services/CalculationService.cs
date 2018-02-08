@@ -44,7 +44,7 @@ namespace Lykke.Service.PayInternal.Services
                 Amount = amount,
                 RequestMarkup = requestMarkup,
                 MerchantMarkup = merchantMarkup,
-                Rate = rate
+                CalculatedRate = rate
             }.ToJson(), "Rate calculation");
 
             return (amount + (decimal) requestMarkup.FixedFee + (decimal) merchantMarkup.LpFixedFee) / rate;
@@ -105,7 +105,7 @@ namespace Lykke.Service.PayInternal.Services
             PriceCalculationMethod priceValueType,
             IMerchantMarkup merchantMarkup)
         {
-            _log.WriteInfoAsync(nameof(CalculationService), nameof(GetAmountAsync), assetPairRate.ToJson(),
+            _log.WriteInfoAsync(nameof(CalculationService), nameof(CalculatePrice), assetPairRate.ToJson(),
                 "Rate calculation").GetAwaiter().GetResult();
 
             double originalPrice =
