@@ -166,22 +166,22 @@ namespace Lykke.Service.PayInternal.Services.Tests
             var assetPairRate = new AssetPairModel
             {
                 AssetPair = "BTCCHF",
-                BidPrice = 8298.227,
-                AskPrice = 8783.97
+                BidPrice = 6838.57154,
+                AskPrice = 6838.57154
             };
 
             IMerchantMarkup merchantMarkup = new MerchantMarkup
             {
-                LpPercent = 9,
-                LpPips = 9,
+                LpPercent = 0,
+                LpPips = 0,
                 DeltaSpread = 1.4,
                 LpFixedFee = 0
             };
 
             IRequestMarkup requestMarkup = new RequestMarkup
             {
-                Pips = 0,
-                Percent = 0,
+                Pips = 9,
+                Percent = 9,
                 FixedFee = 13
             };
 
@@ -202,12 +202,12 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             _logMock.Setup(o => o.WriteInfoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>())).Verifiable();
 
-            var rate = _service.CalculatePrice(assetPairRate, assetPair.Accuracy, BtcAccuracy, 0, 0,
+            var rate = _service.CalculatePrice(assetPairRate, assetPair.Accuracy, BtcAccuracy, requestMarkup.Percent, requestMarkup.Pips,
                 PriceCalculationMethod.ByBid, merchantMarkup);
 
-            var btcAmount = (chfAmount + (decimal) requestMarkup.FixedFee) / rate;
+            var btcAmount = (chfAmount + (decimal) requestMarkup.FixedFee + (decimal) merchantMarkup.LpFixedFee) / rate;
 
-            Assert.IsTrue(Math.Abs(btcAmount - (decimal) 0.003089048612) < BtcAccuracy.GetMinValue());
+            Assert.IsTrue(Math.Abs(btcAmount - (decimal) 0.00374839) < BtcAccuracy.GetMinValue());
         }
 
         [TestMethod]
