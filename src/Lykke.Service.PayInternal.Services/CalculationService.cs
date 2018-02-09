@@ -47,7 +47,15 @@ namespace Lykke.Service.PayInternal.Services
                 CalculatedRate = rate
             }.ToJson(), "Rate calculation");
 
-            return (amount + (decimal) requestMarkup.FixedFee + (decimal) merchantMarkup.LpFixedFee) / rate;
+            decimal result = (amount + (decimal) requestMarkup.FixedFee + (decimal) merchantMarkup.LpFixedFee) / rate;
+
+            var assetPair = await _assetsLocalCache.GetAssetPairByIdAsync(assetPairId);
+
+            var baseAsset = await _assetsLocalCache.GetAssetByIdAsync(assetPair.BaseAssetId);
+
+            decimal roundedResult = decimal.Round(result, baseAsset.Accuracy, MidpointRounding.AwayFromZero);
+
+            return roundedResult;
         }
 
         public async Task<decimal> GetRateAsync(
