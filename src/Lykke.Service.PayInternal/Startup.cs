@@ -2,14 +2,18 @@
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using AutoMapper;
 using AzureStorage.Tables;
 using Common.Log;
+using Lykke.AzureStorage.Tables.Entity.Metamodel;
+using Lykke.AzureStorage.Tables.Entity.Metamodel.Providers;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
 using Lykke.Service.PayInternal.Filters;
+using Lykke.Service.PayInternal.Mapping;
 using Lykke.Service.PayInternal.Modules;
 using Lykke.SettingsReader;
 using Lykke.SlackNotification.AzureQueue;
@@ -52,16 +56,35 @@ namespace Lykke.Service.PayInternal
                 {
                     options.DefaultLykkeConfiguration("v1", "PayInternal API");
                     options.OperationFilter<FileUploadOperationFilter>();
+                    
                 });
+
+                EntityMetamodel.Configure(new AnnotationsBasedMetamodelProvider());
 
                 var builder = new ContainerBuilder();
                 var appSettings = Configuration.LoadSettings<AppSettings>();
 
                 Log = CreateLogWithSlack(services, appSettings);
 
+                builder.RegisterModule(new AzureRepositories.AutofacModule(
+                    appSettings.Nested(o => o.PayInternalService.Db.MerchantOrderConnString),
+                    appSettings.Nested(o => o.PayInternalService.Db.MerchantConnString),
+                    appSettings.Nested(o => o.PayInternalService.Db.PaymentRequestConnString),
+                    Log));
+                builder.RegisterModule(new Services.AutofacModule(
+                    appSettings.CurrentValue.PayInternalService.OrderExpiration,
+                    appSettings.CurrentValue.PayInternalService.TransactionConfirmationCount));
                 builder.RegisterModule(new ServiceModule(appSettings, Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
+
+                Mapper.Initialize(cfg =>
+                {
+                    cfg.ConstructServicesUsing(ApplicationContainer.Resolve);
+                    cfg.AddProfiles(typeof(AutoMapperProfile));
+                });
+
+                Mapper.AssertConfigurationIsValid();
 
                 return new AutofacServiceProvider(ApplicationContainer);
             }

@@ -5,10 +5,14 @@ namespace Lykke.Service.PayInternal.Core.Domain.Merchant
 {
     public interface IMerchantRepository
     {
-        Task<IMerchant> GetAsync(string id);
+        Task<IReadOnlyList<IMerchant>> GetAsync();
+        
+        Task<IMerchant> GetAsync(string merchantId);
 
-        Task<IEnumerable<IMerchant>> GetAsync();
-
-        Task<IMerchant> SaveAsync(IMerchant merchant);
+        Task<IMerchant> InsertAsync(IMerchant merchant);
+        
+        Task ReplaceAsync(IMerchant merchant);
+        
+        Task DeleteAsync(string merchantId);
     }
 }

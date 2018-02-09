@@ -12,21 +12,8 @@ namespace Lykke.Service.PayInternal.Services
             {
                 LpPercent = src.LpMarkupPercent,
                 DeltaSpread = src.DeltaSpread,
-                LpPips = src.LpMarkupPips
-            };
-        }
-
-        public static IMerchant GetMerchant(this ICreateMerchantRequest src)
-        {
-            return new Merchant
-            {
-                DeltaSpread = src.DeltaSpread,
-                LpMarkupPercent = src.LpMarkupPercent,
-                LpMarkupPips = src.LpMarkupPips,
-                TimeCacheRates = src.TimeCacheRates,
-                Name = src.Name,
-                ApiKey = src.ApiKey,
-                LwId = src.LwId
+                LpPips = src.LpMarkupPips,
+                LpFixedFee = src.MarkupFixedFee
             };
         }
 
@@ -39,7 +26,9 @@ namespace Lykke.Service.PayInternal.Services
                 FirstSeen = src.FirstSeen,
                 Confirmations = src.Confirmations,
                 BlockId = src.BlockId,
-                TransactionId = src.TransactionId
+                TransactionId = src.TransactionId,
+                Blockchain = src.Blockchain,
+                AssetId = src.AssetId
             };
         }
 

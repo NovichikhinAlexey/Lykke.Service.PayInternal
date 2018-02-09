@@ -9,18 +9,15 @@ using Lykke.Bitcoin.Api.Client;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.MarketProfile.Client;
-using Lykke.Service.PayInternal.AzureRepositories.Merchant;
-using Lykke.Service.PayInternal.AzureRepositories.Order;
 using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
-using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
+using Lykke.Service.PayInternal.Mapping;
+using Lykke.Service.PayInternal.Rabbit.Publishers;
 using Lykke.Service.PayInternal.Services;
-using Lykke.Service.PayInternal.Services.RabbitPublishers;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 using DbSettings = Lykke.Service.PayInternal.Core.Settings.ServiceSettings.DbSettings;
@@ -66,6 +63,8 @@ namespace Lykke.Service.PayInternal.Modules
 
             RegisterRabbitMqPublishers(builder);
 
+            RegisterMapperValueResolvers(builder);
+
             builder.Populate(_services);
         }
 
@@ -74,14 +73,6 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterInstance<IWalletRepository>(new WalletRepository(
                 AzureTableStorage<WalletEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantWalletConnString),
                     "MerchantWallets", _log)));
-
-            builder.RegisterInstance<IOrdersRepository>(new OrdersRepository(
-                AzureTableStorage<OrderEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantOrderConnString),
-                    "MerchantOrderRequest", _log)));
-
-            builder.RegisterInstance<IMerchantRepository>(new MerchantRepository(
-                AzureTableStorage<MerchantEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantConnString),
-                    "Merchants", _log)));
 
             builder.RegisterInstance<IBlockchainTransactionRepository>(new BlockchainTransactionRepository(
                 AzureTableStorage<BlockchainTransactionEntity>.Create(
@@ -104,13 +95,9 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<MerchantWalletsService>()
                 .As<IMerchantWalletsService>();
 
-            builder.RegisterType<MerchantOrdersService>()
-                .WithParameter("orderExpiration", _settings.CurrentValue.PayInternalService.OrderExpiration)
-                .As<IMerchantOrdersService>();
-
-            builder.RegisterType<RatesCalculationService>()
+            builder.RegisterType<CalculationService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LpMarkup))
-                .As<IRatesCalculationService>();
+                .As<ICalculationService>();
 
             builder.RegisterType<TransactionsService>()
                 .As<ITransactionsService>();
@@ -161,11 +148,19 @@ namespace Lykke.Service.PayInternal.Modules
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
 
-            builder.RegisterType<TransactionsUpdatePublisher>()
-                .As<ITransactionUpdatesPublisher>()
+            builder.RegisterType<PaymentRequestPublisher>()
+                .As<IPaymentRequestPublisher>()
                 .As<IStartable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
+        }
+
+        private void RegisterMapperValueResolvers(ContainerBuilder builder)
+        {
+            builder.RegisterType<TransactionUrlValueResolver>()
+                .AsSelf()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LykkeBlockchainExplorer))
+                .SingleInstance();
         }
     }
 }

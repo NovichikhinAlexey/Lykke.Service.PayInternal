@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Common.Log;
-using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Order;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
@@ -13,73 +13,60 @@ namespace Lykke.Service.PayInternal.Services
     public class TransactionsService : ITransactionsService
     {
         private readonly IBlockchainTransactionRepository _transactionRepository;
-        private readonly IOrdersRepository _ordersRepository;
-        private readonly ITransactionUpdatesPublisher _updatesPublisher;
+        private readonly IPaymentRequestRepository _paymentRequestRepository;
+        private readonly IOrderRepository _orderRepository;
         private readonly ILog _log;
 
         public TransactionsService(
-            IBlockchainTransactionRepository transactionRepository, 
-            IOrdersRepository ordersRepository,
-            ITransactionUpdatesPublisher updatesPublisher,
+            IBlockchainTransactionRepository transactionRepository,
+            IPaymentRequestRepository paymentRequestRepository,
+            IOrderRepository ordersRepository,
             ILog log)
         {
-            _transactionRepository =
-                transactionRepository ?? throw new ArgumentNullException(nameof(transactionRepository));
-            _ordersRepository = ordersRepository ?? throw new ArgumentNullException(nameof(ordersRepository));
-            _updatesPublisher = updatesPublisher ?? throw new ArgumentNullException(nameof(updatesPublisher));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _transactionRepository = transactionRepository;
+            _paymentRequestRepository = paymentRequestRepository;
+            _orderRepository = ordersRepository;
+            _log = log;
+        }
+
+        public async Task<IEnumerable<IBlockchainTransaction>> GetAsync(string walletAddress)
+        {
+            return await _transactionRepository.GetAsync(walletAddress);
         }
 
         public async Task Create(ICreateTransaction request)
         {
-            var order = await FindTransactionOrderByDate(request.WalletAddress, request.FirstSeen);
+            IPaymentRequest paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
 
-            var transactionEntity = new BlockchainTransactionEntity
+            var transactionEntity = new BlockchainTransaction
             {
                 WalletAddress = request.WalletAddress,
                 TransactionId = request.TransactionId,
-                Amount = request.Amount,
+                Amount = (decimal)request.Amount,
+                AssetId = request.AssetId,
                 Confirmations = request.Confirmations,
                 BlockId = request.BlockId,
+                Blockchain = request.Blockchain,
                 FirstSeen = request.FirstSeen,
-                OrderId = order.Id
+                PaymentRequestId = paymentRequest.Id
             };
 
-            await Task.WhenAll(
-                _transactionRepository.SaveAsync(transactionEntity),
-                _updatesPublisher.PublishAsync(transactionEntity.ToMessage()));
+            await _transactionRepository.InsertAsync(transactionEntity);
         }
 
         public async Task Update(IUpdateTransaction request)
         {
-            var transaction = await _transactionRepository.Get(
-                BlockchainTransactionEntity.ByWallet.GeneratePartitionKey(request.WalletAddress),
-                BlockchainTransactionEntity.ByWallet.GenerateRowKey(request.TransactionId));
+            IBlockchainTransaction transaction =
+                await _transactionRepository.GetAsync(request.WalletAddress, request.TransactionId);
 
             if (transaction == null)
                 throw new Exception($"Transaction with id {request.TransactionId} doesn't exist");
 
-            transaction.Amount = request.Amount;
+            transaction.Amount = (decimal)request.Amount;
             transaction.BlockId = request.BlockId;
             transaction.Confirmations = request.Confirmations;
 
-            await Task.WhenAll(
-                _transactionRepository.MergeAsync(transaction),
-                _updatesPublisher.PublishAsync(transaction.ToMessage()));
-        }
-
-        private async Task<IOrder> FindTransactionOrderByDate(string walletAddress, DateTime date)
-        {
-            var walletOrders = await _ordersRepository.GetByWalletAsync(walletAddress);
-
-            var dueDateOrders = walletOrders.Where(x => date < x.DueDate).ToList();
-
-            if (!dueDateOrders.Any())
-                throw new Exception("There is no order with suitable DueDate");
-
-            return dueDateOrders.Count > 1
-                ? dueDateOrders.OrderBy(x => x.DueDate).First()
-                : dueDateOrders.First();
+            await _transactionRepository.UpdateAsync(transaction);
         }
     }
 }

@@ -1,53 +1,100 @@
-﻿using Lykke.Service.PayInternal.Core.Domain.Merchant;
-using Microsoft.WindowsAzure.Storage.Table;
+﻿using Lykke.AzureStorage.Tables;
+using Lykke.AzureStorage.Tables.Entity.Annotation;
+using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
+using Lykke.Service.PayInternal.Core.Domain.Merchant;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
 {
-    public class MerchantEntity : TableEntity, IMerchant
+    [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
+    public class MerchantEntity : AzureTableEntity, IMerchant
     {
-        public static string GeneratePartitionKey()
+        private double _deltaSpread;
+        private int _timeCacheRates;
+        private double _lpMarkupPercent;
+        private int _lpMarkupPips;
+        private double _markupFixedFee;
+
+        public MerchantEntity()
         {
-            return "M";
         }
 
-        public static string GenerateRowKey(string merchantId)
+        public MerchantEntity(string partitionKey, string rowKey)
         {
-            return merchantId;
-        }
-
-        public static MerchantEntity Create(IMerchant src)
-        {
-            return new MerchantEntity
-            {
-                PartitionKey = GeneratePartitionKey(),
-                RowKey = GenerateRowKey(src.Id),
-                ApiKey = src.ApiKey,
-                DeltaSpread = src.DeltaSpread,
-                LpMarkupPercent = src.LpMarkupPercent,
-                LpMarkupPips = src.LpMarkupPips,
-                LwId = src.LwId,
-                Name = src.Name,
-                PublicKey = src.PublicKey,
-                TimeCacheRates = src.TimeCacheRates
-            };
+            PartitionKey = partitionKey;
+            RowKey = rowKey;
         }
 
         public string Id => RowKey;
-
+        
         public string Name { get; set; }
 
         public string PublicKey { get; set; }
 
         public string ApiKey { get; set; }
 
-        public double DeltaSpread { get; set; }
-
-        public int TimeCacheRates { get; set; }
-
-        public double LpMarkupPercent { get; set; }
-
-        public int LpMarkupPips { get; set; }
-
+        public double DeltaSpread
+        {
+            get => _deltaSpread;
+            set
+            {
+                _deltaSpread = value;
+                MarkValueTypePropertyAsDirty(nameof(DeltaSpread));
+            }
+        }
+        
+        public int TimeCacheRates
+        {
+            get => _timeCacheRates;
+            set
+            {
+                _timeCacheRates = value;
+                MarkValueTypePropertyAsDirty(nameof(TimeCacheRates));
+            }
+        }
+        
+        public double LpMarkupPercent
+        {
+            get => _lpMarkupPercent;
+            set
+            {
+                _lpMarkupPercent = value;
+                MarkValueTypePropertyAsDirty(nameof(LpMarkupPercent));
+            }
+        }
+        
+        public int LpMarkupPips
+        {
+            get => _lpMarkupPips;
+            set
+            {
+                _lpMarkupPips = value;
+                MarkValueTypePropertyAsDirty(nameof(LpMarkupPips));
+            }
+        }
+        
+        public double MarkupFixedFee
+        {
+            get => _markupFixedFee;
+            set
+            {
+                _markupFixedFee = value;
+                MarkValueTypePropertyAsDirty(nameof(MarkupFixedFee));
+            }
+        }
+        
         public string LwId { get; set; }
+
+        internal void Map(IMerchant merchant)
+        {
+            ApiKey = merchant.ApiKey;
+            DeltaSpread = merchant.DeltaSpread;
+            LpMarkupPercent = merchant.LpMarkupPercent;
+            LpMarkupPips = merchant.LpMarkupPips;
+            MarkupFixedFee = merchant.MarkupFixedFee;
+            LwId = merchant.LwId;
+            Name = merchant.Name;
+            PublicKey = merchant.PublicKey;
+            TimeCacheRates = merchant.TimeCacheRates;
+        }
     }
 }

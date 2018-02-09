@@ -8,11 +8,18 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public RabbitMqSettings Rabbit { get; set; }
         public TimeSpan OrderExpiration { get; set; }
         public LpMarkupSettings LpMarkup { get; set; }
+        public int TransactionConfirmationCount { get; set; }
+        public BlockchainExplorerSettings LykkeBlockchainExplorer { get; set; }
     }
 
     public class LpMarkupSettings
     {
         public double Percent { get; set; }
         public double Pips { get; set; }
+    }
+
+    public class BlockchainExplorerSettings
+    {
+        public string TransactionUrl { get; set; }
     }
 }

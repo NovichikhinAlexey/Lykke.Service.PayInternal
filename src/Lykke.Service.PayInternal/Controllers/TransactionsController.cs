@@ -13,15 +13,18 @@ namespace Lykke.Service.PayInternal.Controllers
     [Route("api/[controller]")]
     public class TransactionsController : Controller
     {
+        private readonly IPaymentRequestService _paymentRequestService;
         private readonly ITransactionsService _transactionsService;
         private readonly ILog _log;
 
         public TransactionsController(
             ITransactionsService transactionsService,
+            IPaymentRequestService paymentRequestService,
             ILog log)
         {
-            _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _paymentRequestService = paymentRequestService;
+            _transactionsService = transactionsService;
+            _log = log;
         }
 
         /// <summary>
@@ -38,7 +41,7 @@ namespace Lykke.Service.PayInternal.Controllers
             try
             {
                 await _transactionsService.Create(request.ToDomain());
-
+                await _paymentRequestService.ProcessAsync(request.WalletAddress);
                 return Ok();
             }
             catch (Exception e)
@@ -63,7 +66,7 @@ namespace Lykke.Service.PayInternal.Controllers
             try
             {
                 await _transactionsService.Update(request.ToDomain());
-
+                await _paymentRequestService.ProcessAsync(request.WalletAddress);
                 return Ok();
             }
             catch (Exception e)
