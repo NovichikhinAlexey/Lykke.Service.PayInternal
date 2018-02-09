@@ -2,7 +2,10 @@
 using System.Net;
 using System.Threading.Tasks;
 using Common.Log;
+using Lykke.Common.Api.Contract.Responses;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Extensions;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -35,18 +38,29 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [SwaggerOperation("CreateTransaction")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> CreateTransaction([FromBody] CreateTransactionRequest request)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(new ErrorResponse().AddErrors(ModelState));
+
             try
             {
                 await _transactionsService.Create(request.ToDomain());
+
                 await _paymentRequestService.ProcessAsync(request.WalletAddress);
+
                 return Ok();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreateTransaction), e);
+                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreateTransaction), ex);
+
+                if (ex is PaymentRequestNotFoundException || ex is UnexpectedAssetException)
+                {
+                    return BadRequest(ErrorResponse.Create(ex.Message));
+                }
             }
 
             return StatusCode((int) HttpStatusCode.InternalServerError);
@@ -63,15 +77,25 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> UpdateTransaction([FromBody] UpdateTransactionRequest request)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(new ErrorResponse().AddErrors(ModelState));
+
             try
             {
                 await _transactionsService.Update(request.ToDomain());
+
                 await _paymentRequestService.ProcessAsync(request.WalletAddress);
+
                 return Ok();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), e);
+                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), ex);
+
+                if (ex is TransactionNotFoundException || ex is PaymentRequestNotFoundException)
+                {
+                    return BadRequest(ErrorResponse.Create(ex.Message));
+                }
             }
 
             return StatusCode((int) HttpStatusCode.InternalServerError);

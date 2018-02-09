@@ -5,6 +5,7 @@ using Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
 
@@ -38,6 +39,9 @@ namespace Lykke.Service.PayInternal.Services
         {
             IPaymentRequest paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
 
+            if (paymentRequest == null)
+                throw new PaymentRequestNotFoundException(request.WalletAddress);
+
             var transactionEntity = new BlockchainTransaction
             {
                 WalletAddress = request.WalletAddress,
@@ -60,7 +64,7 @@ namespace Lykke.Service.PayInternal.Services
                 await _transactionRepository.GetAsync(request.WalletAddress, request.TransactionId);
 
             if (transaction == null)
-                throw new Exception($"Transaction with id {request.TransactionId} doesn't exist");
+                throw new TransactionNotFoundException(request.TransactionId);
 
             transaction.Amount = (decimal)request.Amount;
             transaction.BlockId = request.BlockId;

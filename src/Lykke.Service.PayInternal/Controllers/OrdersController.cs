@@ -37,11 +37,15 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("merchants/paymentrequests/{paymentRequestId}/orders/{orderId}")]
         [SwaggerOperation("OrdersGetByPaymentRequestId")]
         [ProducesResponseType(typeof(OrderModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetAsync(string paymentRequestId, string orderId)
         {
             try
             {
-                IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequestId);
+                IOrder order = await _orderService.GetAsync(paymentRequestId, orderId);
+
+                if (order == null)
+                    return NotFound();
 
                 var model = Mapper.Map<OrderModel>(order);
 
