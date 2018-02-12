@@ -50,7 +50,7 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             var merchant = await _merchantRepository.GetAsync(request.MerchantId);
             if (merchant == null)
-                return NotFound();
+                return NotFound("Couldn't find merchant");
 
             try
             {
