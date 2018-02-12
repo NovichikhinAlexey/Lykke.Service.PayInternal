@@ -79,7 +79,7 @@ namespace Lykke.Service.PayInternal.Controllers
             IPaymentRequest paymentRequest = await _paymentRequestService.GetAsync(merchantId, paymentRequestId);
 
             if (paymentRequest == null)
-                return NotFound();
+                return NotFound("Couldn't find payment request");
             
             var model = Mapper.Map<PaymentRequestModel>(paymentRequest);
 
@@ -145,7 +145,7 @@ namespace Lykke.Service.PayInternal.Controllers
             IPaymentRequest paymentRequest = await _paymentRequestService.FindAsync(walletAddress);
 
             if (paymentRequest == null)
-                return NotFound();
+                return NotFound("Couldn't find payment request by wallet address");
             
             var model = Mapper.Map<PaymentRequestModel>(paymentRequest);
 

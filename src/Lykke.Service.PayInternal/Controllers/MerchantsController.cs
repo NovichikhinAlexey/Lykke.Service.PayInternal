@@ -68,7 +68,7 @@ namespace Lykke.Service.PayInternal.Controllers
             IMerchant merchant = await _merchantService.GetAsync(merchantId);
 
             if (merchant == null)
-                return NotFound();
+                return NotFound("Couldn't find merchant");
             
             var model = Mapper.Map<MerchantModel>(merchant);
 
@@ -135,7 +135,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 await _log.WriteWarningAsync(nameof(MerchantsController), nameof(UpdateAsync),
                     request.ToJson(), exception.Message);
-                return NotFound();
+                return NotFound(exception.Message);
             }
             catch (Exception exception)
             {
@@ -177,7 +177,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 await _log.WriteWarningAsync(nameof(MerchantsController), nameof(SetPublicKeyAsync),
                     new {MerchantId = merchantId}.ToJson(), exception.Message);
-                return NotFound();
+                return NotFound(exception.Message);
             }
             catch (Exception exception)
             {

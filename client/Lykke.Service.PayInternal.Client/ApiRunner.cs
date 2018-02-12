@@ -44,7 +44,7 @@ namespace Lykke.Service.PayInternal.Client
                 errorResponse = null;
             }
 
-            return errorResponse ?? ErrorResponse.Create(" API is not specify the error response");
+            return errorResponse ?? ErrorResponse.Create("PayInternal API doesn't not specify error details");
         }
     }
 }
