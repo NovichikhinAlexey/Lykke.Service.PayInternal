@@ -7,6 +7,7 @@ using AutoMapper;
 using Common;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Common.ApiLibrary.Contract;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -73,13 +74,13 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("merchants/{merchantId}/paymentrequests/{paymentRequestId}")]
         [SwaggerOperation("PaymentRequestsGetById")]
         [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetAsync(string merchantId, string paymentRequestId)
         {
             IPaymentRequest paymentRequest = await _paymentRequestService.GetAsync(merchantId, paymentRequestId);
 
             if (paymentRequest == null)
-                return NotFound("Couldn't find payment request");
+                return NotFound(ErrorResponse.Create("Couldn't find payment request"));
             
             var model = Mapper.Map<PaymentRequestModel>(paymentRequest);
 
@@ -124,6 +125,7 @@ namespace Lykke.Service.PayInternal.Controllers
                         MerchantId = merchantId,
                         PaymentRequestId = paymentRequestId
                     }.ToJson(), ex);
+
                 throw;
             }
         }
@@ -139,13 +141,13 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("paymentrequests/byAddress/{walletAddress}")]
         [SwaggerOperation("PaymentRequestGetByWalletAddress")]
         [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetByAddressAsync(string walletAddress)
         {
             IPaymentRequest paymentRequest = await _paymentRequestService.FindAsync(walletAddress);
 
             if (paymentRequest == null)
-                return NotFound("Couldn't find payment request by wallet address");
+                return NotFound(ErrorResponse.Create("Couldn't find payment request by wallet address"));
             
             var model = Mapper.Map<PaymentRequestModel>(paymentRequest);
 
