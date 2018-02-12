@@ -55,6 +55,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 await _log.WriteErrorAsync(nameof(OrdersController), nameof(GetAsync),
                     new {PaymentRequestId = paymentRequestId}.ToJson(), exception);
+
                 throw;
             }
         }

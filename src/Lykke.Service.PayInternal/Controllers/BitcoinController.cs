@@ -45,12 +45,12 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(WalletAddressResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(void), (int) HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> CreateAddress([FromBody] CreateWalletRequest request)
         {
             var merchant = await _merchantRepository.GetAsync(request.MerchantId);
             if (merchant == null)
-                return NotFound("Couldn't find merchant");
+                return NotFound(ErrorResponse.Create("Couldn't find merchant"));
 
             try
             {
