@@ -62,13 +62,13 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("merchants/{merchantId}")]
         [SwaggerOperation("MerchantsGetById")]
         [ProducesResponseType(typeof(MerchantModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetAsync(string merchantId)
         {
             IMerchant merchant = await _merchantService.GetAsync(merchantId);
 
             if (merchant == null)
-                return NotFound();
+                return NotFound(ErrorResponse.Create("Couldn't find merchant"));
             
             var model = Mapper.Map<MerchantModel>(merchant);
 
@@ -119,7 +119,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("MerchantsUpdate")]
         [ProducesResponseType((int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> UpdateAsync([FromBody] UpdateMerchantRequest request)
         {
             if (!ModelState.IsValid)
@@ -135,7 +135,8 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 await _log.WriteWarningAsync(nameof(MerchantsController), nameof(UpdateAsync),
                     request.ToJson(), exception.Message);
-                return NotFound();
+
+                return NotFound(ErrorResponse.Create(exception.Message));
             }
             catch (Exception exception)
             {
@@ -158,7 +159,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("MerchantsSetPublicKey")]
         [ProducesResponseType((int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int) HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> SetPublicKeyAsync(string merchantId, IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -177,7 +178,8 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 await _log.WriteWarningAsync(nameof(MerchantsController), nameof(SetPublicKeyAsync),
                     new {MerchantId = merchantId}.ToJson(), exception.Message);
-                return NotFound();
+
+                return NotFound(ErrorResponse.Create(exception.Message));
             }
             catch (Exception exception)
             {
