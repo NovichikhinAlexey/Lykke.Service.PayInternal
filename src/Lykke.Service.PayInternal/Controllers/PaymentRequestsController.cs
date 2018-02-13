@@ -99,12 +99,15 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("merchants/{merchantId}/paymentrequests/details/{paymentRequestId}")]
         [SwaggerOperation("PaymentRequestDetailsGetById")]
         [ProducesResponseType(typeof(PaymentRequestDetailsModel), (int) HttpStatusCode.OK)]
-        [ProducesResponseType((int) HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetDetailsAsync(string merchantId, string paymentRequestId)
         {
             try
             {
                 IPaymentRequest paymentRequest = await _paymentRequestService.GetAsync(merchantId, paymentRequestId);
+
+                if (paymentRequest == null)
+                    return NotFound(ErrorResponse.Create("Could not find payment request by given merchant ID and payment request ID"));
 
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
