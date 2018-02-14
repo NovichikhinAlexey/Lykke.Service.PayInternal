@@ -20,6 +20,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Order
 
         DateTime CreatedDate { get; set; }    
         
-        decimal ExchangeRate { get; set; }
+        decimal? ExchangeRate { get; set; }
     }
 }
