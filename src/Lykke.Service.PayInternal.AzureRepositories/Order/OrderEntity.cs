@@ -13,7 +13,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
         private decimal _paymentAmount;
         private DateTime _dueDate;
         private DateTime _createdDate;
-        private decimal _exchangeRate;
+        private decimal? _exchangeRate;
 
         public OrderEntity()
         {
@@ -70,7 +70,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
             }
         }
 
-        public decimal ExchangeRate
+        public decimal? ExchangeRate
         {
             get => _exchangeRate;
             set
