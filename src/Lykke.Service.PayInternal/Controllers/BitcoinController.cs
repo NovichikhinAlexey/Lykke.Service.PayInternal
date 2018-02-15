@@ -7,9 +7,12 @@ using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Extensions;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Services.Domain;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Lykke.Service.PayInternal.Controllers
@@ -38,18 +41,13 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <returns></returns>
         [HttpPost("address")]
         [SwaggerOperation("CreateBitcoinAddress")]
+        [ValidateModel]
         [ProducesResponseType(typeof(WalletAddressResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> CreateAddress([FromBody] CreateWalletRequest request)
         {
-            if (request.DueDate <= DateTime.UtcNow)
-                return BadRequest(ErrorResponse.Create("DueDate has to be in the future"));
-
-            if (string.IsNullOrEmpty(request.MerchantId))
-                return BadRequest(ErrorResponse.Create("MerchantId can't be empty"));
-
             var merchant = await _merchantRepository.GetAsync(request.MerchantId);
             if (merchant == null)
                 return NotFound(ErrorResponse.Create("Couldn't find merchant"));
@@ -68,6 +66,10 @@ namespace Lykke.Service.PayInternal.Controllers
             return StatusCode((int) HttpStatusCode.InternalServerError);
         }
 
+        /// <summary>
+        /// Gets list of wallets with DueDate in the future
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("wallets/notExpired")]
         [SwaggerOperation("GetNotExpiredWallets")]
         [ProducesResponseType(typeof(IEnumerable<WalletStateResponse>), (int) HttpStatusCode.OK)]
