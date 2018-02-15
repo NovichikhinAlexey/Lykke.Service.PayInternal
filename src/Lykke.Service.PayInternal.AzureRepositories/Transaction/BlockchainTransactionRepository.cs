@@ -28,14 +28,14 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             return await _storage.GetDataAsync(GetPartitionKey(walletAddress), GetRowKey(transactionId));
         }
 
-        public async Task InsertAsync(IBlockchainTransaction blockchainTransaction)
+        public async Task AddAsync(IBlockchainTransaction blockchainTransaction)
         {
             var entity = new BlockchainTransactionEntity(
                 GetPartitionKey(blockchainTransaction.WalletAddress),
                 GetRowKey(blockchainTransaction.TransactionId));
             entity.Map(blockchainTransaction);
 
-            await _storage.InsertAsync(entity);
+            await _storage.InsertOrMergeAsync(entity);
         }
 
         public async Task UpdateAsync(IBlockchainTransaction blockchainTransaction)
