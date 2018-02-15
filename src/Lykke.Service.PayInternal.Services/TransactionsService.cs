@@ -55,7 +55,7 @@ namespace Lykke.Service.PayInternal.Services
                 PaymentRequestId = paymentRequest.Id
             };
 
-            await _transactionRepository.InsertAsync(transactionEntity);
+            await _transactionRepository.AddAsync(transactionEntity);
         }
 
         public async Task Update(IUpdateTransaction request)
