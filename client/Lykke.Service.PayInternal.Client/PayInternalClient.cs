@@ -8,6 +8,7 @@ using Lykke.Service.PayInternal.Client.Models;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
+using Lykke.Service.PayInternal.Client.Models.Transfer;
 using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
 
@@ -20,6 +21,8 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IMerchantsApi _merchantsApi;
         private readonly IOrdersApi _ordersApi;
         private readonly IPaymentRequestsApi _paymentRequestsApi;
+        private readonly ITransferReportApi _transferReportApi;
+        private readonly ITransferRequestApi _transferRequestApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -46,6 +49,9 @@ namespace Lykke.Service.PayInternal.Client
             _merchantsApi = RestService.For<IMerchantsApi>(_httpClient);
             _ordersApi = RestService.For<IOrdersApi>(_httpClient);
             _paymentRequestsApi = RestService.For<IPaymentRequestsApi>(_httpClient);
+            _transferReportApi = RestService.For<ITransferReportApi>(_httpClient);
+            _transferRequestApi = RestService.For<ITransferRequestApi>(_httpClient);
+
             _runner = new ApiRunner();
         }
 
@@ -134,6 +140,39 @@ namespace Lykke.Service.PayInternal.Client
         public async Task<PaymentRequestDetailsModel> ChechoutAsync(string merchantId, string paymentRequestId)
         {
             return await _runner.RunAsync(() => _paymentRequestsApi.ChechoutAsync(merchantId, paymentRequestId));
+        }
+
+        public async Task<TransferRequest> UpdateTransferStatusAsync(UpdateTransferStatusModel model)
+        {
+            return await _runner.RunAsync(() => _transferReportApi.UpdateTransferStatusAsync(model));
+        }
+
+        public async Task<TransferRequest> TransfersRequestAllAsync(string merchantId, string destinationAddress)
+        {
+            return await _runner.RunAsync(() => _transferRequestApi.TransfersRequestAllAsync(merchantId, destinationAddress));
+        }
+
+        public async Task<TransferRequest> TransfersRequestAmountAsync(string merchantId, string destinationAddress, string amount)
+        {
+            return await _runner.RunAsync(() => _transferRequestApi.TransfersRequestAmountAsync(merchantId, destinationAddress, amount));
+        }
+
+        public async Task<TransferRequest> TransfersRequestFromAddressAsync(string merchantId, string destinationAddress, string amount,
+            string sourceAddress)
+        {
+            return await _runner.RunAsync(() => _transferRequestApi.TransfersRequestFromAddressAsync(merchantId, destinationAddress, amount, sourceAddress));
+        }
+
+        public async Task<TransferRequest> TransfersRequestFromAddressesAsync(string merchantId, string destinationAddress, string amount,
+            List<string> sourceAddressesList)
+        {
+            return await _runner.RunAsync(() => _transferRequestApi.TransfersRequestFromAddressesAsync(merchantId, destinationAddress, amount, sourceAddressesList));
+        }
+
+        public async Task<TransferRequest> TransfersRequestFromAddressesWithAmountAsync(string merchantId, string destinationAddress,
+            List<SourceAmount> sourceAddressAmountList)
+        {
+            return await _runner.RunAsync(() => _transferRequestApi.TransfersRequestFromAddressesWithAmountAsync(merchantId, destinationAddress, sourceAddressAmountList));
         }
 
         public void Dispose()

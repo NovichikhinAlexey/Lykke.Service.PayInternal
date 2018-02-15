@@ -1,6 +1,6 @@
 ﻿using Lykke.Service.PayInternal.Core.Domain.Transfer;
 
-namespace Lykke.Service.PayInternal.Services
+namespace Lykke.Service.PayInternal.Services.Domain
 {
     public class SourceAmount : ISourceAmount
     {

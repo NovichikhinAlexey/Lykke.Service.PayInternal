@@ -15,17 +15,14 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
 {
     public class TransferRequestPublisher : ITransferRequestPublisher, IStartable, IStopable
     {
-        private readonly ITransferRequestService _transferRequestService;
         private readonly ILog _log;
         private readonly RabbitMqSettings _settings;
         private RabbitMqPublisher<TransferRequestsMessage> _publisher;
 
         public TransferRequestPublisher(
-            ITransferRequestService transferRequestService,
             ILog log,
             RabbitMqSettings settings)
         {
-            _transferRequestService = transferRequestService;
             _log = log;
             _settings = settings;
         }
