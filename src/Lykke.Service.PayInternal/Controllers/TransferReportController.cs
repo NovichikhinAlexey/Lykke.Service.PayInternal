@@ -8,6 +8,7 @@ using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Lykke.Service.PayInternal.Core.Domain.Transfer;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -30,7 +31,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [Route("updateStatus")]
         [SwaggerOperation("TransferUpdateStatus")]
-        [ProducesResponseType(typeof(TransferModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> UpdateTransferStatusAsync([FromBody] UpdateTransferStatusModel model)
         {

@@ -4,6 +4,7 @@ using Lykke.Service.PayInternal.Client.Models;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
+using Lykke.Service.PayInternal.Client.Models.Transfer;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -107,5 +108,59 @@ namespace Lykke.Service.PayInternal.Client
         /// </summary>
         /// <returns>The payment request details.</returns>
         Task<PaymentRequestDetailsModel> ChechoutAsync(string merchantId, string paymentRequestId);
+
+        /// <summary>
+        /// Update transfer status.
+        /// </summary>
+        /// <param name="model">Transfer model.</param>
+        /// <returns>The Transfer Info.</returns>
+        Task<TransferRequest> UpdateTransferStatusAsync(UpdateTransferStatusModel model);
+
+        /// <summary>
+        /// Request to transfer all money.
+        /// </summary>
+        /// <param name="merchantId">Merchant Id.</param>
+        /// <param name="destinationAddress">Destination Address.</param>
+        /// <returns>The Transfer Info.</returns>
+        Task<TransferRequest> TransfersRequestAllAsync(string merchantId, string destinationAddress);
+
+        /// <summary>
+        /// Request to transfer specify amount.
+        /// </summary>
+        /// <param name="merchantId">Merchant Id.</param>
+        /// <param name="destinationAddress">Destination Address.</param>
+        /// <param name="amount">Amount to send</param>
+        /// <returns>The Transfer Info.</returns>
+        Task<TransferRequest> TransfersRequestAmountAsync(string merchantId, string destinationAddress, string amount);
+
+        /// <summary>
+        /// Request to transfer from specify wallet. If Amount is 0, all money will be transfered
+        /// </summary>
+        /// <param name="merchantId">Merchant Id.</param>
+        /// <param name="destinationAddress">Destination Address.</param>
+        /// <param name="amount">Amount to send</param>
+        /// <param name="sourceAddress">Source Address</param>
+        /// <returns>The Transfer Info.</returns>
+        Task<TransferRequest> TransfersRequestFromAddressAsync(string merchantId, string destinationAddress, string amount, string sourceAddress);
+
+        /// <summary>
+        /// Request to transfer from list of sources. If Amount is 0, all money will be transfered
+        /// </summary>
+        /// <param name="merchantId">Merchant Id.</param>
+        /// <param name="destinationAddress">Destination Address.</param>
+        /// <param name="amount">Amount to send</param>
+        /// <param name="sourceAddressesList">Source Addresses List</param>
+        /// <returns>The Transfer Info.</returns>
+        Task<TransferRequest> TransfersRequestFromAddressesAsync(string merchantId, string destinationAddress, string amount,  List<string> sourceAddressesList);
+
+        /// <summary>
+        /// Request to transfer from list of sources with amounts
+        /// </summary>
+        /// <param name="merchantId">Merchant Id.</param>
+        /// <param name="destinationAddress">Destination Address.</param>
+        /// <param name="sourceAddressAmountList">Source Addresses with Amount List</param>
+        /// <returns>The Transfer Info.</returns>
+        Task<TransferRequest> TransfersRequestFromAddressesWithAmountAsync(string merchantId, string destinationAddress, List<SourceAmount> sourceAddressAmountList);
+
     }
 }
