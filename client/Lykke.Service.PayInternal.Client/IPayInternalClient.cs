@@ -110,6 +110,13 @@ namespace Lykke.Service.PayInternal.Client
         Task<PaymentRequestDetailsModel> ChechoutAsync(string merchantId, string paymentRequestId);
 
         /// <summary>
+        /// Transfers BTC from source addresses with amount provided to destination address without LykkePay fees
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task<BtcTransferResponse> BtcFreeTransfer(BtcFreeTransferRequest request);
+
+        /// <summary>
         /// Update transfer status.
         /// </summary>
         /// <param name="model">Transfer model.</param>

@@ -142,6 +142,11 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunAsync(() => _paymentRequestsApi.ChechoutAsync(merchantId, paymentRequestId));
         }
 
+        public async Task<BtcTransferResponse> BtcFreeTransfer(BtcFreeTransferRequest request)
+        {
+            return await _runner.RunAsync(() => _paymentRequestsApi.BtcFreeTransfer(request));
+        }
+
         public async Task<TransferRequest> UpdateTransferStatusAsync(UpdateTransferStatusModel model)
         {
             return await _runner.RunAsync(() => _transferReportApi.UpdateTransferStatusAsync(model));
