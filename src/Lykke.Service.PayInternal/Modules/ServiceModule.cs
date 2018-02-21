@@ -105,6 +105,9 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<TransactionsService>()
                 .As<ITransactionsService>();
 
+            builder.RegisterType<AssetAvailabilityService>()
+                .As<IAssetsAvailabilityService>();
+
             //todo: unite BtcTransferService + BtcTransferRequestService
             builder.RegisterType<BtcTransferService>()
                 .As<IBtcTransferService>();
