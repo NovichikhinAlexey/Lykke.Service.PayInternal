@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
@@ -28,6 +30,14 @@ namespace Lykke.Service.PayInternal
                 BlockId = src.BlockId,
                 AssetId = src.AssetId,
                 Blockchain = src.Blockchain
+            };
+        }
+
+        public static AvailableAssetsResponseModel ToApiModel(this IEnumerable<IAssetAvailability> src)
+        {
+            return new AvailableAssetsResponseModel
+            {
+                Assets = src.Select(x => x.AssetId).ToList()
             };
         }
     }

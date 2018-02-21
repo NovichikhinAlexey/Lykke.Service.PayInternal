@@ -101,6 +101,9 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<TransactionsService>()
                 .As<ITransactionsService>();
+
+            builder.RegisterType<AssetAvailabilityService>()
+                .As<IAssetsAvailabilityService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
