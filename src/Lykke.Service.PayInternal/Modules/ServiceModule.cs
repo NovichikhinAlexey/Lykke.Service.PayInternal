@@ -98,6 +98,9 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<BtcTransferService>()
                 .As<IBtcTransferService>();
+
+            builder.RegisterType<AssetAvailabilityService>()
+                .As<IAssetsAvailabilityService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
