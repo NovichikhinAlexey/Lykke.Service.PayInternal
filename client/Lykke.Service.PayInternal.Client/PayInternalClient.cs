@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Api;
 using Lykke.Service.PayInternal.Client.Models;
+using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
@@ -20,6 +21,7 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IMerchantsApi _merchantsApi;
         private readonly IOrdersApi _ordersApi;
         private readonly IPaymentRequestsApi _paymentRequestsApi;
+        private readonly IAssetsApi _assetsApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -46,6 +48,7 @@ namespace Lykke.Service.PayInternal.Client
             _merchantsApi = RestService.For<IMerchantsApi>(_httpClient);
             _ordersApi = RestService.For<IOrdersApi>(_httpClient);
             _paymentRequestsApi = RestService.For<IPaymentRequestsApi>(_httpClient);
+            _assetsApi = RestService.For<IAssetsApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
@@ -134,6 +137,16 @@ namespace Lykke.Service.PayInternal.Client
         public async Task<PaymentRequestDetailsModel> ChechoutAsync(string merchantId, string paymentRequestId)
         {
             return await _runner.RunAsync(() => _paymentRequestsApi.ChechoutAsync(merchantId, paymentRequestId));
+        }
+
+        public async Task<AvailableAssetsResponse> GetAvailableAsync(AssetAvailabilityType availabilityType)
+        {
+            return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(availabilityType));
+        }
+
+        public async Task SetAvailabilityAsync(UpdateAssetAvailabilityRequest request)
+        {
+            await _runner.RunAsync(() => _assetsApi.SetAvailabilityAsync(request));
         }
 
         public void Dispose()
