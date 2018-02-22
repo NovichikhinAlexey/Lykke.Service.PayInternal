@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,7 +10,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
     public interface ITransferRequest
     {
         /// <summary>
-
         /// Id of transfer
         /// </summary>
         string TransferId { get; set; }
@@ -34,6 +33,10 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
         /// Merchant Id
         /// </summary>
         string MerchantId { get; set; }
-
+        /// <summary>
+        /// Creates a deep copy of this transfer request
+        /// </summary>
+        /// <returns>A new transfer request object.</returns>
+        ITransferRequest DeepCopy();
     }
 }

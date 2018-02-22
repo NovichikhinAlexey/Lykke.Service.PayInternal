@@ -40,5 +40,31 @@ namespace Lykke.Service.PayInternal.Controllers
 
             return Ok(await _transferRequestService.UpdateTransferStatusAsync(model.ToTransferRequest()));
         }
+
+        /// <summary>
+        /// Get transfer status.
+        /// </summary>
+        /// <param name="transferId">The ID of the transfer to check.</param>
+        /// <returns>The Transfer Info.</returns>
+        /// <response code="200">The Transfer Info.</response>
+        /// <response code="400">Invalid model.</response>
+        [HttpGet]
+        [Route("{transferId}/getStatus")]
+        [SwaggerOperation("TransferGetStatus")]
+        [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> GetTransferStatusAsync(string transferId)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new ErrorResponse().AddErrors(ModelState));
+
+            var result = await _transferRequestService.GetTransferInfoAsync(transferId);
+
+            if (result == null)
+                return NotFound();
+
+            return Ok(result);
+        }
     }
 }

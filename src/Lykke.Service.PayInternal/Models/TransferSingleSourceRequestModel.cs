@@ -11,11 +11,11 @@ namespace Lykke.Service.PayInternal.Models
         public override ITransferRequest ToTransferRequest()
         {
             var result = base.ToTransferRequest();
-            result.TransactionRequests.First().SourceAmounts = new List<ISourceAmount>()
+            result.TransactionRequests.First().SourceAmounts = new List<IAddressAmount>()
             {
-                new SourceAmount
+                new AddressAmount
                 {
-                    SourceAddress = SourceAddress,
+                    Address = SourceAddress,
                     Amount = 0
                 }
             };

@@ -83,7 +83,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
                                                   DestinationAddress = tt.DestinationAddress,
                                                   TransactionHash = tt.TransactionHash,
                                                   CountConfirm = tt.CountConfirm,
-                                                  SourceAmounts = new List<ISourceAmount>(tt.SourceAddresses)
+                                                  SourceAmounts = new List<IAddressAmount>(tt.SourceAddresses)
 
                                               }).ToList()
                     }).ToList();

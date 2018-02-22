@@ -24,6 +24,14 @@
         /// <summary>
         /// Any other errors. Take a look thow the logs.
         /// </summary>
-        InternalError
+        InternalError,
+        /// <summary>
+        /// The requested merchand does not exist.
+        /// </summary>
+        MerchantNotFound,
+        /// <summary>
+        /// The requested merchand does not have any wallets.
+        /// </summary>
+        MerchantHasNoWallets
     }
 }

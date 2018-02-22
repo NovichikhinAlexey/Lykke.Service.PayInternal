@@ -6,7 +6,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
     {
 
         string TransactionHash { get; set; }
-        List<ISourceAmount> SourceAmounts { get; set; }
+        List<IAddressAmount> SourceAmounts { get; set; }
         string DestinationAddress { get; set; }
         int CountConfirm { get; set; }
         decimal Amount { get; set; }

@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
+using Common;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Services;
@@ -23,6 +26,92 @@ namespace Lykke.Service.PayInternal.Controllers
         }
 
         /// <summary>
+        /// Request transfer from a list of some source address(es) to a list of destination address(es) with amounts specified.
+        /// </summary>
+        /// <param name="requestModel">The data containing serialized model object.</param>
+        /// <returns>The transfer info.</returns>
+        /// <response code="200">The Transfer Info.</response>
+        /// <response code="400">Invalid model (description is also provided).</response>
+        [HttpPost]
+        [Route("merchants/transferCrosswise")]
+        [SwaggerOperation("TransferCrosswise")]
+        [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> TransferCrosswiseAsync([FromBody] TransferRequestCrosswiseModel requestModel)
+        {
+            // Block of common validation. Note: numeric values and enums are "0" by default even if they are not presented in given request object.
+            if (!ModelState.IsValid)
+                return BadRequest(
+                    new ErrorResponse().AddErrors(ModelState));
+
+            if (!requestModel.Sources.Any())
+                return BadRequest(
+                    ErrorResponse.Create("List of source addresses can not be empty."));
+
+            if (!requestModel.Destinations.Any())
+                return BadRequest(
+                    ErrorResponse.Create("List of destination addresses can not be empty."));
+
+            var requestValidationError = requestModel.CheckAmountsValidity();
+            if (!string.IsNullOrEmpty(requestValidationError))
+                return BadRequest(
+                    ErrorResponse.Create(requestValidationError));
+
+            var transferRequest = requestModel.ToTransferRequest();
+            if (transferRequest == null)
+                return BadRequest(
+                    ErrorResponse.Create("Transfer model is malformed. Checkup list of sources and destinations."));
+
+            // The main work
+            var transferRequestResult = await _transferRequestService.CreateTransferCrosswiseAsync(transferRequest);
+            if (transferRequestResult.TransferStatus == TransferStatus.Error)
+                return BadRequest(
+                    ErrorResponse.Create("Execution of the transfer was terminated for some reasons. Please, note, that some of its transactions may have passed with success. The transfer data is attached: " +
+                        transferRequestResult.ToJson()));
+
+            return Ok(transferRequestResult);
+        }
+
+        /// <summary>
+        /// Request transfer consistent of a list of signle-source and single-destination transactions with amounts specified for every address pair.
+        /// </summary>
+        /// <param name="requestModel">The data containing serialized model object.</param>
+        /// <returns>The transfer info.</returns>
+        /// <response code="200">The Transfer Info.</response>
+        /// <response code="400">Invalid model (description is also provided).</response>
+        [HttpPost]
+        [Route("merchants/transferMultiBijective")]
+        [SwaggerOperation("TransferMultiBijective")]
+        [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> TransferMultiBijectiveAsync([FromBody] TransferRequestMultiBijectiveModel requestModel)
+        {
+            // Block of common validation. Note: numeric values and enums are "0" by default even if they are not presented in given request object.
+            if (!ModelState.IsValid)
+                return BadRequest(
+                    new ErrorResponse().AddErrors(ModelState));
+
+            var requestValidationError = requestModel.CheckAmountsValidity();
+            if (!string.IsNullOrEmpty(requestValidationError))
+                return BadRequest(
+                    ErrorResponse.Create(requestValidationError));
+
+            var transferRequest = requestModel.ToTransferRequest();
+            if (transferRequest == null)
+                return BadRequest(
+                    ErrorResponse.Create("Transfer model is malformed. Checkup list of sources and destinations."));
+
+            // The main work
+            var transferRequestResult = await _transferRequestService.CreateTransferCrosswiseAsync(transferRequest);
+            if (transferRequestResult.TransferStatus == TransferStatus.Error)
+                return BadRequest(
+                    ErrorResponse.Create("Execution of the transfer was terminated for some reasons. Please, note, that some of its transactions may have passed with success. The transfer data is attached: " +
+                        transferRequestResult.ToJson()));
+
+            return Ok(transferRequestResult);
+        }
+
+        /// <summary>
         /// Request to transfer all money.
         /// </summary>
         /// <param name="merchantId">Merchant Id.</param>
@@ -35,6 +124,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("TransfersRequestAll")]
         [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [Obsolete]
         public async Task<IActionResult> TransfersRequestAllAsync(string merchantId, string destinationAddress)
         {
             if (!ModelState.IsValid)
@@ -62,6 +152,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("TransfersRequestAmountAll")]
         [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [Obsolete]
         public async Task<IActionResult> TransfersRequestAmountAsync(string merchantId, string destinationAddress, string amount)
         {
             if (!ModelState.IsValid)
@@ -96,6 +187,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("TransfesRequestFromAddress")]
         [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [Obsolete]
         public async Task<IActionResult> TransfersRequestFromAddressAsync(string merchantId, string destinationAddress, string amount, [FromBody] string sourceAddress)
         {
             if(!ModelState.IsValid)
@@ -133,6 +225,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("TransfersRequestFromAddressAmount")]
         [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [Obsolete]
         public async Task<IActionResult> TransfersRequestFromAddressesAsync(string merchantId, string destinationAddress, string amount, [FromBody] List<string> sourceAddressesList)
         {
             if (!ModelState.IsValid)
@@ -158,9 +251,9 @@ namespace Lykke.Service.PayInternal.Controllers
                 MerchantId = merchantId,
                 Amount = dAmount,
                 SourceAddresses = (from s in sourceAddressesList
-                                   select new SourceAmount
+                                   select new AddressAmount
                                    {
-                                       SourceAddress = s,
+                                       Address = s,
                                        Amount = 0
                                    }).ToList()
             }.ToTransferRequest()));
@@ -180,14 +273,15 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("TransfersOnlyFromAddress")]
         [ProducesResponseType(typeof(ITransferRequest), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> TransfersRequestFromAddressesWithAmountAsync(string merchantId, string destinationAddress, [FromBody] List<SourceAmount> sourceAddressAmountList)
+        [Obsolete]
+        public async Task<IActionResult> TransfersRequestFromAddressesWithAmountAsync(string merchantId, string destinationAddress, [FromBody] List<AddressAmount> sourceAddressAmountList)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
 
            
             if (sourceAddressAmountList == null || sourceAddressAmountList.Count == 0 ||
-                sourceAddressAmountList.Any(sa=> string.IsNullOrEmpty(sa.SourceAddress) || sa.Amount <= 0))
+                sourceAddressAmountList.Any(sa=> string.IsNullOrEmpty(sa.Address) || sa.Amount <= 0))
             {
                 return BadRequest(ErrorResponse.Create("Source Address Amount list is incorrect"));
             }
@@ -201,6 +295,5 @@ namespace Lykke.Service.PayInternal.Controllers
                 SourceAddresses = sourceAddressAmountList
             }.ToTransferRequest()));
         }
-
     }
 }

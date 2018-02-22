@@ -6,16 +6,16 @@ namespace Lykke.Service.PayInternal.Models
 {
     public class TransferMultipleSourcesRequestModel : TransferRequestModel
     {
-        public List<SourceAmount> SourceAddresses { get; set; }
+        public List<AddressAmount> SourceAddresses { get; set; }
 
         public override ITransferRequest ToTransferRequest()
         {
             var result = base.ToTransferRequest();
-            result.TransactionRequests.First().SourceAmounts = new List<ISourceAmount>(
+            result.TransactionRequests.First().SourceAmounts = new List<IAddressAmount>(
                 from source in SourceAddresses
-                select new SourceAmount
+                select new AddressAmount
                 {
-                    SourceAddress = source.SourceAddress,
+                    Address = source.Address,
                     Amount = source.Amount
                 });
             return result;

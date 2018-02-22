@@ -12,6 +12,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
         /// <summary>
         /// List of source address pairs
         /// </summary>
-        IEnumerable<ISourceAmount> SourceAddresses { get; set; }
+        IEnumerable<IAddressAmount> SourceAddresses { get; set; }
     }
 }

@@ -14,7 +14,7 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public string TransactionHash { get; set; }
         public TransferStatus TransferStatus { get; set; }
         public TransferStatusError TransferStatusError { get; set; }
-        public IEnumerable<ISourceAmount> SourceAddresses { get; set; }
+        public IEnumerable<IAddressAmount> SourceAddresses { get; set; }
         public string DestinationAddress { get; set; }
         public decimal Amount { get; set; }
         public string Currency { get; set; }
