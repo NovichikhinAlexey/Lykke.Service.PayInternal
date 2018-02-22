@@ -20,6 +20,14 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task<ITransferRequest> CreateTransferAsync(ITransferRequest transferRequest);
 
         /// <summary>
+        /// Create crosswise transfer using transfer request
+        /// </summary>
+        /// <param name="transferRequest">transfer request</param>
+        /// <returns></returns>
+
+        Task<ITransferRequest> CreateTransferCrosswiseAsync(ITransferRequest transferRequest);
+
+        /// <summary>
         /// Update transfer status. Other fields will be ignored
         /// </summary>
         /// <param name="transfer">Transfer</param>
@@ -41,7 +49,7 @@ namespace Lykke.Service.PayInternal.Core.Services
         /// <param name="transfer">shord transfer structure</param>
         /// <returns></returns>
 
-        Task<ITransferRequest> GetTransferInfoAsync(ITransferRequest transfer);
+        Task<ITransferRequest> GetTransferInfoAsync(string transferId);
 
     }
 }

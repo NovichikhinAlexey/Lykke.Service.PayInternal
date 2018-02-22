@@ -2,9 +2,9 @@
 
 namespace Lykke.Service.PayInternal.Services.Domain
 {
-    public class SourceAmount : ISourceAmount
+    public class SourceAmount : IAddressAmount
     {
-        public string SourceAddress { get; set; }
+        public string Address { get; set; }
         public decimal Amount { get; set; }
     }
 }

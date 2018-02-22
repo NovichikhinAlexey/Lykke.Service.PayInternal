@@ -5,25 +5,21 @@ using System.Text;
 namespace Lykke.Service.PayInternal.Core.Domain.Transfer
 {
     /// <summary>
-    /// Full transfer object. Contain full transaction fields
+    /// Abstract definition for entity describing what amount of asset should be transfered from AND to the mentioned addresses.
     /// </summary>
-    public interface ITransferInfo: ITransfer
+    public interface IBiAddressAmount
     {
         /// <summary>
-        /// List of source amount pairs.
+        /// Source address
         /// </summary>
-        IEnumerable<IAddressAmount> SourceAddresses { get; set; }
+        string SourceAddress { get; set; }
         /// <summary>
         /// Destination address
         /// </summary>
         string DestinationAddress { get; set; }
         /// <summary>
-        /// TotalAmount
+        /// Amount of asset to transfer
         /// </summary>
         decimal Amount { get; set; }
-        /// <summary>
-        /// Currency
-        /// </summary>
-        string Currency { get; set; }
     }
 }

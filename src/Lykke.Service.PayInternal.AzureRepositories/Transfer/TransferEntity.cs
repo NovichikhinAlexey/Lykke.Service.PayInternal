@@ -68,7 +68,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
         [IgnoreProperty]
         public TransferStatusError TransferStatusError { get; set; }
         [IgnoreProperty]
-        public IEnumerable<ISourceAmount> SourceAddresses { get; set; }
+        public IEnumerable<IAddressAmount> SourceAddresses { get; set; }
         public DateTime CreatedDate { get; set; }
         public string DestinationAddress { get; set; }
         public decimal Amount { get; set; }
@@ -107,7 +107,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
             get => SourceAddresses.ToJson();
             set
             {
-                var result = new List<ISourceAmount>();
+                var result = new List<IAddressAmount>();
                 try
                 {
                     if (string.IsNullOrEmpty(value))

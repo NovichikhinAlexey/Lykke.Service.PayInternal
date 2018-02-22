@@ -43,7 +43,88 @@ namespace Lykke.Service.PayInternal.Services
             _log = log ?? throw new ArgumentNullException(nameof(log));
         }
         #endregion
+
         #region public
+
+        /// <summary>
+        /// Tries to execute a crosswise transfer request from many sources to many destinations.
+        /// </summary>
+        /// <param name="transferRequest">The transfer request.</param>
+        /// <returns>The updated transfer request OR transfer request with error.</returns>
+        public async Task<ITransferRequest> CreateTransferCrosswiseAsync(ITransferRequest transferRequest)
+        {
+            // We need an independent copy of the request here, for some methods in current implementation change the inner state of the given object.
+            // For instance, the BtcTransferRequest class' constructor reuses the transaction list it gets.
+            var transferRequestUpdated = transferRequest.DeepCopy();
+
+            // First of all, we need to verify the source addresses to belong to the Merchant.
+            var sourcesCheckupResult = await CheckupSourcesAndWalletsAsync(transferRequestUpdated);
+            if (sourcesCheckupResult != null)
+                return sourcesCheckupResult;
+
+            // Here would be no additional validations. If transaction fails, we will know it from the underlying BitcoinApi service.
+
+            // The main work
+            foreach (ITransactionRequest tran in transferRequestUpdated.TransactionRequests)
+            {
+                var sourceAddresses = (from s in tran.SourceAmounts
+                                       select new ToOneAddress(s.Address, s.Amount)).ToList();
+                // Please, note: feeRate = 0 and fixedFee = 0 here
+                var currentResult = await _bitcointApiClient.TransactionMultipleTransfer(null, tran.DestinationAddress, tran.Currency, 0, 0, sourceAddresses);
+
+                if (currentResult == null || currentResult.HasError)
+                {
+                    // Please, note: after the first faulty transaction we abort the further execution.
+                    // BUT money that we had already transfered will not go back to source address(es).
+                    // To make the whole transfer request atomic we need to implement such feature in
+                    // BitcoinApi service at first.
+                    return await PackFaultyResult(currentResult, tran, transferRequestUpdated);
+                }
+                else
+                {
+                    tran.TransactionHash = currentResult.Transaction.Hash;
+                }
+            }
+
+            transferRequestUpdated.TransferStatus = TransferStatus.InProgress;
+            transferRequestUpdated.TransferStatusError = TransferStatusError.NotError;
+            return transferRequestUpdated;
+        }
+
+        public async Task<ITransferRequest> UpdateTransferStatusAsync(ITransferRequest transfer)
+        {
+            var t = await GetTransferInfoAsync(transfer.TransferId);
+            if (t == null)
+            {
+                return null;
+            }
+            t.TransferStatus = transfer.TransferStatus;
+            t.TransferStatusError = transfer.TransferStatusError;
+
+            var result =  await _transferRepository.SaveAsync(t) ?? BtcTransferRequest.CreateErrorTransferRequest(transfer.MerchantId,
+                              TransferStatusError.InternalError, transfer.TransactionRequests);
+            await _transferRequestPublisher.PublishAsync(result);
+
+            return result;
+
+        }
+        
+        public async Task<ITransferRequest> UpdateTransferAsync(ITransferRequest transfer)
+        {
+            var result = await _transferRepository.SaveAsync(transfer) ?? BtcTransferRequest.CreateErrorTransferRequest(transfer.MerchantId,
+                       TransferStatusError.InternalError, transfer.TransactionRequests);
+
+            await _transferRequestPublisher.PublishAsync(result);
+
+            return result;
+        }
+
+        public async Task<ITransferRequest> GetTransferInfoAsync(string transferId)
+        {
+            return await _transferRepository.GetAsync(transferId);
+        }
+
+        [Obsolete("This public method is a part of obsolete API. May be removed in newest versions.")]
         public async Task<ITransferRequest> CreateTransferAsync(ITransferRequest transferRequest)
         {
             var wallets = (await _walletRepository.GetByMerchantAsync(transferRequest.MerchantId)).ToList();
@@ -51,14 +132,14 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var transaction in transferRequest.TransactionRequests)
             {
-                List<ISourceAmount> sources = new List<ISourceAmount>();
+                List<IAddressAmount> sources = new List<IAddressAmount>();
                 if (transaction.SourceAmounts == null || !transaction.SourceAmounts.Any())
                 {
                     sources.AddRange(CalculateSources(
                         from w in wallets
                         select new SourceAmount
                         {
-                            SourceAddress = w.Address,
+                            Address = w.Address,
                             Amount = 0
                         }, 0, wallets));
                 }
@@ -75,7 +156,7 @@ namespace Lykke.Service.PayInternal.Services
                     return BtcTransferRequest.CreateErrorTransferRequest(transferRequest.MerchantId,
                         TransferStatusError.InvalidAmount, transferRequest.TransactionRequests);
                 }
-                var transferWallets = new List<string>(sources.Select(s => s.SourceAddress))
+                var transferWallets = new List<string>(sources.Select(s => s.Address))
                 {
                     transaction.DestinationAddress
                 };
@@ -102,51 +183,98 @@ namespace Lykke.Service.PayInternal.Services
             }
 
             return BtcTransferRequest.CreateTransferRequest(transferRequest.MerchantId, transactions);
-
         }
 
-
-
-        public async Task<ITransferRequest> UpdateTransferStatusAsync(ITransferRequest transfer)
-        {
-            var t = await GetTransferInfoAsync(transfer);
-            if (t == null)
-            {
-                return null;
-            }
-            t.TransferStatus = transfer.TransferStatus;
-            t.TransferStatusError = transfer.TransferStatusError;
-
-            var result =  await _transferRepository.SaveAsync(t) ?? BtcTransferRequest.CreateErrorTransferRequest(transfer.MerchantId,
-                              TransferStatusError.InternalError, transfer.TransactionRequests);
-            await _transferRequestPublisher.PublishAsync(result);
-
-            return result;
-
-        }
-
-
-
-
-        public async Task<ITransferRequest> UpdateTransferAsync(ITransferRequest transfer)
-        {
-            var result = await _transferRepository.SaveAsync(transfer) ?? BtcTransferRequest.CreateErrorTransferRequest(transfer.MerchantId,
-                       TransferStatusError.InternalError, transfer.TransactionRequests);
-
-            await _transferRequestPublisher.PublishAsync(result);
-
-            return result;
-        }
-
-        public async Task<ITransferRequest> GetTransferInfoAsync(ITransferRequest transfer)
-        {
-            return await _transferRepository.GetAsync(transfer.TransferId);
-
-        }
         #endregion
+
         #region private
 
-        private async Task<Tuple<ITransactionRequest, TransferStatusError>> CreateBtcTransfer(List<ISourceAmount> sources, string destination)
+        /// <summary>
+        /// Looks through the source addresses and check em up to belong to the Merchant.
+        /// </summary>
+        /// <param name="transferRequest">Transfer request.</param>
+        /// <returns>Error transfer request OR null if validation ended up with success.</returns>
+        private async Task<ITransferRequest> CheckupSourcesAndWalletsAsync(ITransferRequest transferRequest)
+        {
+            // Not the very best algorythm for different transactions may have the same source address(es).
+            var wallets = (await _walletRepository.GetByMerchantAsync(transferRequest.MerchantId))?.ToList();
+            if (wallets == null)
+            {
+                await _log.WriteWarningAsync(
+                            nameof(BtcTransferRequestService),
+                            nameof(CreateTransferCrosswiseAsync),
+                            transferRequest.ToJson(),
+                            $"Error while creating transfer: the merchant with ID \"{transferRequest.MerchantId}\" does not exist.");
+
+                return BtcTransferRequest.CreateErrorTransferRequest(
+                    transferRequest.MerchantId,
+                    TransferStatusError.MerchantNotFound,
+                    transferRequest.TransactionRequests);
+            }
+            if (!wallets.Any())
+            {
+                await _log.WriteWarningAsync(
+                            nameof(BtcTransferRequestService),
+                            nameof(CreateTransferCrosswiseAsync),
+                            transferRequest.ToJson(),
+                            $"Error while creating transfer: the merchant with ID \"{transferRequest.MerchantId}\" does not have any wallets.");
+
+                return BtcTransferRequest.CreateErrorTransferRequest(
+                    transferRequest.MerchantId,
+                    TransferStatusError.MerchantHasNoWallets,
+                    transferRequest.TransactionRequests);
+            }
+
+            foreach (ITransactionRequest tran in transferRequest.TransactionRequests)
+            {
+                foreach (IAddressAmount item in tran.SourceAmounts)
+                {
+                    if (!wallets.Any(w => w.Address == item.Address))
+                    {
+                        await _log.WriteWarningAsync(
+                            nameof(BtcTransferRequestService),
+                            nameof(CreateTransferCrosswiseAsync),
+                            transferRequest.ToJson(),
+                            $"Error while creating transfer: the source address \"{item.Address}\" is incorrect or does not belong to Merchant with ID = \"{transferRequest.MerchantId}\"");
+
+                        return BtcTransferRequest.CreateErrorTransferRequest(
+                            transferRequest.MerchantId,
+                            TransferStatusError.InvalidAddress,
+                            transferRequest.TransactionRequests);
+
+                    }
+                }
+            }
+
+            return null; // Everything's fine
+        }
+
+        /// <summary>
+        /// Packs the result of faulty transaction into new transfer request object, supplying the error info for clients.
+        /// </summary>
+        /// <param name="btcApiResponce">The response of Bitcoin Api Service on the task of transaction execution.</param>
+        /// <param name="faultyTransaction">The faulty transaction itself.</param>
+        /// <param name="theTransfer">The transfer request from wich everything had started.</param>
+        /// <returns></returns>
+        private async Task<ITransferRequest> PackFaultyResult(OnchainResponse btcApiResponce, ITransactionRequest faultyTransaction, ITransferRequest theTransfer)
+        {
+            var errMessage = btcApiResponce?.Error?.Message ?? $"Transaction to destination address \"{faultyTransaction.DestinationAddress}\" with amount of \"{faultyTransaction.Amount} {faultyTransaction.Currency.ToString()}\" failed by unknown reason.";
+            var errCode = btcApiResponce?.Error?.Code;
+
+            await _log.WriteWarningAsync(
+                nameof(BtcTransferRequestService),
+                nameof(CreateTransferAsync),
+                faultyTransaction.ToJson(),
+                $"Transaction to destination address \"{faultyTransaction.DestinationAddress}\" with amount of \"{faultyTransaction.Amount} {faultyTransaction.Currency.ToString()}\" failed with code {errCode} and message \"{errMessage}\".");
+            
+            return BtcTransferRequest.CreateErrorTransferRequest(
+                theTransfer.MerchantId,
+                TransferStatusError.InternalError,
+                theTransfer.TransactionRequests);
+        }
+
+        [Obsolete("This internal method is used in oblolete public methods. May be removed in newest versions.")]
+        private async Task<Tuple<ITransactionRequest, TransferStatusError>> CreateBtcTransfer(List<IAddressAmount> sources, string destination)
         {
             sources = sources.Where(s => s.Amount > 0).ToList();
             OnchainResponse request = null;
@@ -165,7 +293,7 @@ namespace Lykke.Service.PayInternal.Services
 
                 Destination = destination,
                 Sources = (from s in sources
-                           select new ToOneAddress(s.SourceAddress, s.Amount)).ToList()
+                           select new ToOneAddress(s.Address, s.Amount)).ToList()
             };
 
 
@@ -202,33 +330,34 @@ namespace Lykke.Service.PayInternal.Services
 
         }
 
-        private List<ISourceAmount> CalculateSources(IEnumerable<ISourceAmount> sources, decimal amount, List<IWallet> wallets)
+        [Obsolete("This internal method is used in oblolete public methods. May be removed in newest versions.")]
+        private List<IAddressAmount> CalculateSources(IEnumerable<IAddressAmount> sources, decimal amount, List<IWallet> wallets)
         {
-            var result = new List<ISourceAmount>();
-            var sourcesList = sources?.ToList() ?? new List<ISourceAmount>();
-            var sourceToCalc = new List<ISourceAmount>();
+            var result = new List<IAddressAmount>();
+            var sourcesList = sources?.ToList() ?? new List<IAddressAmount>();
+            var sourceToCalc = new List<IAddressAmount>();
             if (sourcesList.Count == 0)
             {
                 sourceToCalc.AddRange(from w in wallets
 
-                                      select new SourceAmount { SourceAddress = w.Address, Amount = w.Amount });
+                                      select new SourceAmount { Address = w.Address, Amount = w.Amount });
 
             }
             else if (sourcesList.All(s => s.Amount == 0))
             {
                 sourceToCalc.AddRange(from s in sourcesList
 
-                                      join w in wallets on s.SourceAddress equals w.Address
-                                      select new SourceAmount { SourceAddress = s.SourceAddress, Amount = w.Amount });
+                                      join w in wallets on s.Address equals w.Address
+                                      select new SourceAmount { Address = s.Address, Amount = w.Amount });
 
             }
             else
             {
                 sourceToCalc.AddRange(from s in sourcesList
 
-                                      join w in wallets on s.SourceAddress equals w.Address
+                                      join w in wallets on s.Address equals w.Address
                                       where s.Amount <= w.Amount
-                                      select new SourceAmount { SourceAddress = s.SourceAddress, Amount = w.Amount });
+                                      select new SourceAmount { Address = s.Address, Amount = w.Amount });
 
                 if (result.Count != sourcesList.Count)
                 {
@@ -267,7 +396,7 @@ namespace Lykke.Service.PayInternal.Services
             return !result.Any() ? null : result;
         }
 
-
+        [Obsolete("This internal method is used in oblolete public methods. May be removed in newest versions.")]
         private bool CheckAddressesValid(IReadOnlyList<string> addresses)
         {
             try

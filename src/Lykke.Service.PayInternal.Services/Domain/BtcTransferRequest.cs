@@ -30,6 +30,16 @@ namespace Lykke.Service.PayInternal.Services.Domain
                 CreateDate = DateTime.Now
             };
         }
+
+        /// <summary>
+        /// --Currently not implemented-- Creates a deep copy of this btc transfer request.
+        /// </summary>
+        /// <returns></returns>
+        public ITransferRequest DeepCopy()
+        {
+            throw new NotImplementedException();
+        }
+
         public string TransferId { get; set; }
         public List<ITransactionRequest> TransactionRequests { get; set; }
         public TransferStatus TransferStatus { get; set; }

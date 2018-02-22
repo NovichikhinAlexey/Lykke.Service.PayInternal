@@ -5,6 +5,6 @@ namespace Lykke.Service.PayInternal.Models
 {
     public class TransferSourcesRequestModel : TransferRequestModel
     {
-        public IEnumerable<ISourceAmount> SourceAddresses { get; set; }
+        public IEnumerable<IAddressAmount> SourceAddresses { get; set; }
     }
 }
