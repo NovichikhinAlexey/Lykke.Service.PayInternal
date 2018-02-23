@@ -56,7 +56,7 @@ namespace Lykke.Service.PayInternal
             return new BtcTransfer
             {
                 DestAddress = src.DestAddress,
-                Sources = src.Sources.Select(x => x.ToDomain()),
+                Sources = src.Sources?.Select(x => x?.ToDomain()),
                 FeeRate = 0,
                 FixedFee = 0
             };

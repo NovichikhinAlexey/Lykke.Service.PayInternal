@@ -36,7 +36,7 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                string transactionId = await _btcTransferService.Execute(request.ToDomain());
+                string transactionId = await _btcTransferService.ExecuteAsync(request.ToDomain());
 
                 return Ok(new BtcTransferResponse {TransactionId = transactionId});
             }

@@ -22,9 +22,11 @@ namespace Lykke.Service.PayInternal.Services
                 bitcoinServiceClient ?? throw new ArgumentNullException(nameof(bitcoinServiceClient));
         }
 
-        public async Task<string> Execute(BtcTransfer transfer)
+        public async Task<string> ExecuteAsync(BtcTransfer transfer)
         {
-            IEnumerable<ToOneAddress> sources = transfer.Sources.Select(x => new ToOneAddress(x.Address, x.Amount));
+            IEnumerable<ToOneAddress> sources = transfer.Sources
+                .Where(x => x != null)
+                .Select(x => new ToOneAddress(x.Address, x.Amount));
 
             OnchainResponse response = await _bitcoinServiceClient.TransactionMultipleTransfer(
                 Guid.NewGuid(),
