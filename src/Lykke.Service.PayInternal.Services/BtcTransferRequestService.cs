@@ -64,6 +64,10 @@ namespace Lykke.Service.PayInternal.Services
 
             // Here would be no additional validations. If transaction fails, we will know it from the underlying BitcoinApi service.
 
+            // Save the initial state of transfer
+            await _transferRepository.SaveAsync(transferRequestUpdated);
+            await _transferRequestPublisher.PublishAsync(transferRequestUpdated);
+
             // The main work
             foreach (ITransactionRequest tran in transferRequestUpdated.TransactionRequests)
             {
@@ -84,10 +88,15 @@ namespace Lykke.Service.PayInternal.Services
                 {
                     tran.TransactionHash = currentResult.Transaction.Hash;
                 }
+
+                await _transferRepository.SaveAsync(transferRequestUpdated);
+                await _transferRequestPublisher.PublishAsync(transferRequestUpdated);
             }
 
             transferRequestUpdated.TransferStatus = TransferStatus.InProgress;
             transferRequestUpdated.TransferStatusError = TransferStatusError.NotError;
+            await _transferRepository.SaveAsync(transferRequestUpdated);
+            await _transferRequestPublisher.PublishAsync(transferRequestUpdated);
             return transferRequestUpdated;
         }
 
