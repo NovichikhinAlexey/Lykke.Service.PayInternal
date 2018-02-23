@@ -113,6 +113,6 @@ namespace Lykke.Service.PayInternal.Client
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        Task<BtcTransferResponse> BtcFreeTransfer(BtcFreeTransferRequest request);
+        Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request);
     }
 }
