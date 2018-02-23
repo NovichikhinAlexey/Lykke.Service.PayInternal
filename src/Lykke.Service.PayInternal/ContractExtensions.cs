@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Lykke.Service.PayInternal.Core.Domain.BtcTransfer;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
@@ -28,6 +29,26 @@ namespace Lykke.Service.PayInternal
                 BlockId = src.BlockId,
                 AssetId = src.AssetId,
                 Blockchain = src.Blockchain
+            };
+        }
+
+        public static SourceInfo ToDomain(this BtcTransferSourceInfo src)
+        {
+            return new SourceInfo
+            {
+                Amount = src.Amount,
+                Address = src.Address
+            };
+        }
+
+        public static BtcTransfer ToDomain(this BtcFreeTransferRequest src)
+        {
+            return new BtcTransfer
+            {
+                DestAddress = src.DestAddress,
+                Sources = src.Sources?.Select(x => x?.ToDomain()),
+                FeeRate = 0,
+                FixedFee = 0
             };
         }
     }
