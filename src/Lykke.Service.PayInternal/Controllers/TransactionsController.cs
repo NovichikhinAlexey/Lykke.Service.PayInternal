@@ -3,6 +3,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
@@ -31,23 +32,24 @@ namespace Lykke.Service.PayInternal.Controllers
         }
 
         /// <summary>
-        /// Registers new transaction
+        /// Creates payment transaction
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost]
-        [SwaggerOperation("CreateTransaction")]
+        [Route("payment")]
+        [SwaggerOperation(nameof(CreatePaymentTransaction))]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> CreateTransaction([FromBody] CreateTransactionRequest request)
+        public async Task<IActionResult> CreatePaymentTransaction([FromBody] CreateTransactionRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
 
             try
             {
-                await _transactionsService.Create(request.ToDomain());
+                await _transactionsService.Create(request.ToDomain(), TransactionType.Payment);
 
                 await _paymentRequestService.ProcessAsync(request.WalletAddress);
 
@@ -55,7 +57,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreateTransaction), ex);
+                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction), ex);
 
                 if (ex is PaymentRequestNotFoundException || ex is UnexpectedAssetException)
                 {
