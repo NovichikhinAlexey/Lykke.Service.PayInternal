@@ -14,5 +14,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         int Confirmations { get; set; }
         string WalletAddress { get; set; }
         DateTime FirstSeen { get; set; }
+        TransactionType TransactionType { get; set; }
     }
 }
