@@ -10,6 +10,6 @@ namespace Lykke.Service.PayInternal.Client.Models.Asset
         /// <summary>
         /// The list of available assets
         /// </summary>
-        public IReadOnlyList<string> Assets { get; set; }
+        public IReadOnlyList<AssetModel> Assets { get; set; }
     }
 }

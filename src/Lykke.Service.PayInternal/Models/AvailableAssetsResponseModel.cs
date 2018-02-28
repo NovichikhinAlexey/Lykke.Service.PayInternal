@@ -4,6 +4,6 @@ namespace Lykke.Service.PayInternal.Models
 {
     public class AvailableAssetsResponseModel
     {
-        public IReadOnlyList<string> Assets { get; set; }
+        public IReadOnlyList<AssetModel> Assets { get; set; }
     }
 }
