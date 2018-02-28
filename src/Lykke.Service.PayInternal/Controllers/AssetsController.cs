@@ -43,8 +43,23 @@ namespace Lykke.Service.PayInternal.Controllers
             try
             {
                 IReadOnlyList<IAssetAvailability> result = await _assetsAvailabilityService.GetAvailableAsync(availabilityType);
+                
+                var assets = new List<AssetModel>();
 
-                return Ok(result.ToApiModel());
+                foreach (IAssetAvailability assetAvailability in result)
+                {
+                    Asset asset = await _assetsLocalCache.GetAssetByIdAsync(assetAvailability.AssetId);
+
+                    assets.Add(new AssetModel
+                    {
+                        Id = asset.Id,
+                        Name = asset.Name
+                    });
+                }
+
+                var response = new AvailableAssetsResponseModel { Assets = assets };
+
+                return Ok(response);
             }
             catch (Exception ex)
             {
