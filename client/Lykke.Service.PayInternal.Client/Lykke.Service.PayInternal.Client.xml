@@ -345,6 +345,21 @@
             Asset is available to be used as settlement asset
             </summary>
         </member>
+        <member name="T:Lykke.Service.PayInternal.Client.Models.Asset.AssetModel">
+            <summary>
+            Repsents an asset details.
+            </summary>
+        </member>
+        <member name="P:Lykke.Service.PayInternal.Client.Models.Asset.AssetModel.Id">
+            <summary>
+            Gets or sets the asset id.
+            </summary>
+        </member>
+        <member name="P:Lykke.Service.PayInternal.Client.Models.Asset.AssetModel.Name">
+            <summary>
+            Gets or sets the asset display name.
+            </summary>
+        </member>
         <member name="T:Lykke.Service.PayInternal.Client.Models.Asset.AvailableAssetsResponse">
             <summary>
             Available assets response
