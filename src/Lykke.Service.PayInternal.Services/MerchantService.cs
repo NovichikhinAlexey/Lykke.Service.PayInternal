@@ -56,6 +56,7 @@ namespace Lykke.Service.PayInternal.Services
             existingMerchant.TimeCacheRates = merchant.TimeCacheRates;
             existingMerchant.LpMarkupPercent = merchant.LpMarkupPercent;
             existingMerchant.LpMarkupPips = merchant.LpMarkupPips;
+            existingMerchant.MarkupFixedFee = merchant.MarkupFixedFee;
             existingMerchant.LwId = merchant.LwId;
             
             await _merchantRepository.ReplaceAsync(existingMerchant);
