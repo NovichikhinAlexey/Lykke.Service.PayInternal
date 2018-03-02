@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Threading.Tasks;
+using Common;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -55,14 +56,29 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok();
             }
+            catch (PaymentRequestNotFoundException ex)
+            {
+                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction), new
+                {
+                    ex.MerchantId,
+                    ex.WalletAddress,
+                    ex.PaymentRequestId
+                }.ToJson(), ex);
+
+                return BadRequest(ErrorResponse.Create(ex.Message));
+            }
+            catch (UnexpectedAssetException ex)
+            {
+                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction), new
+                {
+                    ex.AssetId,
+                }.ToJson(), ex);
+
+                return BadRequest(ErrorResponse.Create(ex.Message));
+            }
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction), ex);
-
-                if (ex is PaymentRequestNotFoundException || ex is UnexpectedAssetException)
-                {
-                    return BadRequest(ErrorResponse.Create(ex.Message));
-                }
             }
 
             return StatusCode((int) HttpStatusCode.InternalServerError);
@@ -90,14 +106,29 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok();
             }
+            catch (TransactionNotFoundException ex)
+            {
+                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), new
+                {
+                    ex.TransactionId
+                }.ToJson(), ex);
+
+                return BadRequest(ErrorResponse.Create(ex.Message));
+            }
+            catch (PaymentRequestNotFoundException ex)
+            {
+                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), new
+                {
+                    ex.MerchantId,
+                    ex.WalletAddress,
+                    ex.PaymentRequestId
+                }.ToJson(), ex);
+
+                return BadRequest(ErrorResponse.Create(ex.Message));
+            }
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), ex);
-
-                if (ex is TransactionNotFoundException || ex is PaymentRequestNotFoundException)
-                {
-                    return BadRequest(ErrorResponse.Create(ex.Message));
-                }
             }
 
             return StatusCode((int) HttpStatusCode.InternalServerError);
