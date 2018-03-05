@@ -52,7 +52,8 @@ namespace Lykke.Service.PayInternal.Services
                 BlockId = request.BlockId,
                 Blockchain = request.Blockchain,
                 FirstSeen = request.FirstSeen,
-                PaymentRequestId = paymentRequest.Id
+                PaymentRequestId = paymentRequest.Id,
+                SourceWalletAddresses = request.SourceWalletAddresses
             };
 
             await _transactionRepository.AddAsync(transactionEntity);

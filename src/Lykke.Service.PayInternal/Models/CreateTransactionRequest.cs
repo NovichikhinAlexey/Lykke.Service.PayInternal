@@ -27,6 +27,9 @@ namespace Lykke.Service.PayInternal.Models
         [Required]
         public string Blockchain { get; set; }
 
+        [Required]
+        public string[] SourceWalletAddresses { get; set; }
+
         public DateTime FirstSeen { get; set; }
     }
 }

@@ -28,7 +28,8 @@ namespace Lykke.Service.PayInternal.Services
                 BlockId = src.BlockId,
                 TransactionId = src.TransactionId,
                 Blockchain = src.Blockchain,
-                AssetId = src.AssetId
+                AssetId = src.AssetId,
+                SourceWalletAddresses = src.SourceWalletAddresses
             };
         }
 
