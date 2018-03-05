@@ -6,6 +6,7 @@ namespace Lykke.Service.PayInternal.Client.Models
     {
         public string TransactionId { get; set; }
         public string WalletAddress { get; set; }
+        public string[] SourceWalletAddresses { get; set; }
         public double Amount { get; set; }
         public string AssetId { get; set; }
         public int Confirmations { get; set; }

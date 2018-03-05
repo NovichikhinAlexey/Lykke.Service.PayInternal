@@ -41,7 +41,6 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.PaidDate, opt => opt.Ignore())
                 .ForMember(dest => dest.Error, opt => opt.Ignore());
 
-
             CreateMap<IPaymentRequest, PaymentRequestDetailsModel>(MemberList.Source)
                 .ForSourceMember(dest => dest.OrderId, opt => opt.Ignore());
 

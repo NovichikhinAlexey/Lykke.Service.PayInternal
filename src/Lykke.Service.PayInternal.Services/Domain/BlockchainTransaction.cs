@@ -15,6 +15,7 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public string Blockchain { get; set; }
         public int Confirmations { get; set; }
         public string WalletAddress { get; set; }
+        public string[] SourceWalletAddresses { get; set; }
         public DateTime FirstSeen { get; set; }
         public TransactionType TransactionType { get; set; }
     }

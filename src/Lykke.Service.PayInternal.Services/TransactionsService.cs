@@ -53,6 +53,7 @@ namespace Lykke.Service.PayInternal.Services
                 Blockchain = request.Blockchain,
                 FirstSeen = request.FirstSeen,
                 PaymentRequestId = paymentRequest.Id,
+                SourceWalletAddresses = request.SourceWalletAddresses,
                 TransactionType = transactionType
             };
 
