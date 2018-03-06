@@ -59,14 +59,14 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunAsync(() => _payInternalApi.GetNotExpiredWalletsAsync());
         }
 
-        public async Task CreatePaymentTransaction(CreateTransactionRequest request)
+        public async Task CreatePaymentTransactionAsync(CreateTransactionRequest request)
         {
-            await _runner.RunAsync(() => _payInternalApi.CreatePaymentTransaction(request));
+            await _runner.RunAsync(() => _payInternalApi.CreatePaymentTransactionAsync(request));
         }
 
-        public async Task UpdateTransaction(UpdateTransactionRequest request)
+        public async Task UpdateTransactionAsync(UpdateTransactionRequest request)
         {
-            await _runner.RunAsync(() => _payInternalApi.UpdateTransaction(request));
+            await _runner.RunAsync(() => _payInternalApi.UpdateTransactionAsync(request));
         }
 
         public async Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync()
