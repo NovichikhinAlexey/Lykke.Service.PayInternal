@@ -13,9 +13,19 @@ namespace Lykke.Service.PayInternal.Client
 
         Task<IEnumerable<WalletStateResponse>> GetNotExpiredWalletsAsync();
 
-        Task CreateTransaction(CreateTransactionRequest request);
+        /// <summary>
+        /// Creates transaction of payment type
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task CreatePaymentTransactionAsync(CreateTransactionRequest request);
 
-        Task UpdateTransaction(UpdateTransactionRequest request);
+        /// <summary>
+        /// Updates transaction
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task UpdateTransactionAsync(UpdateTransactionRequest request);
         
         /// <summary>
         /// Returns all merchants.
