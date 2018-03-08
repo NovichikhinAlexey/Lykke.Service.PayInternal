@@ -10,6 +10,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public LpMarkupSettings LpMarkup { get; set; }
         public int TransactionConfirmationCount { get; set; }
         public BlockchainExplorerSettings LykkeBlockchainExplorer { get; set; }
+        public AssetsAvailability AssetsAvailability { get; set; }
     }
 
     public class LpMarkupSettings
@@ -21,5 +22,10 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class BlockchainExplorerSettings
     {
         public string TransactionUrl { get; set; }
+    }
+    public class AssetsAvailability
+    {
+        public string PaymentAssets { get; set; }
+        public string SettlementAssets { get; set; }
     }
 }

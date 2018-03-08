@@ -12,6 +12,7 @@ using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
 using Lykke.Service.PayInternal.Client.Models.Transfer;
 using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
+using Lykke.Service.PayInternal.Client.Models.Asset;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -21,8 +22,8 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IPayInternalApi _payInternalApi;
         private readonly IMerchantsApi _merchantsApi;
         private readonly IOrdersApi _ordersApi;
-        private readonly IPaymentRequestsApi _paymentRequestsApi;
         private readonly IAssetsApi _assetsApi;
+        private readonly IPaymentRequestsApi _paymentRequestsApi;
         private readonly ITransferReportApi _transferReportApi;
         private readonly ITransferRequestApi _transferRequestApi;
         private readonly ApiRunner _runner;
@@ -54,7 +55,6 @@ namespace Lykke.Service.PayInternal.Client
             _assetsApi = RestService.For<IAssetsApi>(_httpClient);
             _transferReportApi = RestService.For<ITransferReportApi>(_httpClient);
             _transferRequestApi = RestService.For<ITransferRequestApi>(_httpClient);
-
             _runner = new ApiRunner();
         }
 
@@ -144,15 +144,21 @@ namespace Lykke.Service.PayInternal.Client
         {
             return await _runner.RunAsync(() => _paymentRequestsApi.ChechoutAsync(merchantId, paymentRequestId));
         }
-
         public async Task<AvailableAssetsResponse> GetAvailableAsync(AssetAvailabilityType availabilityType)
         {
             return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(availabilityType));
         }
-
+        public async Task<AvailableAssetsResponse> GetAvailableAsync(AssetByMerchantModel assetByMerchant)
+        {
+            return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(assetByMerchant.availabilityType));
+        }
         public async Task SetAvailabilityAsync(UpdateAssetAvailabilityRequest request)
         {
             await _runner.RunAsync(() => _assetsApi.SetAvailabilityAsync(request));
+        }
+        public async Task SetAvailabilityByMerchantAsync(UpdateAssetAvailabilityByMerchantRequest request)
+        {
+            await _runner.RunAsync(() => _assetsApi.SetAvailabilityByMerchantAsync(request));
         }
 
         public async Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request)

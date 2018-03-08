@@ -39,6 +39,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             const string paymentRequestsTableName = "PaymentRequests";
             const string ordersTableName = "Orders";
             const string assetsAvailabilityTableName = "AssetsAvailability";
+            const string assetsAvailabilityByMerchantTableName = "AssetsAvailabilityByMerchant";
 
             builder.RegisterInstance<IMerchantRepository>(new MerchantRepository(
                 AzureTableStorage<MerchantEntity>.Create(_merchantsConnectionString,
@@ -53,10 +54,12 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             builder.RegisterInstance<IOrderRepository>(new OrdersRepository(
                 AzureTableStorage<OrderEntity>.Create(_ordersConnectionString,
                     ordersTableName, _log)));
-
             builder.RegisterInstance<IAssetAvailabilityRepository>(new AssetAvailabilityRepository(
                 AzureTableStorage<AssetAvailabilityEntity>.Create(_paymentRequestsConnectionString,
                     assetsAvailabilityTableName, _log)));
+            builder.RegisterInstance<IAssetAvailabilityByMerchantRepository>(new AssetAvailabilityByMerchantRepository(
+                AzureTableStorage<AssetAvailabilityByMerchantEntity>.Create(_paymentRequestsConnectionString,
+                    assetsAvailabilityByMerchantTableName, _log)));
         }
     }
 }
