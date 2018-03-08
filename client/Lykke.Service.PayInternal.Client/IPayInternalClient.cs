@@ -4,6 +4,7 @@ using Lykke.Service.PayInternal.Client.Models;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
+using Lykke.Service.PayInternal.Client.Models.Asset;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -107,6 +108,21 @@ namespace Lykke.Service.PayInternal.Client
         /// </summary>
         /// <returns>The payment request details.</returns>
         Task<PaymentRequestDetailsModel> ChechoutAsync(string merchantId, string paymentRequestId);
+        /// <summary>
+        /// Get available assets by availability type
+        /// </summary>
+        /// <param name="availabilityType">Availability type</param>
+        /// <returns></returns>
+        Task<AvailableAssetsResponse> GetAvailableAsync(AssetAvailabilityType availabilityType);
+        Task<AvailableAssetsResponse> GetAvailableAsync(AssetByMerchantModel assetByMerchant);
+
+        /// <summary>
+        /// Updates availability type for asset
+        /// </summary>
+        /// <param name="request">The asset availability update request</param>
+        /// <returns></returns>
+        Task SetAvailabilityAsync(UpdateAssetAvailabilityRequest request);
+        Task SetAvailabilityByMerchantAsync(UpdateAssetAvailabilityByMerchantRequest request);
 
         /// <summary>
         /// Transfers BTC from source addresses with amount provided to destination address without LykkePay fees
