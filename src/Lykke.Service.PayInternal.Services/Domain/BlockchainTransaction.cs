@@ -7,7 +7,6 @@ namespace Lykke.Service.PayInternal.Services.Domain
     {
         public string Id { get; set; }
         public string TransactionId { get; set; }
-        public string OrderId { get; set; }
         public string PaymentRequestId { get; set; }
         public decimal Amount { get; set; }
         public string AssetId { get; set; }
