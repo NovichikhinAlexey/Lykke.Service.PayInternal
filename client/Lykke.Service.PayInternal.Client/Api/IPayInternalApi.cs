@@ -20,7 +20,7 @@ namespace Lykke.Service.PayInternal.Client.Api
         [Put("/api/transactions")]
         Task UpdateTransactionAsync([Body] UpdateTransactionRequest request);
 
-        [Get("/api/transactions/GetAllMonitoredTransactions")]
+        [Get("/api/transactions/GetAllMonitored")]
         Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactions();
         
     }
