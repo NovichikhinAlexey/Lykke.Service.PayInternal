@@ -144,24 +144,22 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpGet]
         [Route("GetAllMonitored")]
         [SwaggerOperation("GetAllMonitored")]
-        [ProducesResponseType(typeof(List<TransactionStateResponse>), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(List<TransactionStateResponse>), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetAllMonitoredAsync()
         {
             try
             {
                 var response = await _transactionsService.GetAllMonitoredAsync();
-                if (!response.Any())
-                    return NotFound(ErrorResponse.Create("There are no monitored transactions right now."));
 
                 return Ok(Mapper.Map<List<TransactionStateResponse>>(response));
             }
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(TransactionsController), nameof(GetAllMonitoredAsync), ex);
-                return BadRequest((ErrorResponse.Create(ex.Message)));
             }
+
+            return StatusCode((int) HttpStatusCode.InternalServerError);
         }
     }
 }
