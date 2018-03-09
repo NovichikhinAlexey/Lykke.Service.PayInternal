@@ -1,5 +1,4 @@
-﻿using System;
-using Common.Log;
+﻿using Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;

@@ -111,7 +111,8 @@ namespace Lykke.Service.PayInternal.Services
                     AssetId = multipartTransfer.AssetId,
                     Confirmations = 0,
                     Id = responseForPart.Transaction.TransactionId?.ToString(),
-                    WalletAddress = part.Destination.Address
+                    WalletAddress = part.Destination.Address,
+                    TransactionType = TransactionType.Refund
                 };
 
                 await _transactionRepository.AddAsync(blockchainTransaction);

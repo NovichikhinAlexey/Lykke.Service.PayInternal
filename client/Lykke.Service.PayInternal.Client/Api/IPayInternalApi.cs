@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lykke.Service.PayInternal.Client.Models;
+using Lykke.Service.PayInternal.Client.Models.Transactions;
+using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Refit;
 
 namespace Lykke.Service.PayInternal.Client.Api
@@ -18,5 +19,8 @@ namespace Lykke.Service.PayInternal.Client.Api
 
         [Put("/api/transactions")]
         Task UpdateTransaction([Body] UpdateTransactionRequest request);
+
+        [Get("/api/transactions/GetAllMonitoredTransactions")]
+        Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactions();
     }
 }

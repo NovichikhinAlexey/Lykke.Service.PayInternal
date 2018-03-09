@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lykke.Service.PayInternal.Client.Models;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
+using Lykke.Service.PayInternal.Client.Models.Refunds;
+using Lykke.Service.PayInternal.Client.Models.Transactions;
+using Lykke.Service.PayInternal.Client.Models.Wallets;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -124,5 +126,40 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request"></param>
         /// <returns></returns>
         Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request);
+
+        /// <summary>
+        /// Finds and returns all monitored (i.e., not expired and not fully confirmed yet) transactions.
+        /// </summary>
+        /// <returns>The list of monitored transactions.</returns>
+        Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactions();
+
+        /// <summary>
+        /// Request transfer from a list of some source address(es) to a list of destination address(es) with amounts specified.
+        /// </summary>
+        /// <param name="request">The data containing serialized model object.</param>
+        /// <returns>The object representing the state of transfer request execution.</returns>
+        Task<MultipartTransferResponse> CrosswiseTransferAsync(CrosswiseTransferRequest request);
+
+        /// <summary>
+        /// Request transfer consistent of a list of signle-source and single-destination transactions with amounts specified for every address pair.
+        /// </summary>
+        /// <param name="request">The data containing serialized model object.</param>
+        /// <returns>The object representing the state of transfer request execution.</returns>
+        Task<MultipartTransferResponse> MultiBijectiveTransferAsync( MultipartTransferResponse request);
+
+        /// <summary>
+        /// Creates a new refund request for the specified payment request and (optionally) wallet address.
+        /// </summary>
+        /// <param name="paymentRequestId">The payment request ID.</param>
+        /// <param name="walletAddress">The wallet address.</param>
+        /// <returns>The object representing the state of refund request execution.</returns>
+        Task<RefundResponse> CreateRefundRequestAsync(string paymentRequestId, string walletAddress = null);
+
+        /// <summary>
+        /// Gets the current state of the specified refund request.
+        /// </summary>
+        /// <param name="refundId">The refund request ID.</param>
+        /// <returns></returns>
+        Task<RefundResponse> GetRefundAsync(string refundId);
     }
 }

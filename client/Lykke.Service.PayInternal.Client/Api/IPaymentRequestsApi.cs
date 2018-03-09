@@ -27,5 +27,11 @@ namespace Lykke.Service.PayInternal.Client.Api
 
         [Post("/api/btcTransfer")]
         Task<BtcTransferResponse> BtcFreeTransferAsync([Body] BtcFreeTransferRequest request);
+
+        [Post("/api/transfers/CrosswiseTransfer")]
+        Task<MultipartTransferResponse> CrosswiseTransferAsync([Body] CrosswiseTransferRequest request);
+
+        [Post("/api/transfers/MultiBijectiveTransfer")]
+        Task<MultipartTransferResponse> MultiBijectiveTransferAsync([Body] MultipartTransferResponse request);
     }
 }

@@ -4,10 +4,12 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Api;
-using Lykke.Service.PayInternal.Client.Models;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
+using Lykke.Service.PayInternal.Client.Models.Refunds;
+using Lykke.Service.PayInternal.Client.Models.Transactions;
+using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
 
@@ -20,6 +22,7 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IMerchantsApi _merchantsApi;
         private readonly IOrdersApi _ordersApi;
         private readonly IPaymentRequestsApi _paymentRequestsApi;
+        private readonly IRefundApi _refundApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -46,6 +49,7 @@ namespace Lykke.Service.PayInternal.Client
             _merchantsApi = RestService.For<IMerchantsApi>(_httpClient);
             _ordersApi = RestService.For<IOrdersApi>(_httpClient);
             _paymentRequestsApi = RestService.For<IPaymentRequestsApi>(_httpClient);
+            _refundApi = RestService.For<IRefundApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
@@ -139,6 +143,31 @@ namespace Lykke.Service.PayInternal.Client
         public async Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request)
         {
             return await _runner.RunAsync(() => _paymentRequestsApi.BtcFreeTransferAsync(request));
+        }
+
+        public async Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactions()
+        {
+            return await _runner.RunAsync(() => _payInternalApi.GetAllMonitoredTransactions());
+        }
+
+        public async Task<MultipartTransferResponse> CrosswiseTransferAsync(CrosswiseTransferRequest request)
+        {
+            return await _runner.RunAsync(() => _paymentRequestsApi.CrosswiseTransferAsync(request));
+        }
+
+        public async Task<MultipartTransferResponse> MultiBijectiveTransferAsync(MultipartTransferResponse request)
+        {
+            return await _runner.RunAsync(() => _paymentRequestsApi.MultiBijectiveTransferAsync(request));
+        }
+
+        public async Task<RefundResponse> CreateRefundRequestAsync(string paymentRequestId, string walletAddress = null)
+        {
+            return await _runner.RunAsync(() => _refundApi.CreateRefundRequestAsync(paymentRequestId, walletAddress));
+        }
+
+        public async Task<RefundResponse> GetRefundAsync(string refundId)
+        {
+            return await _runner.RunAsync(() => _refundApi.GetRefundAsync(refundId));
         }
 
         public void Dispose()
