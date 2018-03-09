@@ -1,4 +1,4 @@
-﻿namespace Lykke.Service.PayInternal.Models
+﻿namespace Lykke.Service.PayInternal.Models.Transfers
 {
     public class BtcTransferResponse
     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace Lykke.Service.PayInternal.Models
+namespace Lykke.Service.PayInternal.Models.Transfers
 {
     public class BtcFreeTransferRequest
     {

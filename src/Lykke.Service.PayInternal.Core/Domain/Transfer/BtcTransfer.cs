@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 
-namespace Lykke.Service.PayInternal.Core.Domain.BtcTransfer
+namespace Lykke.Service.PayInternal.Core.Domain.Transfer
 {
     public class BtcTransfer
     {
-        public IEnumerable<SourceInfo> Sources { get; set; }
+        public IEnumerable<AddressAmount> Sources { get; set; }
         public string DestAddress { get; set; }
         public int FeeRate { get; set; }
         public decimal FixedFee { get; set; }

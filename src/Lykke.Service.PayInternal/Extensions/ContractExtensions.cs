@@ -1,10 +1,11 @@
 ﻿using System.Linq;
-using Lykke.Service.PayInternal.Core.Domain.BtcTransfer;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
+using Lykke.Service.PayInternal.Models.Transfers;
 
-namespace Lykke.Service.PayInternal
+namespace Lykke.Service.PayInternal.Extensions
 {
     public static class ContractExtensions
     {
@@ -18,9 +19,9 @@ namespace Lykke.Service.PayInternal
             };
         }
 
-        public static TransactionStateResponse ToApiModel(this IBlockchainTransaction src)
+        public static PayTransactionStateResponse ToApiModel(this IBlockchainTransaction src)
         {
-            return new TransactionStateResponse
+            return new PayTransactionStateResponse
             {
                 Id = src.Id,
                 WalletAddress = src.WalletAddress,
@@ -32,9 +33,9 @@ namespace Lykke.Service.PayInternal
             };
         }
 
-        public static SourceInfo ToDomain(this BtcTransferSourceInfo src)
+        public static AddressAmount ToDomain(this BtcTransferSourceInfo src)
         {
-            return new SourceInfo
+            return new AddressAmount
             {
                 Amount = src.Amount,
                 Address = src.Address

@@ -1,7 +1,9 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
 {
+    [UsedImplicitly]
     public class PayInternalSettings
     {
         public DbSettings Db { get; set; }

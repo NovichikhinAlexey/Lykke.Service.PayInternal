@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
+using Lykke.Service.PayInternal.AzureRepositories.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 {
@@ -36,6 +39,27 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             entity.Map(blockchainTransaction);
 
             await _storage.InsertOrMergeAsync(entity);
+        }
+
+        public async Task<IEnumerable<IBlockchainTransaction>> GetNotExpiredAsync(IReadOnlyList<string> paymentRequestIdList, int minConfirmationsCount)
+        {
+            var result = new List<IBlockchainTransaction>();
+
+            foreach (var payReqId in paymentRequestIdList)
+            {
+                var filter = TableQuery.CombineFilters(
+                    TableQuery.GenerateFilterCondition("PaymentRequestId", QueryComparisons.Equal, payReqId),
+                    TableOperators.And,
+                    TableQuery.GenerateFilterConditionForInt("Confirmations", QueryComparisons.LessThan, minConfirmationsCount));
+
+                var query = new TableQuery<BlockchainTransactionEntity>().Where(filter);
+
+                var item = await _storage.WhereAsync(query);
+                if (item != null)
+                    result.AddRange(item);
+            }
+
+            return result;
         }
 
         public async Task UpdateAsync(IBlockchainTransaction blockchainTransaction)
