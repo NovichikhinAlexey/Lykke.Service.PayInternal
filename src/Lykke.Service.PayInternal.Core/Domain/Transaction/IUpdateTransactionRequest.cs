@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Lykke.Service.PayInternal.Core.Domain.Transaction
+﻿namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 {
     public interface IUpdateTransactionRequest
     {

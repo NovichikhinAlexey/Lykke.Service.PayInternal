@@ -8,6 +8,6 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public string ConnectionString { get; set; }
         public string WalletsExchangeName { get; set; }
         public string PaymentRequestsExchangeName { get; set; }
-        public string TansferRequestsExchangeName { get; set; }
+        public string TransactionUpdatesExchangeName { get; set; }
     }
 }

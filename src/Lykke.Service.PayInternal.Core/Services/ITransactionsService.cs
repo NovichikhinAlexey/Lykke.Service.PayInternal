@@ -7,6 +7,7 @@ namespace Lykke.Service.PayInternal.Core.Services
     public interface ITransactionsService
     {
         Task<IEnumerable<IBlockchainTransaction>> GetAsync(string walletAddress);
+        Task<IEnumerable<IBlockchainTransaction>> GetAllMonitoredAsync();
         Task Create(ICreateTransaction request, TransactionType transactionType);
         Task Update(IUpdateTransaction request);
     }

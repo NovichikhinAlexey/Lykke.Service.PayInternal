@@ -1,93 +1,31 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
 using AzureStorage;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
-using MoreLinq;
-
+using System.Threading.Tasks;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
 {
     public class TransferRepository : ITransferRepository
     {
-        private const int BatchPieceSize = 15;
-        private readonly INoSQLTableStorage<TransferEntity> _tableStorage;
-        public TransferRepository(INoSQLTableStorage<TransferEntity> tableStorage)
+        private readonly INoSQLTableStorage<TransferEntity> _storage;
+
+        public TransferRepository(INoSQLTableStorage<TransferEntity> storage)
         {
-            _tableStorage = tableStorage;
+            _storage = storage;
         }
 
-        public async Task<IEnumerable<ITransferRequest>> GetAllAsync()
+        public async Task AddAsync(IMultipartTransfer transfer)
         {
-            var transactions = await _tableStorage.GetDataAsync();
-            return AggregateTransactions(transactions);
+            var entity = new TransferEntity();
+            entity.Map(transfer);
 
+            await _storage.InsertOrMergeAsync(entity);
         }
 
-    
-
-
-    public async Task<ITransferRequest> GetAsync(string transferRequestId)
+        public async Task<IEnumerable<IMultipartTransfer>> GetFiltered(Func<IMultipartTransfer, bool> filter)
         {
-            var transactions = await _tableStorage.GetDataAsync(transferRequestId);
-            return AggregateTransactions(transactions.ToList()).FirstOrDefault();
-        }
-
-        public async Task<ITransferRequest> GetAsync(string transferRequestId, string transactionHash)
-        {
-            var transaction = await _tableStorage.GetDataAsync(transferRequestId, transactionHash);
-            return AggregateTransactions(new List<TransferEntity> { transaction }).FirstOrDefault(); 
-        }
-
-        public async Task<ITransferRequest> SaveAsync(ITransferRequest transferInfo)
-        {
-            var transfers = TransferEntity.Create(transferInfo);
-
-            foreach (var batch in transfers.Batch(BatchPieceSize))
-            {
-                try
-                {
-                    var tasks = batch.Select(x => _tableStorage.InsertOrMergeAsync(x));
-
-                    await Task.WhenAll(tasks);
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-
-            return transferInfo;
-        }
-
-        private List<ITransferRequest> AggregateTransactions(IList<TransferEntity> transactions)
-        {
-            var transferAgg = (from transaction in transactions
-                group transaction by transaction.TransferId
-                into transferAggregation
-                select transferAggregation).ToList();
-
-            return (from transfer in transferAgg
-                    let transferTransactions = transfer.ToList()
-                    select (ITransferRequest) new TransferRequest
-                    {
-                        TransferId = transfer.Key,
-                        TransferStatus = transferTransactions.First().TransferStatus,
-                        TransferStatusError = transferTransactions.First().TransferStatusError,
-                        CreateDate = transferTransactions.First().CreatedDate,
-                        TransactionRequests = (from tt in transferTransactions
-                                              select (ITransactionRequest) new TransactionRequest
-                                              {
-                                                  Amount = tt.Amount,
-                                                  Currency = tt.Currency,
-                                                  DestinationAddress = tt.DestinationAddress,
-                                                  TransactionHash = tt.TransactionHash,
-                                                  CountConfirm = tt.CountConfirm,
-                                                  SourceAmounts = new List<IAddressAmount>(tt.SourceAddresses)
-
-                                              }).ToList()
-                    }).ToList();
-
+            return await _storage.GetDataAsync(filter);
         }
     }
 }

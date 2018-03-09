@@ -32,6 +32,7 @@ namespace Lykke.Service.PayInternal.Modules
         private readonly IReloadingManager<DbSettings> _dbSettings;
         private readonly ILog _log;
         // NOTE: you can remove it if you don't need to use IServiceCollection extensions to register service specific dependencies
+        // ReSharper disable once CollectionNeverUpdated.Local
         private readonly IServiceCollection _services;
 
         public ServiceModule(IReloadingManager<AppSettings> settings, ILog log)
@@ -107,18 +108,11 @@ namespace Lykke.Service.PayInternal.Modules
                 .As<ICalculationService>();
 
             builder.RegisterType<TransactionsService>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.TransactionConfirmationCount))
                 .As<ITransactionsService>();
 
-            builder.RegisterType<AssetAvailabilityService>()
-                .As<IAssetsAvailabilityService>();
-
-            //todo: unite BtcTransferService + BtcTransferRequestService
-            builder.RegisterType<BtcTransferService>()
-                .As<IBtcTransferService>();
-
-            builder.RegisterType<BtcTransferRequestService>()
-                .As<ITransferRequestService>();
-            
+            builder.RegisterType<TransferService>()
+                .As<ITransferService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
@@ -173,8 +167,8 @@ namespace Lykke.Service.PayInternal.Modules
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
 
-            builder.RegisterType<TransferRequestPublisher>()
-                .As<ITransferRequestPublisher>()
+            builder.RegisterType<TransactionPublisher>()
+                .As<ITransactionPublisher>()
                 .As<IStartable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));

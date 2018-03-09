@@ -26,7 +26,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
             RowKey = rowKey;
         }
 
-        public string Id => RowKey;
+       public string Id => RowKey;
         
         public string MerchantId { get; set; }
         

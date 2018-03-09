@@ -1,4 +1,4 @@
-﻿namespace Lykke.Service.PayInternal.Client.Models
+﻿namespace Lykke.Service.PayInternal.Client.Models.Wallets
 {
     public class WalletAddressResponse
     {

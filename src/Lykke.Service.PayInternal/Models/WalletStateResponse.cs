@@ -7,10 +7,10 @@ namespace Lykke.Service.PayInternal.Models
     {
         public string Address { get; set; }
         public DateTime DueDate { get; set; }
-        public IEnumerable<TransactionStateResponse> Transactions { get; set; }
+        public IEnumerable<PayTransactionStateResponse> Transactions { get; set; }
     }
 
-    public class TransactionStateResponse
+    public class PayTransactionStateResponse
     {
         public string Id { get; set; }
         public decimal Amount { get; set; }

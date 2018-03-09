@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Lykke.Service.PayInternal.Client.Models
+namespace Lykke.Service.PayInternal.Client.Models.Wallets
 {
     public class WalletStateResponse
     {

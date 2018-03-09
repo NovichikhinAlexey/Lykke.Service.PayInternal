@@ -1,6 +1,6 @@
-﻿namespace Lykke.Service.PayInternal.Core.Domain.BtcTransfer
+﻿namespace Lykke.Service.PayInternal.Core.Domain.Transfer
 {
-    public class SourceInfo
+    public class AddressAmount
     {
         public string Address { get; set; }
         public decimal Amount { get; set; }

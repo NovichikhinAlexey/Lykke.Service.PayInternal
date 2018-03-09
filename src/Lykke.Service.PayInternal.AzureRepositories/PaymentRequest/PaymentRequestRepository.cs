@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AzureStorage;
 using AzureStorage.Tables.Templates.Index;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
 {
@@ -43,6 +44,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
                 return null;
 
             return await _storage.GetDataAsync(index);
+        }
+
+        public async Task<IEnumerable<IPaymentRequest>> GetNotExpiredAsync()
+        {
+            var filter =
+                TableQuery.GenerateFilterConditionForDate("DueDate", QueryComparisons.GreaterThanOrEqual, DateTimeOffset.UtcNow);
+
+            var query = new TableQuery<PaymentRequestEntity>().Where(filter);
+
+            return await _storage.WhereAsync(query);
         }
 
         public async Task<IPaymentRequest> InsertAsync(IPaymentRequest paymentRequest)
