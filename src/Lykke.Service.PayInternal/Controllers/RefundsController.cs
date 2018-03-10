@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Extensions;
 using Lykke.Service.PayInternal.Models.Refunds;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -27,19 +28,22 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <summary>
         /// Creates a new refund request for the specified payment request and (optionally) wallet address.
         /// </summary>
-        /// <param name="paymentRequestId">The payment request ID.</param>
-        /// <param name="walletAddress">The wallet address.</param>
+        /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("refunds/Refund")]
+        [Route("refund")]
         [SwaggerOperation("Refund")]
         [ProducesResponseType(typeof(RefundResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> CreateRefundRequestAsync(string paymentRequestId, string walletAddress)
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> CreateRefundRequestAsync([FromBody] RefundRequestModel request)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(new ErrorResponse().AddErrors(ModelState));
+
             await Task.Delay(50);
 
-            if (string.IsNullOrWhiteSpace(paymentRequestId))
+            if (string.IsNullOrWhiteSpace(request.PaymentRequestId))
                 return BadRequest(ErrorResponse.Create("Payment request ID can not be null."));
 
             return Ok(new RefundResponse());
@@ -49,13 +53,14 @@ namespace Lykke.Service.PayInternal.Controllers
         /// Gets the current state of the specified refund request.
         /// </summary>
         /// <param name="refundId">The refund request ID.</param>
+        /// <param name="merchantId">Merchant id that owns the refund</param>
         /// <returns></returns>
         [HttpGet]
-        [Route("refunds/GetRefund")]
+        [Route("refund/{merchantId}/{refundId}")]
         [SwaggerOperation("GetRefund")]
         [ProducesResponseType(typeof(RefundResponse), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetRefundAsync(string refundId)
+        public async Task<IActionResult> GetRefundAsync(string merchantId, string refundId)
         {
             await Task.Delay(50);
 
