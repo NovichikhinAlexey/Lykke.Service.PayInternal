@@ -6,10 +6,10 @@ namespace Lykke.Service.PayInternal.Client.Api
 {
     internal interface IRefundApi
     {
-        [Post("/api/refunds/Refund")]
-        Task<RefundResponse> CreateRefundRequestAsync(string paymentRequestId, string walletAddress = null);
+        [Post("/api/refund")]
+        Task<RefundResponse> CreateRefundRequestAsync([Body] RefundRequestModel request);
 
-        [Get("/api/refunds/GetRefund")]
-        Task<RefundResponse> GetRefundAsync(string refundId);
+        [Get("/api/refund/{merchantId}/{refundId}")]
+        Task<RefundResponse> GetRefundAsync(string merchantId, string refundId);
     }
 }

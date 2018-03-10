@@ -178,14 +178,14 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunAsync(() => _paymentRequestsApi.MultiBijectiveTransferAsync(request));
         }
 
-        public async Task<RefundResponse> CreateRefundRequestAsync(string paymentRequestId, string walletAddress = null)
+        public async Task<RefundResponse> CreateRefundRequestAsync(RefundRequestModel request)
         {
-            return await _runner.RunAsync(() => _refundApi.CreateRefundRequestAsync(paymentRequestId, walletAddress));
+            return await _runner.RunAsync(() => _refundApi.CreateRefundRequestAsync(request));
         }
 
-        public async Task<RefundResponse> GetRefundAsync(string refundId)
+        public async Task<RefundResponse> GetRefundAsync(string merchantId, string refundId)
         {
-            return await _runner.RunAsync(() => _refundApi.GetRefundAsync(refundId));
+            return await _runner.RunAsync(() => _refundApi.GetRefundAsync(merchantId, refundId));
         }
 
         public void Dispose()

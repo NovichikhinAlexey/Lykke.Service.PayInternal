@@ -166,16 +166,16 @@ namespace Lykke.Service.PayInternal.Client
         /// <summary>
         /// Creates a new refund request for the specified payment request and (optionally) wallet address.
         /// </summary>
-        /// <param name="paymentRequestId">The payment request ID.</param>
-        /// <param name="walletAddress">The wallet address.</param>
-        /// <returns>The object representing the state of refund request execution.</returns>
-        Task<RefundResponse> CreateRefundRequestAsync(string paymentRequestId, string walletAddress = null);
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task<RefundResponse> CreateRefundRequestAsync(RefundRequestModel request);
 
         /// <summary>
         /// Gets the current state of the specified refund request.
         /// </summary>
-        /// <param name="refundId">The refund request ID.</param>
+        /// <param name="merchantId"></param>
+        /// <param name="refundId"></param>
         /// <returns></returns>
-        Task<RefundResponse> GetRefundAsync(string refundId);
+        Task<RefundResponse> GetRefundAsync(string merchantId, string refundId);
     }
 }
