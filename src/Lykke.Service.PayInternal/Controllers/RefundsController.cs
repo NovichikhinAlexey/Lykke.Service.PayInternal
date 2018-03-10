@@ -43,9 +43,6 @@ namespace Lykke.Service.PayInternal.Controllers
 
             await Task.Delay(50);
 
-            if (string.IsNullOrWhiteSpace(request.PaymentRequestId))
-                return BadRequest(ErrorResponse.Create("Payment request ID can not be null."));
-
             return Ok(new RefundResponse());
         }
 

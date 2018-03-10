@@ -8,7 +8,7 @@ namespace Lykke.Service.PayInternal.Models.Refunds
         public string MerchantId { get; set; }
 
         [Required]
-        public string PaymentRequestId { get; set; }
+        public string SourceAddress { get; set; }
 
         public string DestinationAddress { get; set; }
     }
