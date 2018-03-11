@@ -46,25 +46,13 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             return entity;
         }
 
-        public async Task<IEnumerable<IBlockchainTransaction>> GetNotExpiredAsync(IReadOnlyList<string> paymentRequestIdList, int minConfirmationsCount)
+        public async Task<IEnumerable<IBlockchainTransaction>> GetNotExpiredAsync(int minConfirmationsCount)
         {
-            var result = new List<IBlockchainTransaction>();
+            var filter = TableQuery.GenerateFilterConditionForInt("Confirmations", QueryComparisons.LessThan, minConfirmationsCount);
 
-            foreach (var payReqId in paymentRequestIdList)
-            {
-                var filter = TableQuery.CombineFilters(
-                    TableQuery.GenerateFilterCondition("PaymentRequestId", QueryComparisons.Equal, payReqId),
-                    TableOperators.And,
-                    TableQuery.GenerateFilterConditionForInt("Confirmations", QueryComparisons.LessThan, minConfirmationsCount));
+            var query = new TableQuery<BlockchainTransactionEntity>().Where(filter);
 
-                var query = new TableQuery<BlockchainTransactionEntity>().Where(filter);
-
-                var item = await _storage.WhereAsync(query);
-                if (item != null)
-                    result.AddRange(item);
-            }
-
-            return result;
+            return await _storage.WhereAsync(query);
         }
 
         public async Task UpdateAsync(IBlockchainTransaction blockchainTransaction)

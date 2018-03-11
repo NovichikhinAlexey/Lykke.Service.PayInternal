@@ -15,13 +15,13 @@ namespace Lykke.Service.PayInternal.Controllers
     public class RefundsController : Controller
     {
         // ReSharper disable once NotAccessedField.Local
-        private readonly ITransferService _transferService;
+        private readonly IRefundService _refundService;
         // ReSharper disable once NotAccessedField.Local
         private readonly ILog _log;
 
-        public RefundsController(ITransferService transferService, ILog log)
+        public RefundsController(IRefundService refundService, ILog log)
         {
-            _transferService = transferService ?? throw new ArgumentNullException(nameof(transferService));
+            _refundService = refundService ?? throw new ArgumentNullException(nameof(refundService));
             _log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
@@ -41,9 +41,25 @@ namespace Lykke.Service.PayInternal.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
 
-            await Task.Delay(50);
+            try
+            {
+                var result = await _refundService.ExecuteAsync(request);
+                if (result == null)
+                    throw new Exception("Unknown internal error.");
 
-            return Ok(new RefundResponse());
+                return Ok(new RefundResponse
+                {
+                    Amount = result.Amount,
+                    MerchantId = result.MerchantId,
+                    PaymentRequestId = result.PaymentRequestId,
+                    RefundId = result.RefundId,
+                    SettlementId = result.SettlementId
+                });
+            }
+            catch (Exception e)
+            {
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
         }
 
         /// <summary>
@@ -59,12 +75,23 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetRefundAsync(string merchantId, string refundId)
         {
-            await Task.Delay(50);
-
-            if (string.IsNullOrWhiteSpace(refundId))
+            if (string.IsNullOrWhiteSpace(refundId) ||
+                string.IsNullOrWhiteSpace(refundId))
                 return BadRequest(ErrorResponse.Create("Refund request ID can not be null."));
 
-            return Ok(new RefundResponse());
+            var result = await _refundService.GetStateAsync(merchantId, refundId);
+
+            if (result == null)
+                return NotFound("The refund operation with the requested parameters does not exist.");
+
+            return Ok(new RefundResponse
+            {
+                Amount = result.Amount,
+                MerchantId = result.MerchantId,
+                PaymentRequestId = result.PaymentRequestId,
+                RefundId = result.RefundId,
+                SettlementId = result.SettlementId
+            });
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using Common.Log;
+﻿using Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -45,15 +44,7 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IEnumerable<IBlockchainTransaction>> GetAllMonitoredAsync()
         {
-            var activePayRequests = await _paymentRequestRepository.GetNotExpiredAsync();
-
-            var payRequestIdList = activePayRequests
-                .Select(pr => pr.Id)
-                .ToList();
-
-            var result = await _transactionRepository.GetNotExpiredAsync(
-                payRequestIdList,
-                _transactionConfirmationCount);
+            var result = await _transactionRepository.GetNotExpiredAsync(_transactionConfirmationCount);
 
             return result;
         }
