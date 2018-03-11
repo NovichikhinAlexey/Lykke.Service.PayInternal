@@ -17,7 +17,6 @@ namespace Lykke.Service.PayInternal.Models
         [Required]
         public int Confirmations { get; set; }
 
-        [Required]
         public string BlockId { get; set; }
 
         public DateTime? FirstSeen { get; set; }

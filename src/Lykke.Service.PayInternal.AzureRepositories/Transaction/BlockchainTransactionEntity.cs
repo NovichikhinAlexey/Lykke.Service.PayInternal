@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
@@ -13,6 +14,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         private int _confirmations;
         private DateTime? _firstSeen;
         private TransactionType _transactionType;
+        [CanBeNull] private string _blockId;
         
         public BlockchainTransactionEntity()
         {
@@ -40,7 +42,15 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             }
         }
         
-        public string BlockId { get; set; }
+        public string BlockId
+        {
+            get => _blockId;
+            set
+            {
+                _blockId = value;
+                MarkValueTypePropertyAsDirty(nameof(BlockId));
+            }
+        }
         
         public int Confirmations
         {
@@ -66,7 +76,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
         public string AssetId { get; set; }
 
-        public string Blockchain { get; set; }
+        [CanBeNull] public string Blockchain { get; set; }
 
         public TransactionType TransactionType
         {

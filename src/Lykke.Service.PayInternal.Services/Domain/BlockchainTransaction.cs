@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.Services.Domain

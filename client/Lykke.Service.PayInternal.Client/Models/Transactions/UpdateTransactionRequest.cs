@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace Lykke.Service.PayInternal.Client.Models.Transactions
 {
@@ -8,7 +9,7 @@ namespace Lykke.Service.PayInternal.Client.Models.Transactions
         public string WalletAddress { get; set; }
         public double Amount { get; set; }
         public int Confirmations { get; set; }
-        public string BlockId { get; set; }
+        [CanBeNull] public string BlockId { get; set; }
         public DateTime? FirstSeen { get; set; }
     }
 }
