@@ -84,13 +84,16 @@ namespace Lykke.Service.PayInternal.Modules
                 .SingleInstance();
 
             builder.RegisterType<StartupManager>()
-                .As<IStartupManager>();
+                .As<IStartupManager>()
+                .SingleInstance();
 
             builder.RegisterType<ShutdownManager>()
-                .As<IShutdownManager>();
+                .As<IShutdownManager>()
+                .SingleInstance();
 
             builder.RegisterType<MerchantWalletsService>()
-                .As<IMerchantWalletsService>();
+                .As<IMerchantWalletsService>()
+                .SingleInstance();
 
             builder.RegisterType<AssetAvailabilityService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.AssetsAvailability))
@@ -98,14 +101,21 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<CalculationService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LpMarkup))
-                .As<ICalculationService>();
+                .As<ICalculationService>()
+                .SingleInstance();
 
             builder.RegisterType<TransactionsService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.TransactionConfirmationCount))
-                .As<ITransactionsService>();
+                .As<ITransactionsService>()
+                .SingleInstance();
 
             builder.RegisterType<TransferService>()
-                .As<ITransferService>();
+                .As<ITransferService>()
+                .SingleInstance();
+
+            builder.RegisterType<RefundService>()
+                .As<IRefundService>()
+                .SingleInstance();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)

@@ -6,11 +6,13 @@ using Lykke.Service.PayInternal.AzureRepositories.Asset;
 using Lykke.Service.PayInternal.AzureRepositories.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.Order;
 using Lykke.Service.PayInternal.AzureRepositories.PaymentRequest;
+using Lykke.Service.PayInternal.AzureRepositories.Refund;
 using Lykke.Service.PayInternal.AzureRepositories.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain.Refund;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.SettingsReader;
 
@@ -22,6 +24,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories
         private readonly IReloadingManager<string> _merchantsConnectionString;
         private readonly IReloadingManager<string> _paymentRequestsConnectionString;
         private readonly IReloadingManager<string> _transfersConnectionString;
+        private readonly IReloadingManager<string> _refundsConnectionStringString;
         private readonly ILog _log;
 
         public AutofacModule(
@@ -29,12 +32,14 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             IReloadingManager<string> merchantsConnectionString,
             IReloadingManager<string> paymentRequestsConnectionString,
             IReloadingManager<string> transfersConnectionString,
+            IReloadingManager<string> refundsConnectionString,
             ILog log)
         {
             _ordersConnectionString = ordersConnectionString;
             _merchantsConnectionString = merchantsConnectionString;
             _paymentRequestsConnectionString = paymentRequestsConnectionString;
             _transfersConnectionString = transfersConnectionString;
+            _refundsConnectionStringString = refundsConnectionString;
             _log = log;
         }
         
@@ -44,6 +49,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             const string paymentRequestsTableName = "PaymentRequests";
             const string ordersTableName = "Orders";
             const string transfersTableName = "Transfers";
+            const string refundsTableName = "Refunds";
             const string assetsAvailabilityTableName = "AssetsAvailability";
             const string assetsAvailabilityByMerchantTableName = "AssetsAvailabilityByMerchant";
 
@@ -64,6 +70,10 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             builder.RegisterInstance<ITransferRepository>(new TransferRepository(
                 AzureTableStorage<TransferEntity>.Create(_transfersConnectionString,
                     transfersTableName, _log)));
+
+            builder.RegisterInstance<IRefundRepository>(new RefundRepository(
+                AzureTableStorage<RefundEntity>.Create(_refundsConnectionStringString,
+                    refundsTableName, _log)));
 
             builder.RegisterInstance<IAssetAvailabilityRepository>(new AssetAvailabilityRepository(
                 AzureTableStorage<AssetAvailabilityEntity>.Create(_paymentRequestsConnectionString,

@@ -18,5 +18,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public string PaymentRequestConnString { get; set; }
         [AzureTableCheck]
         public string TransferConnString { get; set; }
+        [AzureTableCheck]
+        public string RefundConnString { get; set; }
     }
 }

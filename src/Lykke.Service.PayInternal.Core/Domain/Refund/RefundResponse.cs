@@ -1,6 +1,4 @@
-﻿using Lykke.Service.PayInternal.Core.Domain.Refund;
-
-namespace Lykke.Service.PayInternal.Models.Refunds
+﻿namespace Lykke.Service.PayInternal.Core.Domain.Refund
 {
     public class RefundResponse : IRefund
     {
