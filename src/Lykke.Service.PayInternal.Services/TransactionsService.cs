@@ -88,7 +88,7 @@ namespace Lykke.Service.PayInternal.Services
             if (string.IsNullOrEmpty(request.WalletAddress))
             {
                 IEnumerable<IBlockchainTransaction> transactions =
-                    await _transactionRepository.GetAsync(request.TransactionId);
+                    await _transactionRepository.GetByTransactionAsync(request.TransactionId);
 
                 if (!transactions.Any())
                     throw new TransactionNotFoundException(request.TransactionId);
