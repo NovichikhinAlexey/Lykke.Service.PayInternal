@@ -80,7 +80,7 @@ namespace Lykke.Service.PayInternal.Models.Transfers
             {
                 var newMultipleTransaction = new TransferPart
                 {
-                    Destination =
+                    Destination = new AddressAmount
                     {
                         Amount = Destinations[i].Amount,
                         Address = Destinations[i].Address

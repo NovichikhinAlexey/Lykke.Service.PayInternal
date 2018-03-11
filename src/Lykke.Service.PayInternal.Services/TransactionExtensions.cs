@@ -9,7 +9,7 @@ namespace Lykke.Service.PayInternal.Services
     {
         public static DateTime GetLatestDate(this IEnumerable<IBlockchainTransaction> src)
         {
-            return src.Max(x => x.FirstSeen);
+            return src.Max(x => x.FirstSeen ?? DateTime.MinValue);
         }
 
         public static decimal GetTotal(this IEnumerable<IBlockchainTransaction> src)

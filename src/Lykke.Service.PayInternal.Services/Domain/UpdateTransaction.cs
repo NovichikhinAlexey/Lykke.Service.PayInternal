@@ -1,4 +1,5 @@
-﻿using Lykke.Service.PayInternal.Core.Domain.Transaction;
+﻿using System;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.Services.Domain
 {
@@ -9,5 +10,6 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public decimal Amount { get; set; }
         public int Confirmations { get; set; }
         public string BlockId { get; set; }
+        public DateTime? FirstSeen { get; set; }
     }
 }

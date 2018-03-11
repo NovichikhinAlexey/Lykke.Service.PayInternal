@@ -95,29 +95,31 @@ namespace Lykke.Service.PayInternal.Services
                 {
                     response.State = response.TransactionIdList.Count > 0 ? TransferExecutionResult.SuccessInPart : TransferExecutionResult.Fail;
                     response.ErrorMessage = $"Transfer execution failed. " + 
-                                            $"Code = {responseForPart.Error.Code}, Message = {responseForPart.Error.Message}.";
+                                            $"Code = {responseForPart.Error?.Code}, Message = {responseForPart.Error?.Message}.";
 
                     await _log.WriteWarningAsync(nameof(TransferService),
                         nameof(ExecuteMultipartTransferAsync),
                         response.ErrorMessage);
-
+                
                     break;
                 }
 
-                var blockchainTransaction = new BlockchainTransaction
+                var blockchainTransaction = await _transactionRepository.AddAsync(new BlockchainTransaction
                 {
                     PaymentRequestId = multipartTransfer.PaymentRequestId,
                     Amount = part.Destination.Amount,
                     AssetId = multipartTransfer.AssetId,
                     Confirmations = 0,
-                    Id = responseForPart.Transaction.TransactionId?.ToString(),
+                    TransactionId = responseForPart.Transaction.Hash,
                     WalletAddress = part.Destination.Address,
-                    TransactionType = TransactionType.Refund
-                };
+                    TransactionType = TransactionType.Refund,
+                    Blockchain = BlockchainType.Bitcoin.ToString(),
+                    FirstSeen = null
+                });
 
-                await _transactionRepository.AddAsync(blockchainTransaction);
                 await _transactionPublisher.PublishAsync(blockchainTransaction);
-                response.TransactionIdList.Add(responseForPart.Transaction.TransactionId.ToString());
+
+                response.TransactionIdList.Add(blockchainTransaction.Id);
             }
 
             response.State = TransferExecutionResult.Success;

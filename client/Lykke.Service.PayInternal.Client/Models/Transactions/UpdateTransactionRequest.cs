@@ -1,4 +1,6 @@
-﻿namespace Lykke.Service.PayInternal.Client.Models.Transactions
+﻿using System;
+
+namespace Lykke.Service.PayInternal.Client.Models.Transactions
 {
     public class UpdateTransactionRequest
     {
@@ -7,5 +9,6 @@
         public double Amount { get; set; }
         public int Confirmations { get; set; }
         public string BlockId { get; set; }
+        public DateTime? FirstSeen { get; set; }
     }
 }

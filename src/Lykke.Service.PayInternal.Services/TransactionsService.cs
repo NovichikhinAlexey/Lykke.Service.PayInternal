@@ -1,4 +1,5 @@
-﻿using Common.Log;
+﻿using System.Collections;
+using Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -84,6 +85,26 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task Update(IUpdateTransaction request)
         {
+            if (string.IsNullOrEmpty(request.WalletAddress))
+            {
+                IEnumerable<IBlockchainTransaction> transactions =
+                    await _transactionRepository.GetAsync(request.TransactionId);
+
+                if (!transactions.Any())
+                    throw new TransactionNotFoundException(request.TransactionId);
+
+                foreach (var bcnTransaction in transactions)
+                {
+                    bcnTransaction.BlockId = request.BlockId;
+                    bcnTransaction.FirstSeen = request.FirstSeen;
+                    bcnTransaction.Confirmations = request.Confirmations;
+
+                    await _transactionRepository.UpdateAsync(bcnTransaction);
+                }
+
+                return;
+            }
+
             IBlockchainTransaction transaction =
                 await _transactionRepository.GetAsync(request.WalletAddress, request.TransactionId);
 

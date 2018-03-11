@@ -12,7 +12,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
     {
         private decimal _amount;
         private int _confirmations;
-        private DateTime _firstSeen;
+        private DateTime? _firstSeen;
         private TransactionType _transactionType;
         
 
@@ -59,7 +59,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         [ValueSerializer(typeof(StringListSerializer))]
         public string[] SourceWalletAddresses { get; set; }
      
-        public DateTime FirstSeen
+        public DateTime? FirstSeen
         {
             get => _firstSeen;
             set
