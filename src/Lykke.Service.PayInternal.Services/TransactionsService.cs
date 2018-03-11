@@ -49,7 +49,7 @@ namespace Lykke.Service.PayInternal.Services
             return result;
         }
 
-        public async Task Create(ICreateTransaction request, TransactionType transactionType)
+        public async Task CreatePaymentTransaction(ICreateTransaction request)
         {
             IPaymentRequest paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
 
@@ -67,11 +67,19 @@ namespace Lykke.Service.PayInternal.Services
                 Blockchain = request.Blockchain,
                 FirstSeen = request.FirstSeen,
                 PaymentRequestId = paymentRequest.Id,
-                SourceWalletAddresses = request.SourceWalletAddresses,
-                TransactionType = transactionType
+                TransactionType = TransactionType.Payment,
+                DueDate = paymentRequest.DueDate,
+                SourceWalletAddresses = request.SourceWalletAddresses
             };
 
             await _transactionRepository.AddAsync(transactionEntity);
+        }
+
+        public async Task CreateRefundTransaction(ICreateTransaction request)
+        {
+            //todo: use  TransactionType = TransactionType.Refund
+            //todo: set up dueDate = refundRequest.DueDate
+            throw new System.NotImplementedException();
         }
 
         public async Task Update(IUpdateTransaction request)
@@ -96,6 +104,7 @@ namespace Lykke.Service.PayInternal.Services
                 return;
             }
 
+            // payment transaction update
             IBlockchainTransaction transaction =
                 await _transactionRepository.GetAsync(request.WalletAddress, request.TransactionId);
 
