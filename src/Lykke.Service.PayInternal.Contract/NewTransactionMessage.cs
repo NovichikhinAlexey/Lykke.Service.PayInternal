@@ -1,4 +1,6 @@
-﻿namespace Lykke.Service.PayInternal.Contract
+﻿using System;
+
+namespace Lykke.Service.PayInternal.Contract
 {
     public class NewTransactionMessage
     {
@@ -8,5 +10,6 @@
         public string BlockId { get; set; }
         public string Blockchain { get; set; }
         public int Confirmations { get; set; }
+        public DateTime DueDate { get; set; }
     }
 }
