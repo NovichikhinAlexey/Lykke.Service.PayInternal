@@ -5,10 +5,10 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.RabbitMqBroker.Publisher;
 using Lykke.RabbitMqBroker.Subscriber;
+using Lykke.Service.PayInternal.Contract;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
-using Lykke.Service.PayInternal.Models;
 
 namespace Lykke.Service.PayInternal.Rabbit.Publishers
 {
@@ -17,7 +17,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
     {
         private readonly ILog _log;
         private readonly RabbitMqSettings _settings;
-        private RabbitMqPublisher<TransactionStateResponse> _publisher;
+        private RabbitMqPublisher<NewTransactionMessage> _publisher;
 
         public TransactionPublisher(ILog log, RabbitMqSettings settings)
         {
@@ -32,15 +32,15 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
 
         public async Task PublishAsync(IBlockchainTransaction transaction)
         {
-            //todo: add duedate
-            await _publisher.ProduceAsync(new TransactionStateResponse
+            await _publisher.ProduceAsync(new NewTransactionMessage
             {
                 Id = transaction.Id,
                 AssetId = transaction.AssetId,
-                Amount = (double)transaction.Amount,
+                Amount = transaction.Amount,
                 Confirmations = transaction.Confirmations,
                 BlockId = transaction.BlockId,
-                Blockchain = transaction.Blockchain
+                Blockchain = transaction.Blockchain,
+                DueDate = transaction.DueDate
             });
         }
 
@@ -51,8 +51,8 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
 
             settings.MakeDurable();
 
-            _publisher = new RabbitMqPublisher<TransactionStateResponse>(settings)
-                .SetSerializer(new JsonMessageSerializer<TransactionStateResponse>())
+            _publisher = new RabbitMqPublisher<NewTransactionMessage>(settings)
+                .SetSerializer(new JsonMessageSerializer<NewTransactionMessage>())
                 .SetPublishStrategy(new DefaultFanoutPublishStrategy(settings))
                 .PublishSynchronously()
                 .SetLogger(_log)
