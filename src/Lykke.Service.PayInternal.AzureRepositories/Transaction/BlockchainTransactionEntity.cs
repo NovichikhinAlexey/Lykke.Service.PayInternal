@@ -88,6 +88,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             }
         }
 
+        public DateTime DueDate { get; set; }
+
         internal void Map(IBlockchainTransaction blockchainTransaction)
         {
             TransactionId = blockchainTransaction.TransactionId;
@@ -100,6 +102,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             AssetId = blockchainTransaction.AssetId;
             Blockchain = blockchainTransaction.Blockchain;
             TransactionType = blockchainTransaction.TransactionType;
+            DueDate = blockchainTransaction.DueDate;
         }
     }
 }

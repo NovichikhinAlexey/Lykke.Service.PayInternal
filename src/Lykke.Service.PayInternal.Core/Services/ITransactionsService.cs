@@ -8,7 +8,8 @@ namespace Lykke.Service.PayInternal.Core.Services
     {
         Task<IEnumerable<IBlockchainTransaction>> GetAsync(string walletAddress);
         Task<IEnumerable<IBlockchainTransaction>> GetAllMonitoredAsync();
-        Task Create(ICreateTransaction request, TransactionType transactionType);
+        Task CreatePaymentTransaction(ICreateTransaction request);
+        Task CreateRefundTransaction(ICreateTransaction request);
         Task Update(IUpdateTransaction request);
     }
 }

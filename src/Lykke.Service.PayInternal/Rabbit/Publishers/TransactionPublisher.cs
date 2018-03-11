@@ -32,6 +32,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
 
         public async Task PublishAsync(IBlockchainTransaction transaction)
         {
+            //todo: add duedate
             await _publisher.ProduceAsync(new TransactionStateResponse
             {
                 Id = transaction.Id,

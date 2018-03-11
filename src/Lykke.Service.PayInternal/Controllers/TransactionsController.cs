@@ -52,7 +52,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                await _transactionsService.Create(request.ToDomain(), TransactionType.Payment);
+                await _transactionsService.CreatePaymentTransaction(request.ToDomain());
 
                 await _paymentRequestService.ProcessAsync(request.WalletAddress);
 

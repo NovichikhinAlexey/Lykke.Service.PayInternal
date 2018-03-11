@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
@@ -48,7 +49,10 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
         public async Task<IEnumerable<IBlockchainTransaction>> GetNotExpiredAsync(int minConfirmationsCount)
         {
-            var filter = TableQuery.GenerateFilterConditionForInt("Confirmations", QueryComparisons.LessThan, minConfirmationsCount);
+            var filter = TableQuery.CombineFilters(
+                TableQuery.GenerateFilterConditionForDate("DueDate", QueryComparisons.GreaterThan, DateTime.UtcNow),
+                TableOperators.And,
+                TableQuery.GenerateFilterConditionForInt("Confirmations", QueryComparisons.LessThan, minConfirmationsCount));
 
             var query = new TableQuery<BlockchainTransactionEntity>().Where(filter);
 

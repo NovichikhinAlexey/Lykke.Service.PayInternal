@@ -104,6 +104,7 @@ namespace Lykke.Service.PayInternal.Services
                     break;
                 }
 
+                //todo: think about moving transactions creation to transactionsService
                 var blockchainTransaction = await _transactionRepository.AddAsync(new BlockchainTransaction
                 {
                     PaymentRequestId = multipartTransfer.PaymentRequestId,
@@ -115,6 +116,7 @@ namespace Lykke.Service.PayInternal.Services
                     TransactionType = TransactionType.Refund,
                     Blockchain = BlockchainType.Bitcoin.ToString(),
                     FirstSeen = null
+                    //todo: add dueDate
                 });
 
                 await _transactionPublisher.PublishAsync(blockchainTransaction);
