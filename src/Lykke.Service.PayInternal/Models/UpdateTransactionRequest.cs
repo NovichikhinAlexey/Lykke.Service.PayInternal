@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.Models
@@ -8,7 +9,6 @@ namespace Lykke.Service.PayInternal.Models
         [Required]
         public string TransactionId { get; set; }
 
-        [Required]
         public string WalletAddress { get; set; }
 
         [Required]
@@ -19,5 +19,7 @@ namespace Lykke.Service.PayInternal.Models
 
         [Required]
         public string BlockId { get; set; }
+
+        public DateTime? FirstSeen { get; set; }
     }
 }

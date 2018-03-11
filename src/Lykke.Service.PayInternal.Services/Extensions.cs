@@ -40,7 +40,8 @@ namespace Lykke.Service.PayInternal.Services
                 Amount = src.Amount,
                 Confirmations = src.Confirmations,
                 BlockId = src.BlockId,
-                TransactionId = src.TransactionId
+                TransactionId = src.TransactionId,
+                FirstSeen = src.FirstSeen
             };
         }
     }

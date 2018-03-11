@@ -29,7 +29,12 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             return await _storage.GetDataAsync(GetPartitionKey(walletAddress), GetRowKey(transactionId));
         }
 
-        public async Task AddAsync(IBlockchainTransaction blockchainTransaction)
+        public async Task<IEnumerable<IBlockchainTransaction>> GetByTransactionAsync(string transactionId)
+        {
+            return await _storage.GetDataAsync(t => t.Id == transactionId);
+        }
+
+        public async Task<IBlockchainTransaction> AddAsync(IBlockchainTransaction blockchainTransaction)
         {
             var entity = new BlockchainTransactionEntity(
                 GetPartitionKey(blockchainTransaction.WalletAddress),
@@ -37,6 +42,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             entity.Map(blockchainTransaction);
 
             await _storage.InsertOrMergeAsync(entity);
+
+            return entity;
         }
 
         public async Task<IEnumerable<IBlockchainTransaction>> GetNotExpiredAsync(IReadOnlyList<string> paymentRequestIdList, int minConfirmationsCount)

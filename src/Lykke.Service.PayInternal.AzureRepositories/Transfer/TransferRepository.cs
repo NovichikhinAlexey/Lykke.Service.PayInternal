@@ -20,7 +20,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
             var entity = new TransferEntity();
             entity.Map(transfer);
 
-            await _storage.InsertOrMergeAsync(entity);
+            await _storage.InsertAsync(entity);
         }
 
         public async Task<IEnumerable<IMultipartTransfer>> GetFiltered(Func<IMultipartTransfer, bool> filter)
