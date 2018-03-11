@@ -105,7 +105,10 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 await _transactionsService.Update(request.ToDomain());
 
-                await _paymentRequestService.ProcessAsync(request.WalletAddress);
+                if (!string.IsNullOrEmpty(request.WalletAddress))
+                {
+                    await _paymentRequestService.ProcessAsync(request.WalletAddress);
+                }
 
                 return Ok();
             }
