@@ -13,6 +13,7 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task<IAssetAvailability> UpdateAsync(string assetId, AssetAvailabilityType assetAvailability, bool value);
         Task<IAssetAvailabilityByMerchant> UpdateMerchantAssetsAsync(string paymentAssets, string settlementAssets, string merchantId);
         Task<IReadOnlyList<IAssetAvailability>> GetAvailableAsync(string merchantId, AssetAvailabilityType assetAvailabilityType);
+        Task<IAssetAvailabilityByMerchant> GetAvailablePersonalAsync(string merchantId);
         Task<IReadOnlyList<IAssetAvailability>> GetAssetsAvailabilityFromSettings(AssetAvailabilityType assetAvailability);
     }
 }

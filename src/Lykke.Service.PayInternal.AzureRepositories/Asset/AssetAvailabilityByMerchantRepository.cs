@@ -28,6 +28,18 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
             string rowKey = AssetAvailabilityByMerchantEntity.GenerateRowKey();
 
             AssetAvailabilityByMerchantEntity exItem = await _tableStorage.GetDataAsync(partitionKey, rowKey);
+            if (exItem != null && string.IsNullOrEmpty(settlementAssets) && string.IsNullOrEmpty(paymentAssets))
+            {
+                await _tableStorage.DeleteAsync(exItem);
+                return null;
+            }
+            if (exItem != null)
+            {
+                exItem.AssetsPayment = paymentAssets;
+                exItem.AssetsSettlement = settlementAssets;
+                await _tableStorage.InsertOrMergeAsync(exItem);
+                return exItem;
+            }
             var newItem = AssetAvailabilityByMerchantEntity.Create(new AssetAvailabilityByMerchant
             {
                 MerchantId = merchantId,

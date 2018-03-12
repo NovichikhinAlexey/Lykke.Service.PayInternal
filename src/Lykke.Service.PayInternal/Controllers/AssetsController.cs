@@ -115,6 +115,23 @@ namespace Lykke.Service.PayInternal.Controllers
                 throw;
             }
         }
+        [HttpGet]
+        [Route("availablepersonal")]
+        [SwaggerOperation("GetAvailablePersonal")]
+        [ProducesResponseType(typeof(AvailableAssetsResponseModel), (int)HttpStatusCode.OK)]
+        public async Task<IActionResult> GetAvailablePersonal([FromQuery] string merchantId)
+        {
+            try
+            {
+                var response = await _assetsAvailabilityService.GetAvailablePersonalAsync(merchantId);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(AssetsController), nameof(GetAvailable), ex);
+                throw;
+            }
+        }
         /// <summary>
         /// Updates asset availability with provided availability type and value
         /// </summary>
