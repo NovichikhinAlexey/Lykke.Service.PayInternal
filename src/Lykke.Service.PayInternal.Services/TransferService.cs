@@ -14,7 +14,6 @@ using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Services.Domain;
-using Lykke.SettingsReader;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -25,14 +24,14 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransferRepository _transferRepository;
         private readonly ITransactionsService _transactionService;
         private readonly ITransactionPublisher _transactionPublisher;
-        private readonly IReloadingManager<ExpirationPeriodsSettings> _expirationPeriods;
+        private readonly ExpirationPeriodsSettings _expirationPeriods;
         private readonly ILog _log;
 
         public TransferService(IBitcoinApiClient bitcoinServiceClient,
             ITransferRepository transferRepository,
             ITransactionsService transactionServicey,
             ITransactionPublisher transactionPublisher,
-            IReloadingManager<ExpirationPeriodsSettings> expirationPeriods,
+            ExpirationPeriodsSettings expirationPeriods,
             ILog log)
         {
             _bitcoinServiceClient =
@@ -83,8 +82,12 @@ namespace Lykke.Service.PayInternal.Services
                 State = TransferExecutionResult.Success // Assume by default, but may be overriden in process.
             };
 
+            if (string.IsNullOrWhiteSpace(multipartTransfer.TransferId))
+                multipartTransfer.TransferId = Guid.NewGuid().ToString();
+
             await _transferRepository.AddAsync(multipartTransfer);
 
+            // Preparing DueDate value depending on transaction type.
             DateTime? dueDate = null;
 
             switch (transactionsType)
@@ -92,7 +95,9 @@ namespace Lykke.Service.PayInternal.Services
                 case TransactionType.Payment:
                     break; // No need to set DueDate manually
                 case TransactionType.Refund:
-                    dueDate = DateTime.UtcNow.Add(_expirationPeriods.CurrentValue.Refund);
+                    // Refund transaction gets expiration date based on transfer's creation date,
+                    // wich is dependent on refund creation date
+                    dueDate = multipartTransfer.CreationDate.Add(_expirationPeriods.Refund);
                     break;
                 case TransactionType.Settlement:
                     break; // TODO: add some logic here

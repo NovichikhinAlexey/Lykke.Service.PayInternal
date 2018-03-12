@@ -41,6 +41,11 @@ namespace Lykke.Service.PayInternal.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
 
+            // TODO: remove this check after multi-directional refunds are enabled.
+            if (string.IsNullOrWhiteSpace(request.SourceAddress) ||
+                string.IsNullOrWhiteSpace(request.DestinationAddress))
+                return BadRequest(ErrorResponse.Create("Multi-directional refunds are not currently supported. Please, specify both Source and Destination addresses."));
+
             try
             {
                 var result = await _refundService.ExecuteAsync(request);
@@ -58,6 +63,11 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (Exception e)
             {
+                await _log.WriteErrorAsync(
+                    nameof(RefundsController),
+                    nameof(CreateRefundRequestAsync),
+                    e);
+
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
         }

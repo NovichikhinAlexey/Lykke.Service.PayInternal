@@ -10,7 +10,6 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
-using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.Transactions;
 using Lykke.Service.PayInternal.Services;
 using Microsoft.AspNetCore.Mvc;
