@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Lykke.Service.PayInternal.Core.Domain.Refund;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -19,6 +20,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IPaymentRequestRepository _paymentRequestRepository;
         // ReSharper disable once NotAccessedField.Local
         private readonly IOrderRepository _orderRepository;
+        private readonly IRefundRepository _refundRepository;
         private readonly int _transactionConfirmationCount;
         // ReSharper disable once NotAccessedField.Local
         private readonly ILog _log;
@@ -27,12 +29,14 @@ namespace Lykke.Service.PayInternal.Services
             IBlockchainTransactionRepository transactionRepository,
             IPaymentRequestRepository paymentRequestRepository,
             IOrderRepository ordersRepository,
+            IRefundRepository refundRepository,
             int transactionConfirmationCount,
             ILog log)
         {
             _transactionRepository = transactionRepository;
             _paymentRequestRepository = paymentRequestRepository;
             _orderRepository = ordersRepository;
+            _refundRepository = refundRepository;
             _transactionConfirmationCount = transactionConfirmationCount;
             _log = log;
         }
@@ -49,9 +53,9 @@ namespace Lykke.Service.PayInternal.Services
             return result;
         }
 
-        public async Task CreatePaymentTransaction(ICreateTransaction request)
+        public async Task<IBlockchainTransaction> CreateTransaction(ICreateTransaction request)
         {
-            IPaymentRequest paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
+            var paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
 
             if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(request.WalletAddress);
@@ -67,19 +71,12 @@ namespace Lykke.Service.PayInternal.Services
                 Blockchain = request.Blockchain,
                 FirstSeen = request.FirstSeen,
                 PaymentRequestId = paymentRequest.Id,
-                TransactionType = TransactionType.Payment,
-                DueDate = paymentRequest.DueDate,
+                TransactionType = request.Type,
+                DueDate = request.DueDate ?? paymentRequest.DueDate
                 SourceWalletAddresses = request.SourceWalletAddresses
             };
 
-            await _transactionRepository.AddAsync(transactionEntity);
-        }
-
-        public async Task CreateRefundTransaction(ICreateTransaction request)
-        {
-            //todo: use  TransactionType = TransactionType.Refund
-            //todo: set up dueDate = refundRequest.DueDate
-            throw new System.NotImplementedException();
+            return await _transactionRepository.AddAsync(transactionEntity);
         }
 
         public async Task Update(IUpdateTransaction request)

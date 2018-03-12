@@ -1,4 +1,6 @@
-﻿namespace Lykke.Service.PayInternal.Models
+﻿using System;
+
+namespace Lykke.Service.PayInternal.Models.Transactions
 {
     // TODO: remove this class after Contract assembly update.
     public class TransactionStateResponse
@@ -9,6 +11,6 @@
         public string BlockId { get; set; }
         public string Blockchain { get; set; }
         public int Confirmations { get; set; }
-        // Without WalletAddress - more common case.
+        public DateTime DueDate { get; set; }
     }
 }

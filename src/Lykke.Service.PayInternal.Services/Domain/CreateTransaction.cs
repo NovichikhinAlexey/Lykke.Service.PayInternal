@@ -13,6 +13,8 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public int Confirmations { get; set; }
         public string BlockId { get; set; }
         public string Blockchain { get; set; }
-        public DateTime FirstSeen { get; set; }
+        public DateTime? FirstSeen { get; set; }
+        public DateTime? DueDate { get; set; }
+        public TransactionType Type { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Lykke.Service.PayInternal.Core.Domain.Refund;
+﻿using System;
+using Lykke.Service.PayInternal.Core.Domain.Refund;
 
 namespace Lykke.Service.PayInternal.Models.Refunds
 {
@@ -9,5 +10,6 @@ namespace Lykke.Service.PayInternal.Models.Refunds
         public string PaymentRequestId { get; set; }
         public string SettlementId { get; set; }
         public decimal Amount { get; set; }
+        public DateTime DueDate { get; set; }
     }
 }

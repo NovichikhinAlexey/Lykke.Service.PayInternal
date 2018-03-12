@@ -18,6 +18,6 @@ namespace Lykke.Service.PayInternal.Client.Models.Wallets
         public string BlockId { get; set; }
         public string Blockchain { get; set; }
         public int Confirmations { get; set; }
-        public string WalletAddress { get; set; }
+        public DateTime DueDate { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Lykke.AzureStorage.Tables;
+﻿using System;
+using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
 using Lykke.Service.PayInternal.Core.Domain.Refund;
@@ -13,6 +14,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Refund
         public string PaymentRequestId { get; set; }
         public string SettlementId { get; set; }
         public decimal Amount { get; set; }
+        public DateTime DueDate { get; set; }
         
         public void Map(IRefund refund)
         {
@@ -24,6 +26,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Refund
             MerchantId = refund.MerchantId;
             SettlementId = refund.SettlementId;
             Amount = refund.Amount;
+            DueDate = refund.DueDate;
         }
     }
 }
