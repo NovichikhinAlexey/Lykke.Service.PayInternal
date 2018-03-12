@@ -8,7 +8,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     {
         public DbSettings Db { get; set; }
         public RabbitMqSettings Rabbit { get; set; }
-        public TimeSpan OrderExpiration { get; set; }
+        public ExpirationPeriodsSettings ExpirationPeriods { get; set; }
         public LpMarkupSettings LpMarkup { get; set; }
         public int TransactionConfirmationCount { get; set; }
         public BlockchainExplorerSettings LykkeBlockchainExplorer { get; set; }
@@ -23,5 +23,11 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class BlockchainExplorerSettings
     {
         public string TransactionUrl { get; set; }
+    }
+
+    public class ExpirationPeriodsSettings
+    {
+        public TimeSpan Order { get; set; }
+        public TimeSpan Refund { get; set; }
     }
 }

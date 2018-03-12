@@ -11,6 +11,7 @@ using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
 using Lykke.Service.PayInternal.Models;
+using Lykke.Service.PayInternal.Models.Transactions;
 using Lykke.Service.PayInternal.Services;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -52,7 +53,10 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                await _transactionsService.CreatePaymentTransaction(request.ToDomain());
+                var domainRequest = request.ToDomain();
+                domainRequest.Type = TransactionType.Payment;
+
+                await _transactionsService.CreateTransaction(domainRequest);
 
                 await _paymentRequestService.ProcessAsync(request.WalletAddress);
 

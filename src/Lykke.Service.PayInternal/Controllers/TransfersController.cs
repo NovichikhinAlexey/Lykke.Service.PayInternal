@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -107,7 +108,8 @@ namespace Lykke.Service.PayInternal.Controllers
             // Main work
             try
             {
-                var result = await _transferService.ExecuteMultipartTransferAsync(request.ToDomain());
+                // TODO: add ability to set TransactionType in request
+                var result = await _transferService.ExecuteMultipartTransferAsync(request.ToDomain(), TransactionType.Refund);
 
                 return Ok(result);
             }
@@ -158,7 +160,8 @@ namespace Lykke.Service.PayInternal.Controllers
             // Main work
             try
             {
-                var result = await _transferService.ExecuteMultipartTransferAsync(request.ToDomain());
+                // TODO: add ability to set TransactionType in request
+                var result = await _transferService.ExecuteMultipartTransferAsync(request.ToDomain(), TransactionType.Refund);
 
                 return Ok(result);
             }

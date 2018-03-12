@@ -12,7 +12,9 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Services.Domain;
+using Lykke.SettingsReader;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -21,24 +23,28 @@ namespace Lykke.Service.PayInternal.Services
     {
         private readonly IBitcoinApiClient _bitcoinServiceClient;
         private readonly ITransferRepository _transferRepository;
-        private readonly IBlockchainTransactionRepository _transactionRepository;
+        private readonly ITransactionsService _transactionService;
         private readonly ITransactionPublisher _transactionPublisher;
+        private readonly IReloadingManager<ExpirationPeriodsSettings> _expirationPeriods;
         private readonly ILog _log;
 
         public TransferService(IBitcoinApiClient bitcoinServiceClient,
             ITransferRepository transferRepository,
-            IBlockchainTransactionRepository transactionRepository,
+            ITransactionsService transactionServicey,
             ITransactionPublisher transactionPublisher,
+            IReloadingManager<ExpirationPeriodsSettings> expirationPeriods,
             ILog log)
         {
             _bitcoinServiceClient =
                 bitcoinServiceClient ?? throw new ArgumentNullException(nameof(bitcoinServiceClient));
             _transferRepository = 
                 transferRepository ?? throw new ArgumentNullException(nameof(transferRepository));
-            _transactionRepository =
-                transactionRepository ?? throw new ArgumentNullException(nameof(transactionRepository));
+            _transactionService =
+                transactionServicey ?? throw new ArgumentNullException(nameof(transactionServicey));
             _transactionPublisher =
                 transactionPublisher ?? throw new ArgumentNullException(nameof(transactionPublisher));
+            _expirationPeriods =
+                expirationPeriods ?? throw new ArgumentNullException(nameof(expirationPeriods));
             _log = 
                 log ?? throw new ArgumentNullException(nameof(log));
         }
@@ -63,19 +69,34 @@ namespace Lykke.Service.PayInternal.Services
             return response.Transaction?.TransactionId?.ToString();
         }
 
-        public async Task<MultipartTransferResponse> ExecuteMultipartTransferAsync(IMultipartTransfer multipartTransfer)
+        public async Task<MultipartTransferResponse> ExecuteMultipartTransferAsync(IMultipartTransfer multipartTransfer, TransactionType transactionsType)
         {
-            var transferRequest = multipartTransfer as MultipartTransfer;
-            if (transferRequest == null)
+            if (!(multipartTransfer is MultipartTransfer transferRequest))
                 return new MultipartTransferResponse
                 {
                     ErrorMessage = "Technical problem: could not obtain the request data in appropriate format.",
                     State = TransferExecutionResult.Fail
                 };
 
-            var response = new MultipartTransferResponse();
+            var response = new MultipartTransferResponse
+            {
+                State = TransferExecutionResult.Success // Assume by default, but may be overriden in process.
+            };
 
             await _transferRepository.AddAsync(multipartTransfer);
+
+            DateTime? dueDate = null;
+
+            switch (transactionsType)
+            {
+                case TransactionType.Payment:
+                    break; // No need to set DueDate manually
+                case TransactionType.Refund:
+                    dueDate = DateTime.UtcNow.Add(_expirationPeriods.CurrentValue.Refund);
+                    break;
+                case TransactionType.Settlement:
+                    break; // TODO: add some logic here
+            }
 
             foreach (var part in transferRequest.Parts)
             {
@@ -104,19 +125,17 @@ namespace Lykke.Service.PayInternal.Services
                     break;
                 }
 
-                //todo: think about moving transactions creation to transactionsService
-                var blockchainTransaction = await _transactionRepository.AddAsync(new BlockchainTransaction
+                var blockchainTransaction = await _transactionService.CreateTransaction(new CreateTransaction
                 {
-                    PaymentRequestId = multipartTransfer.PaymentRequestId,
-                    Amount = part.Destination.Amount,
+                    Amount = (double)part.Destination.Amount,
                     AssetId = multipartTransfer.AssetId,
                     Confirmations = 0,
                     TransactionId = responseForPart.Transaction.Hash,
                     WalletAddress = part.Destination.Address,
-                    TransactionType = TransactionType.Refund,
+                    Type = transactionsType,
                     Blockchain = BlockchainType.Bitcoin.ToString(),
-                    FirstSeen = null
-                    //todo: add dueDate
+                    FirstSeen = null,
+                    DueDate = dueDate
                 });
 
                 await _transactionPublisher.PublishAsync(blockchainTransaction);
@@ -124,7 +143,6 @@ namespace Lykke.Service.PayInternal.Services
                 response.TransactionIdList.Add(blockchainTransaction.Id);
             }
 
-            response.State = TransferExecutionResult.Success;
             return response;
         }
     }

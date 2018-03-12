@@ -11,6 +11,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         int Confirmations { get; set; }
         string BlockId { get; set; }
         string Blockchain { get; set; }
-        DateTime FirstSeen { get; set; }
+        DateTime? FirstSeen { get; set; }
+        DateTime? DueDate { get; set; } // When not set, we should use PaymentRequest.DueDate in code.
+        TransactionType Type { get; set; }
     }
 }

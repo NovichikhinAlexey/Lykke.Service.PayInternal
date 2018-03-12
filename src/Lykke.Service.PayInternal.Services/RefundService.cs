@@ -45,6 +45,8 @@ namespace Lykke.Service.PayInternal.Services
             var transactions = await _transactionService.GetAsync(refund.SourceAddress);
             if (transactions == null)
                 throw new TransactionNotFoundException("There are (still) no transactions for the payment request with the specified wallet address.");
+
+
             
             foreach (var tran in transactions)
             {

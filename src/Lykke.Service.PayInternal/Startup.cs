@@ -74,7 +74,7 @@ namespace Lykke.Service.PayInternal
                     appSettings.Nested(o => o.PayInternalService.Db.RefundConnString),
                     Log));
                 builder.RegisterModule(new Services.AutofacModule(
-                    appSettings.CurrentValue.PayInternalService.OrderExpiration,
+                    appSettings.CurrentValue.PayInternalService.ExpirationPeriods.Order,
                     appSettings.CurrentValue.PayInternalService.TransactionConfirmationCount));
                 builder.RegisterModule(new ServiceModule(appSettings, Log));
                 builder.Populate(services);

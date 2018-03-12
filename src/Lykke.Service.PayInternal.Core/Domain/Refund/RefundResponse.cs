@@ -1,4 +1,6 @@
-﻿namespace Lykke.Service.PayInternal.Core.Domain.Refund
+﻿using System;
+
+namespace Lykke.Service.PayInternal.Core.Domain.Refund
 {
     public class RefundResponse : IRefund
     {
@@ -7,5 +9,6 @@
         public string PaymentRequestId { get; set; }
         public string SettlementId { get; set; }
         public decimal Amount { get; set; }
+        public DateTime DueDate { get; set; }
     }
 }

@@ -105,6 +105,7 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<TransferService>()
                 .As<ITransferService>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.ExpirationPeriods))
                 .SingleInstance();
 
             builder.RegisterType<RefundService>()

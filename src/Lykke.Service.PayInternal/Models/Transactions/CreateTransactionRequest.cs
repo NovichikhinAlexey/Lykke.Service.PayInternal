@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
-namespace Lykke.Service.PayInternal.Models
+namespace Lykke.Service.PayInternal.Models.Transactions
 {
     public class CreateTransactionRequest : ICreateTransactionRequest
     {
@@ -27,6 +27,6 @@ namespace Lykke.Service.PayInternal.Models
         [Required]
         public string Blockchain { get; set; }
 
-        public DateTime FirstSeen { get; set; }
+        public DateTime? FirstSeen { get; set; }
     }
 }
