@@ -20,6 +20,7 @@ using Lykke.Service.PayInternal.Rabbit.Publishers;
 using Lykke.Service.PayInternal.Services;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
+using QBitNinja.Client;
 using DbSettings = Lykke.Service.PayInternal.Core.Settings.ServiceSettings.DbSettings;
 
 namespace Lykke.Service.PayInternal.Modules
@@ -110,6 +111,7 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<RefundService>()
                 .As<IRefundService>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.ExpirationPeriods.Refund))
                 .SingleInstance();
         }
 
@@ -123,6 +125,9 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<LykkeMarketProfile>()
                 .As<ILykkeMarketProfile>()
                 .WithParameter("baseUri", new Uri(_settings.CurrentValue.MarketProfileServiceClient.ServiceUrl));
+
+            builder.RegisterInstance(new QBitNinjaClient(_settings.CurrentValue.NinjaServiceClient.ServiceUrl))
+                .AsSelf();
         }
 
         private void RegisterCaches(ContainerBuilder builder)

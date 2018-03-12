@@ -11,6 +11,7 @@
     <PackageReference Include="Lykke.RabbitMqBroker" Version="4.3.1" />
     <PackageReference Include="Lykke.Service.Assets.Client" Version="2.1.0.120" />
     <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.0.20" />
+    <PackageReference Include="QBitNinja.Client" Version="1.0.3.32" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lykke.Service.PayInternal.AzureRepositories\Lykke.Service.PayInternal.AzureRepositories.csproj" />

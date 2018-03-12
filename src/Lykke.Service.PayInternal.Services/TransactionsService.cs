@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using Lykke.Service.PayInternal.Core.Domain.Refund;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -20,7 +19,6 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IPaymentRequestRepository _paymentRequestRepository;
         // ReSharper disable once NotAccessedField.Local
         private readonly IOrderRepository _orderRepository;
-        private readonly IRefundRepository _refundRepository;
         private readonly int _transactionConfirmationCount;
         // ReSharper disable once NotAccessedField.Local
         private readonly ILog _log;
@@ -29,14 +27,12 @@ namespace Lykke.Service.PayInternal.Services
             IBlockchainTransactionRepository transactionRepository,
             IPaymentRequestRepository paymentRequestRepository,
             IOrderRepository ordersRepository,
-            IRefundRepository refundRepository,
             int transactionConfirmationCount,
             ILog log)
         {
             _transactionRepository = transactionRepository;
             _paymentRequestRepository = paymentRequestRepository;
             _orderRepository = ordersRepository;
-            _refundRepository = refundRepository;
             _transactionConfirmationCount = transactionConfirmationCount;
             _log = log;
         }
@@ -44,6 +40,13 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<IEnumerable<IBlockchainTransaction>> GetAsync(string walletAddress)
         {
             return await _transactionRepository.GetAsync(walletAddress);
+        }
+
+        public async Task<IEnumerable<IBlockchainTransaction>> GetConfirmedAsync(string walletAddress)
+        {
+            var transactions = await GetAsync(walletAddress);
+            return transactions?
+                .Where(t => t.Confirmations >= _transactionConfirmationCount);
         }
 
         public async Task<IEnumerable<IBlockchainTransaction>> GetAllMonitoredAsync()
