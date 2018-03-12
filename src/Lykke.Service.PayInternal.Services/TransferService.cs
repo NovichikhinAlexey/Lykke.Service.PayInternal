@@ -127,7 +127,7 @@ namespace Lykke.Service.PayInternal.Services
 
                 var blockchainTransaction = await _transactionService.CreateTransaction(new CreateTransaction
                 {
-                    Amount = (double)part.Destination.Amount,
+                    Amount = part.Destination.Amount,
                     AssetId = multipartTransfer.AssetId,
                     Confirmations = 0,
                     TransactionId = responseForPart.Transaction.Hash,

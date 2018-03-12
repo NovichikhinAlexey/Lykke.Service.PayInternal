@@ -30,6 +30,6 @@ namespace Lykke.Service.PayInternal.Models.Transactions
         [Required]
         public string[] SourceWalletAddresses { get; set; }
 
-        public DateTime FirstSeen { get; set; }
+        public DateTime? FirstSeen { get; set; }
     }
 }

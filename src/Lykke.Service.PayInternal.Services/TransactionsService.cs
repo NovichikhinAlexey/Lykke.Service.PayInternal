@@ -72,7 +72,7 @@ namespace Lykke.Service.PayInternal.Services
                 FirstSeen = request.FirstSeen,
                 PaymentRequestId = paymentRequest.Id,
                 TransactionType = request.Type,
-                DueDate = request.DueDate ?? paymentRequest.DueDate
+                DueDate = request.DueDate ?? paymentRequest.DueDate,
                 SourceWalletAddresses = request.SourceWalletAddresses
             };
 
