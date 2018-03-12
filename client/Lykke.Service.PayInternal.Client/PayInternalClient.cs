@@ -52,6 +52,7 @@ namespace Lykke.Service.PayInternal.Client
             _ordersApi = RestService.For<IOrdersApi>(_httpClient);
             _paymentRequestsApi = RestService.For<IPaymentRequestsApi>(_httpClient);
             _refundApi = RestService.For<IRefundApi>(_httpClient);
+            _assetsApi = RestService.For<IAssetsApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
