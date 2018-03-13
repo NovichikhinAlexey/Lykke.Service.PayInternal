@@ -146,6 +146,10 @@ namespace Lykke.Service.PayInternal.Client
         {
             return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(assetByMerchant.availabilityType));
         }
+        public async Task<AvailableAssetsResponse> GetAvailableAsync(string merchantId)
+        {
+            return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(merchantId));
+        }
         public async Task SetAvailabilityAsync(UpdateAssetAvailabilityRequest request)
         {
             await _runner.RunAsync(() => _assetsApi.SetAvailabilityAsync(request));
