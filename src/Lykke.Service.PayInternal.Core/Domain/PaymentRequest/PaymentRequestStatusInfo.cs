@@ -33,6 +33,15 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequest
             };
         }
 
+        public static PaymentRequestStatusInfo Error(string errorMessage)
+        {
+            return new PaymentRequestStatusInfo
+            {
+                Status = PaymentRequestStatus.Error,
+                Details = errorMessage
+            };
+        }
+
         public static PaymentRequestStatusInfo InProcess()
         {
             return new PaymentRequestStatusInfo

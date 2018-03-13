@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using QBitNinja.Client;
 using JetBrains.Annotations;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Refund;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
@@ -13,7 +14,7 @@ using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
 // ReSharper disable once RedundantUsingDirective
 using NBitcoin;
-using TransactionNotFoundException = Lykke.Service.PayInternal.Core.Exceptions.TransactionNotFoundException;
+using QBitNinja.Client.Models;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -28,6 +29,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IRefundRepository _refundRepository;
         private readonly IWalletRepository _walletRepository;
         private readonly TimeSpan _expirationTime;
+        private readonly IBlockchainTransactionRepository _transactionRepository;
 
         public RefundService(
             QBitNinjaClient qBitNinjaClient,
@@ -36,6 +38,7 @@ namespace Lykke.Service.PayInternal.Services
             IPaymentRequestService paymentRequestService,
             IRefundRepository refundRepository,
             IWalletRepository walletRepository,
+            IBlockchainTransactionRepository transactionRepository,
             TimeSpan expirationTime)
         {
             _qBitNinjaClient =
@@ -50,31 +53,69 @@ namespace Lykke.Service.PayInternal.Services
                 refundRepository ?? throw new ArgumentNullException(nameof(refundRepository));
             _walletRepository =
                 walletRepository ?? throw new ArgumentNullException(nameof(walletRepository));
+            _transactionRepository =
+                transactionRepository ?? throw new ArgumentNullException(nameof(transactionRepository));
             _expirationTime = expirationTime;
         }
 
         public async Task<IRefund> ExecuteAsync(IRefundRequest refund)
         {
-            // Initial checkup
-            // TODO: remove this check after multi-directional refunds are enabled.
-            if (string.IsNullOrWhiteSpace(refund.SourceAddress) ||
-                string.IsNullOrWhiteSpace(refund.DestinationAddress))
-                throw new NotImplementedException("Multi-directional refunds are not currently supported. Please, specify both Source and Destination addresses.");
+            IPaymentRequest paymentRequest = await _paymentRequestService.FindAsync(refund.SourceAddress);
 
-            var paymentRequest = await _paymentRequestService.FindAsync(refund.SourceAddress);
             if (paymentRequest == null)
-                throw new PaymentRequestNotFoundException("The payment request for the specified wallet address does not exist.");
+                throw new PaymentRequestNotFoundException(refund.SourceAddress);
 
             if (!paymentRequest.MerchantId.Equals(refund.MerchantId))
-                throw new ArgumentException("Payment request found, but it seems to belong to another merchant.");
+                throw new PaymentRequestNotFoundException(refund.MerchantId, paymentRequest.Id);
+
+            //todo: in some cases we can't procees if status was PaymentRequestStatus.Error
+            if (paymentRequest.Status != PaymentRequestStatus.Confirmed &&
+                paymentRequest.Status != PaymentRequestStatus.Error)
+                throw new NotAllowedStatusException(paymentRequest.Status.ToString());
 
             var walletsCheckResult = await _checkupMerchantWallets(refund);
+
             if (!walletsCheckResult)
-                throw new ArgumentException("The source (and/or destination wallet) belongs to another merchant.");
-            
-            // Initial requests fullfill
-            var balance = await _qBitNinjaClient.GetBalanceSummary(BitcoinAddress.Create(refund.SourceAddress));
-            var refundAmount = balance.Spendable.Amount.ToDecimal(MoneyUnit.BTC);
+                throw new WalletNotFoundException(refund.SourceAddress);
+
+            IEnumerable<IBlockchainTransaction> paymentRequestTxs =
+                await _transactionRepository.GetByPaymentRequest(paymentRequest.Id);
+
+            IEnumerable<IBlockchainTransaction> paymentTxs =
+                paymentRequestTxs.Where(x => x.TransactionType == TransactionType.Payment).ToList();
+
+            if (!paymentTxs.Any())
+                throw new NoTransactionsToRefundException(paymentRequest.Id);
+
+            if (paymentTxs.Count() > 1)
+                throw new MultiTransactionRefundNotSupportedException(paymentTxs.Count());
+
+            IBlockchainTransaction txToRefund = paymentTxs.First();
+
+            if (string.IsNullOrWhiteSpace(refund.DestinationAddress))
+            {
+                if (!txToRefund.SourceWalletAddresses.Any())
+                    throw new NoTransactionsToRefundException(paymentRequest.Id);
+
+                if (txToRefund.SourceWalletAddresses.Length > 1)
+                    throw new MultiTransactionRefundNotSupportedException(txToRefund.SourceWalletAddresses.Length);
+            }
+            else
+            {
+                if (!txToRefund.SourceWalletAddresses.Contains(refund.DestinationAddress))
+                    throw new WalletNotFoundException(refund.DestinationAddress);
+            }
+
+            BalanceSummary balanceSummary =
+                await _qBitNinjaClient.GetBalanceSummary(BitcoinAddress.Create(refund.SourceAddress));
+
+            decimal spendableSatoshi = balanceSummary.Spendable.Amount.ToDecimal(MoneyUnit.Satoshi);
+
+            //todo: take into account different assets 
+            //todo: consider situation if we can make partial refund
+            decimal satoshiToRefund = txToRefund.Amount;
+            if (spendableSatoshi < satoshiToRefund)
+                throw new NotEnoughMoneyException(spendableSatoshi, satoshiToRefund);
 
             var newRefund = new Refund
             {
@@ -82,9 +123,13 @@ namespace Lykke.Service.PayInternal.Services
                 DueDate = DateTime.UtcNow.Add(_expirationTime),
                 MerchantId = refund.MerchantId,
                 RefundId = Guid.NewGuid().ToString(),
-                Amount = refundAmount
+                Amount = satoshiToRefund
                 // TODO: what about settlement ID?
             };
+
+            string destinationAddress = string.IsNullOrWhiteSpace(refund.DestinationAddress)
+                ? txToRefund.SourceWalletAddresses.First()
+                : refund.DestinationAddress;
 
             var newTransfer = new MultipartTransfer
             {
@@ -95,72 +140,46 @@ namespace Lykke.Service.PayInternal.Services
                 FixedFee = (decimal)paymentRequest.MarkupFixedFee,
                 MerchantId = refund.MerchantId,
                 TransferId = Guid.NewGuid().ToString(),
-                Parts = new List<TransferPart>()
-            };
-
-            var result = new RefundResponse
-            {
-                MerchantId = refund.MerchantId,
-                PaymentRequestId = paymentRequest.Id,
-                RefundId = newRefund.RefundId,
-                DueDate = newRefund.DueDate,
-                Amount = refundAmount
-                // TODO: what about settlement ID?
-            };
-
-            // The main work below:
-
-            await _refundRepository.AddAsync(newRefund); // Save the refund itself first
-
-            // The simpliest case: we have both source and destionation addresses. Create a new transfer for the whole volume of money from the source.
-            if (!string.IsNullOrWhiteSpace(refund.DestinationAddress))
-            {
-                newTransfer.Parts.Add(
+                Parts = new List<TransferPart>
+                {
                     new TransferPart
                     {
                         Destination = new AddressAmount
                         {
-                            Address = refund.DestinationAddress,
-                            Amount = refundAmount
+                            Address = destinationAddress,
+                            Amount = satoshiToRefund
                         },
                         Sources = new List<AddressAmount>
                         {
                             new AddressAmount
                             {
                                 Address = refund.SourceAddress,
-                                Amount = refundAmount
+                                Amount = satoshiToRefund
                             }
                         }
                     }
-                );
-
-                var executionResult = await _transferService.ExecuteMultipartTransferAsync(newTransfer, TransactionType.Refund); // Execute the transfer for single transaction and check
-                if (executionResult.State == TransferExecutionResult.Fail)
-                    throw new Exception(executionResult.ErrorMessage);
-            }
-            // And another case: we have only source, so, we need to reverse all the transactions from the payment request.
-            else
-            {
-                // ATTENTION: currently this code is unreachable due to pre-check of DestinationAddress presense.
-                var transactions = await _transactionService.GetConfirmedAsync(paymentRequest.WalletAddress);
-                if (transactions == null)
-                    throw new TransactionNotFoundException("There are (still) no confirmed transactions for the payment request with the specified wallet address.");
-
-                // ReSharper disable once UnusedVariable
-                foreach (var tran in transactions)
-                {
-                   // TODO: Implement transaction reversing with use of QBitNinja client.
                 }
-                
-                var executionResult = await _transferService.ExecuteMultipartTransferAsync(newTransfer, TransactionType.Refund); // Execute the transfer for multiple transactions and check
-                if (executionResult.State != TransferExecutionResult.Success)
-                    throw new Exception(executionResult.ErrorMessage);
-            }
+            };
 
-            // Additionally, process the payment request itself.
+            await _refundRepository.AddAsync(newRefund);
+
+            MultipartTransferResponse transferResponse =
+                await _transferService.ExecuteMultipartTransferAsync(newTransfer, TransactionType.Refund);
+
+            if (transferResponse.State == TransferExecutionResult.Fail)
+                throw new Exception(transferResponse.ErrorMessage);
+
             await _paymentRequestService.ProcessAsync(refund.SourceAddress);
 
-            return result;
+            return new RefundResponse
+            {
+                MerchantId = refund.MerchantId,
+                PaymentRequestId = paymentRequest.Id,
+                RefundId = newRefund.RefundId,
+                DueDate = newRefund.DueDate,
+                Amount = satoshiToRefund
+                // TODO: what about settlement ID?
+            };
         }
 
         public async Task<IRefund> GetStateAsync(string merchantId, string refundId)

@@ -27,6 +27,8 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ExpirationPeriodsSettings _expirationPeriods;
         private readonly ILog _log;
 
+        private const int SatoshiInBtc = 100000000;
+
         public TransferService(IBitcoinApiClient bitcoinServiceClient,
             ITransferRepository transferRepository,
             ITransactionsService transactionServicey,
@@ -105,9 +107,11 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var part in transferRequest.Parts)
             {
+                // todo: Satoshi to btc
                 var sources = part.Sources
-                    .Where((x => x != null))
-                    .Select((x => new ToOneAddress(x.Address, x.Amount)));
+                    .Where(x => x != null)
+                    .Select(x => new ToOneAddress(x.Address, x.Amount / SatoshiInBtc))
+                    .ToList();
 
                 var responseForPart = await _bitcoinServiceClient.TransactionMultipleTransfer(
                     Guid.NewGuid(),
@@ -130,22 +134,27 @@ namespace Lykke.Service.PayInternal.Services
                     break;
                 }
 
-                var blockchainTransaction = await _transactionService.CreateTransaction(new CreateTransaction
+                //todo: transfer has to be thought throw, WalletAddress = source.Address is true only for refund transactions
+                foreach (ToOneAddress source in sources)
                 {
-                    Amount = part.Destination.Amount,
-                    AssetId = multipartTransfer.AssetId,
-                    Confirmations = 0,
-                    TransactionId = responseForPart.Transaction.Hash,
-                    WalletAddress = part.Destination.Address,
-                    Type = transactionsType,
-                    Blockchain = BlockchainType.Bitcoin.ToString(),
-                    FirstSeen = null,
-                    DueDate = dueDate
-                });
+                    var blockchainTransaction = await _transactionService.CreateTransaction(new CreateTransaction
+                    {
+                        // todo: Satoshi to btc
+                        Amount = (source.Amount ?? 0) / SatoshiInBtc,
+                        AssetId = multipartTransfer.AssetId,
+                        Confirmations = 0,
+                        TransactionId = responseForPart.Transaction.Hash,
+                        WalletAddress = source.Address,
+                        Type = transactionsType,
+                        Blockchain = BlockchainType.Bitcoin.ToString(),
+                        FirstSeen = null,
+                        DueDate = dueDate
+                    });
 
-                await _transactionPublisher.PublishAsync(blockchainTransaction);
+                    await _transactionPublisher.PublishAsync(blockchainTransaction);
 
-                response.TransactionIdList.Add(blockchainTransaction.Id);
+                    response.TransactionIdList.Add(blockchainTransaction.Id);
+                }
             }
 
             return response;

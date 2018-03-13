@@ -21,7 +21,8 @@ namespace Lykke.Service.PayInternal.Services
                 .As<IMerchantService>();
 
             builder.RegisterType<PaymentRequestService>()
-                .As<IPaymentRequestService>();
+                .As<IPaymentRequestService>()
+                .WithParameter(TypedParameter.From(_transactionConfirmationCount));
 
             builder.RegisterType<OrderService>()
                 .WithParameter(TypedParameter.From(_orderExpiration))

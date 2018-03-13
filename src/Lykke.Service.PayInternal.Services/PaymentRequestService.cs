@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
@@ -20,6 +22,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IBlockchainTransactionRepository _transactionRepository;
         private readonly IOrderService _orderService;
         private readonly IPaymentRequestPublisher _paymentRequestPublisher;
+        private readonly int _transactionConfirmationCount;
         private readonly ILog _log;
 
         public PaymentRequestService(
@@ -28,6 +31,7 @@ namespace Lykke.Service.PayInternal.Services
             IBlockchainTransactionRepository transactionRepository,
             IOrderService orderService,
             IPaymentRequestPublisher paymentRequestPublisher,
+            int transactionConfirmationCount,
             ILog log)
         {
             _paymentRequestRepository = paymentRequestRepository;
@@ -35,6 +39,7 @@ namespace Lykke.Service.PayInternal.Services
             _transactionRepository = transactionRepository;
             _orderService = orderService;
             _paymentRequestPublisher = paymentRequestPublisher;
+            _transactionConfirmationCount = transactionConfirmationCount;
             _log = log;
         }
         
@@ -103,9 +108,41 @@ namespace Lykke.Service.PayInternal.Services
             if(paymentRequest == null)
                 throw new PaymentRequestNotFoundException(walletAddress);
             
-            IReadOnlyList<IBlockchainTransaction> transactions = await _transactionRepository.GetAsync(walletAddress);
+            IReadOnlyList<IBlockchainTransaction> txs = await _transactionRepository.GetByPaymentRequest(paymentRequest.Id);
 
-            var paymentStatusInfo = await _orderService.GetPaymentStatus(transactions, paymentRequest.Id);
+            IEnumerable<TransactionType> txTypes = txs.Select(x => x.TransactionType).Distinct().ToList();
+
+            PaymentRequestStatusInfo paymentStatusInfo;
+            // todo: rethink status calculation implementation, isolate
+            if (txTypes.Contains(TransactionType.Settlement))
+            {
+                throw new TransactionTypeNotSupportedException(TransactionType.Settlement.ToString());
+            } else if (txTypes.Contains(TransactionType.Refund))
+            {
+                IReadOnlyList<IBlockchainTransaction> refundTxs =
+                    txs.Where(x => x.TransactionType == TransactionType.Refund).ToList();
+
+                if (refundTxs.All(x => x.Confirmations >= _transactionConfirmationCount))
+                {
+                    paymentStatusInfo = PaymentRequestStatusInfo.Refunded();
+                }
+                else
+                {
+                    paymentStatusInfo =
+                        refundTxs.Any(x =>
+                            x.Confirmations < _transactionConfirmationCount && x.DueDate < DateTime.UtcNow)
+                            ? PaymentRequestStatusInfo.Error("NOT CONFIRMED")
+                            : PaymentRequestStatusInfo.InProcess();
+                }
+            } else if (txTypes.Contains(TransactionType.Payment))
+            {
+                IReadOnlyList<IBlockchainTransaction> paymentTxs =
+                    txs.Where(x => x.TransactionType == TransactionType.Payment).ToList();
+
+                paymentStatusInfo = await _orderService.GetPaymentRequestStatus(paymentTxs, paymentRequest.Id);
+            }
+            else
+                throw new Exception("Inconsistent paymentRequest status");
 
             paymentRequest.Status = paymentStatusInfo.Status;
             paymentRequest.PaidDate = paymentStatusInfo.Date;

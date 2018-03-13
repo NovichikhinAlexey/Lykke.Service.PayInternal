@@ -118,7 +118,7 @@ namespace Lykke.Service.PayInternal.Services
             return createdOrder;
         }
 
-        public async Task<PaymentRequestStatusInfo> GetPaymentStatus(IReadOnlyList<IBlockchainTransaction> transactions,
+        public async Task<PaymentRequestStatusInfo> GetPaymentRequestStatus(IReadOnlyList<IBlockchainTransaction> transactions,
             string paymentRequestId)
         {
             if (!transactions.Any())
@@ -148,20 +148,10 @@ namespace Lykke.Service.PayInternal.Services
                 return PaymentRequestStatusInfo.Error("EXPIRED", btcPaid, paidDate);
 
             bool allConfirmed = transactions.All(o => o.Confirmations >= _transactionConfirmationCount);
-            var refundTransactions = transactions.Where(o => o.TransactionType == TransactionType.Refund);
-            bool allConfirmedRefund = refundTransactions.Any() ? refundTransactions.All(o => o.Confirmations >= _transactionConfirmationCount) : false;
             
 
             if (!allConfirmed)
-            {
-                if (refundTransactions.Any())
-                    return allConfirmedRefund ? PaymentRequestStatusInfo.Refunded() : PaymentRequestStatusInfo.RefundInProgress();
-
                 return PaymentRequestStatusInfo.InProcess();
-            }
-
-            if (allConfirmedRefund)
-                return PaymentRequestStatusInfo.Refunded();
 
             decimal btcToBePaid = actualOrder.PaymentAmount;
 

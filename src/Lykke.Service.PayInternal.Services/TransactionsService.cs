@@ -74,9 +74,9 @@ namespace Lykke.Service.PayInternal.Services
                 Blockchain = request.Blockchain,
                 FirstSeen = request.FirstSeen,
                 PaymentRequestId = paymentRequest.Id,
+                SourceWalletAddresses = request.SourceWalletAddresses,
                 TransactionType = request.Type,
-                DueDate = request.DueDate ?? paymentRequest.DueDate,
-                SourceWalletAddresses = request.SourceWalletAddresses
+                DueDate = request.DueDate ?? paymentRequest.DueDate
             };
 
             return await _transactionRepository.AddAsync(transactionEntity);
