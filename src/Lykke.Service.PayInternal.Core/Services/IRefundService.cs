@@ -6,6 +6,7 @@ namespace Lykke.Service.PayInternal.Core.Services
     public interface IRefundService
     {
         Task<IRefund> ExecuteAsync(IRefundRequest refund);
+
         Task<IRefund> GetStateAsync(string merchantId, string refundId);
     }
 }

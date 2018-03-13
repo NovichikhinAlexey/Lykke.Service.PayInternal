@@ -15,7 +15,6 @@ using Lykke.Service.PayInternal.Services.Domain;
 // ReSharper disable once RedundantUsingDirective
 using NBitcoin;
 using QBitNinja.Client.Models;
-using TransactionNotFoundException = Lykke.Service.PayInternal.Core.Exceptions.TransactionNotFoundException;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -94,6 +93,7 @@ namespace Lykke.Service.PayInternal.Services
             IBlockchainTransaction txToRefund = paymentTxs.First();
 
             //todo: if multiple source addresses
+            string destinationAddress = refund.DestinationAddress ?? string.Empty; //paymentRequest.SourceAddress;
 
             BalanceSummary balanceSummary =
                 await _qBitNinjaClient.GetBalanceSummary(BitcoinAddress.Create(refund.SourceAddress));
@@ -104,14 +104,6 @@ namespace Lykke.Service.PayInternal.Services
             //todo: consider situation if we can make partial refund
             if (spendableSatoshi < txToRefund.Amount)
                 throw new NotEnoughMoneyException(spendableSatoshi, txToRefund.Amount);
-
-            if (!string.IsNullOrEmpty(refund.DestinationAddress))
-            {
-            }
-            else
-            {
-                // transferring money back to wallets where the payment request has been paid from 
-            }
 
             var newRefund = new Refund
             {
@@ -132,32 +124,13 @@ namespace Lykke.Service.PayInternal.Services
                 FixedFee = (decimal)paymentRequest.MarkupFixedFee,
                 MerchantId = refund.MerchantId,
                 TransferId = Guid.NewGuid().ToString(),
-                Parts = new List<TransferPart>()
-            };
-
-            var result = new RefundResponse
-            {
-                MerchantId = refund.MerchantId,
-                PaymentRequestId = paymentRequest.Id,
-                RefundId = newRefund.RefundId,
-                DueDate = newRefund.DueDate,
-                Amount = txToRefund.Amount
-                // TODO: what about settlement ID?
-            };
-
-            // The main work below:
-
-            await _refundRepository.AddAsync(newRefund); // Save the refund itself first
-
-            // The simpliest case: we have both source and destionation addresses. Create a new transfer for the whole volume of money from the source.
-            if (!string.IsNullOrWhiteSpace(refund.DestinationAddress))
-            {
-                newTransfer.Parts.Add(
+                Parts = new List<TransferPart>
+                {
                     new TransferPart
                     {
                         Destination = new AddressAmount
                         {
-                            Address = refund.DestinationAddress,
+                            Address = destinationAddress,
                             Amount = txToRefund.Amount
                         },
                         Sources = new List<AddressAmount>
@@ -169,35 +142,28 @@ namespace Lykke.Service.PayInternal.Services
                             }
                         }
                     }
-                );
-
-                var executionResult = await _transferService.ExecuteMultipartTransferAsync(newTransfer, TransactionType.Refund); // Execute the transfer for single transaction and check
-                if (executionResult.State == TransferExecutionResult.Fail)
-                    throw new Exception(executionResult.ErrorMessage);
-            }
-            // And another case: we have only source, so, we need to reverse all the transactions from the payment request.
-            else
-            {
-                // ATTENTION: currently this code is unreachable due to pre-check of DestinationAddress presense.
-                var transactions = await _transactionService.GetConfirmedAsync(paymentRequest.WalletAddress);
-                if (transactions == null)
-                    throw new TransactionNotFoundException("There are (still) no confirmed transactions for the payment request with the specified wallet address.");
-
-                // ReSharper disable once UnusedVariable
-                foreach (var tran in transactions)
-                {
-                   // TODO: Implement transaction reversing with use of QBitNinja client.
                 }
-                
-                var executionResult = await _transferService.ExecuteMultipartTransferAsync(newTransfer, TransactionType.Refund); // Execute the transfer for multiple transactions and check
-                if (executionResult.State != TransferExecutionResult.Success)
-                    throw new Exception(executionResult.ErrorMessage);
-            }
+            };
 
-            // Additionally, process the payment request itself.
+            await _refundRepository.AddAsync(newRefund);
+
+            MultipartTransferResponse transferResponse =
+                await _transferService.ExecuteMultipartTransferAsync(newTransfer, TransactionType.Refund);
+
+            if (transferResponse.State == TransferExecutionResult.Fail)
+                throw new Exception(transferResponse.ErrorMessage);
+
             await _paymentRequestService.ProcessAsync(refund.SourceAddress);
 
-            return result;
+            return new RefundResponse
+            {
+                MerchantId = refund.MerchantId,
+                PaymentRequestId = paymentRequest.Id,
+                RefundId = newRefund.RefundId,
+                DueDate = newRefund.DueDate,
+                Amount = txToRefund.Amount
+                // TODO: what about settlement ID?
+            };
         }
 
         public async Task<IRefund> GetStateAsync(string merchantId, string refundId)

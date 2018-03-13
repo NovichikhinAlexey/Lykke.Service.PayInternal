@@ -67,7 +67,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
             };
             
             // act
-            await _service.GetPaymentStatus(new List<IBlockchainTransaction> {blockchainTransaction}, paymentRequest.Id);
+            await _service.GetPaymentRequestStatus(new List<IBlockchainTransaction> {blockchainTransaction}, paymentRequest.Id);
         }
 
         [TestMethod]
@@ -80,7 +80,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
             };
             // act
             var paymentStatus =
-                await _service.GetPaymentStatus(Enumerable.Empty<IBlockchainTransaction>().ToList(), paymentRequest.Id);
+                await _service.GetPaymentRequestStatus(Enumerable.Empty<IBlockchainTransaction>().ToList(), paymentRequest.Id);
 
             // assert
             Assert.AreEqual(PaymentRequestStatus.New, paymentStatus.Status);
@@ -115,7 +115,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
             
             // act
             var paymentStatus =
-                await _service.GetPaymentStatus(new List<IBlockchainTransaction> {blockchainTransaction}, paymentRequest.Id);
+                await _service.GetPaymentRequestStatus(new List<IBlockchainTransaction> {blockchainTransaction}, paymentRequest.Id);
 
             // assert
             Assert.AreEqual(PaymentRequestStatus.InProcess, paymentStatus.Status);
@@ -155,7 +155,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
             
             // act
             var paymentStatus =
-                await _service.GetPaymentStatus(new List<IBlockchainTransaction> {blockchainTransaction}, paymentRequest.Id);
+                await _service.GetPaymentRequestStatus(new List<IBlockchainTransaction> {blockchainTransaction}, paymentRequest.Id);
 
             // assert
             Assert.AreEqual(PaymentRequestStatus.Confirmed, paymentStatus.Status);
@@ -195,7 +195,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
             
             // act
             var paymentStatus =
-                await _service.GetPaymentStatus(new List<IBlockchainTransaction> {blockchainTransaction}, paymentRequest.Id);
+                await _service.GetPaymentRequestStatus(new List<IBlockchainTransaction> {blockchainTransaction}, paymentRequest.Id);
 
             // assert
             Assert.AreEqual(PaymentRequestStatus.Error, paymentStatus.Status);
@@ -236,7 +236,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
             
             // act
             var paymentStatus =
-                await _service.GetPaymentStatus(new List<IBlockchainTransaction> {blockchainTransaction}, paymentRequest.Id);
+                await _service.GetPaymentRequestStatus(new List<IBlockchainTransaction> {blockchainTransaction}, paymentRequest.Id);
 
             // assert
             Assert.AreEqual(PaymentRequestStatus.Error, paymentStatus.Status);
@@ -277,7 +277,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
             
             // act
             var paymentStatus =
-                await _service.GetPaymentStatus(new List<IBlockchainTransaction> {blockchainTransaction}, paymentRequest.Id);
+                await _service.GetPaymentRequestStatus(new List<IBlockchainTransaction> {blockchainTransaction}, paymentRequest.Id);
 
             // assert
             Assert.AreEqual(PaymentRequestStatus.Error, paymentStatus.Status);
