@@ -13,6 +13,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         private decimal _amount;
         private int _confirmations;
         private DateTime _firstSeen;
+        private TransactionType _transactionType;
         
         public BlockchainTransactionEntity()
         {
@@ -71,6 +72,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
         public string Blockchain { get; set; }
 
+        public TransactionType TransactionType
+        {
+            get => _transactionType;
+            set
+            {
+                _transactionType = value;
+                MarkValueTypePropertyAsDirty(nameof(TransactionType));
+            }
+        }
+
         internal void Map(IBlockchainTransaction blockchainTransaction)
         {
             TransactionId = blockchainTransaction.TransactionId;
@@ -83,6 +94,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             FirstSeen = blockchainTransaction.FirstSeen;
             AssetId = blockchainTransaction.AssetId;
             Blockchain = blockchainTransaction.Blockchain;
+            TransactionType = blockchainTransaction.TransactionType;
         }
     }
 }
