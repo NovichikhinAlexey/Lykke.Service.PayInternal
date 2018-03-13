@@ -11,5 +11,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         Task<IEnumerable<IBlockchainTransaction>> GetNotExpiredAsync(int minConfirmationsCount);
         Task<IBlockchainTransaction> AddAsync(IBlockchainTransaction blockchainTransaction);
         Task UpdateAsync(IBlockchainTransaction blockchainTransaction);
+        Task<IEnumerable<IBlockchainTransaction>> GetByPaymentRequest(string paymentRequestId);
     }
 }

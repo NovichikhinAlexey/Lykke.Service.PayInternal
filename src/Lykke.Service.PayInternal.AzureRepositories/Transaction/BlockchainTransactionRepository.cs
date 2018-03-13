@@ -76,6 +76,17 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
                 });
         }
 
+        public async Task<IEnumerable<IBlockchainTransaction>> GetByPaymentRequest(string paymentRequestId)
+        {
+            // todo: optimize transactions repository
+
+            string filter = TableQuery.GenerateFilterCondition("PaymentRequestId", QueryComparisons.Equal, paymentRequestId);
+
+            var query = new TableQuery<BlockchainTransactionEntity>().Where(filter);
+
+            return await _storage.WhereAsync(query);
+        }
+
         private static string GetPartitionKey(string walletAddress)
             => walletAddress;
 

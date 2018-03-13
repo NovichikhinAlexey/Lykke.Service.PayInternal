@@ -14,6 +14,7 @@ using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
 // ReSharper disable once RedundantUsingDirective
 using NBitcoin;
+using QBitNinja.Client.Models;
 using TransactionNotFoundException = Lykke.Service.PayInternal.Core.Exceptions.TransactionNotFoundException;
 
 namespace Lykke.Service.PayInternal.Services
@@ -29,6 +30,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IRefundRepository _refundRepository;
         private readonly IWalletRepository _walletRepository;
         private readonly TimeSpan _expirationTime;
+        private readonly IBlockchainTransactionRepository _transactionRepository;
 
         public RefundService(
             QBitNinjaClient qBitNinjaClient,
@@ -37,6 +39,7 @@ namespace Lykke.Service.PayInternal.Services
             IPaymentRequestService paymentRequestService,
             IRefundRepository refundRepository,
             IWalletRepository walletRepository,
+            IBlockchainTransactionRepository transactionRepository,
             TimeSpan expirationTime)
         {
             _qBitNinjaClient =
@@ -51,6 +54,8 @@ namespace Lykke.Service.PayInternal.Services
                 refundRepository ?? throw new ArgumentNullException(nameof(refundRepository));
             _walletRepository =
                 walletRepository ?? throw new ArgumentNullException(nameof(walletRepository));
+            _transactionRepository =
+                transactionRepository ?? throw new ArgumentNullException(nameof(transactionRepository));
             _expirationTime = expirationTime;
         }
 
@@ -64,14 +69,49 @@ namespace Lykke.Service.PayInternal.Services
             if (!paymentRequest.MerchantId.Equals(refund.MerchantId))
                 throw new PaymentRequestNotFoundException(refund.MerchantId, paymentRequest.Id);
 
+            //todo: in some cases we can't procees if status was PaymentRequestStatus.Error
+            if (paymentRequest.Status != PaymentRequestStatus.Confirmed &&
+                paymentRequest.Status != PaymentRequestStatus.Error)
+                throw new NotAllowedStatusException(paymentRequest.Status.ToString());
+
             var walletsCheckResult = await _checkupMerchantWallets(refund);
 
             if (!walletsCheckResult)
                 throw new WalletNotFoundException(refund.SourceAddress);
-            
-            var balance = await _qBitNinjaClient.GetBalanceSummary(BitcoinAddress.Create(refund.SourceAddress));
 
-            var refundAmount = balance.Spendable.Amount.ToDecimal(MoneyUnit.Satoshi);
+            IEnumerable<IBlockchainTransaction> paymentRequestTxs =
+                await _transactionRepository.GetByPaymentRequest(paymentRequest.Id);
+
+            IEnumerable<IBlockchainTransaction> paymentTxs =
+                paymentRequestTxs.Where(x => x.TransactionType == TransactionType.Payment).ToList();
+
+            if (!paymentTxs.Any())
+                throw new NoTransactionsToRefundException(paymentRequest.Id);
+
+            if (paymentTxs.Count() > 1)
+                throw new MultiTransactionRefundNotSupportedException(paymentTxs.Count());
+
+            IBlockchainTransaction txToRefund = paymentTxs.First();
+
+            //todo: if multiple source addresses
+
+            BalanceSummary balanceSummary =
+                await _qBitNinjaClient.GetBalanceSummary(BitcoinAddress.Create(refund.SourceAddress));
+
+            decimal spendableSatoshi = balanceSummary.Spendable.Amount.ToDecimal(MoneyUnit.Satoshi);
+
+            //todo: take into account different assets 
+            //todo: consider situation if we can make partial refund
+            if (spendableSatoshi < txToRefund.Amount)
+                throw new NotEnoughMoneyException(spendableSatoshi, txToRefund.Amount);
+
+            if (!string.IsNullOrEmpty(refund.DestinationAddress))
+            {
+            }
+            else
+            {
+                // transferring money back to wallets where the payment request has been paid from 
+            }
 
             var newRefund = new Refund
             {
@@ -79,7 +119,7 @@ namespace Lykke.Service.PayInternal.Services
                 DueDate = DateTime.UtcNow.Add(_expirationTime),
                 MerchantId = refund.MerchantId,
                 RefundId = Guid.NewGuid().ToString(),
-                Amount = refundAmount
+                Amount = txToRefund.Amount
                 // TODO: what about settlement ID?
             };
 
@@ -101,7 +141,7 @@ namespace Lykke.Service.PayInternal.Services
                 PaymentRequestId = paymentRequest.Id,
                 RefundId = newRefund.RefundId,
                 DueDate = newRefund.DueDate,
-                Amount = refundAmount
+                Amount = txToRefund.Amount
                 // TODO: what about settlement ID?
             };
 
@@ -118,14 +158,14 @@ namespace Lykke.Service.PayInternal.Services
                         Destination = new AddressAmount
                         {
                             Address = refund.DestinationAddress,
-                            Amount = refundAmount
+                            Amount = txToRefund.Amount
                         },
                         Sources = new List<AddressAmount>
                         {
                             new AddressAmount
                             {
                                 Address = refund.SourceAddress,
-                                Amount = refundAmount
+                                Amount = txToRefund.Amount
                             }
                         }
                     }
