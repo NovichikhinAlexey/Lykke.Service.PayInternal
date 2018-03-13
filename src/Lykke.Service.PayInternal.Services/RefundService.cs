@@ -92,11 +92,19 @@ namespace Lykke.Service.PayInternal.Services
 
             IBlockchainTransaction txToRefund = paymentTxs.First();
 
-            if (!txToRefund.SourceWalletAddresses.Any())
-                throw new NoTransactionsToRefundException(paymentRequest.Id);
+            if (string.IsNullOrWhiteSpace(refund.DestinationAddress))
+            {
+                if (!txToRefund.SourceWalletAddresses.Any())
+                    throw new NoTransactionsToRefundException(paymentRequest.Id);
 
-            if (txToRefund.SourceWalletAddresses.Length > 1)
-                throw new MultiTransactionRefundNotSupportedException(txToRefund.SourceWalletAddresses.Length);
+                if (txToRefund.SourceWalletAddresses.Length > 1)
+                    throw new MultiTransactionRefundNotSupportedException(txToRefund.SourceWalletAddresses.Length);
+            }
+            else
+            {
+                if (!txToRefund.SourceWalletAddresses.Contains(refund.DestinationAddress))
+                    throw new WalletNotFoundException(refund.DestinationAddress);
+            }
 
             BalanceSummary balanceSummary =
                 await _qBitNinjaClient.GetBalanceSummary(BitcoinAddress.Create(refund.SourceAddress));
@@ -105,8 +113,9 @@ namespace Lykke.Service.PayInternal.Services
 
             //todo: take into account different assets 
             //todo: consider situation if we can make partial refund
-            if (spendableSatoshi < txToRefund.Amount)
-                throw new NotEnoughMoneyException(spendableSatoshi, txToRefund.Amount);
+            decimal satoshiToRefund = txToRefund.Amount;
+            if (spendableSatoshi < satoshiToRefund)
+                throw new NotEnoughMoneyException(spendableSatoshi, satoshiToRefund);
 
             var newRefund = new Refund
             {
@@ -114,11 +123,13 @@ namespace Lykke.Service.PayInternal.Services
                 DueDate = DateTime.UtcNow.Add(_expirationTime),
                 MerchantId = refund.MerchantId,
                 RefundId = Guid.NewGuid().ToString(),
-                Amount = txToRefund.Amount
+                Amount = satoshiToRefund
                 // TODO: what about settlement ID?
             };
 
-            string destinationAddress = refund.DestinationAddress ?? txToRefund.SourceWalletAddresses.First();
+            string destinationAddress = string.IsNullOrWhiteSpace(refund.DestinationAddress)
+                ? txToRefund.SourceWalletAddresses.First()
+                : refund.DestinationAddress;
 
             var newTransfer = new MultipartTransfer
             {
@@ -136,14 +147,14 @@ namespace Lykke.Service.PayInternal.Services
                         Destination = new AddressAmount
                         {
                             Address = destinationAddress,
-                            Amount = txToRefund.Amount
+                            Amount = satoshiToRefund
                         },
                         Sources = new List<AddressAmount>
                         {
                             new AddressAmount
                             {
                                 Address = refund.SourceAddress,
-                                Amount = txToRefund.Amount
+                                Amount = satoshiToRefund
                             }
                         }
                     }
@@ -166,7 +177,7 @@ namespace Lykke.Service.PayInternal.Services
                 PaymentRequestId = paymentRequest.Id,
                 RefundId = newRefund.RefundId,
                 DueDate = newRefund.DueDate,
-                Amount = txToRefund.Amount
+                Amount = satoshiToRefund
                 // TODO: what about settlement ID?
             };
         }
