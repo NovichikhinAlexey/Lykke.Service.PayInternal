@@ -92,8 +92,11 @@ namespace Lykke.Service.PayInternal.Services
 
             IBlockchainTransaction txToRefund = paymentTxs.First();
 
-            //todo: if multiple source addresses
-            string destinationAddress = refund.DestinationAddress ?? string.Empty; //paymentRequest.SourceAddress;
+            if (!txToRefund.SourceWalletAddresses.Any())
+                throw new NoTransactionsToRefundException(paymentRequest.Id);
+
+            if (txToRefund.SourceWalletAddresses.Length > 1)
+                throw new MultiTransactionRefundNotSupportedException(txToRefund.SourceWalletAddresses.Length);
 
             BalanceSummary balanceSummary =
                 await _qBitNinjaClient.GetBalanceSummary(BitcoinAddress.Create(refund.SourceAddress));
@@ -114,6 +117,8 @@ namespace Lykke.Service.PayInternal.Services
                 Amount = txToRefund.Amount
                 // TODO: what about settlement ID?
             };
+
+            string destinationAddress = refund.DestinationAddress ?? txToRefund.SourceWalletAddresses.First();
 
             var newTransfer = new MultipartTransfer
             {

@@ -22,6 +22,7 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public int Confirmations { get; set; }
 
         public string WalletAddress { get; set; }
+        public string[] SourceWalletAddresses { get; set; }
 
         public DateTime? FirstSeen { get; set; }
 

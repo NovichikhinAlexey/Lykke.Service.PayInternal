@@ -23,6 +23,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 
         string WalletAddress { get; set; }
 
+        string[] SourceWalletAddresses { get; set; }
+
         DateTime? FirstSeen { get; set; }
 
         TransactionType TransactionType { get; set; }

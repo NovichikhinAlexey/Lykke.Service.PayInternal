@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
+using Lykke.Service.PayInternal.AzureRepositories.Serializers;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
@@ -63,6 +64,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         }
         
         public string WalletAddress { get; set; }
+
+        [ValueSerializer(typeof(StringListSerializer))]
+        public string[] SourceWalletAddresses { get; set; }
      
         public DateTime? FirstSeen
         {
@@ -98,6 +102,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             BlockId = blockchainTransaction.BlockId;
             Confirmations = blockchainTransaction.Confirmations;
             WalletAddress = blockchainTransaction.WalletAddress;
+            SourceWalletAddresses = blockchainTransaction.SourceWalletAddresses;
             FirstSeen = blockchainTransaction.FirstSeen;
             AssetId = blockchainTransaction.AssetId;
             Blockchain = blockchainTransaction.Blockchain;
