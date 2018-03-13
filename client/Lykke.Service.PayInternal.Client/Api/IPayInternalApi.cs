@@ -15,10 +15,10 @@ namespace Lykke.Service.PayInternal.Client.Api
         Task<IEnumerable<WalletStateResponse>> GetNotExpiredWalletsAsync();
 
         [Post("/api/transactions/payment")]
-        Task CreatePaymentTransaction([Body] CreateTransactionRequest request);
+        Task CreatePaymentTransactionAsync([Body] CreateTransactionRequest request);
 
         [Put("/api/transactions")]
-        Task UpdateTransaction([Body] UpdateTransactionRequest request);
+        Task UpdateTransactionAsync([Body] UpdateTransactionRequest request);
 
         [Get("/api/transactions/GetAllMonitored")]
         Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactions();

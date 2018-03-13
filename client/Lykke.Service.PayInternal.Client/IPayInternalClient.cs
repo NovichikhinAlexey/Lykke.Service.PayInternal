@@ -20,14 +20,14 @@ namespace Lykke.Service.PayInternal.Client
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        Task CreatePaymentTransaction(CreateTransactionRequest request);
+        Task CreatePaymentTransactionAsync(CreateTransactionRequest request);
 
         /// <summary>
         /// Updates transaction
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        Task UpdateTransaction(UpdateTransactionRequest request);
+        Task UpdateTransactionAsync(UpdateTransactionRequest request);
         
         /// <summary>
         /// Returns all merchants.
