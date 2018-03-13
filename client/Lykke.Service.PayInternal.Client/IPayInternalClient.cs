@@ -127,7 +127,7 @@ namespace Lykke.Service.PayInternal.Client
         /// <returns></returns>
         Task<AvailableAssetsResponse> GetAvailableAsync(AssetAvailabilityType availabilityType);
         Task<AvailableAssetsResponse> GetAvailableAsync(AssetByMerchantModel assetByMerchant);
-
+        Task<AvailableAssetsResponse> GetAvailableAsync(string merchantId);
         /// <summary>
         /// Updates availability type for asset
         /// </summary>

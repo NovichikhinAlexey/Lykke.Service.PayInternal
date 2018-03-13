@@ -62,7 +62,10 @@ namespace Lykke.Service.PayInternal.Services
         {
             return await _assetAvailabilityRepository.GetAsync(assetAvailability);
         }
-
+        public async Task<IAssetAvailabilityByMerchant> GetAvailablePersonalAsync(string merchantId)
+        {
+            return await _assetAvailabilityByMerchantRepository.GetAsync(merchantId);
+        }
         public async Task<IReadOnlyList<IAssetAvailability>> GetAvailableAsync(string merchantId, AssetAvailabilityType assetAvailabilityType)
         {
             var assets = await _assetAvailabilityByMerchantRepository.GetAsync(merchantId);

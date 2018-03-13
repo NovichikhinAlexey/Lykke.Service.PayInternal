@@ -10,6 +10,8 @@ namespace Lykke.Service.PayInternal.Client.Api
         Task<AvailableAssetsResponse> GetAvailableAsync([Query] AssetAvailabilityType availabilityType);
         [Get("/api/assets/availablebymerchant")]
         Task<AvailableAssetsResponse> GetAvailableAsync([Query] AssetByMerchantModel assetByMerchant);
+        [Get("/api/assets/availablepersonal")]
+        Task<AvailableAssetsResponse> GetAvailableAsync([Query] string merchantId);
 
         [Post("/api/assets/available")]
         Task SetAvailabilityAsync([Body] UpdateAssetAvailabilityRequest request);
