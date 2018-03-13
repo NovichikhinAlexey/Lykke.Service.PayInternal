@@ -3,12 +3,15 @@ using System.Net;
 using System.Threading.Tasks;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Service.PayInternal.Core.Domain.Refund;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
 using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Refunds;
+using Lykke.Service.PayInternal.Services.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using RefundResponse = Lykke.Service.PayInternal.Models.Refunds.RefundResponse;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -35,35 +38,22 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("refund")]
         [SwaggerOperation("Refund")]
         [ProducesResponseType(typeof(RefundResponse), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.InternalServerError)]
-        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         [ValidateModel]
         public async Task<IActionResult> CreateRefundRequestAsync([FromBody] RefundRequestModel request)
         {
             try
             {
-                var result = await _refundService.ExecuteAsync(request);
-                if (result == null)
-                    throw new Exception("Unknown internal error.");
+                IRefund refund = await _refundService.ExecuteAsync(request);
 
-                return Ok(new RefundResponse
-                {
-                    Amount = result.Amount,
-                    MerchantId = result.MerchantId,
-                    PaymentRequestId = result.PaymentRequestId,
-                    RefundId = result.RefundId,
-                    SettlementId = result.SettlementId
-                });
+                return Ok(refund.ToApiModel());
             }
             catch (Exception e)
             {
-                await _log.WriteErrorAsync(
-                    nameof(RefundsController),
-                    nameof(CreateRefundRequestAsync),
-                    e);
-
-                return BadRequest(ErrorResponse.Create(e.Message));
+                await _log.WriteErrorAsync(nameof(RefundsController), nameof(CreateRefundRequestAsync), e);
             }
+
+            return StatusCode((int) HttpStatusCode.InternalServerError);
         }
 
         /// <summary>

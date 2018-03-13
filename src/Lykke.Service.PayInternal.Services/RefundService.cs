@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using QBitNinja.Client;
 using JetBrains.Annotations;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Refund;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
@@ -55,26 +56,22 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IRefund> ExecuteAsync(IRefundRequest refund)
         {
-            // Initial checkup
-            // TODO: remove this check after multi-directional refunds are enabled.
-            if (string.IsNullOrWhiteSpace(refund.SourceAddress) ||
-                string.IsNullOrWhiteSpace(refund.DestinationAddress))
-                throw new NotImplementedException("Multi-directional refunds are not currently supported. Please, specify both Source and Destination addresses.");
+            IPaymentRequest paymentRequest = await _paymentRequestService.FindAsync(refund.SourceAddress);
 
-            var paymentRequest = await _paymentRequestService.FindAsync(refund.SourceAddress);
             if (paymentRequest == null)
-                throw new PaymentRequestNotFoundException("The payment request for the specified wallet address does not exist.");
+                throw new PaymentRequestNotFoundException(refund.SourceAddress);
 
             if (!paymentRequest.MerchantId.Equals(refund.MerchantId))
-                throw new ArgumentException("Payment request found, but it seems to belong to another merchant.");
+                throw new PaymentRequestNotFoundException(refund.MerchantId, paymentRequest.Id);
 
             var walletsCheckResult = await _checkupMerchantWallets(refund);
+
             if (!walletsCheckResult)
-                throw new ArgumentException("The source (and/or destination wallet) belongs to another merchant.");
+                throw new WalletNotFoundException(refund.SourceAddress);
             
-            // Initial requests fullfill
             var balance = await _qBitNinjaClient.GetBalanceSummary(BitcoinAddress.Create(refund.SourceAddress));
-            var refundAmount = balance.Spendable.Amount.ToDecimal(MoneyUnit.BTC);
+
+            var refundAmount = balance.Spendable.Amount.ToDecimal(MoneyUnit.Satoshi);
 
             var newRefund = new Refund
             {
