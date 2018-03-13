@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Lykke.Service.PayInternal.Contract.PaymentRequest
 {
@@ -9,5 +10,6 @@ namespace Lykke.Service.PayInternal.Contract.PaymentRequest
         public int Confirmations { get; set; }
         public string BlockId { get; set; }
         public DateTime FirstSeen { get; set; }
+        public IReadOnlyList<string> SourceWalletAddresses { get; set; }
     }
 }

@@ -12,5 +12,6 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         public DateTime FirstSeen { get; set; }
         public string Url { get; set; }
         public string RefundLink { get; set; }
+        public string[] SourceWalletAddresses { get; set; }
     }
 }

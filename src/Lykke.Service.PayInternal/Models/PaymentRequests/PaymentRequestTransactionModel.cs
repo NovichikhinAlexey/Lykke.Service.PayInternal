@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Lykke.Service.PayInternal.Models.PaymentRequests
 {
@@ -12,5 +13,6 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         public DateTime FirstSeen { get; set; }
         public string Url { get; set; }
         public string RefundUrl { get; set; }
+        public IReadOnlyList<string> SourceWalletAddresses { get; set; }
     }
 }
