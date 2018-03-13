@@ -5,6 +5,7 @@ using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Refunds;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -36,16 +37,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(RefundResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.InternalServerError)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
         public async Task<IActionResult> CreateRefundRequestAsync([FromBody] RefundRequestModel request)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(new ErrorResponse().AddErrors(ModelState));
-
-            // TODO: remove this check after multi-directional refunds are enabled.
-            if (string.IsNullOrWhiteSpace(request.SourceAddress) ||
-                string.IsNullOrWhiteSpace(request.DestinationAddress))
-                return BadRequest(ErrorResponse.Create("Multi-directional refunds are not currently supported. Please, specify both Source and Destination addresses."));
-
             try
             {
                 var result = await _refundService.ExecuteAsync(request);
