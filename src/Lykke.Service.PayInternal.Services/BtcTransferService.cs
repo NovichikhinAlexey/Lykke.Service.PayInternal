@@ -70,6 +70,7 @@ namespace Lykke.Service.PayInternal.Services
             return response.Transaction?.TransactionId?.ToString();
         }
 
+        //todo: it is common service and shodn't know anything about domain, remove transactionsType
         public async Task<MultipartTransferResponse> ExecuteMultipartTransferAsync(IMultipartTransfer multipartTransfer, TransactionType transactionsType)
         {
             if (!(multipartTransfer is MultipartTransfer transferRequest))
