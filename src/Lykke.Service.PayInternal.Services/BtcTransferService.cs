@@ -137,6 +137,7 @@ namespace Lykke.Service.PayInternal.Services
                 //todo: transfer has to be thought throw, WalletAddress = source.Address is true only for refund transactions
                 foreach (ToOneAddress source in sources)
                 {
+                    //_transactionService is a part of domain logic can't be part of transfer service
                     var blockchainTransaction = await _transactionService.CreateTransaction(new CreateTransaction
                     {
                         // todo: Satoshi to btc
