@@ -133,7 +133,7 @@ namespace Lykke.Service.PayInternal.Services
                         refundTxs.Any(x =>
                             x.Confirmations < _transactionConfirmationCount && x.DueDate < DateTime.UtcNow)
                             ? PaymentRequestStatusInfo.Error("NOT CONFIRMED")
-                            : PaymentRequestStatusInfo.InProcess();
+                            : PaymentRequestStatusInfo.RefundInProcess();
                 }
             } else if (txTypes.Contains(TransactionType.Payment))
             {
@@ -156,6 +156,20 @@ namespace Lykke.Service.PayInternal.Services
             await _paymentRequestRepository.UpdateAsync(paymentRequest);
 
             await _paymentRequestPublisher.PublishAsync(paymentRequest);
+        }
+
+        public async Task ProcessByTransactionAsync(string transactionId)
+        {
+            IEnumerable<IBlockchainTransaction> txs = await _transactionRepository.GetByTransactionAsync(transactionId);
+
+            //todo: for this we need to be sure each transaction has walletAddress which is equal to paymentRequest walletAddress
+            //it is true for payment and refund transactions
+            IEnumerable<string> walletAddresses = txs.Select(x => x.WalletAddress).Distinct();
+
+            foreach (string walletAddress in walletAddresses)
+            {
+                await ProcessAsync(walletAddress);
+            }
         }
     }
 }
