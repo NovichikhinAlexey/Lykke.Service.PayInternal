@@ -104,8 +104,8 @@ namespace Lykke.Service.PayInternal.Modules
                 .As<ITransactionsService>()
                 .SingleInstance();
 
-            builder.RegisterType<TransferService>()
-                .As<ITransferService>()
+            builder.RegisterType<BtcTransferService>()
+                .As<IBtcTransferService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.ExpirationPeriods))
                 .SingleInstance();
 

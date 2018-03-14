@@ -18,12 +18,12 @@ namespace Lykke.Service.PayInternal.Controllers
     [Route("api")]
     public class TransfersController : Controller
     {
-        private readonly ITransferService _transferService;
+        private readonly IBtcTransferService _btcTransferService;
         private readonly ILog _log;
 
-        public TransfersController(ITransferService transferService, ILog log)
+        public TransfersController(IBtcTransferService btcTransferService, ILog log)
         {
-            _transferService = transferService ?? throw new ArgumentNullException(nameof(transferService));
+            _btcTransferService = btcTransferService ?? throw new ArgumentNullException(nameof(btcTransferService));
             _log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
@@ -41,7 +41,7 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                string transactionId = await _transferService.ExecuteAsync(request.ToDomain());
+                string transactionId = await _btcTransferService.ExecuteAsync(request.ToDomain());
 
                 return Ok(new BtcTransferResponse {TransactionId = transactionId});
             }
@@ -109,7 +109,7 @@ namespace Lykke.Service.PayInternal.Controllers
             try
             {
                 // TODO: add ability to set TransactionType in request
-                var result = await _transferService.ExecuteMultipartTransferAsync(request.ToDomain(), TransactionType.Refund);
+                var result = await _btcTransferService.ExecuteMultipartTransferAsync(request.ToDomain(), TransactionType.Refund);
 
                 return Ok(result);
             }
@@ -161,7 +161,7 @@ namespace Lykke.Service.PayInternal.Controllers
             try
             {
                 // TODO: add ability to set TransactionType in request
-                var result = await _transferService.ExecuteMultipartTransferAsync(request.ToDomain(), TransactionType.Refund);
+                var result = await _btcTransferService.ExecuteMultipartTransferAsync(request.ToDomain(), TransactionType.Refund);
 
                 return Ok(result);
             }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using QBitNinja.Client;
 using JetBrains.Annotations;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Refund;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -19,11 +20,12 @@ using QBitNinja.Client.Models;
 namespace Lykke.Service.PayInternal.Services
 {
     [UsedImplicitly]
-    public class RefundService : IRefundService
+    public class 
+        RefundService : IRefundService
     {
         // ReSharper disable once NotAccessedField.Local
         private readonly QBitNinjaClient _qBitNinjaClient;
-        private readonly ITransferService _transferService;
+        private readonly IBtcTransferService _btcTransferService;
         private readonly ITransactionsService _transactionService;
         private readonly IPaymentRequestService _paymentRequestService;
         private readonly IRefundRepository _refundRepository;
@@ -33,7 +35,7 @@ namespace Lykke.Service.PayInternal.Services
 
         public RefundService(
             QBitNinjaClient qBitNinjaClient,
-            ITransferService transferService,
+            IBtcTransferService btcTransferService,
             ITransactionsService transactionService,
             IPaymentRequestService paymentRequestService,
             IRefundRepository refundRepository,
@@ -43,8 +45,8 @@ namespace Lykke.Service.PayInternal.Services
         {
             _qBitNinjaClient =
                 qBitNinjaClient ?? throw new ArgumentNullException(nameof(qBitNinjaClient));
-            _transferService =
-                transferService ?? throw new ArgumentNullException(nameof(transferService));
+            _btcTransferService =
+                btcTransferService ?? throw new ArgumentNullException(nameof(btcTransferService));
             _transactionService =
                 transactionService ?? throw new ArgumentNullException(nameof(transactionService));
             _paymentRequestService =
@@ -64,6 +66,9 @@ namespace Lykke.Service.PayInternal.Services
 
             if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(refund.SourceAddress);
+
+            if (paymentRequest.PaymentAssetId != LykkeConstants.BitcoinAssetId)
+                throw new AssetNotSupportedException(paymentRequest.PaymentAssetId);
 
             if (!paymentRequest.MerchantId.Equals(refund.MerchantId))
                 throw new PaymentRequestNotFoundException(refund.MerchantId, paymentRequest.Id);
@@ -164,7 +169,7 @@ namespace Lykke.Service.PayInternal.Services
             await _refundRepository.AddAsync(newRefund);
 
             MultipartTransferResponse transferResponse =
-                await _transferService.ExecuteMultipartTransferAsync(newTransfer, TransactionType.Refund);
+                await _btcTransferService.ExecuteMultipartTransferAsync(newTransfer, TransactionType.Refund);
 
             if (transferResponse.State == TransferExecutionResult.Fail)
                 throw new Exception(transferResponse.ErrorMessage);

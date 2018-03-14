@@ -4,7 +4,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.Core.Services
 {
-    public interface ITransferService
+    public interface IBtcTransferService
     {
         Task<string> ExecuteAsync(BtcTransfer transfer);
 

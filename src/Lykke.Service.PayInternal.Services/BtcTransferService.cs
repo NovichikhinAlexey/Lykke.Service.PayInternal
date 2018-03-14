@@ -18,7 +18,7 @@ using Lykke.Service.PayInternal.Services.Domain;
 namespace Lykke.Service.PayInternal.Services
 {
     [UsedImplicitly]
-    public class TransferService : ITransferService
+    public class BtcTransferService : IBtcTransferService
     {
         private readonly IBitcoinApiClient _bitcoinServiceClient;
         private readonly ITransferRepository _transferRepository;
@@ -29,7 +29,7 @@ namespace Lykke.Service.PayInternal.Services
 
         private const int SatoshiInBtc = 100000000;
 
-        public TransferService(IBitcoinApiClient bitcoinServiceClient,
+        public BtcTransferService(IBitcoinApiClient bitcoinServiceClient,
             ITransferRepository transferRepository,
             ITransactionsService transactionServicey,
             ITransactionPublisher transactionPublisher,
@@ -126,7 +126,7 @@ namespace Lykke.Service.PayInternal.Services
                     response.ErrorMessage = $"Transfer execution failed. " + 
                                             $"Code = {responseForPart.Error?.Code}, Message = {responseForPart.Error?.Message}.";
 
-                    await _log.WriteWarningAsync(nameof(TransferService),
+                    await _log.WriteWarningAsync(nameof(BtcTransferService),
                         nameof(ExecuteMultipartTransferAsync),
                         response.ErrorMessage);
                 
