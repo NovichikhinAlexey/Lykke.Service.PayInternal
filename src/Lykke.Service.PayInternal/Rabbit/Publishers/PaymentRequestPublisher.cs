@@ -77,6 +77,8 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
         
         public async Task PublishAsync(PaymentRequestDetailsMessage message)
         {
+            await _log.WriteInfoAsync(nameof(PaymentRequestPublisher), nameof(PublishAsync), message.ToJson());
+      
             await _publisher.ProduceAsync(message);
         }
     }
