@@ -50,14 +50,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequest
             };
         }
 
-        public static PaymentRequestStatusInfo RefundInProcess()
-        {
-            return new PaymentRequestStatusInfo
-            {
-                Status = PaymentRequestStatus.RefundInProgress
-            };
-        }
-
         public static PaymentRequestStatusInfo New()
         {
             return new PaymentRequestStatusInfo
