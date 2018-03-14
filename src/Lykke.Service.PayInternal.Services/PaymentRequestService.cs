@@ -108,6 +108,7 @@ namespace Lykke.Service.PayInternal.Services
             if(paymentRequest == null)
                 throw new PaymentRequestNotFoundException(walletAddress);
             
+            //todo: we can get transactions by partition, will be faster
             IReadOnlyList<IBlockchainTransaction> txs = await _transactionRepository.GetByPaymentRequest(paymentRequest.Id);
 
             IEnumerable<TransactionType> txTypes = txs.Select(x => x.TransactionType).Distinct().ToList();
