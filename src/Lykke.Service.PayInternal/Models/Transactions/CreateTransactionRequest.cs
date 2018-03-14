@@ -21,7 +21,6 @@ namespace Lykke.Service.PayInternal.Models.Transactions
         [Required]
         public int Confirmations { get; set; }
 
-        [Required]
         public string BlockId { get; set; }
 
         [Required]
