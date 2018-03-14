@@ -14,8 +14,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         private decimal _amount;
         private int _confirmations;
         private DateTime? _firstSeen;
+        private DateTime _dueDate;
         private TransactionType _transactionType;
-        [CanBeNull] private string _blockId;
         
 
         public BlockchainTransactionEntity()
@@ -44,15 +44,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             }
         }
 
-        public string BlockId
-        {
-            get => _blockId;
-            set
-            {
-                _blockId = value;
-                MarkValueTypePropertyAsDirty(nameof(BlockId));
-            }
-        }
+        public string BlockId { get; set; }
 
         public int Confirmations
         {
@@ -93,7 +85,15 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             }
         }
 
-        public DateTime DueDate { get; set; }
+        public DateTime DueDate
+        {
+            get => _dueDate;
+            set
+            {
+                _dueDate = value;
+                MarkValueTypePropertyAsDirty(nameof(DueDate));
+            }
+        }
 
         internal void Map(IBlockchainTransaction blockchainTransaction)
         {
