@@ -63,9 +63,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                 AzureTableStorage<OrderEntity>.Create(_ordersConnectionString,
                     ordersTableName, _log)));
 
-            builder.RegisterInstance<ITransferRepository>(new TransferRepository(
-                AzureTableStorage<TransferEntity>.Create(_transfersConnectionString,
-                    transfersTableName, _log)));
+            builder.RegisterInstance<ITransferRepository>(
+                new TransferRepository(AzureTableStorage<TransferEntity>.Create(_transfersConnectionString,
+                        transfersTableName, _log)));
 
             builder.RegisterInstance<IRefundRepository>(new RefundRepository(
                 AzureTableStorage<RefundEntity>.Create(_refundsConnectionStringString,

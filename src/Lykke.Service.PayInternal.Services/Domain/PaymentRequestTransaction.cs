@@ -3,7 +3,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.Services.Domain
 {
-    public class BlockchainTransaction : IBlockchainTransaction
+    public class PaymentRequestTransaction : IPaymentRequestTransaction
     {
         public string Id { get; set; }
 

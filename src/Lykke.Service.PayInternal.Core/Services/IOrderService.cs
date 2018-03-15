@@ -15,7 +15,7 @@ namespace Lykke.Service.PayInternal.Core.Services
         
         Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest);
 
-        Task<PaymentRequestStatusInfo> GetPaymentRequestStatus(IReadOnlyList<IBlockchainTransaction> transactions,
+        Task<PaymentRequestStatusInfo> GetPaymentRequestStatus(IReadOnlyList<IPaymentRequestTransaction> transactions,
             string paymentRequestId);
     }
 }

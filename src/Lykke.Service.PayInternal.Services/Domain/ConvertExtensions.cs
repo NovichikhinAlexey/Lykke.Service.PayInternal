@@ -44,5 +44,19 @@ namespace Lykke.Service.PayInternal.Services.Domain
                 DueDate = src.DueDate
             };
         }
+
+        public static RefundResponse ToApiModel(this RefundResult src)
+        {
+            return new RefundResponse
+            {
+                Amount = src.Amount,
+                MerchantId = src.MerchantId,
+                PaymentRequestId = src.PaymentRequestId,
+                RefundId = null,
+                SettlementId = null,
+                DueDate = src.DueDate,
+                PaymentRequestStatus = src.PaymentRequestStatus
+            };
+        }
     }
 }

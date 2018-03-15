@@ -5,6 +5,6 @@ namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface ITransactionPublisher
     {
-        Task PublishAsync(IBlockchainTransaction transaction);
+        Task PublishAsync(IPaymentRequestTransaction transaction);
     }
 }

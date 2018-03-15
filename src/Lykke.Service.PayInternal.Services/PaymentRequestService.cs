@@ -7,7 +7,9 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain.Refund;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
@@ -19,19 +21,27 @@ namespace Lykke.Service.PayInternal.Services
     {
         private readonly IPaymentRequestRepository _paymentRequestRepository;
         private readonly IMerchantWalletsService _merchantWalletsService;
-        private readonly IBlockchainTransactionRepository _transactionRepository;
+        private readonly IPaymentRequestTransactionRepository _transactionRepository;
         private readonly IOrderService _orderService;
         private readonly IPaymentRequestPublisher _paymentRequestPublisher;
         private readonly int _transactionConfirmationCount;
+        private readonly ITransferService _transferService;
+        private readonly TimeSpan _refundExpirationPeriod;
+        private readonly ITransactionPublisher _transactionPublisher;
+        private readonly ITransactionsService _transactionsService;
         private readonly ILog _log;
 
         public PaymentRequestService(
             IPaymentRequestRepository paymentRequestRepository,
             IMerchantWalletsService merchantWalletsService,
-            IBlockchainTransactionRepository transactionRepository,
+            IPaymentRequestTransactionRepository transactionRepository,
             IOrderService orderService,
             IPaymentRequestPublisher paymentRequestPublisher,
             int transactionConfirmationCount,
+            ITransferService transferService,
+            TimeSpan refundExpirationPeriod,
+            ITransactionPublisher transactionPublisher,
+            ITransactionsService transactionsService,
             ILog log)
         {
             _paymentRequestRepository = paymentRequestRepository;
@@ -40,6 +50,10 @@ namespace Lykke.Service.PayInternal.Services
             _orderService = orderService;
             _paymentRequestPublisher = paymentRequestPublisher;
             _transactionConfirmationCount = transactionConfirmationCount;
+            _transferService = transferService;
+            _refundExpirationPeriod = refundExpirationPeriod;
+            _transactionPublisher = transactionPublisher;
+            _transactionsService = transactionsService;
             _log = log;
         }
         
@@ -109,7 +123,7 @@ namespace Lykke.Service.PayInternal.Services
                 throw new PaymentRequestNotFoundException(walletAddress);
             
             //todo: we can get transactions by partition, will be faster
-            IReadOnlyList<IBlockchainTransaction> txs = await _transactionRepository.GetByPaymentRequest(paymentRequest.Id);
+            IReadOnlyList<IPaymentRequestTransaction> txs = await _transactionRepository.GetByPaymentRequest(paymentRequest.Id);
 
             IEnumerable<TransactionType> txTypes = txs.Select(x => x.TransactionType).Distinct().ToList();
 
@@ -120,7 +134,7 @@ namespace Lykke.Service.PayInternal.Services
                 throw new TransactionTypeNotSupportedException(TransactionType.Settlement.ToString());
             } else if (txTypes.Contains(TransactionType.Refund))
             {
-                IReadOnlyList<IBlockchainTransaction> refundTxs =
+                IReadOnlyList<IPaymentRequestTransaction> refundTxs =
                     txs.Where(x => x.TransactionType == TransactionType.Refund).ToList();
 
                 if (refundTxs.All(x => x.Confirmations >= _transactionConfirmationCount))
@@ -137,7 +151,7 @@ namespace Lykke.Service.PayInternal.Services
                 }
             } else if (txTypes.Contains(TransactionType.Payment))
             {
-                IReadOnlyList<IBlockchainTransaction> paymentTxs =
+                IReadOnlyList<IPaymentRequestTransaction> paymentTxs =
                     txs.Where(x => x.TransactionType == TransactionType.Payment).ToList();
 
                 paymentStatusInfo = await _orderService.GetPaymentRequestStatus(paymentTxs, paymentRequest.Id);
@@ -160,7 +174,7 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task ProcessByTransactionAsync(string transactionId)
         {
-            IEnumerable<IBlockchainTransaction> txs = await _transactionRepository.GetByTransactionAsync(transactionId);
+            IEnumerable<IPaymentRequestTransaction> txs = await _transactionRepository.GetByTransactionAsync(transactionId);
 
             //todo: for this we need to be sure each transaction has walletAddress which is equal to paymentRequest walletAddress
             //it is true for payment and refund transactions
@@ -170,6 +184,106 @@ namespace Lykke.Service.PayInternal.Services
             {
                 await ProcessAsync(walletAddress);
             }
+        }
+
+        public async Task<RefundResult> RefundAsync(string merchantId, string sourceWalletAddress, string destinationWalletAddress)
+        {
+            IPaymentRequest paymentRequest = await _paymentRequestRepository.FindAsync(sourceWalletAddress);
+
+            if (paymentRequest == null)
+                throw new PaymentRequestNotFoundException(sourceWalletAddress);
+
+            if (!paymentRequest.MerchantId.Equals(merchantId))
+                throw new PaymentRequestNotFoundException(merchantId, paymentRequest.Id);
+
+            if (paymentRequest.Status != PaymentRequestStatus.Confirmed &&
+                paymentRequest.Status != PaymentRequestStatus.Error)
+                throw new NotAllowedStatusException(paymentRequest.Status.ToString());
+
+            IEnumerable<IPaymentRequestTransaction> paymentRequestTxs =
+                await _transactionRepository.GetAsync(sourceWalletAddress);
+
+            IEnumerable<IPaymentRequestTransaction> paymentOnlyTxs =
+                paymentRequestTxs.Where(x => x.TransactionType == TransactionType.Payment).ToList();
+
+            if (!paymentOnlyTxs.Any())
+                throw new NoTransactionsToRefundException(paymentRequest.Id);
+
+            if (paymentOnlyTxs.Count() > 1)
+                throw new MultiTransactionRefundNotSupportedException(paymentOnlyTxs.Count());
+
+            IPaymentRequestTransaction txToRefund = paymentOnlyTxs.First();
+
+            if (!txToRefund.SourceWalletAddresses.Any())
+                throw new NoTransactionsToRefundException(paymentRequest.Id);
+
+            if (string.IsNullOrWhiteSpace(destinationWalletAddress))
+            {
+                if (txToRefund.SourceWalletAddresses.Length > 1)
+                    throw new MultiTransactionRefundNotSupportedException(txToRefund.SourceWalletAddresses.Length);
+            }
+            else
+            {
+                if (!txToRefund.SourceWalletAddresses.Contains(destinationWalletAddress))
+                    throw new WalletNotFoundException(destinationWalletAddress);
+            }
+
+            TransferResult transferResult = await _transferService.ExecuteAsync(new TransferCommand
+            {
+                AssetId = txToRefund.AssetId,
+                Amounts = new List<TransferAmount>
+                {
+                    new TransferAmount
+                    {
+                        Amount = txToRefund.Amount,
+                        Source = sourceWalletAddress,
+                        Destination = string.IsNullOrWhiteSpace(destinationWalletAddress)
+                            ? txToRefund.SourceWalletAddresses.First()
+                            : destinationWalletAddress,
+                    }
+                }
+            });
+
+            DateTime refundDueDate = DateTime.UtcNow.Add(_refundExpirationPeriod);
+
+            foreach (var transferResultTransaction in transferResult.Transactions)
+            {
+                if (!string.IsNullOrEmpty(transferResultTransaction.Error))
+                {
+                    await _log.WriteWarningAsync(nameof(PaymentRequestService), nameof(RefundAsync),
+                        transferResultTransaction.ToJson(), "Transaction failed");
+
+                    continue;
+                }
+
+                IPaymentRequestTransaction paymenRequestTransaction = await _transactionsService.CreateTransaction(
+                    new CreateTransaction
+                    {
+                        Amount = transferResultTransaction.Amount,
+                        AssetId = transferResultTransaction.AssetId,
+                        Confirmations = 0,
+                        TransactionId = transferResultTransaction.Hash,
+                        WalletAddress = sourceWalletAddress,
+                        Type = TransactionType.Refund,
+                        Blockchain = transferResult.Blockchain,
+                        FirstSeen = null,
+                        DueDate = refundDueDate
+                    });
+
+                //todo: think of moving this call inside  _transactionsService
+                await _transactionPublisher.PublishAsync(paymenRequestTransaction);
+            }
+
+            return new RefundResult
+            {
+                Amount = transferResult.Transactions.Where(x => string.IsNullOrEmpty(x.Error)).Sum(x => x.Amount),
+                DueDate = refundDueDate,
+                MerchantId = merchantId,
+                PaymentRequestId = paymentRequest.Id,
+                PaymentRequestStatus = transferResult.Transactions.Any(x => string.IsNullOrEmpty(x.Error))
+                    ? PaymentRequestStatus.RefundInProgress
+                    : PaymentRequestStatus.Error
+            };
         }
     }
 }

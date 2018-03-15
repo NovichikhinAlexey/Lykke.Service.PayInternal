@@ -15,7 +15,7 @@ namespace Lykke.Service.PayInternal.Services
     [UsedImplicitly]
     public class TransactionsService : ITransactionsService
     {
-        private readonly IBlockchainTransactionRepository _transactionRepository;
+        private readonly IPaymentRequestTransactionRepository _transactionRepository;
         private readonly IPaymentRequestRepository _paymentRequestRepository;
         // ReSharper disable once NotAccessedField.Local
         private readonly IOrderRepository _orderRepository;
@@ -24,7 +24,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ILog _log;
 
         public TransactionsService(
-            IBlockchainTransactionRepository transactionRepository,
+            IPaymentRequestTransactionRepository transactionRepository,
             IPaymentRequestRepository paymentRequestRepository,
             IOrderRepository ordersRepository,
             int transactionConfirmationCount,
@@ -37,37 +37,37 @@ namespace Lykke.Service.PayInternal.Services
             _log = log;
         }
 
-        public async Task<IEnumerable<IBlockchainTransaction>> GetAsync(string walletAddress)
+        public async Task<IEnumerable<IPaymentRequestTransaction>> GetAsync(string walletAddress)
         {
             return await _transactionRepository.GetAsync(walletAddress);
         }
 
-        public async Task<IEnumerable<IBlockchainTransaction>> GetConfirmedAsync(string walletAddress)
+        public async Task<IEnumerable<IPaymentRequestTransaction>> GetConfirmedAsync(string walletAddress)
         {
             var transactions = await GetAsync(walletAddress);
             return transactions?
                 .Where(t => t.Confirmations >= _transactionConfirmationCount);
         }
 
-        public async Task<IEnumerable<IBlockchainTransaction>> GetAllMonitoredAsync()
+        public async Task<IEnumerable<IPaymentRequestTransaction>> GetAllMonitoredAsync()
         {
             var result = await _transactionRepository.GetNotExpiredAsync(_transactionConfirmationCount);
 
             return result;
         }
 
-        public async Task<IBlockchainTransaction> CreateTransaction(ICreateTransaction request)
+        public async Task<IPaymentRequestTransaction> CreateTransaction(ICreateTransaction request)
         {
             var paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
 
             if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(request.WalletAddress);
 
-            var transactionEntity = new BlockchainTransaction
+            var transactionEntity = new PaymentRequestTransaction
             {
                 WalletAddress = request.WalletAddress,
                 TransactionId = request.TransactionId,
-                Amount = (decimal)request.Amount,
+                Amount = request.Amount,
                 AssetId = request.AssetId,
                 Confirmations = request.Confirmations,
                 BlockId = request.BlockId,
@@ -86,7 +86,7 @@ namespace Lykke.Service.PayInternal.Services
         {
             if (string.IsNullOrEmpty(request.WalletAddress))
             {
-                IEnumerable<IBlockchainTransaction> transactions =
+                IEnumerable<IPaymentRequestTransaction> transactions =
                     (await _transactionRepository.GetByTransactionAsync(request.TransactionId)).ToList();
 
                 if (!transactions.Any())
@@ -105,7 +105,7 @@ namespace Lykke.Service.PayInternal.Services
             }
 
             // payment transaction update
-            IBlockchainTransaction transaction =
+            IPaymentRequestTransaction transaction =
                 await _transactionRepository.GetAsync(request.WalletAddress, request.TransactionId);
 
             if (transaction == null)

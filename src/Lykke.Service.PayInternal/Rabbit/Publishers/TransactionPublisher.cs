@@ -30,7 +30,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
             _publisher?.Dispose();
         }
 
-        public async Task PublishAsync(IBlockchainTransaction transaction)
+        public async Task PublishAsync(IPaymentRequestTransaction transaction)
         {
             await _publisher.ProduceAsync(new NewTransactionMessage
             {

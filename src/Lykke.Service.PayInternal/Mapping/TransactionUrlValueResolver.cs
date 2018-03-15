@@ -7,7 +7,7 @@ using Lykke.Service.PayInternal.Models.PaymentRequests;
 
 namespace Lykke.Service.PayInternal.Mapping
 {
-    public class TransactionUrlValueResolver : IValueResolver<IBlockchainTransaction, PaymentRequestTransactionModel, string>
+    public class TransactionUrlValueResolver : IValueResolver<IPaymentRequestTransaction, PaymentRequestTransactionModel, string>
     {
         private readonly BlockchainExplorerSettings _blockchainExplorerSettings;
 
@@ -17,7 +17,7 @@ namespace Lykke.Service.PayInternal.Mapping
                                           throw new ArgumentNullException(nameof(blockchainExplorerSettings));
         }
 
-        public string Resolve(IBlockchainTransaction source, PaymentRequestTransactionModel destination, string destMember,
+        public string Resolve(IPaymentRequestTransaction source, PaymentRequestTransactionModel destination, string destMember,
             ResolutionContext context)
         {
             var uri = new Uri(new Uri(_blockchainExplorerSettings.TransactionUrl.AddLastSymbolIfNotExists('/')), source.Id);
