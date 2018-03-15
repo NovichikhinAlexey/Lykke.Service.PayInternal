@@ -12,6 +12,7 @@ using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.AzureRepositories.Transfer;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
@@ -72,8 +73,8 @@ namespace Lykke.Service.PayInternal.Modules
                 AzureTableStorage<WalletEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantWalletConnString),
                     "MerchantWallets", _log)));
 
-            builder.RegisterInstance<IBlockchainTransactionRepository>(new BlockchainTransactionRepository(
-                AzureTableStorage<BlockchainTransactionEntity>.Create(
+            builder.RegisterInstance<IPaymentRequestTransactionRepository>(new PaymentRequestTransactionRepository(
+                AzureTableStorage<PaymentRequestTransactionEntity>.Create(
                     _dbSettings.ConnectionString(x => x.MerchantConnString),
                     "MerchantWalletTransactions", _log)));
         }
@@ -115,9 +116,16 @@ namespace Lykke.Service.PayInternal.Modules
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.ExpirationPeriods))
                 .SingleInstance();
 
-            builder.RegisterType<RefundService>()
-                .As<IRefundService>()
-                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.ExpirationPeriods.Refund))
+            builder.RegisterType<TransferService>()
+                .As<ITransferService>()
+                .SingleInstance();
+
+            builder.RegisterType<NoFeeProvider>()
+                .As<IFeeProvider>()
+                .SingleInstance();
+
+            builder.RegisterType<BitcoinApiClient>()
+                .Keyed<IBlockchainApiClient>(BlockchainType.Bitcoin)
                 .SingleInstance();
         }
 

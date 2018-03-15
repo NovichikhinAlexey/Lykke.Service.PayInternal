@@ -1,37 +1,65 @@
-﻿using Lykke.AzureStorage.Tables;
+﻿using System;
+using System.Collections.Generic;
+using Lykke.AzureStorage.Tables;
+using Lykke.AzureStorage.Tables.Entity.Annotation;
+using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
-using System;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
 {
-    public class TransferEntity : AzureTableEntity, IMultipartTransfer
+    [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
+    public class TransferEntity : AzureTableEntity, ITransfer
     {
-        public string MerchantId { get; set; }
+        private DateTime _createdOn;
 
-        public DateTime CreationDate { get; set; }
+        public string Id => RowKey;
 
         public string AssetId { get; set; }
 
-        public int FeeRate { get; set; }
+        public string Blockchain { get; set; }
 
-        public decimal FixedFee { get; set; }
+        [JsonValueSerializer]
+        public IEnumerable<TransferAmount> Amounts { get; set; }
 
-        public string TransferId { get; set; }
+        [JsonValueSerializer]
+        public IEnumerable<TransferTransaction> Transactions { get; set; }
 
-        public string PaymentRequestId { get; set; }
-
-        public void Map(IMultipartTransfer transfer)
+        public DateTime CreatedOn
         {
-            PaymentRequestId = transfer.PaymentRequestId;
-            TransferId = transfer.TransferId;
+            get => _createdOn;
 
-            PartitionKey = transfer.PaymentRequestId;
-            RowKey = transfer.TransferId;
-            MerchantId = transfer.MerchantId;
-            CreationDate = transfer.CreationDate;
-            AssetId = transfer.AssetId;
-            FeeRate = transfer.FeeRate;
-            FixedFee = transfer.FixedFee;
+            set
+            {
+                _createdOn = value;
+                MarkValueTypePropertyAsDirty(nameof(CreatedOn));
+            }
+        }
+
+        public static class ByDate
+        {
+            public static string GeneratePartitionKey(DateTime createdOn)
+            {
+                return createdOn.ToString("yyyy-MM-dd");
+            }
+
+            public static string GenerateRowKey()
+            {
+                return Guid.NewGuid().ToString();
+            }
+
+            public static TransferEntity Create(ITransfer src)
+            {
+                return new TransferEntity
+                {
+                    PartitionKey = GeneratePartitionKey(src.CreatedOn),
+                    RowKey = GenerateRowKey(),
+                    AssetId = src.AssetId,
+                    Blockchain = src.Blockchain,
+                    CreatedOn = src.CreatedOn,
+                    Amounts = src.Amounts,
+                    Transactions = src.Transactions
+                };
+            }
         }
     }
 }

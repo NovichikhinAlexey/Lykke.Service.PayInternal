@@ -737,6 +737,16 @@
             Payment request have minimum number of transaction confiramtions.
             </summary>
         </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestStatus.RefundInProgress">
+            <summary>
+            There was a refund request for the payment request initiated, but has not been finished yet.
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestStatus.Refunded">
+            <summary>
+            The payment request was successfully refunded.
+            </summary>
+        </member>
         <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestStatus.Error">
             <summary>
             An error occurred during processing payment request.

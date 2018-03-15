@@ -9,13 +9,17 @@ using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain.Refund;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
+using Lykke.Service.PayInternal.Models.Refunds;
 using Lykke.Service.PayInternal.Services.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using RefundResponse = Lykke.Service.PayInternal.Models.Refunds.RefundResponse;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -110,7 +114,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
-                IReadOnlyList<IBlockchainTransaction> transactions =
+                IReadOnlyList<IPaymentRequestTransaction> transactions =
                     (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
 
                 var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
@@ -215,7 +219,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
-                IReadOnlyList<IBlockchainTransaction> transactions =
+                IReadOnlyList<IPaymentRequestTransaction> transactions =
                     (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
 
                 var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
@@ -234,6 +238,37 @@ namespace Lykke.Service.PayInternal.Controllers
                     }.ToJson(), exception);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Starts refund process on payment request associated with source wallet address
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("merchants/paymentrequests/refunds")]
+        [SwaggerOperation("Refund")]
+        [ProducesResponseType(typeof(RefundResponse), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
+        [ValidateModel]
+        public async Task<IActionResult> RefundAsync([FromBody] RefundRequestModel request)
+        {
+            try
+            {
+                //todo: create refund service which will contain these calls
+                RefundResult refund = await _paymentRequestService.RefundAsync(request.MerchantId,
+                    request.SourceAddress, request.DestinationAddress);
+
+                await _paymentRequestService.ProcessAsync(request.SourceAddress);
+
+                return Ok(refund.ToApiModel());
+            }
+            catch (Exception e)
+            {
+                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(RefundAsync), e);
+            }
+
+            return StatusCode((int) HttpStatusCode.InternalServerError);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Lykke.Service.PayInternal.Extensions
             };
         }
 
-        public static PayTransactionStateResponse ToApiModel(this IBlockchainTransaction src)
+        public static PayTransactionStateResponse ToApiModel(this IPaymentRequestTransaction src)
         {
             return new PayTransactionStateResponse
             {

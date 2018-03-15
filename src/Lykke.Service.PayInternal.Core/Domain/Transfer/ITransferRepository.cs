@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Lykke.Service.PayInternal.Core.Domain.Transfer
 {
     public interface ITransferRepository
     {
-        Task AddAsync(IMultipartTransfer transfer);
+        Task<ITransfer> AddAsync(ITransfer transfer);
     }
 }

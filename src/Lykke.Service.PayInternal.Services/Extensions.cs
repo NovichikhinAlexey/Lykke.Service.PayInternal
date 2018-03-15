@@ -22,7 +22,7 @@ namespace Lykke.Service.PayInternal.Services
             return new CreateTransaction
             {
                 WalletAddress = src.WalletAddress,
-                Amount = src.Amount,
+                Amount = (decimal) src.Amount,
                 FirstSeen = src.FirstSeen,
                 Confirmations = src.Confirmations,
                 BlockId = src.BlockId,

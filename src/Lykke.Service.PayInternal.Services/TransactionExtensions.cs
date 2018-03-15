@@ -7,17 +7,17 @@ namespace Lykke.Service.PayInternal.Services
 {
     public static class TransactionExtensions
     {
-        public static DateTime GetLatestDate(this IEnumerable<IBlockchainTransaction> src)
+        public static DateTime GetLatestDate(this IEnumerable<IPaymentRequestTransaction> src)
         {
             return src.Max(x => x.FirstSeen ?? DateTime.MinValue);
         }
 
-        public static decimal GetTotal(this IEnumerable<IBlockchainTransaction> src)
+        public static decimal GetTotal(this IEnumerable<IPaymentRequestTransaction> src)
         {
             return src.Sum(x => x.Amount);
         }
 
-        public static string GetAssetId(this IEnumerable<IBlockchainTransaction> src)
+        public static string GetAssetId(this IEnumerable<IPaymentRequestTransaction> src)
         {
             return src.Select(x => x.AssetId).FirstOrDefault();
         }

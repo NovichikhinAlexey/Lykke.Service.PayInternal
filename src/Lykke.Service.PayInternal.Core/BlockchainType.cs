@@ -2,6 +2,7 @@
 {
     public enum BlockchainType
     {
-        Bitcoin = 0
+        None = 0,
+        Bitcoin = 1
     }
 }

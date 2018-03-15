@@ -118,7 +118,7 @@ namespace Lykke.Service.PayInternal.Services
             return createdOrder;
         }
 
-        public async Task<PaymentRequestStatusInfo> GetPaymentRequestStatus(IReadOnlyList<IBlockchainTransaction> transactions,
+        public async Task<PaymentRequestStatusInfo> GetPaymentRequestStatus(IReadOnlyList<IPaymentRequestTransaction> transactions,
             string paymentRequestId)
         {
             if (!transactions.Any())

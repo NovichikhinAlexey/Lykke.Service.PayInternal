@@ -18,7 +18,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IBitcoinApiClient _bitcoinServiceClient;
         private readonly IWalletRepository _walletRepository;
         private readonly IWalletEventsPublisher _walletEventsPublisher;
-        private readonly IBlockchainTransactionRepository _blockchainTransactionRepository;
+        private readonly IPaymentRequestTransactionRepository _blockchainTransactionRepository;
 
         private const int BatchPieceSize = 15;
 
@@ -26,7 +26,7 @@ namespace Lykke.Service.PayInternal.Services
             IBitcoinApiClient bitcoinServiceClient,
             IWalletRepository walletRepository,
             IWalletEventsPublisher walletEventsPublisher,
-            IBlockchainTransactionRepository blockchainTransactionRepository)
+            IPaymentRequestTransactionRepository blockchainTransactionRepository)
         {
             _bitcoinServiceClient = bitcoinServiceClient;
             _walletRepository = walletRepository;
@@ -78,7 +78,7 @@ namespace Lykke.Service.PayInternal.Services
         {
             var wallets = (await _walletRepository.GetNotExpired()).ToList();
 
-            var transactions = new List<IBlockchainTransaction>();
+            var transactions = new List<IPaymentRequestTransaction>();
 
             foreach (var batch in wallets.Batch(BatchPieceSize))
             {

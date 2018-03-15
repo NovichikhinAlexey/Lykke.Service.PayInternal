@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Threading.Tasks;
 using AzureStorage;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
-using System.Threading.Tasks;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
 {
@@ -15,17 +13,13 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
             _storage = storage;
         }
 
-        public async Task AddAsync(IMultipartTransfer transfer)
+        public async Task<ITransfer> AddAsync(ITransfer transfer)
         {
-            var entity = new TransferEntity();
-            entity.Map(transfer);
+            var entity = TransferEntity.ByDate.Create(transfer);
 
             await _storage.InsertAsync(entity);
-        }
 
-        public async Task<IEnumerable<IMultipartTransfer>> GetFiltered(Func<IMultipartTransfer, bool> filter)
-        {
-            return await _storage.GetDataAsync(filter);
+            return entity;
         }
     }
 }

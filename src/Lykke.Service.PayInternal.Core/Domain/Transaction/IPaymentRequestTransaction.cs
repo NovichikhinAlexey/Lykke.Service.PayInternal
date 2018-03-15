@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 {
-    public interface IBlockchainTransaction
+    public interface IPaymentRequestTransaction
     {
         string Id { get; }
 

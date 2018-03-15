@@ -65,7 +65,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
         {
             IOrder order = await _orderService.GetAsync(request.Id, request.OrderId);
 
-            IReadOnlyList<IBlockchainTransaction> transactions =
+            IReadOnlyList<IPaymentRequestTransaction> transactions =
                 (await _transactionsService.GetAsync(request.WalletAddress)).ToList();
 
             var message = Mapper.Map<PaymentRequestDetailsMessage>(request);
