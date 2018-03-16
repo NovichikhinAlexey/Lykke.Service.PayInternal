@@ -192,9 +192,6 @@ namespace Lykke.Service.PayInternal.Services
             if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(merchantId, paymentRequestId);
 
-            if (!paymentRequest.MerchantId.Equals(merchantId))
-                throw new PaymentRequestNotFoundException(merchantId, paymentRequest.Id);
-
             if (paymentRequest.Status != PaymentRequestStatus.Error)
                 throw new NotAllowedStatusException(paymentRequest.Status.ToString());
 
