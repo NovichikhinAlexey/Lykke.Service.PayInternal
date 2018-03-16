@@ -7,7 +7,6 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
-using Lykke.Service.PayInternal.Core.Domain.Refund;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -186,22 +185,21 @@ namespace Lykke.Service.PayInternal.Services
             }
         }
 
-        public async Task<RefundResult> RefundAsync(string merchantId, string sourceWalletAddress, string destinationWalletAddress)
+        public async Task<RefundResult> RefundAsync(string merchantId, string paymentRequestId, string destinationWalletAddress)
         {
-            IPaymentRequest paymentRequest = await _paymentRequestRepository.FindAsync(sourceWalletAddress);
+            IPaymentRequest paymentRequest = await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
 
             if (paymentRequest == null)
-                throw new PaymentRequestNotFoundException(sourceWalletAddress);
+                throw new PaymentRequestNotFoundException(merchantId, paymentRequestId);
 
             if (!paymentRequest.MerchantId.Equals(merchantId))
                 throw new PaymentRequestNotFoundException(merchantId, paymentRequest.Id);
 
-            if (paymentRequest.Status != PaymentRequestStatus.Confirmed &&
-                paymentRequest.Status != PaymentRequestStatus.Error)
+            if (paymentRequest.Status != PaymentRequestStatus.Error)
                 throw new NotAllowedStatusException(paymentRequest.Status.ToString());
 
             IEnumerable<IPaymentRequestTransaction> paymentRequestTxs =
-                await _transactionRepository.GetAsync(sourceWalletAddress);
+                await _transactionRepository.GetAsync(paymentRequest.WalletAddress);
 
             IEnumerable<IPaymentRequestTransaction> paymentOnlyTxs =
                 paymentRequestTxs.Where(x => x.TransactionType == TransactionType.Payment).ToList();
@@ -222,11 +220,6 @@ namespace Lykke.Service.PayInternal.Services
                 if (txToRefund.SourceWalletAddresses.Length > 1)
                     throw new MultiTransactionRefundNotSupportedException(txToRefund.SourceWalletAddresses.Length);
             }
-            else
-            {
-                if (!txToRefund.SourceWalletAddresses.Contains(destinationWalletAddress))
-                    throw new WalletNotFoundException(destinationWalletAddress);
-            }
 
             TransferResult transferResult = await _transferService.ExecuteAsync(new TransferCommand
             {
@@ -236,7 +229,7 @@ namespace Lykke.Service.PayInternal.Services
                     new TransferAmount
                     {
                         Amount = txToRefund.Amount,
-                        Source = sourceWalletAddress,
+                        Source = paymentRequest.WalletAddress,
                         Destination = string.IsNullOrWhiteSpace(destinationWalletAddress)
                             ? txToRefund.SourceWalletAddresses.First()
                             : destinationWalletAddress,
@@ -263,7 +256,7 @@ namespace Lykke.Service.PayInternal.Services
                         AssetId = transferResultTransaction.AssetId,
                         Confirmations = 0,
                         TransactionId = transferResultTransaction.Hash,
-                        WalletAddress = sourceWalletAddress,
+                        WalletAddress = paymentRequest.WalletAddress,
                         Type = TransactionType.Refund,
                         Blockchain = transferResult.Blockchain,
                         FirstSeen = null,
@@ -277,12 +270,18 @@ namespace Lykke.Service.PayInternal.Services
             return new RefundResult
             {
                 Amount = transferResult.Transactions.Where(x => string.IsNullOrEmpty(x.Error)).Sum(x => x.Amount),
-                DueDate = refundDueDate,
-                MerchantId = merchantId,
+                AssetId = txToRefund.AssetId,
                 PaymentRequestId = paymentRequest.Id,
-                PaymentRequestStatus = transferResult.Transactions.Any(x => string.IsNullOrEmpty(x.Error))
-                    ? PaymentRequestStatus.RefundInProgress
-                    : PaymentRequestStatus.Error
+                PaymentRequestWalletAddress = paymentRequest.WalletAddress,
+                Transactions = transferResult.Transactions.Select(x => new RefundTransactionResult
+                {
+                    Amount = x.Amount,
+                    AssetId = x.AssetId,
+                    Blockchain = transferResult.Blockchain,
+                    Hash = x.Hash,
+                    SourceAddress = string.Join(";", x.Sources),
+                    DestinationAddress = string.Join(";", x.Destinations)
+                })
             };
         }
     }

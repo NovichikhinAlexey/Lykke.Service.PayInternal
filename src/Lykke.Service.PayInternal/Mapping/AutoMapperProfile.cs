@@ -60,6 +60,11 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId))
                 .ForMember(dest => dest.Url, opt => opt.ResolveUsing<TransactionUrlValueResolver>())
                 .ForMember(dest => dest.RefundUrl, opt => opt.Ignore());
+
+            CreateMap<RefundTransactionResult, RefundTransactionReponseModel>();
+
+            CreateMap<RefundResult, RefundResponseModel>(MemberList.Source)
+                .ForSourceMember(src => src.PaymentRequestWalletAddress, opt => opt.Ignore());
         }
 
         private void PaymentRequestMessages()

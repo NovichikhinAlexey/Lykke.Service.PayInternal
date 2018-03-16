@@ -7,7 +7,6 @@ using Lykke.Service.PayInternal.Client.Api;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
-using Lykke.Service.PayInternal.Client.Models.Refunds;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Microsoft.Extensions.PlatformAbstractions;
@@ -22,7 +21,6 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IMerchantsApi _merchantsApi;
         private readonly IOrdersApi _ordersApi;
         private readonly IPaymentRequestsApi _paymentRequestsApi;
-        private readonly IRefundApi _refundApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -49,7 +47,6 @@ namespace Lykke.Service.PayInternal.Client
             _merchantsApi = RestService.For<IMerchantsApi>(_httpClient);
             _ordersApi = RestService.For<IOrdersApi>(_httpClient);
             _paymentRequestsApi = RestService.For<IPaymentRequestsApi>(_httpClient);
-            _refundApi = RestService.For<IRefundApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
@@ -150,24 +147,9 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunAsync(() => _payInternalApi.GetAllMonitoredTransactions());
         }
 
-        public async Task<MultipartTransferResponse> CrosswiseTransferAsync(CrosswiseTransferRequest request)
+        public async Task<RefundResponse> RefundAsync(RefundRequestModel request)
         {
-            return await _runner.RunAsync(() => _paymentRequestsApi.CrosswiseTransferAsync(request));
-        }
-
-        public async Task<MultipartTransferResponse> MultiBijectiveTransferAsync(MultipartTransferResponse request)
-        {
-            return await _runner.RunAsync(() => _paymentRequestsApi.MultiBijectiveTransferAsync(request));
-        }
-
-        public async Task<RefundResponse> CreateRefundRequestAsync(RefundRequestModel request)
-        {
-            return await _runner.RunAsync(() => _refundApi.CreateRefundRequestAsync(request));
-        }
-
-        public async Task<RefundResponse> GetRefundAsync(string merchantId, string refundId)
-        {
-            return await _runner.RunAsync(() => _refundApi.GetRefundAsync(merchantId, refundId));
+            return await _runner.RunAsync(() => _paymentRequestsApi.RefundAsync(request));
         }
 
         public void Dispose()

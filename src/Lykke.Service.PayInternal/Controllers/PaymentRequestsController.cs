@@ -9,17 +9,14 @@ using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
-using Lykke.Service.PayInternal.Core.Domain.Refund;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
 using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
-using Lykke.Service.PayInternal.Models.Refunds;
 using Lykke.Service.PayInternal.Services.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using RefundResponse = Lykke.Service.PayInternal.Models.Refunds.RefundResponse;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -248,7 +245,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [Route("merchants/paymentrequests/refunds")]
         [SwaggerOperation("Refund")]
-        [ProducesResponseType(typeof(RefundResponse), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(RefundResponseModel), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         [ValidateModel]
         public async Task<IActionResult> RefundAsync([FromBody] RefundRequestModel request)
@@ -257,11 +254,11 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 //todo: create refund service which will contain these calls
                 RefundResult refund = await _paymentRequestService.RefundAsync(request.MerchantId,
-                    request.SourceAddress, request.DestinationAddress);
+                    request.PaymentRequestId, request.DestinationAddress);
 
-                await _paymentRequestService.ProcessAsync(request.SourceAddress);
+                await _paymentRequestService.ProcessAsync(refund.PaymentRequestWalletAddress);
 
-                return Ok(refund.ToApiModel());
+                return Ok(Mapper.Map<RefundResponseModel>(refund));
             }
             catch (Exception e)
             {

@@ -71,7 +71,6 @@ namespace Lykke.Service.PayInternal
                     appSettings.Nested(o => o.PayInternalService.Db.MerchantConnString),
                     appSettings.Nested(o => o.PayInternalService.Db.PaymentRequestConnString),
                     appSettings.Nested(o => o.PayInternalService.Db.TransferConnString),
-                    appSettings.Nested(o => o.PayInternalService.Db.RefundConnString),
                     Log));
                 builder.RegisterModule(new Services.AutofacModule(
                     appSettings.CurrentValue.PayInternalService.ExpirationPeriods.Order,
