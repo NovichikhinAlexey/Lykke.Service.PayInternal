@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -192,7 +193,8 @@ namespace Lykke.Service.PayInternal.Services
             if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(merchantId, paymentRequestId);
 
-            if (paymentRequest.Status != PaymentRequestStatus.Error)
+            if (paymentRequest.Status != PaymentRequestStatus.Confirmed &&
+                paymentRequest.Status != PaymentRequestStatus.Error)
                 throw new NotAllowedStatusException(paymentRequest.Status.ToString());
 
             IEnumerable<IPaymentRequestTransaction> paymentRequestTxs =
@@ -264,10 +266,22 @@ namespace Lykke.Service.PayInternal.Services
                 await _transactionPublisher.PublishAsync(paymenRequestTransaction);
             }
 
+            var assetIds = transferResult.Transactions.Unique(x => x.AssetId).ToList();
+
+            if (assetIds.MoreThanOne())
+                await _log.WriteWarningAsync(nameof(PaymentRequestService), nameof(RefundAsync), new
+                {
+                    merchantId,
+                    paymentRequestId,
+                    destinationWalletAddress,
+                    transferId = transferResult.Id,
+                    assetIds = assetIds.ToJson()
+                }.ToJson(), "Multiple assets are not expected");
+
             return new RefundResult
             {
                 Amount = transferResult.Transactions.Where(x => string.IsNullOrEmpty(x.Error)).Sum(x => x.Amount),
-                AssetId = txToRefund.AssetId,
+                AssetId = assetIds.First(),
                 PaymentRequestId = paymentRequest.Id,
                 PaymentRequestWalletAddress = paymentRequest.WalletAddress,
                 Transactions = transferResult.Transactions.Select(x => new RefundTransactionResult
