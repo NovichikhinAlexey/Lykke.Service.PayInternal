@@ -12,7 +12,9 @@ namespace Lykke.Service.PayInternal.Services
                 Amount = src.Amount,
                 AssetId = src.AssetId,
                 Hash = src.Hash,
-                Error = src.Error
+                Error = src.Error,
+                Sources = src.Sources,
+                Destinations = src.Destinations
             };
         }
 
@@ -33,7 +35,9 @@ namespace Lykke.Service.PayInternal.Services
                 Amount = src.Amount,
                 AssetId = src.AssetId,
                 Hash = src.Hash,
-                Error = src.Error
+                Error = src.Error,
+                Sources = src.Sources,
+                Destinations = src.Destinations
             };
         }
 

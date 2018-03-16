@@ -1,15 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Lykke.Service.PayInternal.Core.Domain.Refund;
 
-namespace Lykke.Service.PayInternal.Models.Refunds
+namespace Lykke.Service.PayInternal.Models.PaymentRequests
 {
-    public class RefundRequestModel : IRefundRequest
+    public class RefundRequestModel
     {
         [Required]
         public string MerchantId { get; set; }
 
         [Required]
-        public string SourceAddress { get; set; }
+        public string PaymentRequestId { get; set; }
 
         public string DestinationAddress { get; set; }
     }

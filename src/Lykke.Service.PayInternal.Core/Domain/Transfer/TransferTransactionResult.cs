@@ -1,4 +1,6 @@
-﻿namespace Lykke.Service.PayInternal.Core.Domain.Transfer
+﻿using System.Collections.Generic;
+
+namespace Lykke.Service.PayInternal.Core.Domain.Transfer
 {
     public class TransferTransactionResult
     {
@@ -9,5 +11,9 @@
         public string AssetId { get; set; }
 
         public string Error { get; set; }
+
+        public IEnumerable<string> Sources { get; set; }
+
+        public IEnumerable<string> Destinations { get; set; }
     }
 }
