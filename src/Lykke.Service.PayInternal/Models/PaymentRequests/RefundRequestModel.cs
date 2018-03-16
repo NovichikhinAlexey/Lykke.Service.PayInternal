@@ -11,5 +11,7 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         public string PaymentRequestId { get; set; }
 
         public string DestinationAddress { get; set; }
+
+        public string CallbackUrl { get; set; }
     }
 }
