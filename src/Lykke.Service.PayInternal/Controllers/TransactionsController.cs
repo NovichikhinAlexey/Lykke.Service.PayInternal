@@ -9,7 +9,7 @@ using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Extensions;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Transactions;
 using Lykke.Service.PayInternal.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -45,11 +45,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
+        [ValidateModel]
         public async Task<IActionResult> CreatePaymentTransaction([FromBody] CreateTransactionRequest request)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(new ErrorResponse().AddErrors(ModelState));
-
             try
             {
                 var domainRequest = request.ToDomain();
@@ -98,11 +96,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("UpdateTransaction")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
+        [ValidateModel]
         public async Task<IActionResult> UpdateTransaction([FromBody] UpdateTransactionRequest request)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(new ErrorResponse().AddErrors(ModelState));
-
             try
             {
                 await _transactionsService.Update(request.ToDomain());
@@ -166,6 +162,34 @@ namespace Lykke.Service.PayInternal.Controllers
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(TransactionsController), nameof(GetAllMonitoredAsync), ex);
+            }
+
+            return StatusCode((int) HttpStatusCode.InternalServerError);
+        }
+
+
+        /// <summary>
+        /// Notifies about transaction expiration
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("expired")]
+        [SwaggerOperation("SetExpired")]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
+        [ValidateModel]
+        public async Task<IActionResult> Expired([FromBody] TransactionExpiredRequest request)
+        {
+            try
+            {
+                await _paymentRequestService.ProcessByTransactionAsync(request.TransactionId);
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(Expired), ex);
             }
 
             return StatusCode((int) HttpStatusCode.InternalServerError);

@@ -175,6 +175,11 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunAsync(() => _paymentRequestsApi.RefundAsync(request));
         }
 
+        public async Task SetTransactionExpired(TransactionExpiredRequest request)
+        {
+            await _runner.RunAsync(() => _payInternalApi.SetTransactionExpired(request));
+        }
+
         public void Dispose()
         {
             _httpClient?.Dispose();

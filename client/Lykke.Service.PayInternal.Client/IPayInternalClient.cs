@@ -166,5 +166,12 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request"></param>
         /// <returns></returns>
         Task<RefundResponse> RefundAsync(RefundRequestModel request);
+
+        /// <summary>
+        /// Marks transaction as expired
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task SetTransactionExpired(TransactionExpiredRequest request);
     }
 }
