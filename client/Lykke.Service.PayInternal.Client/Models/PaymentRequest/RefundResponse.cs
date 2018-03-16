@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
 {
@@ -11,5 +12,7 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         public string AssetId { get; set; }
 
         public IEnumerable<RefundTransactionResponse> Transactions { get; set; }
+
+        public DateTime DueDate { get; set; }
     }
 }

@@ -281,7 +281,8 @@ namespace Lykke.Service.PayInternal.Services
                     Hash = x.Hash,
                     SourceAddress = string.Join(";", x.Sources),
                     DestinationAddress = string.Join(";", x.Destinations)
-                })
+                }),
+                DueDate = refundDueDate
             };
         }
     }
