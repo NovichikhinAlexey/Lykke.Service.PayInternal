@@ -146,7 +146,7 @@ namespace Lykke.Service.PayInternal.Services
                     paymentStatusInfo =
                         refundTxs.Any(x =>
                             x.Confirmations < _transactionConfirmationCount && x.DueDate < DateTime.UtcNow)
-                            ? PaymentRequestStatusInfo.Error("NOT CONFIRMED")
+                            ? PaymentRequestStatusInfo.Error("REFUND NOT CONFIRMED")
                             : PaymentRequestStatusInfo.RefundInProgress();
                 }
             } else if (txTypes.Contains(TransactionType.Payment))
