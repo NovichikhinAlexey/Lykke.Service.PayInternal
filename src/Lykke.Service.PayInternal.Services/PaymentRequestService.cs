@@ -195,7 +195,7 @@ namespace Lykke.Service.PayInternal.Services
                 throw new NotAllowedStatusException(paymentRequest.Status);
 
             IEnumerable<IPaymentRequestTransaction> paymentTxs =
-                (await _transactionRepository.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsRefund()).ToList();
+                (await _transactionRepository.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
 
             if (!paymentTxs.Any())
                 throw new NoTransactionsToRefundException(paymentRequest.Id);
