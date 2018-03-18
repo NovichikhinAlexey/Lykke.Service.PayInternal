@@ -2,7 +2,7 @@
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
-using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.Orders;

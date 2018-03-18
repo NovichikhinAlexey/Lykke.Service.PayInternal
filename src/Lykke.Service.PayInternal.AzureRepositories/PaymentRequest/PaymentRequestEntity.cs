@@ -2,12 +2,12 @@
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
-using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
 {
     [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
-    public class PaymentRequestEntity : AzureTableEntity, IPaymentRequest
+    public class PaymentRequestEntity : AzureTableEntity
     {
         private decimal _amount;
         private DateTime _dueDate;
@@ -25,8 +25,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
             PartitionKey = partitionKey;
             RowKey = rowKey;
         }
-
-       public string Id => RowKey;
+        
+        public string Id => RowKey;
         
         public string MerchantId { get; set; }
         
@@ -103,23 +103,5 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         public DateTime? PaidDate { get; set; }
         
         public string Error { get; set; }
-        
-        internal void Map(IPaymentRequest paymentRequest)
-        {
-            MerchantId = paymentRequest.MerchantId;
-            OrderId = paymentRequest.OrderId;
-            Amount = paymentRequest.Amount;
-            SettlementAssetId = paymentRequest.SettlementAssetId;
-            PaymentAssetId = paymentRequest.PaymentAssetId;
-            DueDate = paymentRequest.DueDate;
-            MarkupPercent = paymentRequest.MarkupPercent;
-            MarkupPips = paymentRequest.MarkupPips;
-            MarkupFixedFee = paymentRequest.MarkupFixedFee;
-            WalletAddress = paymentRequest.WalletAddress;
-            Status = paymentRequest.Status;
-            PaidAmount = paymentRequest.PaidAmount;
-            PaidDate = paymentRequest.PaidDate;
-            Error = paymentRequest.Error;
-        }
     }
 }

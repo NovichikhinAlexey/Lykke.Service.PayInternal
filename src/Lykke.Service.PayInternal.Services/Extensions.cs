@@ -1,5 +1,4 @@
 ﻿using Lykke.Service.PayInternal.Core.Domain.Merchant;
-using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Services.Domain;
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequest
+namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
 {
     public class RefundResult
     {

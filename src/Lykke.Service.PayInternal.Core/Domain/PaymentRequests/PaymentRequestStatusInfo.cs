@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequest
+namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
 {
     public class PaymentRequestStatusInfo
     {
