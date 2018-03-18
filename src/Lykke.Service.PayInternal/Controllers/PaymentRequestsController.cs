@@ -27,6 +27,7 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly IOrderService _orderService;
         private readonly ITransactionsService _transactionsService;
         private readonly IAssetsLocalCache _assetsLocalCache;
+        private readonly IRefundService _refundService;
         private readonly ILog _log;
 
         public PaymentRequestsController(
@@ -34,12 +35,14 @@ namespace Lykke.Service.PayInternal.Controllers
             IOrderService orderService,
             ITransactionsService transactionsService,
             IAssetsLocalCache assetsLocalCache,
+            IRefundService refundService,
             ILog log)
         {
             _paymentRequestService = paymentRequestService;
             _orderService = orderService;
             _transactionsService = transactionsService;
             _assetsLocalCache = assetsLocalCache;
+            _refundService = refundService;
             _log = log;
         }
 
@@ -252,14 +255,11 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                //todo: create refund service which will contain these calls
-                //todo: save callbackUrl from trquest.CallbackUrl
-                RefundResult refund = await _paymentRequestService.RefundAsync(request.MerchantId,
+                //todo: save callbackUrl from request.CallbackUrl
+                RefundResult refundResult = await _refundService.ExecuteAsync(request.MerchantId,
                     request.PaymentRequestId, request.DestinationAddress);
 
-                await _paymentRequestService.ProcessAsync(refund.PaymentRequestWalletAddress);
-
-                return Ok(Mapper.Map<RefundResponseModel>(refund));
+                return Ok(Mapper.Map<RefundResponseModel>(refundResult));
             }
             catch (Exception e)
             {

@@ -121,6 +121,10 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<BitcoinApiClient>()
                 .Keyed<IBlockchainApiClient>(BlockchainType.Bitcoin)
                 .SingleInstance();
+
+            builder.RegisterType<RefundService>()
+                .As<IRefundService>()
+                .SingleInstance();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)

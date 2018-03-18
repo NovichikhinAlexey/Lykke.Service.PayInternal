@@ -216,7 +216,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (string.IsNullOrWhiteSpace(destinationWalletAddress))
             {
-                if (txToRefund.SourceWalletAddresses.Length > 1)
+                if (txToRefund.SourceWalletAddresses.MoreThanOne())
                     throw new MultiTransactionRefundNotSupportedException(txToRefund.SourceWalletAddresses.Length);
             }
 

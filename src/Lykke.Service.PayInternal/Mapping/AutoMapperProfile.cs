@@ -86,7 +86,7 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.Blockchain, opt => opt.Ignore())
                 .ForSourceMember(src => src.TransactionType, opt => opt.Ignore())
                 .ForSourceMember(src => src.DueDate, opt => opt.Ignore())
-                .ForMember(dest => dest.Id, (IMemberConfigurationExpression<IPaymentRequestTransaction, Contract.PaymentRequest.PaymentRequestTransaction, string> opt) => opt.MapFrom(src => src.TransactionId));            
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId));            
         }
     }
 }
