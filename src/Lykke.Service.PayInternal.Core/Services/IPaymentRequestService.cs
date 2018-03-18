@@ -20,6 +20,6 @@ namespace Lykke.Service.PayInternal.Core.Services
 
         Task ProcessByTransactionAsync(string transactionId);
 
-        Task<RefundResult> RefundAsync(string merchantId, string paymentRequestId, string destinationWalletAddress);
+        Task<RefundResult> RefundAsync(RefundCommand command);
     }
 }

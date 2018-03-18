@@ -9,7 +9,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 {
     [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
-    public class PaymentRequestTransactionEntity : AzureTableEntity, IPaymentRequestTransaction
+    public class PaymentRequestTransactionEntity : AzureTableEntity
     {
         private decimal _amount;
         private int _confirmations;
@@ -92,22 +92,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
                 _dueDate = value;
                 MarkValueTypePropertyAsDirty(nameof(DueDate));
             }
-        }
-
-        internal void Map(IPaymentRequestTransaction blockchainTransaction)
-        {
-            TransactionId = blockchainTransaction.TransactionId;
-            PaymentRequestId = blockchainTransaction.PaymentRequestId;
-            Amount = blockchainTransaction.Amount;
-            BlockId = blockchainTransaction.BlockId;
-            Confirmations = blockchainTransaction.Confirmations;
-            WalletAddress = blockchainTransaction.WalletAddress;
-            SourceWalletAddresses = blockchainTransaction.SourceWalletAddresses;
-            FirstSeen = blockchainTransaction.FirstSeen;
-            AssetId = blockchainTransaction.AssetId;
-            Blockchain = blockchainTransaction.Blockchain;
-            TransactionType = blockchainTransaction.TransactionType;
-            DueDate = blockchainTransaction.DueDate;
         }
     }
 }
