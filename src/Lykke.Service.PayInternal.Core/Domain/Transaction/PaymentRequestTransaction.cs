@@ -1,7 +1,6 @@
 ﻿using System;
-using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
-namespace Lykke.Service.PayInternal.Services.Domain
+namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 {
     public class PaymentRequestTransaction : IPaymentRequestTransaction
     {
@@ -22,6 +21,7 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public int Confirmations { get; set; }
 
         public string WalletAddress { get; set; }
+
         public string[] SourceWalletAddresses { get; set; }
 
         public DateTime? FirstSeen { get; set; }
@@ -29,5 +29,10 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public TransactionType TransactionType { get; set; }
 
         public DateTime DueDate { get; set; }
+
+        public bool IsRefund()
+        {
+            return TransactionType == TransactionType.Refund;
+        }
     }
 }

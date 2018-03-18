@@ -70,7 +70,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
 
             var message = Mapper.Map<PaymentRequestDetailsMessage>(paymentRequest);
             message.Order = Mapper.Map<PaymentRequestOrder>(order);
-            message.Transactions = Mapper.Map<List<PaymentRequestTransaction>>(transactions);
+            message.Transactions = Mapper.Map<List<Contract.PaymentRequest.PaymentRequestTransaction>>(transactions);
 
             await PublishAsync(message);
         }

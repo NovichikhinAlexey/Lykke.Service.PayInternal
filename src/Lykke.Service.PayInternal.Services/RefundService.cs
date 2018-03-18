@@ -18,7 +18,12 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<RefundResult> ExecuteAsync(string merchantId, string paymentRequestId, string destinationWalletAddress)
         {
             RefundResult refundResult =
-                await _paymentRequestService.RefundAsync(merchantId, paymentRequestId, destinationWalletAddress);
+                await _paymentRequestService.RefundAsync(new RefundCommand
+                {
+                    MerchantId = merchantId,
+                    PaymentRequestId = paymentRequestId,
+                    DestinationAddress = destinationWalletAddress
+                });
 
             await _paymentRequestService.ProcessAsync(refundResult.PaymentRequestWalletAddress);
 

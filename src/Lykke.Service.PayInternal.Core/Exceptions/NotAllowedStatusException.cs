@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.Serialization;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 
 namespace Lykke.Service.PayInternal.Core.Exceptions
 {
@@ -9,9 +10,8 @@ namespace Lykke.Service.PayInternal.Core.Exceptions
         {
         }
 
-        public NotAllowedStatusException(string status) : base("Not allowed status")
+        public NotAllowedStatusException(string message) : base(message)
         {
-            Status = status;
         }
 
         public NotAllowedStatusException(string message, Exception innerException) : base(message, innerException)
@@ -22,6 +22,11 @@ namespace Lykke.Service.PayInternal.Core.Exceptions
         {
         }
 
-        public string Status { get; set; }
+        public NotAllowedStatusException(PaymentRequestStatus status) : base("Not allowed status")
+        {
+            Status = status;
+        }
+
+        public PaymentRequestStatus Status { get; set; }
     }
 }

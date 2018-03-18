@@ -176,8 +176,6 @@ namespace Lykke.Service.PayInternal.Services
         {
             IEnumerable<IPaymentRequestTransaction> txs = await _transactionRepository.GetByTransactionAsync(transactionId);
 
-            //todo: for this we need to be sure each transaction has walletAddress which is equal to paymentRequest walletAddress
-            //it is true for payment and refund transactions
             IEnumerable<string> walletAddresses = txs.Select(x => x.WalletAddress).Distinct();
 
             foreach (string walletAddress in walletAddresses)
@@ -186,55 +184,38 @@ namespace Lykke.Service.PayInternal.Services
             }
         }
 
-        public async Task<RefundResult> RefundAsync(string merchantId, string paymentRequestId, string destinationWalletAddress)
+        public async Task<RefundResult> RefundAsync(RefundCommand command)
         {
-            IPaymentRequest paymentRequest = await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
+            IPaymentRequest paymentRequest = await _paymentRequestRepository.GetAsync(command.MerchantId, command.PaymentRequestId);
 
             if (paymentRequest == null)
-                throw new PaymentRequestNotFoundException(merchantId, paymentRequestId);
+                throw new PaymentRequestNotFoundException(command.MerchantId, command.PaymentRequestId);
 
-            if (paymentRequest.Status != PaymentRequestStatus.Confirmed &&
-                paymentRequest.Status != PaymentRequestStatus.Error)
-                throw new NotAllowedStatusException(paymentRequest.Status.ToString());
+            if (!paymentRequest.StatusValidForRefund())
+                throw new NotAllowedStatusException(paymentRequest.Status);
 
-            IEnumerable<IPaymentRequestTransaction> paymentRequestTxs =
-                await _transactionRepository.GetAsync(paymentRequest.WalletAddress);
+            IEnumerable<IPaymentRequestTransaction> paymentTxs =
+                (await _transactionRepository.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsRefund()).ToList();
 
-            IEnumerable<IPaymentRequestTransaction> paymentOnlyTxs =
-                paymentRequestTxs.Where(x => x.TransactionType == TransactionType.Payment).ToList();
-
-            if (!paymentOnlyTxs.Any())
+            if (!paymentTxs.Any())
                 throw new NoTransactionsToRefundException(paymentRequest.Id);
 
-            if (paymentOnlyTxs.Count() > 1)
-                throw new MultiTransactionRefundNotSupportedException(paymentOnlyTxs.Count());
+            if (paymentTxs.MoreThanOne())
+                throw new MultiTransactionRefundNotSupportedException(paymentTxs.Count());
 
-            IPaymentRequestTransaction txToRefund = paymentOnlyTxs.First();
+            IPaymentRequestTransaction tx = paymentTxs.Single();
 
-            if (!txToRefund.SourceWalletAddresses.Any())
+            if (!tx.SourceWalletAddresses.Any())
                 throw new NoTransactionsToRefundException(paymentRequest.Id);
 
-            if (string.IsNullOrWhiteSpace(destinationWalletAddress))
+            if (string.IsNullOrWhiteSpace(command.DestinationAddress))
             {
-                if (txToRefund.SourceWalletAddresses.MoreThanOne())
-                    throw new MultiTransactionRefundNotSupportedException(txToRefund.SourceWalletAddresses.Length);
+                if (tx.SourceWalletAddresses.MoreThanOne())
+                    throw new MultiTransactionRefundNotSupportedException(tx.SourceWalletAddresses.Length);
             }
 
-            TransferResult transferResult = await _transferService.ExecuteAsync(new TransferCommand
-            {
-                AssetId = txToRefund.AssetId,
-                Amounts = new List<TransferAmount>
-                {
-                    new TransferAmount
-                    {
-                        Amount = txToRefund.Amount,
-                        Source = paymentRequest.WalletAddress,
-                        Destination = string.IsNullOrWhiteSpace(destinationWalletAddress)
-                            ? txToRefund.SourceWalletAddresses.First()
-                            : destinationWalletAddress,
-                    }
-                }
-            });
+            TransferResult transferResult =
+                await _transferService.ExecuteAsync(tx.ToRefundTransferCommand(command.DestinationAddress));
 
             DateTime refundDueDate = DateTime.UtcNow.Add(_refundExpirationPeriod);
 
@@ -248,7 +229,7 @@ namespace Lykke.Service.PayInternal.Services
                     continue;
                 }
 
-                IPaymentRequestTransaction paymenRequestTransaction = await _transactionsService.CreateTransaction(
+                IPaymentRequestTransaction refundTransaction = await _transactionsService.CreateTransaction(
                     new CreateTransaction
                     {
                         Amount = transferResultTransaction.Amount,
@@ -263,25 +244,29 @@ namespace Lykke.Service.PayInternal.Services
                     });
 
                 //todo: think of moving this call inside  _transactionsService
-                await _transactionPublisher.PublishAsync(paymenRequestTransaction);
+                await _transactionPublisher.PublishAsync(refundTransaction);
             }
 
+            return await PrepareRefundResult(paymentRequest, transferResult, refundDueDate);
+        }
+
+        private async Task<RefundResult> PrepareRefundResult(IPaymentRequest paymentRequest, TransferResult transferResult, DateTime refundDueDate)
+        {
             var assetIds = transferResult.Transactions.Unique(x => x.AssetId).ToList();
 
             if (assetIds.MoreThanOne())
-                await _log.WriteWarningAsync(nameof(PaymentRequestService), nameof(RefundAsync), new
+                await _log.WriteWarningAsync(nameof(PaymentRequestService), nameof(PrepareRefundResult), new
                 {
-                    merchantId,
-                    paymentRequestId,
-                    destinationWalletAddress,
-                    transferId = transferResult.Id,
-                    assetIds = assetIds.ToJson()
+                    PaymentResuest = paymentRequest,
+                    RefundTransferResult = transferResult
                 }.ToJson(), "Multiple assets are not expected");
 
             return new RefundResult
             {
-                Amount = transferResult.Transactions.Where(x => string.IsNullOrEmpty(x.Error)).Sum(x => x.Amount),
-                AssetId = assetIds.First(),
+                Amount = transferResult.Transactions
+                    .Where(x => string.IsNullOrEmpty(x.Error))
+                    .Sum(x => x.Amount),
+                AssetId = assetIds.Single(),
                 PaymentRequestId = paymentRequest.Id,
                 PaymentRequestWalletAddress = paymentRequest.WalletAddress,
                 Transactions = transferResult.Transactions.Select(x => new RefundTransactionResult
