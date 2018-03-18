@@ -11,4 +11,7 @@
     <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.0.20" />
     <PackageReference Include="Lykke.SettingsReader" Version="2.1.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Domain\PaymentRequest\" />
+  </ItemGroup>
 </Project>

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequest
+namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
 {
     public interface IPaymentRequestRepository
     {

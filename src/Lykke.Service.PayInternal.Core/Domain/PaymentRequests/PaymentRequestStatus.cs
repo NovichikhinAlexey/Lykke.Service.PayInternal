@@ -1,4 +1,4 @@
-﻿namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequest
+﻿namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
 {
     /// <summary>
     /// The payment request statuses.

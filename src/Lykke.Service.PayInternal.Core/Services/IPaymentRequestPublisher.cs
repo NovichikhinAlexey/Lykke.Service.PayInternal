@@ -1,4 +1,4 @@
-﻿using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+﻿using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 
 namespace Lykke.Service.PayInternal.Core.Services
 {

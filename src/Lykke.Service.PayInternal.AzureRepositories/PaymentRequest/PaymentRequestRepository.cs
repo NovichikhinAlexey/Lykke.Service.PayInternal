@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using AzureStorage;
 using AzureStorage.Tables.Templates.Index;
-using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
@@ -27,12 +28,15 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
             IEnumerable<PaymentRequestEntity> paymentRequestEntities
                 = await _storage.GetDataAsync(GetPartitionKey(merchantId));
 
-            return paymentRequestEntities.ToList();
+            return Mapper.Map<IEnumerable<Core.Domain.PaymentRequests.PaymentRequest>>(paymentRequestEntities).ToList();
         }
 
         public async Task<IPaymentRequest> GetAsync(string merchantId, string paymentRequestId)
         {
-            return await _storage.GetDataAsync(GetPartitionKey(merchantId), GetRowKey(paymentRequestId));
+            PaymentRequestEntity entity =
+                await _storage.GetDataAsync(GetPartitionKey(merchantId), GetRowKey(paymentRequestId));
+
+            return Mapper.Map<Core.Domain.PaymentRequests.PaymentRequest>(entity);
         }
 
         public async Task<IPaymentRequest> FindAsync(string walletAddress)
@@ -43,7 +47,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
             if (index == null)
                 return null;
 
-            return await _storage.GetDataAsync(index);
+            PaymentRequestEntity entity = await _storage.GetDataAsync(index);
+
+            return Mapper.Map<Core.Domain.PaymentRequests.PaymentRequest>(entity);
         }
 
         public async Task<IEnumerable<IPaymentRequest>> GetNotExpiredAsync()
@@ -53,13 +59,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
 
             var query = new TableQuery<PaymentRequestEntity>().Where(filter);
 
-            return await _storage.WhereAsync(query);
+            IEnumerable<PaymentRequestEntity> entities = await _storage.WhereAsync(query);
+
+            return Mapper.Map<IEnumerable<Core.Domain.PaymentRequests.PaymentRequest>>(entities);
         }
 
         public async Task<IPaymentRequest> InsertAsync(IPaymentRequest paymentRequest)
         {
             var entity = new PaymentRequestEntity(GetPartitionKey(paymentRequest.MerchantId), GetRowKey());
-            entity.Map(paymentRequest);
+
+            Mapper.Map(paymentRequest, entity);
 
             await _storage.InsertAsync(entity);
 
@@ -67,13 +76,14 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
             
             await _walletAddressIndexStorage.InsertAsync(index);
             
-            return entity;
+            return Mapper.Map<Core.Domain.PaymentRequests.PaymentRequest>(entity);
         }
 
         public async Task UpdateAsync(IPaymentRequest paymentRequest)
         {
             var entity = new PaymentRequestEntity(GetPartitionKey(paymentRequest.MerchantId), GetRowKey(paymentRequest.Id));
-            entity.Map(paymentRequest);
+
+            Mapper.Map(paymentRequest, entity);
 
             entity.ETag = "*";
             
