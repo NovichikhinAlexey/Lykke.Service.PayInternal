@@ -31,6 +31,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 
         DateTime DueDate { get; set; }
 
-        bool IsRefund();
+        bool IsPayment();
     }
 }
