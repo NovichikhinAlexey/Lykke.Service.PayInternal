@@ -32,8 +32,11 @@ namespace Lykke.Service.PayInternal.Services
 
             builder.RegisterType<OrderService>()
                 .WithParameter(TypedParameter.From(_orderExpiration))
-                .WithParameter(TypedParameter.From(_transactionConfirmationCount))
                 .As<IOrderService>();
+
+            builder.RegisterType<PaymentRequestStatusResolver>()
+                .WithParameter(TypedParameter.From(_transactionConfirmationCount))
+                .As<IPaymentRequestStatusResolver>();
         }
     }
 }
