@@ -34,5 +34,25 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         {
             return TransactionType == TransactionType.Payment;
         }
+
+        public bool IsSettlement()
+        {
+            return TransactionType == TransactionType.Settlement;
+        }
+
+        public bool IsRefund()
+        {
+            return TransactionType == TransactionType.Refund;
+        }
+
+        public bool Confirmed(int confirmationLimit)
+        {
+            return Confirmations >= confirmationLimit;
+        }
+
+        public bool Expired()
+        {
+            return DueDate < DateTime.UtcNow;
+        }
     }
 }
