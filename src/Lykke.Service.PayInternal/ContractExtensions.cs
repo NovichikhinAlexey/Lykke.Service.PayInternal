@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Lykke.Service.PayInternal.Core.Domain.BtcTransfer;
+using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
@@ -49,6 +50,14 @@ namespace Lykke.Service.PayInternal
                 Sources = src.Sources?.Select(x => x?.ToDomain()),
                 FeeRate = 0,
                 FixedFee = 0
+            };
+        }
+
+        public static AvailableAssetsResponseModel ToApiModel(this IEnumerable<IAssetAvailability> src)
+        {
+            return new AvailableAssetsResponseModel
+            {
+                Assets = src.Select(x => x.AssetId).ToList()
             };
         }
     }

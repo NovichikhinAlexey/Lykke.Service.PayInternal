@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models;
+using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
@@ -124,5 +125,19 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request"></param>
         /// <returns></returns>
         Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request);
+
+        /// <summary>
+        /// Get available assets by availability type
+        /// </summary>
+        /// <param name="availabilityType">Availability type</param>
+        /// <returns></returns>
+        Task<AvailableAssetsResponse> GetAvailableAsync(AssetAvailabilityType availabilityType);
+
+        /// <summary>
+        /// Updates availability type for asset
+        /// </summary>
+        /// <param name="request">The asset availability update request</param>
+        /// <returns></returns>
+        Task SetAvailabilityAsync(UpdateAssetAvailabilityRequest request);
     }
 }
