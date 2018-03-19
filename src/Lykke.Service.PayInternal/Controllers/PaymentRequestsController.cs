@@ -254,7 +254,6 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                //todo: save callbackUrl from request.CallbackUrl
                 RefundResult refundResult = await _refundService.ExecuteAsync(request.MerchantId,
                     request.PaymentRequestId, request.DestinationAddress);
 
