@@ -5,12 +5,9 @@ using System.Threading.Tasks;
 using Common;
 using Common.Log;
 using Lykke.Service.Assets.Client.Models;
-using Lykke.Service.PayInternal.Core;
-using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
-using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
@@ -25,7 +22,6 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ICalculationService _calculationService;
         private readonly ILog _log;
         private readonly TimeSpan _orderExpiration;
-        private readonly int _transactionConfirmationCount;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -33,8 +29,7 @@ namespace Lykke.Service.PayInternal.Services
             IMerchantRepository merchantRepository,
             ICalculationService calculationService,
             ILog log,
-            TimeSpan orderExpiration,
-            int transactionConfirmationCount)
+            TimeSpan orderExpiration)
         {
             _orderRepository = orderRepository;
             _assetsLocalCache = assetsLocalCache;
@@ -42,7 +37,6 @@ namespace Lykke.Service.PayInternal.Services
             _calculationService = calculationService;
             _log = log;
             _orderExpiration = orderExpiration;
-            _transactionConfirmationCount = transactionConfirmationCount;
         }
 
         public async Task<IOrder> GetAsync(string paymentRequestId, string orderId)
@@ -117,56 +111,6 @@ namespace Lykke.Service.PayInternal.Services
                 "Order created.");
 
             return createdOrder;
-        }
-
-        public async Task<PaymentRequestStatusInfo> GetPaymentRequestStatus(IReadOnlyList<IPaymentRequestTransaction> transactions,
-            string paymentRequestId)
-        {
-            if (!transactions.Any())
-                return PaymentRequestStatusInfo.New();
-
-            decimal btcPaid;
-
-            var assetId = transactions.GetAssetId();
-
-            switch (assetId)
-            {
-                case LykkeConstants.BitcoinAssetId:
-                    btcPaid = transactions.GetTotal();
-                    break;
-                case LykkeConstants.SatoshiAssetId:
-                    btcPaid = transactions.GetTotal().SatoshiToBtc();
-                    break;
-                default:
-                    throw new UnexpectedAssetException(assetId);
-            }
-
-            var paidDate = transactions.GetLatestDate();
-
-            var actualOrder = await GetAsync(paymentRequestId, paidDate);
-
-            if (actualOrder == null)
-                return PaymentRequestStatusInfo.Error("EXPIRED", btcPaid, paidDate);
-
-            bool allConfirmed = transactions.All(x => x.Confirmed(_transactionConfirmationCount));
-
-            if (!allConfirmed)
-                return PaymentRequestStatusInfo.InProcess();
-
-            decimal btcToBePaid = actualOrder.PaymentAmount;
-
-            var fulfillment = await _calculationService.CalculateBtcAmountFullfillmentAsync(btcToBePaid, btcPaid);
-
-            switch (fulfillment)
-            {
-                case AmountFullFillmentStatus.Below:
-                    return PaymentRequestStatusInfo.Error("AMOUNT BELOW", btcPaid, paidDate);
-                case AmountFullFillmentStatus.Exact:
-                    return PaymentRequestStatusInfo.Confirmed(btcPaid, paidDate);
-                case AmountFullFillmentStatus.Above:
-                    return PaymentRequestStatusInfo.Error("AMOUNT ABOVE", btcPaid, paidDate);
-                default: throw new Exception("Unexpected amount fullfillment status");
-            }
         }
     }
 }

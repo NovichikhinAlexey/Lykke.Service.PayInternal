@@ -55,7 +55,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 await _transactionsService.CreateTransaction(domainRequest);
 
-                await _paymentRequestService.ProcessAsync(request.WalletAddress);
+                await _paymentRequestService.UpdateStatusAsync(request.WalletAddress);
 
                 return Ok();
             }
@@ -105,11 +105,11 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 if (string.IsNullOrEmpty(request.WalletAddress))
                 {
-                    await _paymentRequestService.ProcessByTransactionAsync(request.TransactionId);
+                    await _paymentRequestService.UpdateStatusByTransactionAsync(request.TransactionId);
                 }
                 else
                 {
-                    await _paymentRequestService.ProcessAsync(request.WalletAddress);
+                    await _paymentRequestService.UpdateStatusAsync(request.WalletAddress);
                 }
 
                 return Ok();
@@ -183,7 +183,7 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                await _paymentRequestService.ProcessByTransactionAsync(request.TransactionId);
+                await _paymentRequestService.UpdateStatusByTransactionAsync(request.TransactionId);
 
                 return Ok();
             }

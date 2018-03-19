@@ -24,11 +24,11 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IPaymentRequestTransactionRepository _transactionRepository;
         private readonly IOrderService _orderService;
         private readonly IPaymentRequestPublisher _paymentRequestPublisher;
-        private readonly int _transactionConfirmationCount;
         private readonly ITransferService _transferService;
         private readonly TimeSpan _refundExpirationPeriod;
         private readonly ITransactionPublisher _transactionPublisher;
         private readonly ITransactionsService _transactionsService;
+        private readonly IPaymentRequestStatusResolver _paymentRequestStatusResolver;
         private readonly ILog _log;
 
         public PaymentRequestService(
@@ -37,11 +37,11 @@ namespace Lykke.Service.PayInternal.Services
             IPaymentRequestTransactionRepository transactionRepository,
             IOrderService orderService,
             IPaymentRequestPublisher paymentRequestPublisher,
-            int transactionConfirmationCount,
             ITransferService transferService,
             TimeSpan refundExpirationPeriod,
             ITransactionPublisher transactionPublisher,
             ITransactionsService transactionsService,
+            IPaymentRequestStatusResolver paymentRequestStatusResolver,
             ILog log)
         {
             _paymentRequestRepository = paymentRequestRepository;
@@ -49,14 +49,14 @@ namespace Lykke.Service.PayInternal.Services
             _transactionRepository = transactionRepository;
             _orderService = orderService;
             _paymentRequestPublisher = paymentRequestPublisher;
-            _transactionConfirmationCount = transactionConfirmationCount;
             _transferService = transferService;
             _refundExpirationPeriod = refundExpirationPeriod;
             _transactionPublisher = transactionPublisher;
             _transactionsService = transactionsService;
+            _paymentRequestStatusResolver = paymentRequestStatusResolver;
             _log = log;
         }
-        
+
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
         {
             return await _paymentRequestRepository.GetAsync(merchantId);
@@ -94,9 +94,9 @@ namespace Lykke.Service.PayInternal.Services
         {
             IPaymentRequest paymentRequest = await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
 
-            if(paymentRequest == null)
+            if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(merchantId, paymentRequestId);
-            
+
             // Don't create new order if payment reqest status not new. 
             if (paymentRequest.Status != PaymentRequestStatus.New)
                 return paymentRequest;
@@ -115,52 +115,21 @@ namespace Lykke.Service.PayInternal.Services
             return paymentRequest;
         }
 
-        public async Task ProcessAsync(string walletAddress)
+        public async Task UpdateStatusAsync(string walletAddress)
         {
             IPaymentRequest paymentRequest = await _paymentRequestRepository.FindAsync(walletAddress);
 
-            if(paymentRequest == null)
+            if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(walletAddress);
-            
-            IReadOnlyList<IPaymentRequestTransaction> txs =
-                await _transactionRepository.GetAsync(paymentRequest.WalletAddress);
 
-            IEnumerable<TransactionType> txTypes = txs.Select(x => x.TransactionType).Distinct().ToList();
+            PaymentRequestStatusInfo newStatusInfo = await _paymentRequestStatusResolver.GetStatus(walletAddress);
 
-            PaymentRequestStatusInfo paymentStatusInfo;
-
-            if (txs.Any(x => x.IsSettlement()))
-                throw new TransactionTypeNotSupportedException();
-
-            if (txs.Any(x => x.IsRefund()))
-            {
-                IReadOnlyList<IPaymentRequestTransaction> refundTxs = txs.Where(x => x.IsRefund()).ToList();
-
-                if (refundTxs.All(x => x.Confirmed(_transactionConfirmationCount)))
-                {
-                    paymentStatusInfo = PaymentRequestStatusInfo.Refunded();
-                }
-                else
-                {
-                    paymentStatusInfo =
-                        refundTxs.Any(x => !x.Confirmed(_transactionConfirmationCount) && x.Expired())
-                            ? PaymentRequestStatusInfo.Error("REFUND NOT CONFIRMED")
-                            : PaymentRequestStatusInfo.RefundInProgress();
-                }
-            } else if (txs.Any(x => x.IsPayment()))
-            {
-                IReadOnlyList<IPaymentRequestTransaction> paymentTxs = txs.Where(x => x.IsPayment()).ToList();
-
-                paymentStatusInfo = await _orderService.GetPaymentRequestStatus(paymentTxs, paymentRequest.Id);
-            } else 
-                throw new Exception("Inconsistent paymentRequest status");
-
-            paymentRequest.Status = paymentStatusInfo.Status;
-            paymentRequest.PaidDate = paymentStatusInfo.Date;
-            paymentRequest.PaidAmount = paymentStatusInfo.Amount;
+            paymentRequest.Status = newStatusInfo.Status;
+            paymentRequest.PaidDate = newStatusInfo.Date;
+            paymentRequest.PaidAmount = newStatusInfo.Amount;
             if (paymentRequest.Status == PaymentRequestStatus.Error)
             {
-                paymentRequest.Error = paymentStatusInfo.Details;
+                paymentRequest.Error = newStatusInfo.Details;
             }
 
             await _paymentRequestRepository.UpdateAsync(paymentRequest);
@@ -168,21 +137,21 @@ namespace Lykke.Service.PayInternal.Services
             await _paymentRequestPublisher.PublishAsync(paymentRequest);
         }
 
-        public async Task ProcessByTransactionAsync(string transactionId)
+        public async Task UpdateStatusByTransactionAsync(string transactionId)
         {
-            IEnumerable<IPaymentRequestTransaction> txs = await _transactionRepository.GetByTransactionAsync(transactionId);
-
-            IEnumerable<string> walletAddresses = txs.Select(x => x.WalletAddress).Distinct();
-
-            foreach (string walletAddress in walletAddresses)
+            IEnumerable<IPaymentRequestTransaction> txs =
+                await _transactionRepository.GetByTransactionAsync(transactionId);
+            
+            foreach (string walletAddress in txs.Unique(x => x.WalletAddress))
             {
-                await ProcessAsync(walletAddress);
+                await UpdateStatusAsync(walletAddress);
             }
         }
 
         public async Task<RefundResult> RefundAsync(RefundCommand command)
         {
-            IPaymentRequest paymentRequest = await _paymentRequestRepository.GetAsync(command.MerchantId, command.PaymentRequestId);
+            IPaymentRequest paymentRequest =
+                await _paymentRequestRepository.GetAsync(command.MerchantId, command.PaymentRequestId);
 
             if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(command.MerchantId, command.PaymentRequestId);
@@ -191,7 +160,8 @@ namespace Lykke.Service.PayInternal.Services
                 throw new NotAllowedStatusException(paymentRequest.Status);
 
             IEnumerable<IPaymentRequestTransaction> paymentTxs =
-                (await _transactionRepository.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
+                (await _transactionRepository.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment())
+                .ToList();
 
             if (!paymentTxs.Any())
                 throw new NoTransactionsToRefundException(paymentRequest.Id);
@@ -246,7 +216,8 @@ namespace Lykke.Service.PayInternal.Services
             return await PrepareRefundResult(paymentRequest, transferResult, refundDueDate);
         }
 
-        private async Task<RefundResult> PrepareRefundResult(IPaymentRequest paymentRequest, TransferResult transferResult, DateTime refundDueDate)
+        private async Task<RefundResult> PrepareRefundResult(IPaymentRequest paymentRequest,
+            TransferResult transferResult, DateTime refundDueDate)
         {
             var assetIds = transferResult.Transactions.Unique(x => x.AssetId).ToList();
 

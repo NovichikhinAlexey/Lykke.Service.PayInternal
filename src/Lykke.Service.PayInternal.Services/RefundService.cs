@@ -25,7 +25,7 @@ namespace Lykke.Service.PayInternal.Services
                     DestinationAddress = destinationWalletAddress
                 });
 
-            await _paymentRequestService.ProcessAsync(refundResult.PaymentRequestWalletAddress);
+            await _paymentRequestService.UpdateStatusAsync(refundResult.PaymentRequestWalletAddress);
 
             return refundResult;
         }
