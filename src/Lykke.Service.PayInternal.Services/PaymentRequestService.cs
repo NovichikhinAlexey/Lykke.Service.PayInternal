@@ -122,41 +122,37 @@ namespace Lykke.Service.PayInternal.Services
             if(paymentRequest == null)
                 throw new PaymentRequestNotFoundException(walletAddress);
             
-            //todo: we can get transactions by partition, will be faster
-            IReadOnlyList<IPaymentRequestTransaction> txs = await _transactionRepository.GetByPaymentRequest(paymentRequest.Id);
+            IReadOnlyList<IPaymentRequestTransaction> txs =
+                await _transactionRepository.GetAsync(paymentRequest.WalletAddress);
 
             IEnumerable<TransactionType> txTypes = txs.Select(x => x.TransactionType).Distinct().ToList();
 
             PaymentRequestStatusInfo paymentStatusInfo;
-            // todo: rethink status calculation implementation, isolate
-            if (txTypes.Contains(TransactionType.Settlement))
-            {
-                throw new TransactionTypeNotSupportedException(TransactionType.Settlement.ToString());
-            } else if (txTypes.Contains(TransactionType.Refund))
-            {
-                IReadOnlyList<IPaymentRequestTransaction> refundTxs =
-                    txs.Where(x => x.TransactionType == TransactionType.Refund).ToList();
 
-                if (refundTxs.All(x => x.Confirmations >= _transactionConfirmationCount))
+            if (txs.Any(x => x.IsSettlement()))
+                throw new TransactionTypeNotSupportedException();
+
+            if (txs.Any(x => x.IsRefund()))
+            {
+                IReadOnlyList<IPaymentRequestTransaction> refundTxs = txs.Where(x => x.IsRefund()).ToList();
+
+                if (refundTxs.All(x => x.Confirmed(_transactionConfirmationCount)))
                 {
                     paymentStatusInfo = PaymentRequestStatusInfo.Refunded();
                 }
                 else
                 {
                     paymentStatusInfo =
-                        refundTxs.Any(x =>
-                            x.Confirmations < _transactionConfirmationCount && x.DueDate < DateTime.UtcNow)
+                        refundTxs.Any(x => !x.Confirmed(_transactionConfirmationCount) && x.Expired())
                             ? PaymentRequestStatusInfo.Error("REFUND NOT CONFIRMED")
                             : PaymentRequestStatusInfo.RefundInProgress();
                 }
-            } else if (txTypes.Contains(TransactionType.Payment))
+            } else if (txs.Any(x => x.IsPayment()))
             {
-                IReadOnlyList<IPaymentRequestTransaction> paymentTxs =
-                    txs.Where(x => x.TransactionType == TransactionType.Payment).ToList();
+                IReadOnlyList<IPaymentRequestTransaction> paymentTxs = txs.Where(x => x.IsPayment()).ToList();
 
                 paymentStatusInfo = await _orderService.GetPaymentRequestStatus(paymentTxs, paymentRequest.Id);
-            }
-            else
+            } else 
                 throw new Exception("Inconsistent paymentRequest status");
 
             paymentRequest.Status = paymentStatusInfo.Status;

@@ -32,5 +32,13 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         DateTime DueDate { get; set; }
 
         bool IsPayment();
+
+        bool IsSettlement();
+
+        bool IsRefund();
+
+        bool Confirmed(int confirmationLimit);
+
+        bool Expired();
     }
 }
