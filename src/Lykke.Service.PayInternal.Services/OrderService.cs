@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Common;
 using Common.Log;
 using Lykke.Service.Assets.Client.Models;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
@@ -130,10 +131,10 @@ namespace Lykke.Service.PayInternal.Services
 
             switch (assetId)
             {
-                case "BTC":
+                case LykkeConstants.BitcoinAssetId:
                     btcPaid = transactions.GetTotal();
                     break;
-                case "Satoshi":
+                case LykkeConstants.SatoshiAssetId:
                     btcPaid = transactions.GetTotal().SatoshiToBtc();
                     break;
                 default:
@@ -147,8 +148,7 @@ namespace Lykke.Service.PayInternal.Services
             if (actualOrder == null)
                 return PaymentRequestStatusInfo.Error("EXPIRED", btcPaid, paidDate);
 
-            bool allConfirmed = transactions.All(o => o.Confirmations >= _transactionConfirmationCount);
-            
+            bool allConfirmed = transactions.All(x => x.Confirmed(_transactionConfirmationCount));
 
             if (!allConfirmed)
                 return PaymentRequestStatusInfo.InProcess();
