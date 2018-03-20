@@ -125,6 +125,9 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<RefundService>()
                 .As<IRefundService>()
                 .SingleInstance();
+
+            builder.RegisterType<AssetAvailabilityService>()
+                .As<IAssetsAvailabilityService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
