@@ -140,6 +140,20 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunAsync(() => _paymentRequestsApi.ChechoutAsync(merchantId, paymentRequestId));
         }
 
+        public async Task<AvailableAssetsResponse> GetAvailableAsync(AssetByMerchantModel assetByMerchant)
+        {
+            return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(assetByMerchant.availabilityType));
+        }
+
+        public async Task<AvailableAssetsByMerchantResponse> GetAvailableAsync(string merchantId)
+        {
+            return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(merchantId));
+        }
+
+        public async Task SetAvailabilityByMerchantAsync(UpdateAssetAvailabilityByMerchantRequest request)
+        {
+            await _runner.RunAsync(() => _assetsApi.SetAvailabilityByMerchantAsync(request));
+        }
         public async Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request)
         {
             return await _runner.RunAsync(() => _paymentRequestsApi.BtcFreeTransferAsync(request));
