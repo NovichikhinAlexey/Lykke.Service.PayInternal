@@ -2,6 +2,7 @@
 using Refit;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Lykke.Service.PayInternal.Client.Models.Asset;
 
 namespace Lykke.Service.PayInternal.Client.Api
 {
@@ -25,5 +26,8 @@ namespace Lykke.Service.PayInternal.Client.Api
         
         [Delete("/api/merchants/{merchantId}")]
         Task DeleteAsync(string merchantId);
+
+        [Get("/api/merchants/{merchantId}/assets")]
+        Task<AvailableAssetsResponse> GetAvailableAssetsAsync(string merchantId, [Query] AssetAvailabilityType type);
     }
 }

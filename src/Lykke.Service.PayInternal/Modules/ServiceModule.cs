@@ -97,7 +97,7 @@ namespace Lykke.Service.PayInternal.Modules
                 .As<IMerchantWalletsService>()
                 .SingleInstance();
 
-            builder.RegisterType<AssetAvailabilityService>()
+            builder.RegisterType<AssetsAvailabilityService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.AssetsAvailability))
                 .As<IAssetsAvailabilityService>();
 

@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Api;
+using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
@@ -11,7 +12,6 @@ using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
-using Lykke.Service.PayInternal.Client.Models.Asset;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -21,8 +21,8 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IPayInternalApi _payInternalApi;
         private readonly IMerchantsApi _merchantsApi;
         private readonly IOrdersApi _ordersApi;
-        private readonly IAssetsApi _assetsApi;
         private readonly IPaymentRequestsApi _paymentRequestsApi;
+        private readonly IAssetsApi _assetsApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -139,26 +139,6 @@ namespace Lykke.Service.PayInternal.Client
         {
             return await _runner.RunAsync(() => _paymentRequestsApi.ChechoutAsync(merchantId, paymentRequestId));
         }
-        public async Task<AvailableAssetsResponse> GetAvailableAsync(AssetAvailabilityType availabilityType)
-        {
-            return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(availabilityType));
-        }
-        public async Task<AvailableAssetsResponse> GetAvailableAsync(AssetByMerchantModel assetByMerchant)
-        {
-            return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(assetByMerchant.availabilityType));
-        }
-        public async Task<AvailableAssetsByMerchantResponse> GetAvailableAsync(string merchantId)
-        {
-            return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(merchantId));
-        }
-        public async Task SetAvailabilityAsync(UpdateAssetAvailabilityRequest request)
-        {
-            await _runner.RunAsync(() => _assetsApi.SetAvailabilityAsync(request));
-        }
-        public async Task SetAvailabilityByMerchantAsync(UpdateAssetAvailabilityByMerchantRequest request)
-        {
-            await _runner.RunAsync(() => _assetsApi.SetAvailabilityByMerchantAsync(request));
-        }
 
         public async Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request)
         {
@@ -175,9 +155,34 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunAsync(() => _paymentRequestsApi.RefundAsync(request));
         }
 
-        public async Task SetTransactionExpired(TransactionExpiredRequest request)
+        public async Task<AvailableAssetsResponse> ResolveAvailableAssetsAsync(string merchantId, AssetAvailabilityType type)
         {
-            await _runner.RunAsync(() => _payInternalApi.SetTransactionExpired(request));
+            return await _runner.RunAsync(() => _merchantsApi.GetAvailableAssetsAsync(merchantId, type));
+        }
+
+        public async Task<AvailableAssetsResponse> GetGeneralAvailableAssetsAsync(AssetAvailabilityType type)
+        {
+            return await _runner.RunAsync(() => _assetsApi.GetGeneralAvailableAssetsAsync(type));
+        }
+
+        public async Task<AvailableAssetsByMerchantResponse> GetPersonalAvailableAssetsAsync(string merchantId)
+        {
+            return await _runner.RunAsync(() => _assetsApi.GetPersonalAvailableAssetsAsync(merchantId));
+        }
+
+        public async Task SetGeneralAvailableAssetsAsync(UpdateAssetAvailabilityRequest request)
+        {
+            await _runner.RunAsync(() => _assetsApi.SetGeneralAvailableAssetsAsync(request));
+        }
+
+        public async Task SetPersonalAvailableAssetsAsync(UpdateAssetAvailabilityByMerchantRequest request)
+        {
+            await _runner.RunAsync(() => _assetsApi.SetPersonalAvailableAssetsAsync(request));
+        }
+
+        public async Task SetTransactionExpiredAsync(TransactionExpiredRequest request)
+        {
+            await _runner.RunAsync(() => _payInternalApi.SetTransactionExpiredAsync(request));
         }
 
         public void Dispose()

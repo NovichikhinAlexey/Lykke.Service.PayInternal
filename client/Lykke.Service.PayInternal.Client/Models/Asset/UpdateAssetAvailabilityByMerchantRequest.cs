@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Lykke.Service.PayInternal.Client.Models.Asset
+﻿namespace Lykke.Service.PayInternal.Client.Models.Asset
 {
     public class UpdateAssetAvailabilityByMerchantRequest
     {

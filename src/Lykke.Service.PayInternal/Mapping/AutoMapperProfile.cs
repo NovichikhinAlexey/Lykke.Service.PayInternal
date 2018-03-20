@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Models;
+using Lykke.Service.PayInternal.Models.Assets;
 using Lykke.Service.PayInternal.Models.Orders;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Lykke.Service.PayInternal.Services.Domain;
@@ -24,6 +26,8 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.PublicKey, opt => opt.Ignore());
             
             CreateMap<IOrder, OrderModel>(MemberList.Source);
+
+            CreateMap<IAssetAvailabilityByMerchant, AssetAvailabilityByMerchantResponse>();
 
             PaymentRequestApiModels();
             PaymentRequestMessages();

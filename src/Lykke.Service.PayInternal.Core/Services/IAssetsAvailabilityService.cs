@@ -2,18 +2,19 @@
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
-using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface IAssetsAvailabilityService
     {
-        Task<IReadOnlyList<IAssetAvailability>> GetAvailableAsync(AssetAvailabilityType assetAvailability);
+        Task<IReadOnlyList<string>> ResolveAsync(string merchantId, AssetAvailabilityType type);
 
-        Task<IAssetAvailability> UpdateAsync(string assetId, AssetAvailabilityType assetAvailability, bool value);
-        Task<IAssetAvailabilityByMerchant> UpdateMerchantAssetsAsync(string paymentAssets, string settlementAssets, string merchantId);
-        Task<IReadOnlyList<IAssetAvailability>> GetAvailableAsync(string merchantId, AssetAvailabilityType assetAvailabilityType);
-        Task<IAssetAvailabilityByMerchant> GetAvailablePersonalAsync(string merchantId);
-        Task<IReadOnlyList<IAssetAvailability>> GetAssetsAvailabilityFromSettings(AssetAvailabilityType assetAvailability);
+        Task<IAssetAvailabilityByMerchant> GetPersonalAsync(string merchantId);
+
+        Task<IAssetAvailabilityByMerchant> SetPersonalAsync(string merchantId, string paymentAssets, string settlementAssets);
+
+        Task<IReadOnlyList<IAssetAvailability>> GetGeneralByTypeAsync(AssetAvailabilityType type);
+
+        Task<IAssetAvailability> SetGeneralAsync(string assetId, AssetAvailabilityType type, bool value);
     }
 }
