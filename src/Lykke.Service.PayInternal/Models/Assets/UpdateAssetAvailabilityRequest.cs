@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Lykke.Service.PayInternal.Core.Domain;
 
-namespace Lykke.Service.PayInternal.Models
+namespace Lykke.Service.PayInternal.Models.Assets
 {
     public class UpdateAssetAvailabilityRequest
     {

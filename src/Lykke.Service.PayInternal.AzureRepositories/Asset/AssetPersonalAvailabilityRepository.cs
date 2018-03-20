@@ -1,25 +1,26 @@
-﻿using AzureStorage;
-using Lykke.Service.PayInternal.Core.Domain.Asset;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System;
 using System.Threading.Tasks;
+using AzureStorage;
+using Lykke.Service.PayInternal.Core.Domain.Asset;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Asset
 {
-    public class AssetAvailabilityByMerchantRepository : IAssetAvailabilityByMerchantRepository
+    public class AssetPersonalAvailabilityRepository : IAssetPersonalAvailabilityRepository
     {
         private readonly INoSQLTableStorage<AssetAvailabilityByMerchantEntity> _tableStorage;
-        public AssetAvailabilityByMerchantRepository(INoSQLTableStorage<AssetAvailabilityByMerchantEntity> tableStorage)
+
+        public AssetPersonalAvailabilityRepository(INoSQLTableStorage<AssetAvailabilityByMerchantEntity> tableStorage)
         {
             _tableStorage = tableStorage ?? throw new ArgumentNullException(nameof(tableStorage));
         }
 
         public async Task<IAssetAvailabilityByMerchant> GetAsync(string merchantId)
         {
-            var result = await _tableStorage.GetDataAsync(a => a.MerchantId == merchantId);
-            return result.FirstOrDefault();
+            AssetAvailabilityByMerchantEntity entity = await _tableStorage.GetDataAsync(
+                AssetAvailabilityByMerchantEntity.GeneratePartitionKey(merchantId),
+                AssetAvailabilityByMerchantEntity.GenerateRowKey());
+
+            return entity;
         }
 
         public async Task<IAssetAvailabilityByMerchant> SetAsync(string paymentAssets, string settlementAssets, string merchantId)
@@ -35,16 +36,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
             }
             if (exItem != null)
             {
-                exItem.AssetsPayment = paymentAssets;
-                exItem.AssetsSettlement = settlementAssets;
+                exItem.PaymentAssets = paymentAssets;
+                exItem.SettlementAssets = settlementAssets;
                 await _tableStorage.InsertOrMergeAsync(exItem);
                 return exItem;
             }
             var newItem = AssetAvailabilityByMerchantEntity.Create(new AssetAvailabilityByMerchant
             {
                 MerchantId = merchantId,
-                AssetsPayment = paymentAssets,
-                AssetsSettlement = settlementAssets
+                PaymentAssets = paymentAssets,
+                SettlementAssets = settlementAssets
             });
 
             await _tableStorage.InsertAsync(newItem);

@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Lykke.Service.PayInternal.Core.Domain.Asset
 {
-    public interface IAssetAvailabilityRepository
+    public interface IAssetGeneralAvailabilityRepository
     {
         Task<IReadOnlyList<IAssetAvailability>> GetAsync(AssetAvailabilityType availability);
 

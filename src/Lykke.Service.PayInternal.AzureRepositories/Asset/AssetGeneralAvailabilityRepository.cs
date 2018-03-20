@@ -8,11 +8,11 @@ using Lykke.Service.PayInternal.Core.Domain.Asset;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Asset
 {
-    public class AssetAvailabilityRepository : IAssetAvailabilityRepository
+    public class AssetGeneralAvailabilityRepository : IAssetGeneralAvailabilityRepository
     {
         private readonly INoSQLTableStorage<AssetAvailabilityEntity> _tableStorage;
 
-        public AssetAvailabilityRepository(INoSQLTableStorage<AssetAvailabilityEntity> tableStorage)
+        public AssetGeneralAvailabilityRepository(INoSQLTableStorage<AssetAvailabilityEntity> tableStorage)
         {
             _tableStorage = tableStorage ?? throw new ArgumentNullException(nameof(tableStorage));
         }

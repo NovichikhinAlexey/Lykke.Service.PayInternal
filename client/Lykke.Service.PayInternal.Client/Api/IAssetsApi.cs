@@ -6,16 +6,16 @@ namespace Lykke.Service.PayInternal.Client.Api
 {
     internal interface IAssetsApi
     {
-        [Get("/api/assets/available")]
-        Task<AvailableAssetsResponse> GetAvailableAsync([Query] AssetAvailabilityType availabilityType);
-        [Get("/api/assets/availablebymerchant")]
-        Task<AvailableAssetsResponse> GetAvailableAsync([Query] AssetByMerchantModel assetByMerchant);
-        [Get("/api/assets/availablepersonal")]
-        Task<AvailableAssetsByMerchantResponse> GetAvailableAsync([Query] string merchantId);
+        [Get("/api/assets/settings/general")]
+        Task<AvailableAssetsResponse> GetGeneralAvailableAssetsAsync([Query] AssetAvailabilityType type);
 
-        [Post("/api/assets/available")]
-        Task SetAvailabilityAsync([Body] UpdateAssetAvailabilityRequest request);
-        [Post("/api/assets/availablebymerchant")]
-        Task SetAvailabilityByMerchantAsync([Body] UpdateAssetAvailabilityByMerchantRequest request);
+        [Get("/api/assets/settings/personal")]
+        Task<AvailableAssetsByMerchantResponse> GetPersonalAvailableAssetsAsync([Query] string merchantId);
+
+        [Post("/api/assets/settings/general")]
+        Task SetGeneralAvailableAssetsAsync([Body] UpdateAssetAvailabilityRequest request);
+
+        [Post("/api/assets/settings/personal")]
+        Task SetPersonalAvailableAssetsAsync([Body] UpdateAssetAvailabilityByMerchantRequest request);
     }
 }
