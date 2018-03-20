@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 
 namespace Lykke.Service.PayInternal.Core.Services
 {
@@ -16,6 +16,10 @@ namespace Lykke.Service.PayInternal.Core.Services
         
         Task<IPaymentRequest> CheckoutAsync(string merchantId, string paymentRequestId);
 
-        Task ProcessAsync(string walletAddress);
+        Task UpdateStatusAsync(string walletAddress);
+
+        Task UpdateStatusByTransactionAsync(string transactionId);
+
+        Task<RefundResult> RefundAsync(RefundCommand command);
     }
 }

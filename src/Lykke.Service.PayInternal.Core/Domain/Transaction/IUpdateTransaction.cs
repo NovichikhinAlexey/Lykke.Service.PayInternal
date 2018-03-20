@@ -1,4 +1,6 @@
-﻿namespace Lykke.Service.PayInternal.Core.Domain.Transaction
+﻿using System;
+
+namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 {
     public interface IUpdateTransaction
     {
@@ -7,5 +9,6 @@
         double Amount { get; set; }
         int Confirmations { get; set; }
         string BlockId { get; set; }
+        DateTime? FirstSeen { get; set; }
     }
 }

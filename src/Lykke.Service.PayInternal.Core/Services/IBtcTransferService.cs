@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using System.Threading.Tasks;
-using Lykke.Service.PayInternal.Core.Domain.BtcTransfer;
 
 namespace Lykke.Service.PayInternal.Core.Services
 {

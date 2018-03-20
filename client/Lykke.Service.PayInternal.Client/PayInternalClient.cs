@@ -4,11 +4,12 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Api;
-using Lykke.Service.PayInternal.Client.Models;
 using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
+using Lykke.Service.PayInternal.Client.Models.Transactions;
+using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
 
@@ -166,6 +167,21 @@ namespace Lykke.Service.PayInternal.Client
         public async Task SetAvailabilityAsync(UpdateAssetAvailabilityRequest request)
         {
             await _runner.RunAsync(() => _assetsApi.SetAvailabilityAsync(request));
+        }
+
+        public async Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactions()
+        {
+            return await _runner.RunAsync(() => _payInternalApi.GetAllMonitoredTransactions());
+        }
+
+        public async Task<RefundResponse> RefundAsync(RefundRequestModel request)
+        {
+            return await _runner.RunAsync(() => _paymentRequestsApi.RefundAsync(request));
+        }
+
+        public async Task SetTransactionExpired(TransactionExpiredRequest request)
+        {
+            await _runner.RunAsync(() => _payInternalApi.SetTransactionExpired(request));
         }
 
         public void Dispose()

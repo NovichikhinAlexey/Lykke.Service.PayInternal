@@ -11,6 +11,7 @@ using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
@@ -20,6 +21,7 @@ using Lykke.Service.PayInternal.Rabbit.Publishers;
 using Lykke.Service.PayInternal.Services;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
+using QBitNinja.Client;
 using DbSettings = Lykke.Service.PayInternal.Core.Settings.ServiceSettings.DbSettings;
 
 namespace Lykke.Service.PayInternal.Modules
@@ -30,6 +32,7 @@ namespace Lykke.Service.PayInternal.Modules
         private readonly IReloadingManager<DbSettings> _dbSettings;
         private readonly ILog _log;
         // NOTE: you can remove it if you don't need to use IServiceCollection extensions to register service specific dependencies
+        // ReSharper disable once CollectionNeverUpdated.Local
         private readonly IServiceCollection _services;
 
         public ServiceModule(IReloadingManager<AppSettings> settings, ILog log)
@@ -68,8 +71,8 @@ namespace Lykke.Service.PayInternal.Modules
                 AzureTableStorage<WalletEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantWalletConnString),
                     "MerchantWallets", _log)));
 
-            builder.RegisterInstance<IBlockchainTransactionRepository>(new BlockchainTransactionRepository(
-                AzureTableStorage<BlockchainTransactionEntity>.Create(
+            builder.RegisterInstance<IPaymentRequestTransactionRepository>(new PaymentRequestTransactionRepository(
+                AzureTableStorage<PaymentRequestTransactionEntity>.Create(
                     _dbSettings.ConnectionString(x => x.MerchantConnString),
                     "MerchantWalletTransactions", _log)));
         }
@@ -81,13 +84,16 @@ namespace Lykke.Service.PayInternal.Modules
                 .SingleInstance();
 
             builder.RegisterType<StartupManager>()
-                .As<IStartupManager>();
+                .As<IStartupManager>()
+                .SingleInstance();
 
             builder.RegisterType<ShutdownManager>()
-                .As<IShutdownManager>();
+                .As<IShutdownManager>()
+                .SingleInstance();
 
             builder.RegisterType<MerchantWalletsService>()
-                .As<IMerchantWalletsService>();
+                .As<IMerchantWalletsService>()
+                .SingleInstance();
 
             builder.RegisterType<AssetAvailabilityService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.AssetsAvailability))
@@ -95,13 +101,34 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<CalculationService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LpMarkup))
-                .As<ICalculationService>();
+                .As<ICalculationService>()
+                .SingleInstance();
 
             builder.RegisterType<TransactionsService>()
-                .As<ITransactionsService>();
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.TransactionConfirmationCount))
+                .As<ITransactionsService>()
+                .SingleInstance();
 
             builder.RegisterType<BtcTransferService>()
-                .As<IBtcTransferService>();
+                .As<IBtcTransferService>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.ExpirationPeriods))
+                .SingleInstance();
+
+            builder.RegisterType<TransferService>()
+                .As<ITransferService>()
+                .SingleInstance();
+
+            builder.RegisterType<NoFeeProvider>()
+                .As<IFeeProvider>()
+                .SingleInstance();
+
+            builder.RegisterType<BitcoinApiClient>()
+                .Keyed<IBlockchainApiClient>(BlockchainType.Bitcoin)
+                .SingleInstance();
+
+            builder.RegisterType<RefundService>()
+                .As<IRefundService>()
+                .SingleInstance();
 
             builder.RegisterType<AssetAvailabilityService>()
                 .As<IAssetsAvailabilityService>();
@@ -117,6 +144,9 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<LykkeMarketProfile>()
                 .As<ILykkeMarketProfile>()
                 .WithParameter("baseUri", new Uri(_settings.CurrentValue.MarketProfileServiceClient.ServiceUrl));
+
+            builder.RegisterInstance(new QBitNinjaClient(_settings.CurrentValue.NinjaServiceClient.ServiceUrl))
+                .AsSelf();
         }
 
         private void RegisterCaches(ContainerBuilder builder)
@@ -154,6 +184,12 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<PaymentRequestPublisher>()
                 .As<IPaymentRequestPublisher>()
+                .As<IStartable>()
+                .SingleInstance()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
+
+            builder.RegisterType<TransactionPublisher>()
+                .As<ITransactionPublisher>()
                 .As<IStartable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));

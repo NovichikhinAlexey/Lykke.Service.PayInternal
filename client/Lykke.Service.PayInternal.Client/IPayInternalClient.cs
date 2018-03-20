@@ -1,17 +1,30 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lykke.Service.PayInternal.Client.Models;
 using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
+using Lykke.Service.PayInternal.Client.Models.Transactions;
+using Lykke.Service.PayInternal.Client.Models.Wallets;
 
 namespace Lykke.Service.PayInternal.Client
 {
+    /// <summary>
+    /// Pay Internal client interface
+    /// </summary>
     public interface IPayInternalClient
     {
+        /// <summary>
+        /// Creates new wallet address in bitcoin blockchain
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         Task<WalletAddressResponse> CreateAddressAsync(CreateWalletRequest request);
 
+        /// <summary>
+        /// Returns wallet addresses that are not considered as expired
+        /// </summary>
+        /// <returns></returns>
         Task<IEnumerable<WalletStateResponse>> GetNotExpiredWalletsAsync();
 
         /// <summary>
@@ -154,5 +167,25 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request">The asset availability update request</param>
         /// <returns></returns>
         Task SetAvailabilityAsync(UpdateAssetAvailabilityRequest request);
+
+        /// <summary>
+        /// Finds and returns all monitored (i.e., not expired and not fully confirmed yet) transactions.
+        /// </summary>
+        /// <returns>The list of monitored transactions.</returns>
+        Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactions();
+
+        /// <summary>
+        /// Initiates a refund for the specified payment request
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task<RefundResponse> RefundAsync(RefundRequestModel request);
+
+        /// <summary>
+        /// Marks transaction as expired
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task SetTransactionExpired(TransactionExpiredRequest request);
     }
 }

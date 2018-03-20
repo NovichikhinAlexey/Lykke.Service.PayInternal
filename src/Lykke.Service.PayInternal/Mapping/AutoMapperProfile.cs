@@ -2,7 +2,7 @@
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
-using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.Orders;
@@ -50,15 +50,21 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.AssetPairId, opt => opt.Ignore())
                 .ForSourceMember(src => src.SettlementAmount, opt => opt.Ignore());
 
-            CreateMap<IBlockchainTransaction, PaymentRequestTransactionModel>(MemberList.Source)
+            CreateMap<IPaymentRequestTransaction, PaymentRequestTransactionModel>(MemberList.Source)
                 .ForSourceMember(src => src.Id, opt => opt.Ignore())
                 .ForSourceMember(src => src.PaymentRequestId, opt => opt.Ignore())
                 .ForSourceMember(src => src.WalletAddress, opt => opt.Ignore())
                 .ForSourceMember(src => src.Blockchain, opt => opt.Ignore())
                 .ForSourceMember(src => src.TransactionType, opt => opt.Ignore())
+                .ForSourceMember(src => src.DueDate, opt => opt.Ignore())
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId))
                 .ForMember(dest => dest.Url, opt => opt.ResolveUsing<TransactionUrlValueResolver>())
                 .ForMember(dest => dest.RefundUrl, opt => opt.Ignore());
+
+            CreateMap<RefundTransactionResult, RefundTransactionReponseModel>();
+
+            CreateMap<RefundResult, RefundResponseModel>(MemberList.Source)
+                .ForSourceMember(src => src.PaymentRequestWalletAddress, opt => opt.Ignore());
         }
 
         private void PaymentRequestMessages()
@@ -72,13 +78,14 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.AssetPairId, opt => opt.Ignore())
                 .ForSourceMember(src => src.SettlementAmount, opt => opt.Ignore());
 
-            CreateMap<IBlockchainTransaction, PaymentRequestTransaction>(MemberList.Source)
+            CreateMap<IPaymentRequestTransaction, Contract.PaymentRequest.PaymentRequestTransaction>(MemberList.Source)
                 .ForSourceMember(src => src.Id, opt => opt.Ignore())
                 .ForSourceMember(src => src.PaymentRequestId, opt => opt.Ignore())
                 .ForSourceMember(src => src.WalletAddress, opt => opt.Ignore())
                 .ForSourceMember(src => src.AssetId, opt => opt.Ignore())
                 .ForSourceMember(src => src.Blockchain, opt => opt.Ignore())
                 .ForSourceMember(src => src.TransactionType, opt => opt.Ignore())
+                .ForSourceMember(src => src.DueDate, opt => opt.Ignore())
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId));            
         }
     }

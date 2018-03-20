@@ -8,12 +8,12 @@ using Common;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Order;
-using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
-using Lykke.Service.PayInternal.Services.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -26,6 +26,7 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly IOrderService _orderService;
         private readonly ITransactionsService _transactionsService;
         private readonly IAssetsLocalCache _assetsLocalCache;
+        private readonly IRefundService _refundService;
         private readonly ILog _log;
 
         public PaymentRequestsController(
@@ -33,12 +34,14 @@ namespace Lykke.Service.PayInternal.Controllers
             IOrderService orderService,
             ITransactionsService transactionsService,
             IAssetsLocalCache assetsLocalCache,
+            IRefundService refundService,
             ILog log)
         {
             _paymentRequestService = paymentRequestService;
             _orderService = orderService;
             _transactionsService = transactionsService;
             _assetsLocalCache = assetsLocalCache;
+            _refundService = refundService;
             _log = log;
         }
 
@@ -110,7 +113,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
-                IReadOnlyList<IBlockchainTransaction> transactions =
+                IReadOnlyList<IPaymentRequestTransaction> transactions =
                     (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
 
                 var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
@@ -215,7 +218,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
-                IReadOnlyList<IBlockchainTransaction> transactions =
+                IReadOnlyList<IPaymentRequestTransaction> transactions =
                     (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
 
                 var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
@@ -234,6 +237,34 @@ namespace Lykke.Service.PayInternal.Controllers
                     }.ToJson(), exception);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Starts refund process on payment request associated with source wallet address
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("merchants/paymentrequests/refunds")]
+        [SwaggerOperation("Refund")]
+        [ProducesResponseType(typeof(RefundResponseModel), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
+        [ValidateModel]
+        public async Task<IActionResult> RefundAsync([FromBody] RefundRequestModel request)
+        {
+            try
+            {
+                RefundResult refundResult = await _refundService.ExecuteAsync(request.MerchantId,
+                    request.PaymentRequestId, request.DestinationAddress);
+
+                return Ok(Mapper.Map<RefundResponseModel>(refundResult));
+            }
+            catch (Exception e)
+            {
+                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(RefundAsync), e);
+            }
+
+            return StatusCode((int) HttpStatusCode.InternalServerError);
         }
     }
 }

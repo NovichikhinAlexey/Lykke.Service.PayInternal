@@ -9,6 +9,6 @@ namespace Lykke.Service.PayInternal.Services.Domain
     {
         public string Address { get; set; }
         public DateTime DueDate { get; set; }
-        public IEnumerable<IBlockchainTransaction> Transactions { get; set; }
+        public IEnumerable<IPaymentRequestTransaction> Transactions { get; set; }
     }
 }

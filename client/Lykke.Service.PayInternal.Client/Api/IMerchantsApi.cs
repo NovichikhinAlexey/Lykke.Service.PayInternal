@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Lykke.Service.PayInternal.Client.Models;
-using Lykke.Service.PayInternal.Client.Models.Merchant;
+﻿using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Refit;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Lykke.Service.PayInternal.Client.Api
 {

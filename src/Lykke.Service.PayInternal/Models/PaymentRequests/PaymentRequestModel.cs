@@ -1,5 +1,5 @@
 ﻿using System;
-using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 

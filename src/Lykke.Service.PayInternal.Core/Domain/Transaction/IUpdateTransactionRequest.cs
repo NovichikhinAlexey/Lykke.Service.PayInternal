@@ -9,5 +9,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         double Amount { get; set; }
         int Confirmations { get; set; }
         string BlockId { get; set; }
+        DateTime? FirstSeen { get; set; }
     }
 }

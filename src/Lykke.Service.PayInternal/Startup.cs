@@ -70,18 +70,25 @@ namespace Lykke.Service.PayInternal
                     appSettings.Nested(o => o.PayInternalService.Db.MerchantOrderConnString),
                     appSettings.Nested(o => o.PayInternalService.Db.MerchantConnString),
                     appSettings.Nested(o => o.PayInternalService.Db.PaymentRequestConnString),
+                    appSettings.Nested(o => o.PayInternalService.Db.TransferConnString),
                     Log));
+
                 builder.RegisterModule(new Services.AutofacModule(
-                    appSettings.CurrentValue.PayInternalService.OrderExpiration,
+                    appSettings.CurrentValue.PayInternalService.ExpirationPeriods.Order,
+                    appSettings.CurrentValue.PayInternalService.ExpirationPeriods.Refund,
                     appSettings.CurrentValue.PayInternalService.TransactionConfirmationCount));
+
                 builder.RegisterModule(new ServiceModule(appSettings, Log));
+
                 builder.Populate(services);
+
                 ApplicationContainer = builder.Build();
 
                 Mapper.Initialize(cfg =>
                 {
                     cfg.ConstructServicesUsing(ApplicationContainer.Resolve);
                     cfg.AddProfiles(typeof(AutoMapperProfile));
+                    cfg.AddProfiles(typeof(AzureRepositories.AutoMapperProfile));
                 });
 
                 Mapper.AssertConfigurationIsValid();

@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
 
 namespace Lykke.Service.PayInternal.Models
 {

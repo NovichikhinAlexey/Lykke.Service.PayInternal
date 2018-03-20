@@ -9,7 +9,7 @@ using Lykke.RabbitMqBroker.Publisher;
 using Lykke.RabbitMqBroker.Subscriber;
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Order;
-using Lykke.Service.PayInternal.Core.Domain.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
@@ -65,18 +65,20 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
         {
             IOrder order = await _orderService.GetAsync(paymentRequest.Id, paymentRequest.OrderId);
 
-            IReadOnlyList<IBlockchainTransaction> transactions =
+            IReadOnlyList<IPaymentRequestTransaction> transactions =
                 (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
 
             var message = Mapper.Map<PaymentRequestDetailsMessage>(paymentRequest);
             message.Order = Mapper.Map<PaymentRequestOrder>(order);
-            message.Transactions = Mapper.Map<List<PaymentRequestTransaction>>(transactions);
+            message.Transactions = Mapper.Map<List<Contract.PaymentRequest.PaymentRequestTransaction>>(transactions);
 
             await PublishAsync(message);
         }
         
         public async Task PublishAsync(PaymentRequestDetailsMessage message)
         {
+            await _log.WriteInfoAsync(nameof(PaymentRequestPublisher), nameof(PublishAsync), message.ToJson());
+      
             await _publisher.ProduceAsync(message);
         }
     }
