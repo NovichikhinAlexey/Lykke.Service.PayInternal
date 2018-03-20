@@ -41,7 +41,6 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.PaidDate, opt => opt.Ignore())
                 .ForMember(dest => dest.Error, opt => opt.Ignore());
 
-
             CreateMap<IPaymentRequest, PaymentRequestDetailsModel>(MemberList.Source)
                 .ForSourceMember(dest => dest.OrderId, opt => opt.Ignore());
 
@@ -56,6 +55,7 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.PaymentRequestId, opt => opt.Ignore())
                 .ForSourceMember(src => src.WalletAddress, opt => opt.Ignore())
                 .ForSourceMember(src => src.Blockchain, opt => opt.Ignore())
+                .ForSourceMember(src => src.TransactionType, opt => opt.Ignore())
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId))
                 .ForMember(dest => dest.Url, opt => opt.ResolveUsing<TransactionUrlValueResolver>())
                 .ForMember(dest => dest.RefundUrl, opt => opt.Ignore());
@@ -78,6 +78,7 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.WalletAddress, opt => opt.Ignore())
                 .ForSourceMember(src => src.AssetId, opt => opt.Ignore())
                 .ForSourceMember(src => src.Blockchain, opt => opt.Ignore())
+                .ForSourceMember(src => src.TransactionType, opt => opt.Ignore())
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId));            
         }
     }

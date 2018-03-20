@@ -35,7 +35,7 @@ namespace Lykke.Service.PayInternal.Services
             return await _transactionRepository.GetAsync(walletAddress);
         }
 
-        public async Task Create(ICreateTransaction request)
+        public async Task Create(ICreateTransaction request, TransactionType transactionType)
         {
             IPaymentRequest paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
 
@@ -52,7 +52,9 @@ namespace Lykke.Service.PayInternal.Services
                 BlockId = request.BlockId,
                 Blockchain = request.Blockchain,
                 FirstSeen = request.FirstSeen,
-                PaymentRequestId = paymentRequest.Id
+                PaymentRequestId = paymentRequest.Id,
+                TransactionType = transactionType,
+                SourceWalletAddresses = request.SourceWalletAddresses
             };
 
             await _transactionRepository.AddAsync(transactionEntity);

@@ -5,12 +5,12 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Api;
 using Lykke.Service.PayInternal.Client.Models;
+using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
 using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
-using Lykke.Service.PayInternal.Client.Models.Asset;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -20,8 +20,8 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IPayInternalApi _payInternalApi;
         private readonly IMerchantsApi _merchantsApi;
         private readonly IOrdersApi _ordersApi;
-        private readonly IAssetsApi _assetsApi;
         private readonly IPaymentRequestsApi _paymentRequestsApi;
+        private readonly IAssetsApi _assetsApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -62,14 +62,14 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunAsync(() => _payInternalApi.GetNotExpiredWalletsAsync());
         }
 
-        public async Task CreateTransaction(CreateTransactionRequest request)
+        public async Task CreatePaymentTransactionAsync(CreateTransactionRequest request)
         {
-            await _runner.RunAsync(() => _payInternalApi.CreateTransaction(request));
+            await _runner.RunAsync(() => _payInternalApi.CreatePaymentTransactionAsync(request));
         }
 
-        public async Task UpdateTransaction(UpdateTransactionRequest request)
+        public async Task UpdateTransactionAsync(UpdateTransactionRequest request)
         {
-            await _runner.RunAsync(() => _payInternalApi.UpdateTransaction(request));
+            await _runner.RunAsync(() => _payInternalApi.UpdateTransactionAsync(request));
         }
 
         public async Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync()
@@ -138,22 +138,17 @@ namespace Lykke.Service.PayInternal.Client
         {
             return await _runner.RunAsync(() => _paymentRequestsApi.ChechoutAsync(merchantId, paymentRequestId));
         }
-        public async Task<AvailableAssetsResponse> GetAvailableAsync(AssetAvailabilityType availabilityType)
-        {
-            return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(availabilityType));
-        }
+
         public async Task<AvailableAssetsResponse> GetAvailableAsync(AssetByMerchantModel assetByMerchant)
         {
             return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(assetByMerchant.availabilityType));
         }
+
         public async Task<AvailableAssetsByMerchantResponse> GetAvailableAsync(string merchantId)
         {
             return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(merchantId));
         }
-        public async Task SetAvailabilityAsync(UpdateAssetAvailabilityRequest request)
-        {
-            await _runner.RunAsync(() => _assetsApi.SetAvailabilityAsync(request));
-        }
+
         public async Task SetAvailabilityByMerchantAsync(UpdateAssetAvailabilityByMerchantRequest request)
         {
             await _runner.RunAsync(() => _assetsApi.SetAvailabilityByMerchantAsync(request));
@@ -161,6 +156,16 @@ namespace Lykke.Service.PayInternal.Client
         public async Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request)
         {
             return await _runner.RunAsync(() => _paymentRequestsApi.BtcFreeTransferAsync(request));
+        }
+
+        public async Task<AvailableAssetsResponse> GetAvailableAsync(AssetAvailabilityType availabilityType)
+        {
+            return await _runner.RunAsync(() => _assetsApi.GetAvailableAsync(availabilityType));
+        }
+
+        public async Task SetAvailabilityAsync(UpdateAssetAvailabilityRequest request)
+        {
+            await _runner.RunAsync(() => _assetsApi.SetAvailabilityAsync(request));
         }
 
         public void Dispose()

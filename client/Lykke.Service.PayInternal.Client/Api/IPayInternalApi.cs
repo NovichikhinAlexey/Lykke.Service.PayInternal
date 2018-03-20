@@ -13,10 +13,10 @@ namespace Lykke.Service.PayInternal.Client.Api
         [Get("/api/bitcoin/wallets/notExpired")]
         Task<IEnumerable<WalletStateResponse>> GetNotExpiredWalletsAsync();
 
-        [Post("/api/transactions")]
-        Task CreateTransaction([Body] CreateTransactionRequest request);
+        [Post("/api/transactions/payment")]
+        Task CreatePaymentTransactionAsync([Body] CreateTransactionRequest request);
 
         [Put("/api/transactions")]
-        Task UpdateTransaction([Body] UpdateTransactionRequest request);
+        Task UpdateTransactionAsync([Body] UpdateTransactionRequest request);
     }
 }

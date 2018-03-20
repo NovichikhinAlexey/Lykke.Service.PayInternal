@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models;
+using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
-using Lykke.Service.PayInternal.Client.Models.Asset;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -14,9 +14,19 @@ namespace Lykke.Service.PayInternal.Client
 
         Task<IEnumerable<WalletStateResponse>> GetNotExpiredWalletsAsync();
 
-        Task CreateTransaction(CreateTransactionRequest request);
+        /// <summary>
+        /// Creates transaction of payment type
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task CreatePaymentTransactionAsync(CreateTransactionRequest request);
 
-        Task UpdateTransaction(UpdateTransactionRequest request);
+        /// <summary>
+        /// Updates transaction
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task UpdateTransactionAsync(UpdateTransactionRequest request);
         
         /// <summary>
         /// Returns all merchants.
@@ -113,15 +123,15 @@ namespace Lykke.Service.PayInternal.Client
         /// </summary>
         /// <param name="availabilityType">Availability type</param>
         /// <returns></returns>
-        Task<AvailableAssetsResponse> GetAvailableAsync(AssetAvailabilityType availabilityType);
         Task<AvailableAssetsResponse> GetAvailableAsync(AssetByMerchantModel assetByMerchant);
+
         Task<AvailableAssetsByMerchantResponse> GetAvailableAsync(string merchantId);
+
         /// <summary>
         /// Updates availability type for asset
         /// </summary>
         /// <param name="request">The asset availability update request</param>
         /// <returns></returns>
-        Task SetAvailabilityAsync(UpdateAssetAvailabilityRequest request);
         Task SetAvailabilityByMerchantAsync(UpdateAssetAvailabilityByMerchantRequest request);
 
         /// <summary>
@@ -130,5 +140,19 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request"></param>
         /// <returns></returns>
         Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request);
+
+        /// <summary>
+        /// Get available assets by availability type
+        /// </summary>
+        /// <param name="availabilityType">Availability type</param>
+        /// <returns></returns>
+        Task<AvailableAssetsResponse> GetAvailableAsync(AssetAvailabilityType availabilityType);
+
+        /// <summary>
+        /// Updates availability type for asset
+        /// </summary>
+        /// <param name="request">The asset availability update request</param>
+        /// <returns></returns>
+        Task SetAvailabilityAsync(UpdateAssetAvailabilityRequest request);
     }
 }

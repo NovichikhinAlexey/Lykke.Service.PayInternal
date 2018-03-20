@@ -2,6 +2,7 @@
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
+using Lykke.Service.PayInternal.AzureRepositories.Serializers;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
@@ -12,6 +13,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         private decimal _amount;
         private int _confirmations;
         private DateTime _firstSeen;
+        private TransactionType _transactionType;
         
         public BlockchainTransactionEntity()
         {
@@ -52,6 +54,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         }
         
         public string WalletAddress { get; set; }
+
+        [ValueSerializer(typeof(StringListSerializer))]
+        public string[] SourceWalletAddresses { get; set; }
      
         public DateTime FirstSeen
         {
@@ -67,6 +72,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
         public string Blockchain { get; set; }
 
+        public TransactionType TransactionType
+        {
+            get => _transactionType;
+            set
+            {
+                _transactionType = value;
+                MarkValueTypePropertyAsDirty(nameof(TransactionType));
+            }
+        }
+
         internal void Map(IBlockchainTransaction blockchainTransaction)
         {
             TransactionId = blockchainTransaction.TransactionId;
@@ -75,9 +90,11 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             BlockId = blockchainTransaction.BlockId;
             Confirmations = blockchainTransaction.Confirmations;
             WalletAddress = blockchainTransaction.WalletAddress;
+            SourceWalletAddresses = blockchainTransaction.SourceWalletAddresses;
             FirstSeen = blockchainTransaction.FirstSeen;
             AssetId = blockchainTransaction.AssetId;
             Blockchain = blockchainTransaction.Blockchain;
+            TransactionType = blockchainTransaction.TransactionType;
         }
     }
 }
