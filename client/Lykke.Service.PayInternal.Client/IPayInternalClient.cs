@@ -118,6 +118,21 @@ namespace Lykke.Service.PayInternal.Client
         /// </summary>
         /// <returns>The payment request details.</returns>
         Task<PaymentRequestDetailsModel> ChechoutAsync(string merchantId, string paymentRequestId);
+        /// <summary>
+        /// Get available assets by availability type
+        /// </summary>
+        /// <param name="availabilityType">Availability type</param>
+        /// <returns></returns>
+        Task<AvailableAssetsResponse> GetAvailableAsync(AssetByMerchantModel assetByMerchant);
+
+        Task<AvailableAssetsByMerchantResponse> GetAvailableAsync(string merchantId);
+
+        /// <summary>
+        /// Updates availability type for asset
+        /// </summary>
+        /// <param name="request">The asset availability update request</param>
+        /// <returns></returns>
+        Task SetAvailabilityByMerchantAsync(UpdateAssetAvailabilityByMerchantRequest request);
 
         /// <summary>
         /// Transfers BTC from source addresses with amount provided to destination address without LykkePay fees

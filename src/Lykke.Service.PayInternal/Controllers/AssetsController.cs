@@ -44,17 +44,13 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 IReadOnlyList<IAssetAvailability> result = await _assetsAvailabilityService.GetAvailableAsync(availabilityType);
                 
-                var assets = new List<AssetModel>();
+                var assets = new List<string>();
 
                 foreach (IAssetAvailability assetAvailability in result)
                 {
                     Asset asset = await _assetsLocalCache.GetAssetByIdAsync(assetAvailability.AssetId);
 
-                    assets.Add(new AssetModel
-                    {
-                        Id = asset.Id,
-                        Name = asset.Name
-                    });
+                    assets.Add(asset.Id);
                 }
 
                 var response = new AvailableAssetsResponseModel { Assets = assets };
@@ -67,7 +63,72 @@ namespace Lykke.Service.PayInternal.Controllers
                 throw;
             }
         }
+        /// <summary>
+        /// Returns list of assets which are allowed to be used for payment or settlement
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("availablebymerchant")]
+        [SwaggerOperation("GetAvailableByMerchant")]
+        [ProducesResponseType(typeof(AvailableAssetsResponseModel), (int)HttpStatusCode.OK)]
+        public async Task<IActionResult> GetAvailableByMerchant([FromQuery] string merchantId, AssetAvailabilityType assetAvailabilityType)
+        {
+            try
+            {
+                IReadOnlyList<IAssetAvailability> result = new List<IAssetAvailability>();
+                IReadOnlyList<IAssetAvailability> resultMerchant = await _assetsAvailabilityService.GetAvailableAsync(merchantId, assetAvailabilityType);
+                IReadOnlyList<IAssetAvailability> resultGlobal = await _assetsAvailabilityService.GetAvailableAsync(assetAvailabilityType);
+                var assetsFromSettings = await _assetsAvailabilityService.GetAssetsAvailabilityFromSettings(assetAvailabilityType);
+                if (resultMerchant == null)
+                {
+                    if (assetsFromSettings.Count == 0)
+                        result = resultGlobal;
+                    else
+                        result = assetsFromSettings;
+                }
+                else
+                    result = resultMerchant;
+                var assets = new List<string>();
 
+                foreach (IAssetAvailability assetAvailability in result)
+                {
+                    Asset asset = await _assetsLocalCache.GetAssetByIdAsync(assetAvailability.AssetId);
+
+                    assets.Add(asset.Id);
+                }
+
+                var response = new AvailableAssetsResponseModel { Assets = assets };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(AssetsController), nameof(GetAvailable), ex);
+                throw;
+            }
+        }
+        /// <summary>
+        /// Return personal settings available assets by merchant
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("availablepersonal")]
+        [SwaggerOperation("GetAvailablePersonal")]
+        [ProducesResponseType(typeof(AvailableAssetsResponseModel), (int)HttpStatusCode.OK)]
+        public async Task<IActionResult> GetAvailableByMerchant([FromQuery] string merchantId)
+        {
+            try
+            {
+                var response = await _assetsAvailabilityService.GetAvailablePersonalAsync(merchantId);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(AssetsController), nameof(GetAvailable), ex);
+                throw;
+            }
+        }
         /// <summary>
         /// Updates asset availability with provided availability type and value
         /// </summary>
@@ -88,6 +149,30 @@ namespace Lykke.Service.PayInternal.Controllers
             try
             {
                 await _assetsAvailabilityService.UpdateAsync(request.AssetId, request.AvailabilityType, request.Value);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(AssetsController), nameof(SetAvailability), ex);
+                throw;
+            }
+        }
+        /// <summary>
+        /// Updates asset availability assets by merchant
+        /// </summary>
+        /// <param name="request">Contains availability type which has the following possible values: Payment, Settlement</param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("availablebymerchant")]
+        [SwaggerOperation("SetAvailabilityByMerchant")]
+        [ProducesResponseType(typeof(void), (int)HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> SetAvailabilityByMerchant([FromBody] UpdateAssetAvailabilityByMerchantRequest request)
+        {
+            try
+            {
+                await _assetsAvailabilityService.UpdateMerchantAssetsAsync(request.PaymentAssets, request.SettlementAssets, request.MerchantId);
 
                 return NoContent();
             }
