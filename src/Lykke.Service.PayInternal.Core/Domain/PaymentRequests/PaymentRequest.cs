@@ -36,7 +36,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
 
         public bool StatusValidForRefund()
         {
-            return Status == PaymentRequestStatus.Confirmed || Status == PaymentRequestStatus.Error;
+            return Status == PaymentRequestStatus.Error;
         }
     }
 }
