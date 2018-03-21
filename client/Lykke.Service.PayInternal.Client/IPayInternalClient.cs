@@ -142,7 +142,7 @@ namespace Lykke.Service.PayInternal.Client
         /// Finds and returns all monitored (i.e., not expired and not fully confirmed yet) transactions.
         /// </summary>
         /// <returns>The list of monitored transactions.</returns>
-        Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactions();
+        Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactionsAsync();
 
         /// <summary>
         /// Initiates a refund for the specified payment request

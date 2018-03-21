@@ -18,7 +18,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
         {
             AssetAvailabilityByMerchantEntity entity = await _tableStorage.GetDataAsync(
                 AssetAvailabilityByMerchantEntity.GeneratePartitionKey(merchantId),
-                AssetAvailabilityByMerchantEntity.GenerateRowKey());
+                AssetAvailabilityByMerchantEntity.GenerateRowKey(merchantId));
 
             return entity;
         }
@@ -26,7 +26,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
         public async Task<IAssetAvailabilityByMerchant> SetAsync(string paymentAssets, string settlementAssets, string merchantId)
         {
             string partitionKey = AssetAvailabilityByMerchantEntity.GeneratePartitionKey(merchantId);
-            string rowKey = AssetAvailabilityByMerchantEntity.GenerateRowKey();
+            string rowKey = AssetAvailabilityByMerchantEntity.GenerateRowKey(merchantId);
 
             AssetAvailabilityByMerchantEntity exItem = await _tableStorage.GetDataAsync(partitionKey, rowKey);
             if (exItem != null && string.IsNullOrEmpty(settlementAssets) && string.IsNullOrEmpty(paymentAssets))

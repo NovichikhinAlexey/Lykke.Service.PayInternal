@@ -13,7 +13,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
             return new AssetAvailabilityByMerchantEntity
             {
                 PartitionKey = GeneratePartitionKey(src.MerchantId),
-                RowKey = GenerateRowKey(),
+                RowKey = GenerateRowKey(src.MerchantId),
                 MerchantId = src.MerchantId,
                 PaymentAssets = src.PaymentAssets,
                 SettlementAssets = src.SettlementAssets
@@ -25,9 +25,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
             return merchantId;
         }
 
-        public static string GenerateRowKey()
+        public static string GenerateRowKey(string merchantId)
         {
-            return string.Empty;
+            return merchantId;
         }
 
         public string MerchantId { get; set; }

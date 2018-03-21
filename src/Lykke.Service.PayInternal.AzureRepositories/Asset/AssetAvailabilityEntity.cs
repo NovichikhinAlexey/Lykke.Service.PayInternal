@@ -18,9 +18,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
                 return assetId;
             }
 
-            public static string GenerateRowKey()
+            public static string GenerateRowKey(string assetId)
             {
-                return string.Empty;
+                return assetId;
             }
 
             public static AssetAvailabilityEntity Create(IAssetAvailability src)
@@ -28,7 +28,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
                 return new AssetAvailabilityEntity
                 {
                     PartitionKey = GeneratePartitionKey(src.AssetId),
-                    RowKey = GenerateRowKey(),
+                    RowKey = GenerateRowKey(src.AssetId),
                     AssetId = src.AssetId,
                     PaymentAvailable = src.PaymentAvailable,
                     SettlementAvailable = src.SettlementAvailable
