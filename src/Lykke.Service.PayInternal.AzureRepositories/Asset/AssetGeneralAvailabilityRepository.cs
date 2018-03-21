@@ -38,7 +38,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
         public async Task<IAssetAvailability> SetAsync(string assetId, AssetAvailabilityType availability, bool value)
         {
             string partitionKey = AssetAvailabilityEntity.ByAsset.GeneratePartitionKey(assetId);
-            string rowKey = AssetAvailabilityEntity.ByAsset.GenerateRowKey();
+            string rowKey = AssetAvailabilityEntity.ByAsset.GenerateRowKey(assetId);
 
             AssetAvailabilityEntity exItem = await _tableStorage.GetDataAsync(partitionKey, rowKey);
 
