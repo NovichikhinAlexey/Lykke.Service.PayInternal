@@ -95,7 +95,7 @@ namespace Lykke.Service.PayInternal.Modules
                 .As<IMerchantWalletsService>()
                 .SingleInstance();
 
-            builder.RegisterType<AssetAvailabilityService>()
+            builder.RegisterType<AssetsAvailabilityService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.AssetsAvailability))
                 .As<IAssetsAvailabilityService>();
 
@@ -129,9 +129,6 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<RefundService>()
                 .As<IRefundService>()
                 .SingleInstance();
-
-            builder.RegisterType<AssetAvailabilityService>()
-                .As<IAssetsAvailabilityService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)

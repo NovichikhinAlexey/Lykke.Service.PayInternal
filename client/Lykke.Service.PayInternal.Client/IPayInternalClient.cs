@@ -80,7 +80,6 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="merchantId">The merchan id.</param>
         Task DeleteMerchantAsync(string merchantId);
 
-
         /// <summary>
         /// Returns an order by id.
         /// </summary>
@@ -131,21 +130,6 @@ namespace Lykke.Service.PayInternal.Client
         /// </summary>
         /// <returns>The payment request details.</returns>
         Task<PaymentRequestDetailsModel> ChechoutAsync(string merchantId, string paymentRequestId);
-        /// <summary>
-        /// Get available assets by availability type
-        /// </summary>
-        /// <param name="availabilityType">Availability type</param>
-        /// <returns></returns>
-        Task<AvailableAssetsResponse> GetAvailableAsync(AssetByMerchantModel assetByMerchant);
-
-        Task<AvailableAssetsByMerchantResponse> GetAvailableAsync(string merchantId);
-
-        /// <summary>
-        /// Updates availability type for asset
-        /// </summary>
-        /// <param name="request">The asset availability update request</param>
-        /// <returns></returns>
-        Task SetAvailabilityByMerchantAsync(UpdateAssetAvailabilityByMerchantRequest request);
 
         /// <summary>
         /// Transfers BTC from source addresses with amount provided to destination address without LykkePay fees
@@ -155,24 +139,10 @@ namespace Lykke.Service.PayInternal.Client
         Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request);
 
         /// <summary>
-        /// Get available assets by availability type
-        /// </summary>
-        /// <param name="availabilityType">Availability type</param>
-        /// <returns></returns>
-        Task<AvailableAssetsResponse> GetAvailableAsync(AssetAvailabilityType availabilityType);
-
-        /// <summary>
-        /// Updates availability type for asset
-        /// </summary>
-        /// <param name="request">The asset availability update request</param>
-        /// <returns></returns>
-        Task SetAvailabilityAsync(UpdateAssetAvailabilityRequest request);
-
-        /// <summary>
         /// Finds and returns all monitored (i.e., not expired and not fully confirmed yet) transactions.
         /// </summary>
         /// <returns>The list of monitored transactions.</returns>
-        Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactions();
+        Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactionsAsync();
 
         /// <summary>
         /// Initiates a refund for the specified payment request
@@ -186,6 +156,42 @@ namespace Lykke.Service.PayInternal.Client
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        Task SetTransactionExpired(TransactionExpiredRequest request);
+        Task SetTransactionExpiredAsync(TransactionExpiredRequest request);
+
+        /// <summary>
+        /// Returns list of assets available for merchant according to availability type and general asset settings
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        Task<AvailableAssetsResponse> ResolveAvailableAssetsAsync(string merchantId, AssetAvailabilityType type);
+
+        /// <summary>
+        /// Returns general asset availability settings by type
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        Task<AvailableAssetsResponse> GetGeneralAvailableAssetsAsync(AssetAvailabilityType type);
+
+        /// <summary>
+        /// Returns personal asset availability settings
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <returns></returns>
+        Task<AvailableAssetsByMerchantResponse> GetPersonalAvailableAssetsAsync(string merchantId);
+
+        /// <summary>
+        /// Updates general asset availability settings
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task SetGeneralAvailableAssetsAsync(UpdateAssetAvailabilityRequest request);
+
+        /// <summary>
+        /// Updates personal asset availability settings
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task SetPersonalAvailableAssetsAsync(UpdateAssetAvailabilityByMerchantRequest request);
     }
 }

@@ -21,9 +21,9 @@ namespace Lykke.Service.PayInternal.Client.Api
         Task UpdateTransactionAsync([Body] UpdateTransactionRequest request);
 
         [Get("/api/transactions/GetAllMonitored")]
-        Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactions();
+        Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactionsAsync();
 
         [Post("/api/transactions/expired")]
-        Task SetTransactionExpired([Body] TransactionExpiredRequest request);
+        Task SetTransactionExpiredAsync([Body] TransactionExpiredRequest request);
     }
 }

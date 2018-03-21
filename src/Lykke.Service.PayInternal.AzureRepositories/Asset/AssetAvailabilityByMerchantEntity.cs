@@ -2,9 +2,6 @@
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Asset
 {
@@ -16,22 +13,27 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
             return new AssetAvailabilityByMerchantEntity
             {
                 PartitionKey = GeneratePartitionKey(src.MerchantId),
-                RowKey = GenerateRowKey(),
+                RowKey = GenerateRowKey(src.MerchantId),
                 MerchantId = src.MerchantId,
-                AssetsPayment = src.AssetsPayment,
-                AssetsSettlement = src.AssetsSettlement
+                PaymentAssets = src.PaymentAssets,
+                SettlementAssets = src.SettlementAssets
             };
         }
+
         public static string GeneratePartitionKey(string merchantId)
         {
             return merchantId;
         }
-        public static string GenerateRowKey()
+
+        public static string GenerateRowKey(string merchantId)
         {
-            return string.Empty;
+            return merchantId;
         }
+
         public string MerchantId { get; set; }
-        public string AssetsPayment { get; set; }
-        public string AssetsSettlement { get; set; }
+
+        public string PaymentAssets { get; set; }
+
+        public string SettlementAssets { get; set; }
     }
 }
