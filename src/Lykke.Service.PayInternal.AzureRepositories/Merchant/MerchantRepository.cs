@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
@@ -25,14 +24,14 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
             return entities.ToList();
         }
         
-        public async Task<IMerchant> GetAsync(string merchantId)
+        public async Task<IMerchant> GetAsync(string merchantName)
         {
-            return await _storage.GetDataAsync(GetPartitionKey(), GetRowKey(merchantId));
+            return await _storage.GetDataAsync(GetPartitionKey(), GetRowKey(merchantName));
         }
 
         public async Task<IMerchant> InsertAsync(IMerchant merchant)
         {
-            var entity = new MerchantEntity(GetPartitionKey(), GetRowKey());
+            var entity = new MerchantEntity(GetPartitionKey(), GetRowKey(merchant.Name));
             entity.Map(merchant);
 
             await _storage.InsertAsync(entity);
@@ -42,7 +41,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
         
         public async Task ReplaceAsync(IMerchant merchant)
         {
-            var entity = new MerchantEntity(GetPartitionKey(), GetRowKey(merchant.Id));
+            var entity = new MerchantEntity(GetPartitionKey(), GetRowKey(merchant.Name));
             entity.Map(merchant);
             
             entity.ETag = "*";
@@ -50,18 +49,15 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
             await _storage.ReplaceAsync(entity);
         }
 
-        public async Task DeleteAsync(string merchantId)
+        public async Task DeleteAsync(string merchantName)
         {
-            await _storage.DeleteAsync(GetPartitionKey(), GetRowKey(merchantId));
+            await _storage.DeleteAsync(GetPartitionKey(), GetRowKey(merchantName));
         }
 
         private static string GetPartitionKey()
             => "M"; // TODO: Change to 'Merchant'
 
-        private static string GetRowKey(string merchantId)
-            => merchantId;
-
-        private static string GetRowKey()
-            => Guid.NewGuid().ToString("D");
+        private static string GetRowKey(string merchantName)
+            => merchantName;
     }
 }

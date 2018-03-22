@@ -7,12 +7,12 @@ namespace Lykke.Service.PayInternal.Core.Domain.Merchant
     {
         Task<IReadOnlyList<IMerchant>> GetAsync();
         
-        Task<IMerchant> GetAsync(string merchantId);
+        Task<IMerchant> GetAsync(string merchantName);
 
         Task<IMerchant> InsertAsync(IMerchant merchant);
         
         Task ReplaceAsync(IMerchant merchant);
         
-        Task DeleteAsync(string merchantId);
+        Task DeleteAsync(string merchantName);
     }
 }

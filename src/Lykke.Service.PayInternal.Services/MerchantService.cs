@@ -27,9 +27,9 @@ namespace Lykke.Service.PayInternal.Services
             return await _merchantRepository.GetAsync();
         }
 
-        public async Task<IMerchant> GetAsync(string merchantId)
+        public async Task<IMerchant> GetAsync(string merchantName)
         {
-            return await _merchantRepository.GetAsync(merchantId);
+            return await _merchantRepository.GetAsync(merchantName);
         }
 
         public async Task<IMerchant> CreateAsync(IMerchant merchant)
@@ -45,10 +45,10 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task UpdateAsync(IMerchant merchant)
         {
-            IMerchant existingMerchant = await _merchantRepository.GetAsync(merchant.Id);
+            IMerchant existingMerchant = await _merchantRepository.GetAsync(merchant.Name);
             
             if(existingMerchant == null)
-                throw new MerchantNotFoundException(merchant.Id);
+                throw new MerchantNotFoundException(merchant.Name);
 
             existingMerchant.Name = merchant.Name;
             existingMerchant.ApiKey = merchant.ApiKey;
@@ -66,12 +66,12 @@ namespace Lykke.Service.PayInternal.Services
                 "Merchant updated");
         }
 
-        public async Task SetPublicKeyAsync(string merchantId, string publicKey)
+        public async Task SetPublicKeyAsync(string merchantName, string publicKey)
         {
-            IMerchant merchant = await _merchantRepository.GetAsync(merchantId);
+            IMerchant merchant = await _merchantRepository.GetAsync(merchantName);
             
             if(merchant == null)
-                throw new MerchantNotFoundException(merchantId);
+                throw new MerchantNotFoundException(merchantName);
             
             merchant.PublicKey = publicKey;
             
@@ -82,12 +82,12 @@ namespace Lykke.Service.PayInternal.Services
                 "Merchant public key updated");
         }
 
-        public async Task DeleteAsync(string merchantId)
+        public async Task DeleteAsync(string merchantName)
         {
-            await _merchantRepository.DeleteAsync(merchantId);
+            await _merchantRepository.DeleteAsync(merchantName);
             
             await _log.WriteInfoAsync(nameof(MerchantService), nameof(DeleteAsync),
-                new{MerchantId = merchantId}.ToJson(),
+                new{MerchantId = merchantName}.ToJson(),
                 "Merchant deleted");
         }
     }
