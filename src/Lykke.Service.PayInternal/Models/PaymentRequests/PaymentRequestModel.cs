@@ -23,5 +23,6 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         public decimal PaidAmount { get; set; }
         public DateTime? PaidDate { get; set; }
         public string Error { get; set; }
+        public DateTime Timestamp { get; set; }
     }
 }
