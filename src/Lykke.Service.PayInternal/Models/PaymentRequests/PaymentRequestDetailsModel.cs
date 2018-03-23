@@ -42,6 +42,8 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         
         public string Error { get; set; }
 
+        public DateTime Timestamp { get; set; }
+
         public PaymentRequestOrderModel Order { get; set; }
         
         public List<PaymentRequestTransactionModel> Transactions { get; set; }
