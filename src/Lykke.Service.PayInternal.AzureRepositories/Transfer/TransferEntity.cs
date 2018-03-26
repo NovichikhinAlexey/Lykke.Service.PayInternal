@@ -8,7 +8,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transfer;
 namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
 {
     [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
-    public class TransferEntity : AzureTableEntity, ITransfer
+    public class TransferEntity : AzureTableEntity
     {
         private DateTime _createdOn;
 

@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Lykke.Service.PayInternal.Core.Domain.Transfer;
 
-namespace Lykke.Service.PayInternal.Services.Domain
+namespace Lykke.Service.PayInternal.Core.Domain.Transfer
 {
     public class Transfer : ITransfer
     {

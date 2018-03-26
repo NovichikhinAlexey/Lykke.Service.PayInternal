@@ -8,6 +8,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 
         public string TransactionId { get; set; }
 
+        public string TransferId { get; set; }
+
         public string PaymentRequestId { get; set; }
 
         public decimal Amount { get; set; }
@@ -25,6 +27,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         public string[] SourceWalletAddresses { get; set; }
 
         public DateTime? FirstSeen { get; set; }
+
+        public DateTime CreatedOn { get; set; }
 
         public TransactionType TransactionType { get; set; }
 

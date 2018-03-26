@@ -13,7 +13,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         string BlockId { get; set; }
         string Blockchain { get; set; }
         DateTime? FirstSeen { get; set; }
-        DateTime? DueDate { get; set; } // When not set, we should use PaymentRequest.DueDate in code.
+        DateTime? DueDate { get; set; }
         TransactionType Type { get; set; }
+        string TransferId { get; set; }
     }
 }

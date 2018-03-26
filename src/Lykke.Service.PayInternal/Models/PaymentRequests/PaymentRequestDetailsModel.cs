@@ -49,5 +49,7 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         public PaymentRequestOrderModel Order { get; set; }
         
         public List<PaymentRequestTransactionModel> Transactions { get; set; }
+
+        public PaymentRequestRefundModel Refund { get; set; }
     }
 }
