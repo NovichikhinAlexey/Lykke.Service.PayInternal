@@ -68,7 +68,7 @@ namespace Lykke.Service.PayInternal.Services
             return await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
         }
 
-        public async Task<PaymentRequestRefund> GetRefundAsync(string paymentRequestId)
+        public async Task<PaymentRequestRefund> GetRefundInfoAsync(string paymentRequestId)
         {
             //todo: move to transactionsService
             IReadOnlyList<IPaymentRequestTransaction> transactions =
