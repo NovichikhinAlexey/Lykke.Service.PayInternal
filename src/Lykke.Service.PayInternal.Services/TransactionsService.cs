@@ -76,7 +76,8 @@ namespace Lykke.Service.PayInternal.Services
                 PaymentRequestId = paymentRequest.Id,
                 SourceWalletAddresses = request.SourceWalletAddresses,
                 TransactionType = request.Type,
-                DueDate = request.DueDate ?? paymentRequest.DueDate
+                DueDate = request.DueDate ?? paymentRequest.DueDate,
+                TransferId = request.TransferId
             };
 
             return await _transactionRepository.AddAsync(transactionEntity);

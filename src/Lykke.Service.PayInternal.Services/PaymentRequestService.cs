@@ -206,7 +206,8 @@ namespace Lykke.Service.PayInternal.Services
                         Type = TransactionType.Refund,
                         Blockchain = transferResult.Blockchain,
                         FirstSeen = null,
-                        DueDate = refundDueDate
+                        DueDate = refundDueDate,
+                        TransferId = transferResult.Id
                     });
 
                 //todo: think of moving this call inside  _transactionsService

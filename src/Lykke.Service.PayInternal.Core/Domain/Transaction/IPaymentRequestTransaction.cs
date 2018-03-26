@@ -9,6 +9,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 
         string TransactionId { get; set; }
 
+        string TransferId { get; set; }
+
         string PaymentRequestId { get; set; }
 
         decimal Amount { get; set; }
