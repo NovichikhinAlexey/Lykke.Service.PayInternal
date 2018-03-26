@@ -245,7 +245,8 @@ namespace Lykke.Service.PayInternal.Services
                     SourceAddress = string.Join(";", x.Sources),
                     DestinationAddress = string.Join(";", x.Destinations)
                 }),
-                DueDate = refundDueDate
+                DueDate = refundDueDate,
+                Timestamp = transferResult.Timestamp
             };
         }
     }
