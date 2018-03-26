@@ -5,7 +5,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
 {
     public class Transfer : ITransfer
     {
-        public string Id { get; }
+        public string Id { get; set; }
 
         public string AssetId { get; set; }
 
