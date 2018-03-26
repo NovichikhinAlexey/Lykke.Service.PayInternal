@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
@@ -56,7 +57,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
                     AssetId = src.AssetId,
                     Blockchain = src.Blockchain,
                     CreatedOn = src.CreatedOn,
-                    Amounts = src.Amounts,
+                    Amounts = src.Amounts.ToList(),
                     Transactions = src.Transactions
                 };
             }
