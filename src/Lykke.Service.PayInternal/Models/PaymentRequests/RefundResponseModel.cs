@@ -14,5 +14,7 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         public IEnumerable<RefundTransactionReponseModel> Transactions { get; set; }
 
         public DateTime DueDate { get; set; }
+
+        public DateTime Timestamp { get; set; }
     }
 }
