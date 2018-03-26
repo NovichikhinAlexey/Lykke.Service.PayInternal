@@ -183,7 +183,7 @@ namespace Lykke.Service.PayInternal.Services
             TransferResult transferResult =
                 await _transferService.ExecuteAsync(tx.ToRefundTransferCommand(command.DestinationAddress));
 
-            DateTime refundDueDate = DateTime.UtcNow.Add(_refundExpirationPeriod);
+            DateTime refundDueDate = transferResult.Timestamp.Add(_refundExpirationPeriod);
 
             foreach (var transferResultTransaction in transferResult.Transactions)
             {
