@@ -112,14 +112,14 @@ namespace Lykke.Service.PayInternal.Controllers
                 IPaymentRequest paymentRequest = await _paymentRequestService.GetAsync(merchantId, paymentRequestId);
 
                 if (paymentRequest == null)
-                    return NotFound(ErrorResponse.Create("Could not find payment request by given merchant ID and payment request ID"));
+                    return NotFound(ErrorResponse.Create("Could not find payment request"));
 
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
                 IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
                     (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
 
-                PaymentRequestRefund refund = await _paymentRequestService.GetRefundAsync(paymentRequestId);
+                PaymentRequestRefund refund = await _paymentRequestService.GetRefundInfoAsync(paymentRequestId);
 
                 var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
                 model.Order = Mapper.Map<PaymentRequestOrderModel>(order);

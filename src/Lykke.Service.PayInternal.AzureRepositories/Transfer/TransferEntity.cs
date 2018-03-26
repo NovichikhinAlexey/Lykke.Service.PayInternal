@@ -4,6 +4,7 @@ using System.Linq;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
+using Lykke.Service.PayInternal.AzureRepositories.Serializers;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
@@ -19,10 +20,10 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
 
         public string Blockchain { get; set; }
 
-        [JsonValueSerializer]
+        [ValueSerializer(typeof(AmountsListSerializer))]
         public IEnumerable<TransferAmount> Amounts { get; set; }
 
-        [JsonValueSerializer]
+        [ValueSerializer(typeof(TransactionListSerializer))]
         public IEnumerable<TransferTransaction> Transactions { get; set; }
 
         public DateTime CreatedOn
