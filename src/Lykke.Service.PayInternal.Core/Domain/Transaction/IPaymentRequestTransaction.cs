@@ -29,6 +29,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 
         DateTime? FirstSeen { get; set; }
 
+        DateTime CreatedOn { get; set; }
+
         TransactionType TransactionType { get; set; }
 
         DateTime DueDate { get; set; }

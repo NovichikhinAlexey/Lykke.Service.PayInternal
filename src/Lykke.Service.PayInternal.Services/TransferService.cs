@@ -6,7 +6,6 @@ using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -59,6 +58,11 @@ namespace Lykke.Service.PayInternal.Services
             });
 
             return transfer.ToResult();
+        }
+
+        public async Task<Transfer> GetAsync(string id)
+        {
+            return await _transferRepository.GetAsync(id);
         }
     }
 }

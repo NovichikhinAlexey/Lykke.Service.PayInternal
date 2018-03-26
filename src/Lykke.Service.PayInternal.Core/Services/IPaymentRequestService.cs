@@ -10,6 +10,8 @@ namespace Lykke.Service.PayInternal.Core.Services
         
         Task<IPaymentRequest> GetAsync(string merchantId, string paymentRequestId);
 
+        Task<PaymentRequestRefund> GetRefundAsync(string paymentRequestId);
+
         Task<IPaymentRequest> FindAsync(string walletAddress);
 
         Task<IPaymentRequest> CreateAsync(IPaymentRequest paymentRequest);

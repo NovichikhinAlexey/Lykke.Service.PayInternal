@@ -194,7 +194,12 @@ namespace Lykke.Service.PayInternal.Modules
 
         private void RegisterMapperValueResolvers(ContainerBuilder builder)
         {
-            builder.RegisterType<TransactionUrlValueResolver>()
+            builder.RegisterType<PaymentTxUrlValueResolver>()
+                .AsSelf()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LykkeBlockchainExplorer))
+                .SingleInstance();
+
+            builder.RegisterType<RefundTxUrlValueResolver>()
                 .AsSelf()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LykkeBlockchainExplorer))
                 .SingleInstance();

@@ -20,6 +20,9 @@ using System.Threading.Tasks;
 namespace Lykke.Service.PayInternal.Controllers
 {
     [Route("api")]
+    //todo: rethink controller implementation
+    //too much contracts having now
+    //Probably, in most cases we should use PaymentRequestDetailsModel as response 
     public class PaymentRequestsController : Controller
     {
         private readonly IPaymentRequestService _paymentRequestService;
@@ -113,12 +116,15 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
-                IReadOnlyList<IPaymentRequestTransaction> transactions =
-                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
+                IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
+                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
+
+                PaymentRequestRefund refund = await _paymentRequestService.GetRefundAsync(paymentRequestId);
 
                 var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
                 model.Order = Mapper.Map<PaymentRequestOrderModel>(order);
-                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(transactions);
+                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(paymentTransactions);
+                model.Refund = Mapper.Map<PaymentRequestRefundModel>(refund);
 
                 return Ok(model);
             }
@@ -218,12 +224,12 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
-                IReadOnlyList<IPaymentRequestTransaction> transactions =
-                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
+                IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
+                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
 
                 var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
                 model.Order = Mapper.Map<PaymentRequestOrderModel>(order);
-                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(transactions);
+                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(paymentTransactions);
 
                 return Ok(model);
             }

@@ -28,6 +28,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 
         public DateTime? FirstSeen { get; set; }
 
+        public DateTime CreatedOn { get; set; }
+
         public TransactionType TransactionType { get; set; }
 
         public DateTime DueDate { get; set; }

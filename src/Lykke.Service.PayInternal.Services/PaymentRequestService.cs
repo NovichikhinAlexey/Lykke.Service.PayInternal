@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
@@ -65,6 +66,32 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<IPaymentRequest> GetAsync(string merchantId, string paymentRequestId)
         {
             return await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
+        }
+
+        public async Task<PaymentRequestRefund> GetRefundAsync(string paymentRequestId)
+        {
+            //todo: move to transactionsService
+            IReadOnlyList<IPaymentRequestTransaction> transactions =
+                (await _transactionRepository.GetByPaymentRequest(paymentRequestId)).Where(x => x.IsRefund()).ToList();
+
+            if (!transactions.Any()) 
+                return null;
+
+            IEnumerable<string> transferIds = transactions.Unique(x => x.TransferId).ToList();
+
+            if (transferIds.MoreThanOne())
+                throw new MultiTransactionRefundNotSupportedException();
+
+            Transfer transfer = await _transferService.GetAsync(transferIds.Single());
+
+            return new PaymentRequestRefund
+            {
+                Amount = transfer.Amounts.Sum(x => x.Amount),
+                Timestamp = transfer.CreatedOn,
+                Address = transfer.Amounts.Unique(x => x.Destination).Single(),
+                DueDate = transactions.OrderByDescending(x => x.DueDate).First().DueDate,
+                Transactions = Mapper.Map<IEnumerable<PaymentRequestRefundTransaction>>(transactions)
+            };
         }
 
         public async Task<IPaymentRequest> FindAsync(string walletAddress)

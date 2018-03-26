@@ -4,6 +4,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
 {
     public interface ITransferRepository
     {
-        Task<ITransfer> AddAsync(ITransfer transfer);
+        Task<Transfer> AddAsync(ITransfer transfer);
+
+        Task<Transfer> GetAsync(string id);
     }
 }
