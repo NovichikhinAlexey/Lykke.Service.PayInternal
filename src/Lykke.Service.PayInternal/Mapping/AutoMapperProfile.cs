@@ -21,10 +21,10 @@ namespace Lykke.Service.PayInternal.Mapping
             CreateMap<CreateMerchantRequest, Merchant>(MemberList.Destination)
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.PublicKey, opt => opt.Ignore());
-            
+
             CreateMap<UpdateMerchantRequest, Merchant>(MemberList.Destination)
                 .ForMember(dest => dest.PublicKey, opt => opt.Ignore());
-            
+
             CreateMap<IOrder, OrderModel>(MemberList.Source);
 
             CreateMap<IAssetAvailabilityByMerchant, AssetAvailabilityByMerchantResponse>();
@@ -72,16 +72,16 @@ namespace Lykke.Service.PayInternal.Mapping
             CreateMap<RefundResult, RefundResponseModel>(MemberList.Source)
                 .ForSourceMember(src => src.PaymentRequestWalletAddress, opt => opt.Ignore());
 
-            CreateMap<PaymentRequestRefundTransaction, PaymentRequestRefundTransactionModel>(MemberList.Source)
+            CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefundTransaction, PaymentRequestRefundTransactionModel
+                >(MemberList.Source)
                 .ForMember(dest => dest.Url, opt => opt.ResolveUsing<RefundTxUrlValueResolver>());
 
-            CreateMap<PaymentRequestRefund, PaymentRequestRefundModel>(MemberList.Source);
+            CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefund, PaymentRequestRefundModel>(MemberList.Source);
         }
 
         private void PaymentRequestMessages()
         {
-            CreateMap<IPaymentRequest, PaymentRequestDetailsMessage>(MemberList.Source)
-                .ForSourceMember(dest => dest.OrderId, opt => opt.Ignore());
+            CreateMap<IPaymentRequest, PaymentRequestDetailsMessage>(MemberList.Source);
 
             CreateMap<IOrder, PaymentRequestOrder>(MemberList.Source)
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())
@@ -99,7 +99,13 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.DueDate, opt => opt.Ignore())
                 .ForSourceMember(src => src.TransferId, opt => opt.Ignore())
                 .ForSourceMember(src => src.CreatedOn, opt => opt.Ignore())
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId));            
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId));
+
+            CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefundTransaction,
+                    Contract.PaymentRequest.PaymentRequestRefundTransaction>(MemberList.Destination)
+                .ForMember(dest => dest.Url, opt => opt.ResolveUsing<RefundTxUrlValueResolver>());
+
+            CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefund, Contract.PaymentRequest.PaymentRequestRefund>();
         }
     }
 }
