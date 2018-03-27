@@ -13,7 +13,9 @@ namespace Lykke.Service.PayInternal.Contract.PaymentRequest
         }
         
         public string Id { get; set; }
-        
+
+        public string OrderId { get; set; }
+
         public string MerchantId { get; set; }
         
         public decimal Amount { get; set; }
@@ -46,5 +48,7 @@ namespace Lykke.Service.PayInternal.Contract.PaymentRequest
         public PaymentRequestOrder Order { get; set; }
         
         public List<PaymentRequestTransaction> Transactions { get; set; }
+
+        public PaymentRequestRefund Refund { get; set; }
     }
 }
