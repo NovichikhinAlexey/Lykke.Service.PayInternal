@@ -63,12 +63,12 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
 
         public async Task PublishAsync(IPaymentRequest paymentRequest, Core.Domain.PaymentRequests.PaymentRequestRefund refundInfo)
         {
-            IOrder order = await _orderService.GetAsync(request.Id, request.OrderId);
+            IOrder order = await _orderService.GetAsync(paymentRequest.Id, paymentRequest.OrderId);
 
             IReadOnlyList<IPaymentRequestTransaction> transactions =
-                (await _transactionsService.GetAsync(request.WalletAddress)).ToList();
+                (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
 
-            var message = Mapper.Map<PaymentRequestDetailsMessage>(request);
+            var message = Mapper.Map<PaymentRequestDetailsMessage>(paymentRequest);
             message.Order = Mapper.Map<PaymentRequestOrder>(order);
             message.Transactions = Mapper.Map<List<Contract.PaymentRequest.PaymentRequestTransaction>>(transactions);
             message.Refund = Mapper.Map<Contract.PaymentRequest.PaymentRequestRefund>(refundInfo);
