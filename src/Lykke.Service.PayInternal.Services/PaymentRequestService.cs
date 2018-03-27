@@ -14,6 +14,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
+using RabbitMQ.Client.Apigen.Attributes;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -161,7 +162,9 @@ namespace Lykke.Service.PayInternal.Services
 
             await _paymentRequestRepository.UpdateAsync(paymentRequest);
 
-            await _paymentRequestPublisher.PublishAsync(paymentRequest);
+            PaymentRequestRefund refundInfo = await GetRefundInfoAsync(paymentRequest.Id);
+
+            await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
         }
 
         public async Task UpdateStatusByTransactionAsync(string transactionId)

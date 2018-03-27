@@ -61,7 +61,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
             _publisher?.Stop();
         }
 
-        public async Task PublishAsync(IPaymentRequest paymentRequest)
+        public async Task PublishAsync(IPaymentRequest paymentRequest, Core.Domain.PaymentRequests.PaymentRequestRefund refundInfo)
         {
             IOrder order = await _orderService.GetAsync(paymentRequest.Id, paymentRequest.OrderId);
 
@@ -71,6 +71,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
             var message = Mapper.Map<PaymentRequestDetailsMessage>(paymentRequest);
             message.Order = Mapper.Map<PaymentRequestOrder>(order);
             message.Transactions = Mapper.Map<List<Contract.PaymentRequest.PaymentRequestTransaction>>(transactions);
+            message.Refund = Mapper.Map<Contract.PaymentRequest.PaymentRequestRefund>(refundInfo);
 
             await PublishAsync(message);
         }
