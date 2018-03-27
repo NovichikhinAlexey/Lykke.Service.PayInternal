@@ -3,21 +3,20 @@ using AutoMapper;
 using Common;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
-using Lykke.Service.PayInternal.Models.PaymentRequests;
 
 namespace Lykke.Service.PayInternal.Mapping
 {
-    public class TransactionUrlValueResolver : IValueResolver<IPaymentRequestTransaction, PaymentRequestTransactionModel, string>
+    public class PaymentTxUrlValueResolver : IValueResolver<IPaymentRequestTransaction, object, string>
     {
         private readonly BlockchainExplorerSettings _blockchainExplorerSettings;
 
-        public TransactionUrlValueResolver(BlockchainExplorerSettings blockchainExplorerSettings)
+        public PaymentTxUrlValueResolver(BlockchainExplorerSettings blockchainExplorerSettings)
         {
             _blockchainExplorerSettings = blockchainExplorerSettings ??
                                           throw new ArgumentNullException(nameof(blockchainExplorerSettings));
         }
 
-        public string Resolve(IPaymentRequestTransaction source, PaymentRequestTransactionModel destination, string destMember,
+        public string Resolve(IPaymentRequestTransaction source, object destination, string destMember,
             ResolutionContext context)
         {
             var uri = new Uri(new Uri(_blockchainExplorerSettings.TransactionUrl.AddLastSymbolIfNotExists('/')), source.Id);

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Lykke.Service.PayInternal.Core.Domain.Transfer
 {
@@ -9,5 +10,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
         public string Blockchain { get; set; }
 
         public IEnumerable<TransferTransactionResult> Transactions { get; set; }
+
+        public DateTime Timestamp { get; set; }
     }
 }

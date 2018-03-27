@@ -15,6 +15,8 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         public string Id { get; set; }
         
         public string MerchantId { get; set; }
+
+        public string OrderId { get; set; }
         
         public double Amount { get; set; }
         
@@ -46,5 +48,7 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         public PaymentRequestOrderModel Order { get; set; }
         
         public List<PaymentRequestTransactionModel> Transactions { get; set; }
+
+        public PaymentRequestRefundModel Refund { get; set; }
     }
 }

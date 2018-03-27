@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using Common;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
@@ -16,10 +11,18 @@ using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
     [Route("api")]
+    //todo: rethink controller implementation
+    //too much contracts having now
+    //Probably, in most cases we should use PaymentRequestDetailsModel as response 
     public class PaymentRequestsController : Controller
     {
         private readonly IPaymentRequestService _paymentRequestService;
@@ -109,16 +112,19 @@ namespace Lykke.Service.PayInternal.Controllers
                 IPaymentRequest paymentRequest = await _paymentRequestService.GetAsync(merchantId, paymentRequestId);
 
                 if (paymentRequest == null)
-                    return NotFound(ErrorResponse.Create("Could not find payment request by given merchant ID and payment request ID"));
+                    return NotFound(ErrorResponse.Create("Could not find payment request"));
 
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
-                IReadOnlyList<IPaymentRequestTransaction> transactions =
-                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
+                IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
+                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
+
+                PaymentRequestRefund refund = await _paymentRequestService.GetRefundInfoAsync(paymentRequestId);
 
                 var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
                 model.Order = Mapper.Map<PaymentRequestOrderModel>(order);
-                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(transactions);
+                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(paymentTransactions);
+                model.Refund = Mapper.Map<PaymentRequestRefundModel>(refund);
 
                 return Ok(model);
             }
@@ -218,12 +224,12 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
-                IReadOnlyList<IPaymentRequestTransaction> transactions =
-                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
+                IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
+                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
 
                 var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
                 model.Order = Mapper.Map<PaymentRequestOrderModel>(order);
-                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(transactions);
+                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(paymentTransactions);
 
                 return Ok(model);
             }

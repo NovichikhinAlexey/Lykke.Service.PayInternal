@@ -89,6 +89,7 @@ namespace Lykke.Service.PayInternal
                     cfg.ConstructServicesUsing(ApplicationContainer.Resolve);
                     cfg.AddProfiles(typeof(AutoMapperProfile));
                     cfg.AddProfiles(typeof(AzureRepositories.AutoMapperProfile));
+                    cfg.AddProfiles(typeof(Services.AutoMapperProfile));
                 });
 
                 Mapper.AssertConfigurationIsValid();

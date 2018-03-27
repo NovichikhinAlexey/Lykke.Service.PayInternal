@@ -16,5 +16,6 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public DateTime? FirstSeen { get; set; }
         public DateTime? DueDate { get; set; }
         public TransactionType Type { get; set; }
+        public string TransferId { get; set; }
     }
 }

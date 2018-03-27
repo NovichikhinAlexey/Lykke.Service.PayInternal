@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
+using Lykke.Service.PayInternal.AzureRepositories.Serializers;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
 {
     [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
-    public class TransferEntity : AzureTableEntity, ITransfer
+    public class TransferEntity : AzureTableEntity
     {
         private DateTime _createdOn;
 
@@ -18,10 +20,10 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
 
         public string Blockchain { get; set; }
 
-        [JsonValueSerializer]
+        [ValueSerializer(typeof(AmountsListSerializer))]
         public IEnumerable<TransferAmount> Amounts { get; set; }
 
-        [JsonValueSerializer]
+        [ValueSerializer(typeof(TransactionListSerializer))]
         public IEnumerable<TransferTransaction> Transactions { get; set; }
 
         public DateTime CreatedOn
@@ -56,7 +58,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
                     AssetId = src.AssetId,
                     Blockchain = src.Blockchain,
                     CreatedOn = src.CreatedOn,
-                    Amounts = src.Amounts,
+                    Amounts = src.Amounts.ToList(),
                     Transactions = src.Transactions
                 };
             }

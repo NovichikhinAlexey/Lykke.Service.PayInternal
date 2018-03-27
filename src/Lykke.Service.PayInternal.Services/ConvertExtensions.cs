@@ -28,7 +28,8 @@ namespace Lykke.Service.PayInternal.Services
             {
                 Id = src.Id,
                 Blockchain = src.Blockchain,
-                Transactions = src.Transactions.Select(x => x.ToResult())
+                Transactions = src.Transactions.Select(x => x.ToResult()),
+                Timestamp = src.CreatedOn
             };
         }
 
