@@ -207,6 +207,11 @@ namespace Lykke.Service.PayInternal.Services
                 if (tx.SourceWalletAddresses.MoreThanOne())
                     throw new MultiTransactionRefundNotSupportedException(tx.SourceWalletAddresses.Length);
             }
+            else
+            {
+                if (!tx.SourceWalletAddresses.Contains(command.DestinationAddress))
+                    throw new WalletNotFoundException(command.DestinationAddress);
+            }
 
             TransferResult transferResult =
                 await _transferService.ExecuteAsync(tx.ToRefundTransferCommand(command.DestinationAddress));
