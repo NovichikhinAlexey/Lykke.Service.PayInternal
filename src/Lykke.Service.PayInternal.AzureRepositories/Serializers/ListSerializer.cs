@@ -10,9 +10,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Serializers
     {
         public string Serialize(object value)
         {
-            if (!(value is List<T>))
-                throw new Exception($"Source is not a List of {typeof(T).Name}");
-
             var serialized = value.ToJson();
 
             return serialized;

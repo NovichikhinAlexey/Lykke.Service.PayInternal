@@ -14,7 +14,6 @@ using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
-using RabbitMQ.Client.Apigen.Attributes;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -243,6 +242,15 @@ namespace Lykke.Service.PayInternal.Services
                 //todo: think of moving this call inside  _transactionsService
                 await _transactionPublisher.PublishAsync(refundTransaction);
             }
+
+            if (transferResult.Transactions.All(x => x.HasError))
+                throw new OperationFailed(transferResult.Transactions.Select(x => x.Error).ToJson());
+
+            IEnumerable<TransferTransactionResult> errorTransactions =
+                transferResult.Transactions.Where(x => x.HasError).ToList();
+
+            if (errorTransactions.Any())
+                throw new OperationPartiallyFailed(errorTransactions.Select(x => x.Error).ToJson());
 
             return await PrepareRefundResult(paymentRequest, transferResult, refundDueDate);
         }

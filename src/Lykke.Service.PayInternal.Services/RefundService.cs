@@ -15,15 +15,15 @@ namespace Lykke.Service.PayInternal.Services
                 paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
         }
 
-        public async Task<RefundResult> ExecuteAsync(string merchantId, string paymentRequestId, string destinationWalletAddress)
+        public async Task<RefundResult> ExecuteAsync(string merchantId, string paymentRequestId,
+            string destinationWalletAddress)
         {
-            RefundResult refundResult =
-                await _paymentRequestService.RefundAsync(new RefundCommand
-                {
-                    MerchantId = merchantId,
-                    PaymentRequestId = paymentRequestId,
-                    DestinationAddress = destinationWalletAddress
-                });
+            RefundResult refundResult = await _paymentRequestService.RefundAsync(new RefundCommand
+            {
+                MerchantId = merchantId,
+                PaymentRequestId = paymentRequestId,
+                DestinationAddress = destinationWalletAddress
+            });
 
             await _paymentRequestService.UpdateStatusAsync(refundResult.PaymentRequestWalletAddress);
 
