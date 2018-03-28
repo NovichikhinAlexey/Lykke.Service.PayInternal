@@ -50,7 +50,8 @@ namespace Lykke.Service.PayInternal.Services
                     e is NoTransactionsToRefundException ||
                     e is MultiTransactionRefundNotSupportedException ||
                     e is OperationFailedException ||
-                    e is OperationPartiallyFailedException)
+                    e is OperationPartiallyFailedException ||
+                    e is WalletNotFoundException)
                     throw new RefundException(e.Message);
                 
                 throw;

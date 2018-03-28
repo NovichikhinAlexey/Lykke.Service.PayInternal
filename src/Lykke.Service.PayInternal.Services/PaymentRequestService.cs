@@ -154,10 +154,9 @@ namespace Lykke.Service.PayInternal.Services
             paymentRequest.Status = newStatusInfo.Status;
             paymentRequest.PaidDate = newStatusInfo.Date;
             paymentRequest.PaidAmount = newStatusInfo.Amount;
-            if (paymentRequest.Status == PaymentRequestStatus.Error)
-            {
-                paymentRequest.Error = newStatusInfo.Details;
-            }
+            paymentRequest.Error = paymentRequest.Status == PaymentRequestStatus.Error
+                ? newStatusInfo.Details
+                : string.Empty;
 
             await _paymentRequestRepository.UpdateAsync(paymentRequest);
 
@@ -207,6 +206,11 @@ namespace Lykke.Service.PayInternal.Services
             {
                 if (tx.SourceWalletAddresses.MoreThanOne())
                     throw new MultiTransactionRefundNotSupportedException(tx.SourceWalletAddresses.Length);
+            }
+            else
+            {
+                if (!tx.SourceWalletAddresses.Contains(command.DestinationAddress))
+                    throw new WalletNotFoundException(command.DestinationAddress);
             }
 
             TransferResult transferResult =

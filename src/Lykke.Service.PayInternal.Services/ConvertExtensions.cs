@@ -107,7 +107,7 @@ namespace Lykke.Service.PayInternal.Services
                         Amount = src.Amount,
                         Source = src.WalletAddress,
                         Destination = string.IsNullOrWhiteSpace(destination)
-                            ? src.SourceWalletAddresses.First()
+                            ? src.SourceWalletAddresses.Single()
                             : destination,
                     }
                 }
