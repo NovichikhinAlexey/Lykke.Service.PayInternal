@@ -35,7 +35,9 @@ namespace Lykke.Service.PayInternal.Mapping
 
         private void PaymentRequestApiModels()
         {
-            CreateMap<IPaymentRequest, PaymentRequestModel>(MemberList.Source);
+            CreateMap<IPaymentRequest, PaymentRequestModel>(MemberList.Source)
+                .ForSourceMember(src => src.OrderId, opt => opt.Ignore())
+                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.ExternalOrderId));
 
             CreateMap<CreatePaymentRequestModel, PaymentRequest>(MemberList.Destination)
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -44,9 +46,13 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.PaidAmount, opt => opt.Ignore())
                 .ForMember(dest => dest.PaidDate, opt => opt.Ignore())
                 .ForMember(dest => dest.Error, opt => opt.Ignore())
-                .ForMember(dest => dest.Timestamp, opt => opt.Ignore());
+                .ForMember(dest => dest.Timestamp, opt => opt.Ignore())
+                .ForMember(dest => dest.OrderId, opt => opt.Ignore())
+                .ForMember(dest => dest.ExternalOrderId, opt => opt.MapFrom(src => src.OrderId));
 
-            CreateMap<IPaymentRequest, PaymentRequestDetailsModel>(MemberList.Source);
+            CreateMap<IPaymentRequest, PaymentRequestDetailsModel>(MemberList.Source)
+                .ForSourceMember(src => src.OrderId, opt => opt.Ignore())
+                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.ExternalOrderId));
 
             CreateMap<IOrder, PaymentRequestOrderModel>(MemberList.Source)
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())
@@ -81,7 +87,8 @@ namespace Lykke.Service.PayInternal.Mapping
 
         private void PaymentRequestMessages()
         {
-            CreateMap<IPaymentRequest, PaymentRequestDetailsMessage>(MemberList.Source);
+            CreateMap<IPaymentRequest, PaymentRequestDetailsMessage>(MemberList.Source)
+                .ForMember(dest => dest.Order, opt => opt.MapFrom(src => src.ExternalOrderId));
 
             CreateMap<IOrder, PaymentRequestOrder>(MemberList.Source)
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())

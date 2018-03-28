@@ -29,9 +29,11 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         public string Id => RowKey;
         
         public string MerchantId { get; set; }
+
+        public string ExternalOrderId { get; set; }
         
         public string OrderId { get; set; }
-        
+
         public decimal Amount
         {
             get => _amount;
