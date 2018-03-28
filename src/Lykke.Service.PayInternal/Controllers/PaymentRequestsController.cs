@@ -259,6 +259,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("Refund")]
         [ProducesResponseType(typeof(RefundResponseModel), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.InternalServerError)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ValidateModel]
         public async Task<IActionResult> RefundAsync([FromBody] RefundRequestModel request)
         {
@@ -271,13 +272,10 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (Exception e)
             {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(RefundAsync), e);
+                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(RefundAsync), request.ToJson(), e);
 
-                if (e is OperationPartiallyFailed)
-                    return BadRequest(ErrorResponse.Create("Refund partially failed"));
-
-                if (e is OperationFailed)
-                    return BadRequest(ErrorResponse.Create("Refund failed"));
+                if (e is RefundException)
+                    return BadRequest(ErrorResponse.Create(e.Message));
             }
 
             return StatusCode((int) HttpStatusCode.InternalServerError);
