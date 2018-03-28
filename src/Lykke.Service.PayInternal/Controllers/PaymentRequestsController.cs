@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Lykke.Service.PayInternal.Core.Exceptions;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -57,7 +58,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpGet]
         [Route("merchants/{merchantId}/paymentrequests")]
         [SwaggerOperation("PaymentRequestsGetAll")]
-        [ProducesResponseType(typeof(List<PaymentRequestModel>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(List<PaymentRequestModel>), (int) HttpStatusCode.OK)]
         public async Task<IActionResult> GetAsync(string merchantId)
         {
             IReadOnlyList<IPaymentRequest> paymentRequests = await _paymentRequestService.GetAsync(merchantId);
@@ -66,7 +67,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
             return Ok(model);
         }
-        
+
         /// <summary>
         /// Returns merchant payment request.
         /// </summary>
@@ -78,15 +79,15 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpGet]
         [Route("merchants/{merchantId}/paymentrequests/{paymentRequestId}")]
         [SwaggerOperation("PaymentRequestsGetById")]
-        [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(PaymentRequestModel), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetAsync(string merchantId, string paymentRequestId)
         {
             IPaymentRequest paymentRequest = await _paymentRequestService.GetAsync(merchantId, paymentRequestId);
 
             if (paymentRequest == null)
                 return NotFound(ErrorResponse.Create("Couldn't find payment request"));
-            
+
             var model = Mapper.Map<PaymentRequestModel>(paymentRequest);
 
             return Ok(model);
@@ -104,7 +105,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("merchants/{merchantId}/paymentrequests/details/{paymentRequestId}")]
         [SwaggerOperation("PaymentRequestDetailsGetById")]
         [ProducesResponseType(typeof(PaymentRequestDetailsModel), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetDetailsAsync(string merchantId, string paymentRequestId)
         {
             try
@@ -117,7 +118,8 @@ namespace Lykke.Service.PayInternal.Controllers
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
                 IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
-                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
+                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment())
+                    .ToList();
 
                 PaymentRequestRefund refund = await _paymentRequestService.GetRefundInfoAsync(paymentRequestId);
 
@@ -151,15 +153,15 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpGet]
         [Route("paymentrequests/byAddress/{walletAddress}")]
         [SwaggerOperation("PaymentRequestGetByWalletAddress")]
-        [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(PaymentRequestModel), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetByAddressAsync(string walletAddress)
         {
             IPaymentRequest paymentRequest = await _paymentRequestService.FindAsync(walletAddress);
 
             if (paymentRequest == null)
                 return NotFound(ErrorResponse.Create("Couldn't find payment request by wallet address"));
-            
+
             var model = Mapper.Map<PaymentRequestModel>(paymentRequest);
 
             return Ok(model);
@@ -187,10 +189,10 @@ namespace Lykke.Service.PayInternal.Controllers
 
             if (await _assetsLocalCache.GetAssetByIdAsync(model.PaymentAssetId) == null)
                 return BadRequest(ErrorResponse.Create("Payment asset doesn't exist"));
-            
+
             if (await _assetsLocalCache.GetAssetPairAsync(model.PaymentAssetId, model.SettlementAssetId) == null)
                 return BadRequest(ErrorResponse.Create("Asset pair doesn't exist"));
-            
+
             try
             {
                 var paymentRequest = Mapper.Map<PaymentRequest>(model);
@@ -201,7 +203,8 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (Exception exception)
             {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(CreateAsync), model.ToJson(), exception);
+                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(CreateAsync), model.ToJson(),
+                    exception);
                 throw;
             }
         }
@@ -225,7 +228,8 @@ namespace Lykke.Service.PayInternal.Controllers
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
                 IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
-                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
+                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment())
+                    .ToList();
 
                 var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
                 model.Order = Mapper.Map<PaymentRequestOrderModel>(order);
@@ -254,7 +258,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("merchants/paymentrequests/refunds")]
         [SwaggerOperation("Refund")]
         [ProducesResponseType(typeof(RefundResponseModel), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.InternalServerError)]
         [ValidateModel]
         public async Task<IActionResult> RefundAsync([FromBody] RefundRequestModel request)
         {
@@ -268,6 +272,13 @@ namespace Lykke.Service.PayInternal.Controllers
             catch (Exception e)
             {
                 await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(RefundAsync), e);
+
+                if (e is OperationPartiallyFailed partiallyFailedEx)
+                    return StatusCode((int) HttpStatusCode.InternalServerError,
+                        ErrorResponse.Create(partiallyFailedEx.Message));
+
+                if (e is OperationFailed failedEx)
+                    return StatusCode((int) HttpStatusCode.InternalServerError, ErrorResponse.Create(failedEx.Message));
             }
 
             return StatusCode((int) HttpStatusCode.InternalServerError);
