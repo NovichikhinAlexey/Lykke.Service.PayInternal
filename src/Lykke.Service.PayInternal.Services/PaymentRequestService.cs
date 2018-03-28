@@ -244,13 +244,13 @@ namespace Lykke.Service.PayInternal.Services
             }
 
             if (transferResult.Transactions.All(x => x.HasError))
-                throw new OperationFailed(transferResult.Transactions.Select(x => x.Error).ToJson());
+                throw new OperationFailedException(transferResult.Transactions.Select(x => x.Error).ToJson());
 
             IEnumerable<TransferTransactionResult> errorTransactions =
                 transferResult.Transactions.Where(x => x.HasError).ToList();
 
             if (errorTransactions.Any())
-                throw new OperationPartiallyFailed(errorTransactions.Select(x => x.Error).ToJson());
+                throw new OperationPartiallyFailedException(errorTransactions.Select(x => x.Error).ToJson());
 
             return await PrepareRefundResult(paymentRequest, transferResult, refundDueDate);
         }
