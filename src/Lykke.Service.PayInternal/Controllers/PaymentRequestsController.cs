@@ -273,12 +273,11 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(RefundAsync), e);
 
-                if (e is OperationPartiallyFailed partiallyFailedEx)
-                    return StatusCode((int) HttpStatusCode.InternalServerError,
-                        ErrorResponse.Create(partiallyFailedEx.Message));
+                if (e is OperationPartiallyFailed)
+                    return BadRequest(ErrorResponse.Create("Refund partially failed"));
 
-                if (e is OperationFailed failedEx)
-                    return StatusCode((int) HttpStatusCode.InternalServerError, ErrorResponse.Create(failedEx.Message));
+                if (e is OperationFailed)
+                    return BadRequest(ErrorResponse.Create("Refund failed"));
             }
 
             return StatusCode((int) HttpStatusCode.InternalServerError);
