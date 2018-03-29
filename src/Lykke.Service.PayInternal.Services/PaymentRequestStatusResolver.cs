@@ -75,7 +75,7 @@ namespace Lykke.Service.PayInternal.Services
                 return PaymentRequestStatusInfo.Refunded();
 
             return txs.Any(x => !x.Confirmed(_transactionConfirmationCount) && x.Expired())
-                ? PaymentRequestStatusInfo.Error("REFUND NOT CONFIRMED")
+                ? PaymentRequestStatusInfo.Error(PaymentRequestErrorType.RefundNotConfirmed)
                 : PaymentRequestStatusInfo.RefundInProgress();
         }
 
@@ -108,7 +108,7 @@ namespace Lykke.Service.PayInternal.Services
             var actualOrder = await _orderService.GetAsync(paymentRequest.Id, paidDate);
 
             if (actualOrder == null)
-                return PaymentRequestStatusInfo.Error("EXPIRED", btcPaid, paidDate);
+                return PaymentRequestStatusInfo.Error(PaymentRequestErrorType.PaymentExpired, btcPaid, paidDate);
 
             bool allConfirmed = txs.All(x => x.Confirmed(_transactionConfirmationCount));
 
@@ -122,11 +122,11 @@ namespace Lykke.Service.PayInternal.Services
             switch (fulfillment)
             {
                 case AmountFullFillmentStatus.Below:
-                    return PaymentRequestStatusInfo.Error("AMOUNT BELOW", btcPaid, paidDate);
+                    return PaymentRequestStatusInfo.Error(PaymentRequestErrorType.PaymentAmountBelow, btcPaid, paidDate);
                 case AmountFullFillmentStatus.Exact:
                     return PaymentRequestStatusInfo.Confirmed(btcPaid, paidDate);
                 case AmountFullFillmentStatus.Above:
-                    return PaymentRequestStatusInfo.Error("AMOUNT ABOVE", btcPaid, paidDate);
+                    return PaymentRequestStatusInfo.Error(PaymentRequestErrorType.PaymentAmountAbove, btcPaid, paidDate);
                 default: throw new Exception("Unexpected amount fullfillment status");
             }
         }

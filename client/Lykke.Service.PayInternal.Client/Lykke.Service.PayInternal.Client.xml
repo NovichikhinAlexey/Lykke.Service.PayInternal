@@ -620,6 +620,36 @@
             Gets or sets markup fixed fee
             </summary>
         </member>
+        <member name="T:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestErrorType">
+            <summary>
+            Payment request error types
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestErrorType.None">
+            <summary>
+            Default value, no errors
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestErrorType.PaymentAmountAbove">
+            <summary>
+            Amount paid is more than required
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestErrorType.PaymentAmountBelow">
+            <summary>
+            Amount paid is less than required
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestErrorType.PaymentExpired">
+            <summary>
+            Payment order expired
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestErrorType.RefundNotConfirmed">
+            <summary>
+            Refund was not confirmed before expiration date
+            </summary>
+        </member>
         <member name="T:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel">
             <summary>
             Represent a payment request.
