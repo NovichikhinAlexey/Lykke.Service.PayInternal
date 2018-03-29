@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
+using Lykke.Service.PayInternal.Core;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -117,6 +118,21 @@ namespace Lykke.Service.PayInternal.Services
             transaction.Confirmations = request.Confirmations;
 
             await _transactionRepository.UpdateAsync(transaction);
+        }
+        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetTransactionsByPaymentRequestAsync(string paymentRequestId)
+        {
+            IReadOnlyList<IPaymentRequestTransaction> transactions =
+                (await _transactionRepository.GetByPaymentRequest(paymentRequestId)).Where(x => x.IsPayment()).ToList();
+
+            if (!transactions.Any())
+                return null;
+
+            IEnumerable<string> transferIds = transactions.Unique(x => x.TransferId).ToList();
+
+            if (transferIds.MoreThanOne())
+                throw new MultiTransactionRefundNotSupportedException();
+
+            return transactions;
         }
     }
 }
