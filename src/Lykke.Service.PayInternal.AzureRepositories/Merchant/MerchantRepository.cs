@@ -1,14 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
+using Lykke.Service.PayInternal.Core.Exceptions;
+using Microsoft.WindowsAzure.Storage;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
 {
     public class MerchantRepository : IMerchantRepository
     {
         private readonly INoSQLTableStorage<MerchantEntity> _storage;
+        private const string ConflictMessage = "Conflict";
 
         public MerchantRepository(
             INoSQLTableStorage<MerchantEntity> storage)
@@ -32,9 +36,20 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
         public async Task<IMerchant> InsertAsync(IMerchant merchant)
         {
             var entity = new MerchantEntity(GetPartitionKey(), GetRowKey(merchant.Name));
+
             entity.Map(merchant);
 
-            await _storage.InsertAsync(entity);
+            try
+            {
+                await _storage.InsertAsync(entity);
+            }
+            catch (StorageException ex)
+            {
+                if (ex.Message == ConflictMessage)
+                    throw new DuplicateMerchantNameException(merchant.Name);
+
+                throw;
+            }
 
             return entity;
         }
