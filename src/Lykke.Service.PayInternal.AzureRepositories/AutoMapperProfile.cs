@@ -14,7 +14,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             CreateMap<PaymentRequestEntity, Core.Domain.PaymentRequests.PaymentRequest>(MemberList.Destination);
 
             CreateMap<IPaymentRequest, PaymentRequestEntity>(MemberList.Source)
-                .ForSourceMember(src => src.Id, opt => opt.Ignore());
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.Timestamp, opt => opt.Ignore());
 
             CreateMap<PaymentRequestTransactionEntity, PaymentRequestTransaction>(MemberList.Destination)
                 .ForMember(dest => dest.CreatedOn, opt => opt.MapFrom(src => src.Timestamp));

@@ -154,14 +154,15 @@ namespace Lykke.Service.PayInternal.Services
             paymentRequest.Status = newStatusInfo.Status;
             paymentRequest.PaidDate = newStatusInfo.Date;
             paymentRequest.PaidAmount = newStatusInfo.Amount;
-            if (paymentRequest.Status == PaymentRequestStatus.Error)
-            {
-                paymentRequest.Error = newStatusInfo.Details;
-            }
+            paymentRequest.Error = paymentRequest.Status == PaymentRequestStatus.Error
+                ? newStatusInfo.ErrorType
+                : PaymentRequestErrorType.None;
 
             await _paymentRequestRepository.UpdateAsync(paymentRequest);
 
-            await _paymentRequestPublisher.PublishAsync(paymentRequest);
+            PaymentRequestRefund refundInfo = await GetRefundInfoAsync(paymentRequest.Id);
+
+            await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
         }
 
         public async Task UpdateStatusByTransactionAsync(string transactionId)
@@ -206,6 +207,11 @@ namespace Lykke.Service.PayInternal.Services
                 if (tx.SourceWalletAddresses.MoreThanOne())
                     throw new MultiTransactionRefundNotSupportedException(tx.SourceWalletAddresses.Length);
             }
+            else
+            {
+                if (!tx.SourceWalletAddresses.Contains(command.DestinationAddress))
+                    throw new WalletNotFoundException(command.DestinationAddress);
+            }
 
             TransferResult transferResult =
                 await _transferService.ExecuteAsync(tx.ToRefundTransferCommand(command.DestinationAddress));
@@ -240,6 +246,15 @@ namespace Lykke.Service.PayInternal.Services
                 //todo: think of moving this call inside  _transactionsService
                 await _transactionPublisher.PublishAsync(refundTransaction);
             }
+
+            if (transferResult.Transactions.All(x => x.HasError))
+                throw new OperationFailedException(transferResult.Transactions.Select(x => x.Error).ToJson());
+
+            IEnumerable<TransferTransactionResult> errorTransactions =
+                transferResult.Transactions.Where(x => x.HasError).ToList();
+
+            if (errorTransactions.Any())
+                throw new OperationPartiallyFailedException(errorTransactions.Select(x => x.Error).ToJson());
 
             return await PrepareRefundResult(paymentRequest, transferResult, refundDueDate);
         }

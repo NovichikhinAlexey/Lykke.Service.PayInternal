@@ -8,6 +8,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
 
         string MerchantId { get; set; }
 
+        string ExternalOrderId { get; set; }
+
         string OrderId { get; set; }
         
         decimal Amount { get; set; }
@@ -32,7 +34,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
         
         DateTime? PaidDate { get; set; }
         
-        string Error { get; set; }
+        PaymentRequestErrorType Error { get; set; }
 
         DateTime Timestamp { get; set; }
 

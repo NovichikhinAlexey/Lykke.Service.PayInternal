@@ -6,7 +6,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
     {
         public PaymentRequestStatus Status { get; set; }
 
-        public string Details { get; set; }
+        public PaymentRequestErrorType ErrorType { get; set; }
 
         public decimal Amount { get; set; }
 
@@ -22,23 +22,23 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
             };
         }
 
-        public static PaymentRequestStatusInfo Error(string errorMessage, decimal paid, DateTime? date)
+        public static PaymentRequestStatusInfo Error(PaymentRequestErrorType errorType, decimal paid, DateTime? date)
         {
             return new PaymentRequestStatusInfo
             {
                 Status = PaymentRequestStatus.Error,
-                Details = errorMessage,
+                ErrorType = errorType,
                 Amount = paid,
                 Date = date
             };
         }
 
-        public static PaymentRequestStatusInfo Error(string errorMessage)
+        public static PaymentRequestStatusInfo Error(PaymentRequestErrorType errorType)
         {
             return new PaymentRequestStatusInfo
             {
                 Status = PaymentRequestStatus.Error,
-                Details = errorMessage
+                ErrorType = errorType
             };
         }
 

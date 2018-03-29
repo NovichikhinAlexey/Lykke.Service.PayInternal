@@ -15,6 +15,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         private int _markupPips;
         private decimal _paidAmount;
         private double _markupFixedFee;
+        private PaymentRequestErrorType _error;
         
         public PaymentRequestEntity()
         {
@@ -29,9 +30,11 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         public string Id => RowKey;
         
         public string MerchantId { get; set; }
+
+        public string ExternalOrderId { get; set; }
         
         public string OrderId { get; set; }
-        
+
         public decimal Amount
         {
             get => _amount;
@@ -101,7 +104,15 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         }
         
         public DateTime? PaidDate { get; set; }
-        
-        public string Error { get; set; }
+
+        public PaymentRequestErrorType Error
+        {
+            get => _error;
+            set
+            {
+                _error = value;
+                MarkValueTypePropertyAsDirty(nameof(Error));
+            }
+        }
     }
 }

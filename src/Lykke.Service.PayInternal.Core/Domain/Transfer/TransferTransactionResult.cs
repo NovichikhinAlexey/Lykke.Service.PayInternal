@@ -15,5 +15,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
         public IEnumerable<string> Sources { get; set; }
 
         public IEnumerable<string> Destinations { get; set; }
+
+        public bool HasError => !string.IsNullOrEmpty(Error);
     }
 }

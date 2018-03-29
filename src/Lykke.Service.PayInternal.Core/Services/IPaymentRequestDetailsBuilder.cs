@@ -3,8 +3,8 @@ using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 
 namespace Lykke.Service.PayInternal.Core.Services
 {
-    public interface IPaymentRequestPublisher
+    public interface IPaymentRequestDetailsBuilder
     {
-        Task PublishAsync(IPaymentRequest paymentRequest, PaymentRequestRefund refundInfo);
+        Task<PaymentRequestDetails> Build(IPaymentRequest paymentRequest);
     }
 }
