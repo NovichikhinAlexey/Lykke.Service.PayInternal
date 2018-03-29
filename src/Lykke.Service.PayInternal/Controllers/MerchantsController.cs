@@ -105,9 +105,17 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<MerchantModel>(createdMerchant));
             }
+            catch (DuplicateMerchantNameException duplicateEx)
+            {
+                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(CreateAsync), request.ToJson(), duplicateEx);
+
+                return BadRequest(ErrorResponse.Create(duplicateEx.Message));
+
+            }
             catch (Exception exception)
             {
                 await _log.WriteErrorAsync(nameof(MerchantsController), nameof(CreateAsync), request.ToJson(), exception);
+
                 throw;
             }
         }
@@ -194,7 +202,7 @@ namespace Lykke.Service.PayInternal.Controllers
                 throw;
             }
         }
-        
+
         /// <summary>
         /// Deletes a merchant.
         /// </summary>
@@ -203,12 +211,28 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpDelete]
         [Route("merchants/{merchantId}")]
         [SwaggerOperation("MerchantsDelete")]
-        [ProducesResponseType((int)HttpStatusCode.NoContent)]
+        [ProducesResponseType((int) HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> DeleteAsync(string merchantId)
         {
-            await _merchantService.DeleteAsync(merchantId);
-            
-            return NoContent();
+            IMerchant merchant = await _merchantService.GetAsync(merchantId);
+
+            if (merchant == null)
+                return NotFound(ErrorResponse.Create("Couldn't find merchant"));
+
+            try
+            {
+                await _merchantService.DeleteAsync(merchantId);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(DeleteAsync),
+                    new {merchantId}.ToJson(), ex);
+
+                throw;
+            }
         }
 
         /// <summary>
