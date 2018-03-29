@@ -155,8 +155,8 @@ namespace Lykke.Service.PayInternal.Services
             paymentRequest.PaidDate = newStatusInfo.Date;
             paymentRequest.PaidAmount = newStatusInfo.Amount;
             paymentRequest.Error = paymentRequest.Status == PaymentRequestStatus.Error
-                ? newStatusInfo.Details
-                : string.Empty;
+                ? newStatusInfo.ErrorType
+                : PaymentRequestErrorType.None;
 
             await _paymentRequestRepository.UpdateAsync(paymentRequest);
 

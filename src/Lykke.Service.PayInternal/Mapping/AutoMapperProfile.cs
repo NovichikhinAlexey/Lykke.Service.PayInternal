@@ -106,7 +106,8 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.DueDate, opt => opt.Ignore())
                 .ForSourceMember(src => src.TransferId, opt => opt.Ignore())
                 .ForSourceMember(src => src.CreatedOn, opt => opt.Ignore())
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId));
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId))
+                .ForMember(dest => dest.Url, opt => opt.ResolveUsing<PaymentTxUrlValueResolver>());
 
             CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefundTransaction,
                     Contract.PaymentRequest.PaymentRequestRefundTransaction>(MemberList.Destination)
