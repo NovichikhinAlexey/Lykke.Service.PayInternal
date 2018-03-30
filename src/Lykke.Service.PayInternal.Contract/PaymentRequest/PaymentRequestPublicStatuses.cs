@@ -35,5 +35,10 @@
         /// Refund has been confirmed
         /// </summary>
         public const string RefundConfirmed = "REFUND_CONFIRMED";
+
+        /// <summary>
+        /// Refund error
+        /// </summary>
+        public const string RefundError = "REFUND_ERROR";
     }
 }
