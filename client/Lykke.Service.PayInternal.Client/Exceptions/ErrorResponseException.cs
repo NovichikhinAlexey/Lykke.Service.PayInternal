@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Net;
-using Lykke.Common.Api.Contract.Responses;
 using Refit;
 
-namespace Lykke.Service.PayInternal.Client
+namespace Lykke.Service.PayInternal.Client.Exceptions
 {
     /// <summary>
-    /// Represents error response from the PayInternal API service
+    /// Represents base error response from the PayInternal API service
     /// </summary>
-    public class ErrorResponseException : Exception
+    public class ErrorResponseException<T> : Exception
     {
         /// <summary>
         /// Initializes a new instance of <see cref="ErrorResponseException"/> with error message.
@@ -24,8 +23,8 @@ namespace Lykke.Service.PayInternal.Client
         /// </summary>
         /// <param name="error">The response error details</param>
         /// <param name="inner">The exception occurred during calling service API.</param>
-        public ErrorResponseException(ErrorResponse error, ApiException inner)
-            : base(error.GetSummaryMessage() ?? string.Empty, inner)
+        public ErrorResponseException(T error, ApiException inner)
+            : base(inner.Message ?? string.Empty, inner)
         {
             Error = error;
             StatusCode = inner.StatusCode;
@@ -34,7 +33,7 @@ namespace Lykke.Service.PayInternal.Client
         /// <summary>
         /// Gets a response error details.
         /// </summary>
-        public ErrorResponse Error { get; }
+        public T Error { get; }
 
         /// <summary>
         /// Gets a http response status code.
