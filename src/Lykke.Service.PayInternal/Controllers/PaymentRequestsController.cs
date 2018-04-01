@@ -17,6 +17,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core.Exceptions;
+using Lykke.Service.PayInternal.Models;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -258,8 +259,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("merchants/paymentrequests/refunds")]
         [SwaggerOperation("Refund")]
         [ProducesResponseType(typeof(RefundResponseModel), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.InternalServerError)]
-        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(RefundErrorModel), (int) HttpStatusCode.BadRequest)]
         [ValidateModel]
         public async Task<IActionResult> RefundAsync([FromBody] RefundRequestModel request)
         {
@@ -270,15 +270,17 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<RefundResponseModel>(refundResult));
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(RefundAsync), request.ToJson(), e);
+                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(RefundAsync), request.ToJson(), ex);
 
-                if (e is RefundException)
-                    return BadRequest(ErrorResponse.Create(e.Message));
+                if (ex is RefundValidationException validationEx)
+                {
+                    return BadRequest(new RefundErrorModel {Code = validationEx.ErrorType});
+                }
+                
+                return BadRequest(new RefundErrorModel {Code = RefundErrorType.Unknown});
             }
-
-            return StatusCode((int) HttpStatusCode.InternalServerError);
         }
     }
 }

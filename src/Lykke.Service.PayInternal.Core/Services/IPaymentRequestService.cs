@@ -18,10 +18,8 @@ namespace Lykke.Service.PayInternal.Core.Services
         
         Task<IPaymentRequest> CheckoutAsync(string merchantId, string paymentRequestId);
 
-        Task UpdateStatusAsync(string walletAddress);
+        Task UpdateStatusAsync(string walletAddress, PaymentRequestStatusInfo statusInfo = null);
 
         Task UpdateStatusByTransactionAsync(string transactionId);
-
-        Task<RefundResult> RefundAsync(RefundCommand command);
     }
 }

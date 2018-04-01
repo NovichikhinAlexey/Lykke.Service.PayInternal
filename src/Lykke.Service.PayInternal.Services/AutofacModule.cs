@@ -27,7 +27,10 @@ namespace Lykke.Service.PayInternal.Services
 
             builder.RegisterType<PaymentRequestService>()
                 .As<IPaymentRequestService>()
-                .WithParameter(TypedParameter.From(_transactionConfirmationCount))
+                .WithParameter(TypedParameter.From(_transactionConfirmationCount));
+
+            builder.RegisterType<RefundService>()
+                .As<IRefundService>()
                 .WithParameter(TypedParameter.From(_refundExpiration));
 
             builder.RegisterType<OrderService>()

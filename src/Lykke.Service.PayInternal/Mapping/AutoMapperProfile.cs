@@ -45,7 +45,7 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.Status, opt => opt.Ignore())
                 .ForMember(dest => dest.PaidAmount, opt => opt.Ignore())
                 .ForMember(dest => dest.PaidDate, opt => opt.Ignore())
-                .ForMember(dest => dest.Error, opt => opt.Ignore())
+                .ForMember(dest => dest.ProcessingError, opt => opt.Ignore())
                 .ForMember(dest => dest.Timestamp, opt => opt.Ignore())
                 .ForMember(dest => dest.OrderId, opt => opt.Ignore())
                 .ForMember(dest => dest.ExternalOrderId, opt => opt.MapFrom(src => src.OrderId));
@@ -88,7 +88,8 @@ namespace Lykke.Service.PayInternal.Mapping
         private void PaymentRequestMessages()
         {
             CreateMap<IPaymentRequest, PaymentRequestDetailsMessage>(MemberList.Source)
-                .ForMember(dest => dest.Order, opt => opt.MapFrom(src => src.ExternalOrderId));
+                .ForMember(dest => dest.Order, opt => opt.MapFrom(src => src.ExternalOrderId))
+                .ForSourceMember(src => src.ProcessingError, opt => opt.Ignore());
 
             CreateMap<IOrder, PaymentRequestOrder>(MemberList.Source)
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())
