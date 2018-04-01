@@ -193,7 +193,7 @@ namespace Lykke.Service.PayInternal.Client
 
         public async Task<IReadOnlyList<TransactionByPaymentRequestResponse>> GetTransactionsByPaymentRequestAsync(string paymentRequestId)
         {
-            return await _runner.RunAsync(() => _payInternalApi.GetTransactionsByPaymentRequestAsync(paymentRequestId));
+            return await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.GetTransactionsByPaymentRequestAsync(paymentRequestId));
         }
     }
 }
