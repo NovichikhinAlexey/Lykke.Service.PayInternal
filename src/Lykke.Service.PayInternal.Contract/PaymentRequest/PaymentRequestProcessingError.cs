@@ -3,7 +3,7 @@
     /// <summary>
     /// Payment request error types
     /// </summary>
-    public enum PaymentRequestErrorType
+    public enum PaymentRequestProcessingError
     {
         /// <summary>
         /// Default value, no errors
