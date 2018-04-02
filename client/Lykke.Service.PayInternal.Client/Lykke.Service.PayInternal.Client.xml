@@ -656,36 +656,6 @@
             Gets or sets markup fixed fee
             </summary>
         </member>
-        <member name="T:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestErrorType">
-            <summary>
-            Payment request error types
-            </summary>
-        </member>
-        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestErrorType.None">
-            <summary>
-            Default value, no errors
-            </summary>
-        </member>
-        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestErrorType.PaymentAmountAbove">
-            <summary>
-            Amount paid is more than required
-            </summary>
-        </member>
-        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestErrorType.PaymentAmountBelow">
-            <summary>
-            Amount paid is less than required
-            </summary>
-        </member>
-        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestErrorType.PaymentExpired">
-            <summary>
-            Payment order expired
-            </summary>
-        </member>
-        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestErrorType.RefundNotConfirmed">
-            <summary>
-            Refund was not confirmed before expiration date
-            </summary>
-        </member>
         <member name="T:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel">
             <summary>
             Represent a payment request.
@@ -761,9 +731,44 @@
             Gets or sets the paid date.
             </summary>
         </member>
-        <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel.Error">
+        <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel.ProcessingError">
             <summary>
             Gets or sets the error occurred during processing payment request.
+            </summary>
+        </member>
+        <member name="T:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError">
+            <summary>
+            Payment request error types
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError.None">
+            <summary>
+            Default value, no errors
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError.Unknown">
+            <summary>
+            Unexpected unknown error occured
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError.PaymentAmountAbove">
+            <summary>
+            Amount paid is more than required
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError.PaymentAmountBelow">
+            <summary>
+            Amount paid is less than required
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError.PaymentExpired">
+            <summary>
+            Payment order expired
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError.RefundNotConfirmed">
+            <summary>
+            Refund was not confirmed before expiration date
             </summary>
         </member>
         <member name="T:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestStatus">
