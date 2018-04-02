@@ -11,6 +11,11 @@
         None = 0,
 
         /// <summary>
+        /// Unexpected unknown error occured
+        /// </summary>
+        Unknown,
+
+        /// <summary>
         /// Amount paid is more than required
         /// </summary>
         PaymentAmountAbove,
