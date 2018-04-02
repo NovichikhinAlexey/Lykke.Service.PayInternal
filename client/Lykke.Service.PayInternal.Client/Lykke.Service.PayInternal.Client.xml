@@ -746,9 +746,14 @@
             Default value, no errors
             </summary>
         </member>
-        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError.Unknown">
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError.UnknownRefund">
             <summary>
-            Unexpected unknown error occured
+            Unexpected unknown error occured during refund
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError.UnknownPayment">
+            <summary>
+            Unexpected unknown error occured during payment
             </summary>
         </member>
         <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError.PaymentAmountAbove">

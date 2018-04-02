@@ -11,9 +11,14 @@
         None = 0,
 
         /// <summary>
-        /// Unexpected unknown error occured
+        /// Unexpected unknown error occured during refund
         /// </summary>
-        Unknown,
+        UnknownRefund,
+
+        /// <summary>
+        /// Unexpected unknown error occured during payment
+        /// </summary>
+        UnknownPayment,
 
         /// <summary>
         /// Amount paid is more than required

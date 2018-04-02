@@ -134,7 +134,7 @@ namespace Lykke.Service.PayInternal.Services
             catch (Exception)
             {
                 await _paymentRequestService.UpdateStatusAsync(paymentRequest.WalletAddress,
-                    PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.Unknown));
+                    PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.UnknownRefund));
 
                 throw;
             }
