@@ -416,6 +416,11 @@
             Gets or sets the merchant name.
             </summary>
         </member>
+        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.CreateMerchantRequest.DisplayName">
+            <summary>
+            Gets ot sets the merchant display name
+            </summary>
+        </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.CreateMerchantRequest.ApiKey">
             <summary>
             Gets or sets the merchant api key.
@@ -464,6 +469,11 @@
         <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.MerchantModel.Name">
             <summary>
             Gets or sets the merchant name.
+            </summary>
+        </member>
+        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.MerchantModel.DisplayName">
+            <summary>
+            Gets ot sets the merchant display name
             </summary>
         </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.MerchantModel.PublicKey">
@@ -519,6 +529,11 @@
         <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.UpdateMerchantRequest.Name">
             <summary>
             Gets or sets the merchant name.
+            </summary>
+        </member>
+        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.UpdateMerchantRequest.DisplayName">
+            <summary>
+            Gets ot sets the merchant display name
             </summary>
         </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.UpdateMerchantRequest.ApiKey">
