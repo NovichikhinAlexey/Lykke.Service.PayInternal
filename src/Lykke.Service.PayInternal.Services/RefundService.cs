@@ -70,7 +70,7 @@ namespace Lykke.Service.PayInternal.Services
             if (string.IsNullOrWhiteSpace(destinationWalletAddress))
             {
                 if (tx.SourceWalletAddresses.MoreThanOne())
-                    throw new RefundValidationException(RefundErrorType.MultitransactionNotSupported);
+                    throw new RefundValidationException(RefundErrorType.InvalidDestinationAddress);
             }
             else
             {
