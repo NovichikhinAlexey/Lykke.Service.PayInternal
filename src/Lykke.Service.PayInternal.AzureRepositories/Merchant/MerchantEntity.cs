@@ -28,6 +28,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
         
         public string Name { get; set; }
 
+        public string DisplayName { get; set; }
+
         public string PublicKey { get; set; }
 
         public string ApiKey { get; set; }
@@ -83,18 +85,5 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
         }
         
         public string LwId { get; set; }
-
-        internal void Map(IMerchant merchant)
-        {
-            ApiKey = merchant.ApiKey;
-            DeltaSpread = merchant.DeltaSpread;
-            LpMarkupPercent = merchant.LpMarkupPercent;
-            LpMarkupPips = merchant.LpMarkupPips;
-            MarkupFixedFee = merchant.MarkupFixedFee;
-            LwId = merchant.LwId;
-            Name = merchant.Name;
-            PublicKey = merchant.PublicKey;
-            TimeCacheRates = merchant.TimeCacheRates;
-        }
     }
 }

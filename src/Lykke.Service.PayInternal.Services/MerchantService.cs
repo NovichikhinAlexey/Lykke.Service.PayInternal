@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using AutoMapper;
 using Common;
 using Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
@@ -50,14 +51,7 @@ namespace Lykke.Service.PayInternal.Services
             if(existingMerchant == null)
                 throw new MerchantNotFoundException(merchant.Name);
 
-            existingMerchant.Name = merchant.Name;
-            existingMerchant.ApiKey = merchant.ApiKey;
-            existingMerchant.DeltaSpread = merchant.DeltaSpread;
-            existingMerchant.TimeCacheRates = merchant.TimeCacheRates;
-            existingMerchant.LpMarkupPercent = merchant.LpMarkupPercent;
-            existingMerchant.LpMarkupPips = merchant.LpMarkupPips;
-            existingMerchant.MarkupFixedFee = merchant.MarkupFixedFee;
-            existingMerchant.LwId = merchant.LwId;
+            Mapper.Map(merchant, existingMerchant);
             
             await _merchantRepository.ReplaceAsync(existingMerchant);
             
