@@ -34,7 +34,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
         
         DateTime? PaidDate { get; set; }
         
-        PaymentRequestErrorType Error { get; set; }
+        PaymentRequestProcessingError ProcessingError { get; set; }
 
         DateTime Timestamp { get; set; }
 

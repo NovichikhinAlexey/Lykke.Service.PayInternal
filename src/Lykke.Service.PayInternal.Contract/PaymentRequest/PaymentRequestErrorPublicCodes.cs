@@ -20,10 +20,19 @@
         /// </summary>
         public const string PaymentExpired = "PAYMENT_EXPIRED";
 
-
         /// <summary>
         /// Any payment request transaction type has not been confirmed
         /// </summary>
         public const string TransactionNotConfirmed = "TRANSACTION_NOT_CONFIRMED";
+
+        /// <summary>
+        /// Any payment request transaction type has not been detected
+        /// </summary>
+        public const string TransactionNotDetected = "TRANSACTION_NOT_DETECTED";
+
+        /// <summary>
+        /// Common refund error, typically means unexpected unknown error
+        /// </summary>
+        public const string RefundIsNotAvailable = "REFUND_IS_NOT_AVAILABLE";
     }
 }

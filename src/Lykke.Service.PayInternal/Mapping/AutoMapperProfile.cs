@@ -45,7 +45,7 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.Status, opt => opt.Ignore())
                 .ForMember(dest => dest.PaidAmount, opt => opt.Ignore())
                 .ForMember(dest => dest.PaidDate, opt => opt.Ignore())
-                .ForMember(dest => dest.Error, opt => opt.Ignore())
+                .ForMember(dest => dest.ProcessingError, opt => opt.Ignore())
                 .ForMember(dest => dest.Timestamp, opt => opt.Ignore())
                 .ForMember(dest => dest.OrderId, opt => opt.Ignore())
                 .ForMember(dest => dest.ExternalOrderId, opt => opt.MapFrom(src => src.OrderId));
