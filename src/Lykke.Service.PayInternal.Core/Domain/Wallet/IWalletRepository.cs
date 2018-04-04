@@ -7,12 +7,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Wallet
     {
         Task SaveAsync(IWallet wallet);
 
-        Task<IEnumerable<IWallet>> GetAsync();
-
-        Task<IWallet> GetAsync(string merchantId, string address);
-
-        Task<IEnumerable<IWallet>> GetByMerchantAsync(string merchantId, bool nonEmptyOnly = false);
-
         Task<IEnumerable<IWallet>> GetNotExpired();
     }
 }

@@ -27,37 +27,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
             await _tableStorage.InsertAsync(itemByDueDate);
         }
 
-        public async Task<IEnumerable<IWallet>> GetAsync()
-        {
-            return await _tableStorage.GetDataAsync();
-
-        }
-
-        public async Task<IWallet> GetAsync(string merchantId, string address)
-        {
-            return await _tableStorage.GetDataAsync(
-                WalletEntity.ByMerchant.GeneratePartitionKey(merchantId),
-                WalletEntity.ByMerchant.GenerateRowKey(address));
-        }
-
-        public async Task<IEnumerable<IWallet>> GetByMerchantAsync(string merchantId, bool nonEmptyOnly = false)
-        {
-            if (nonEmptyOnly)
-            {
-                var filter = TableQuery.CombineFilters(
-                    TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal,
-                        WalletEntity.ByMerchant.GeneratePartitionKey(merchantId)),
-                    TableOperators.And,
-                    TableQuery.GenerateFilterConditionForDouble("Amount", QueryComparisons.GreaterThan, 0d));
-
-                var query = new TableQuery<WalletEntity>().Where(filter);
-
-                return await _tableStorage.WhereAsync(query);
-            }
-           
-            return await _tableStorage.GetDataAsync(WalletEntity.ByMerchant.GeneratePartitionKey(merchantId));
-        }
-
         public async Task<IEnumerable<IWallet>> GetNotExpired()
         {
             var gtDate = WalletEntity.ByDueDate.GeneratePartitionKey(DateTime.UtcNow);
