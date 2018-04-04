@@ -193,5 +193,13 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request"></param>
         /// <returns></returns>
         Task SetPersonalAvailableAssetsAsync(UpdateAssetAvailabilityByMerchantRequest request);
+
+        /// <summary>
+        /// Cancels payment request
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <param name="paymentRequestId">Payment request id</param>
+        /// <returns></returns>
+        Task CancelAsync(string merchantId, string paymentRequestId);
     }
 }
