@@ -14,6 +14,11 @@
         /// Payment request created no transactions.
         /// </summary>
         New,
+
+        /// <summary>
+        /// Payment request has been cancelled
+        /// </summary>
+        Cancelled,
         
         /// <summary>
         /// Payment request have at least one transaction.
