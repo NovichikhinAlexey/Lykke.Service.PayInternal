@@ -208,5 +208,12 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="paymentRequestId"></param>
         /// <returns></returns>
         Task<IReadOnlyList<TransactionByPaymentRequestResponse>> GetTransactionsByPaymentRequestAsync(string paymentRequestId);
+
+        /// <summary>
+        /// Marks wallet as expired
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task SetWalletExpiredAsync(BlockchainWalletExpiredRequest request);
     }
 }

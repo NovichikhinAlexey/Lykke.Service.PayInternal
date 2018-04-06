@@ -22,16 +22,19 @@ namespace Lykke.Service.PayInternal.Controllers
     {
         private readonly IPaymentRequestService _paymentRequestService;
         private readonly ITransactionsService _transactionsService;
+        private readonly IBcnWalletUsageService _bcnWalletUsageService;
         private readonly ILog _log;
 
         public TransactionsController(
             ITransactionsService transactionsService,
             IPaymentRequestService paymentRequestService,
-            ILog log)
+            ILog log, 
+            IBcnWalletUsageService bcnWalletUsageService)
         {
             _paymentRequestService = paymentRequestService;
             _transactionsService = transactionsService;
             _log = log;
+            _bcnWalletUsageService = bcnWalletUsageService;
         }
 
         /// <summary>
@@ -50,12 +53,18 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                var domainRequest = request.ToDomain();
-                domainRequest.Type = TransactionType.Payment;
+                //todo: move this business logic to transactions manager service
+                string virtualAddress =
+                    await _bcnWalletUsageService.ResolveOccupierAsync(request.WalletAddress, request.Blockchain);
+
+                if (string.IsNullOrEmpty(virtualAddress))
+                    throw new BlockchainWalletNotLinkedException(request.WalletAddress, request.Blockchain);
+
+                var domainRequest = request.ToDomain(virtualAddress, TransactionType.Payment);
 
                 await _transactionsService.CreateTransaction(domainRequest);
 
-                await _paymentRequestService.UpdateStatusAsync(request.WalletAddress);
+                await _paymentRequestService.UpdateStatusAsync(virtualAddress);
 
                 return Ok();
             }
@@ -75,6 +84,16 @@ namespace Lykke.Service.PayInternal.Controllers
                 await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction), new
                 {
                     ex.AssetId,
+                }.ToJson(), ex);
+
+                return BadRequest(ErrorResponse.Create(ex.Message));
+            }
+            catch (BlockchainWalletNotLinkedException ex)
+            {
+                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction), new
+                {
+                    ex.Blockchain,
+                    ex.WalletAddress
                 }.ToJson(), ex);
 
                 return BadRequest(ErrorResponse.Create(ex.Message));
@@ -136,15 +155,27 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                await _transactionsService.Update(request.ToDomain());
+                //todo: move this business logic to transactions manager service
+                var virtualAddress = string.Empty;
 
-                if (string.IsNullOrEmpty(request.WalletAddress))
+                if (!string.IsNullOrEmpty(request.WalletAddress))
+                {
+                    virtualAddress =
+                        await _bcnWalletUsageService.ResolveOccupierAsync(request.WalletAddress, request.Blockchain);
+
+                    if (string.IsNullOrEmpty(virtualAddress))
+                        throw new BlockchainWalletNotLinkedException(request.WalletAddress, request.Blockchain);
+                }
+
+                await _transactionsService.Update(request.ToDomain(virtualAddress));
+
+                if (string.IsNullOrEmpty(virtualAddress))
                 {
                     await _paymentRequestService.UpdateStatusByTransactionAsync(request.TransactionId);
                 }
                 else
                 {
-                    await _paymentRequestService.UpdateStatusAsync(request.WalletAddress);
+                    await _paymentRequestService.UpdateStatusAsync(virtualAddress);
                 }
 
                 return Ok();
@@ -165,6 +196,16 @@ namespace Lykke.Service.PayInternal.Controllers
                     ex.MerchantId,
                     ex.WalletAddress,
                     ex.PaymentRequestId
+                }.ToJson(), ex);
+
+                return BadRequest(ErrorResponse.Create(ex.Message));
+            }
+            catch (BlockchainWalletNotLinkedException ex)
+            {
+                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), new
+                {
+                    ex.Blockchain,
+                    ex.WalletAddress
                 }.ToJson(), ex);
 
                 return BadRequest(ErrorResponse.Create(ex.Message));

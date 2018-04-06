@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.Models.Transactions
@@ -24,7 +25,7 @@ namespace Lykke.Service.PayInternal.Models.Transactions
         public string BlockId { get; set; }
 
         [Required]
-        public string Blockchain { get; set; }
+        public BlockchainType Blockchain { get; set; }
 
         public DateTime? FirstSeen { get; set; }
 

@@ -7,6 +7,7 @@ namespace Lykke.Service.PayInternal.Client.Models.Transactions
     {
         public string TransactionId { get; set; }
         public string WalletAddress { get; set; }
+        public BlockchainType Blockchain { get; set; }
         public decimal Amount { get; set; }
         public int Confirmations { get; set; }
         [CanBeNull] public string BlockId { get; set; }

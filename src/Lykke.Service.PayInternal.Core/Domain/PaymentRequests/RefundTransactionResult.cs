@@ -1,6 +1,4 @@
-﻿using JetBrains.Annotations;
-
-namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
+﻿namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
 {
     public class RefundTransactionResult
     {
@@ -14,6 +12,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
 
         public string AssetId { get; set; }
 
-        [CanBeNull] public string Blockchain { get; set; }
+        public BlockchainType Blockchain { get; set; }
     }
 }

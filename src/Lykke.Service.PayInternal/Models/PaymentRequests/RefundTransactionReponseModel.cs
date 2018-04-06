@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+﻿using Lykke.Service.PayInternal.Core;
 
 namespace Lykke.Service.PayInternal.Models.PaymentRequests
 {
@@ -14,6 +14,6 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
 
         public string AssetId { get; set; }
 
-        [CanBeNull] public string Blockchain { get; set; }
+        public BlockchainType Blockchain { get; set; }
     }
 }

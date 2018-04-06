@@ -59,21 +59,6 @@ namespace Lykke.Service.PayInternal.Services
             return response.Address;
         }
 
-        public async Task<IWallet> GetAsync(string merchantId, string address)
-        {
-            return await _walletRepository.GetAsync(merchantId, address);
-        }
-
-        public async Task<IEnumerable<IWallet>> GetAsync(string merchantId)
-        {
-            return await _walletRepository.GetByMerchantAsync(merchantId);
-        }
-
-        public async Task<IEnumerable<IWallet>> GetNonEmptyAsync(string merchantId)
-        {
-            return await _walletRepository.GetByMerchantAsync(merchantId, true);
-        }
-
         public async Task<IEnumerable<IWalletState>> GetNotExpiredAsync()
         {
             var wallets = (await _walletRepository.GetNotExpired()).ToList();
