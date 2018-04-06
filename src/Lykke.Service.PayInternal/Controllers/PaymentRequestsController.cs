@@ -215,6 +215,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// </summary>
         /// <returns>The payment request details.</returns>
         /// <response code="200">The payment request details.</response>
+        [Obsolete("The order api should be used")]
         [HttpPost]
         [Route("merchants/{merchantId}/paymentrequests/{paymentRequestId}")]
         [SwaggerOperation("PaymentRequestsCreate")]
