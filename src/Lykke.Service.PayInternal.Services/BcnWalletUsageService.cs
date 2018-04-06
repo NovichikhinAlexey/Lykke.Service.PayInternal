@@ -9,6 +9,7 @@ namespace Lykke.Service.PayInternal.Services
     public class BcnWalletUsageService : IBcnWalletUsageService
     {
         private readonly IBcnWalletUsageRepository _walletUsageRepository;
+
         public BcnWalletUsageService(IBcnWalletUsageRepository walletUsageRepository)
         {
             _walletUsageRepository = walletUsageRepository;

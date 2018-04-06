@@ -8,10 +8,12 @@ using Lykke.Service.PayInternal.AzureRepositories.Order;
 using Lykke.Service.PayInternal.AzureRepositories.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.AzureRepositories.Transfer;
+using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
+using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.SettingsReader;
 
 namespace Lykke.Service.PayInternal.AzureRepositories
@@ -46,6 +48,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             const string assetsAvailabilityTableName = "AssetsAvailability";
             const string assetsAvailabilityByMerchantTableName = "AssetsAvailabilityByMerchant";
             const string transfersTableName = "Transfers";
+            const string bcnWalletsUsageTableName = "BlockchainWalletsUsage";
+            const string virtualWalletsTableName = "VirtualWallets";
 
             builder.RegisterInstance<IMerchantRepository>(new MerchantRepository(
                 AzureTableStorage<MerchantEntity>.Create(_merchantsConnectionString,
@@ -56,6 +60,18 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                     paymentRequestsTableName, _log),
                 AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
                     paymentRequestsTableName, _log)));
+
+            builder.RegisterInstance<IVirtualWalletRepository>(new VirtualWalletRepository(
+                AzureTableStorage<VirtualWalletEntity>.Create(_paymentRequestsConnectionString,
+                    virtualWalletsTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
+                    virtualWalletsTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
+                    virtualWalletsTableName, _log)));
+
+            builder.RegisterInstance<IBcnWalletUsageRepository>(new BcnWalletUsageRepository(
+                AzureTableStorage<BcnWalletUsageEntity>.Create(_paymentRequestsConnectionString,
+                    bcnWalletsUsageTableName, _log)));
             
             builder.RegisterInstance<IOrderRepository>(new OrdersRepository(
                 AzureTableStorage<OrderEntity>.Create(_ordersConnectionString,
