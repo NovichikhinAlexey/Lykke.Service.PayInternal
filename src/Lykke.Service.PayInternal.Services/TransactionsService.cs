@@ -71,7 +71,7 @@ namespace Lykke.Service.PayInternal.Services
                 AssetId = request.AssetId,
                 Confirmations = request.Confirmations,
                 BlockId = request.BlockId,
-                Blockchain = request.Blockchain.ToString(),
+                Blockchain = request.Blockchain,
                 FirstSeen = request.FirstSeen,
                 PaymentRequestId = paymentRequest.Id,
                 SourceWalletAddresses = request.SourceWalletAddresses,
