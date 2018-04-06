@@ -29,6 +29,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             CreateMap<TransferEntity, Core.Domain.Transfer.Transfer>(MemberList.Destination);
 
             CreateMap<VirtualWalletEntity, VirtualWallet>(MemberList.Destination);
+
+            CreateMap<BcnWalletUsageEntity, BcnWalletUsage>(MemberList.Destination);
         }
     }
 }

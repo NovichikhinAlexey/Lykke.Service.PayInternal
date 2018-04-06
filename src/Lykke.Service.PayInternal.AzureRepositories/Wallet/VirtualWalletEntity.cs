@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using AzureStorage.Tables.Templates.Index;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
@@ -12,7 +13,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
     {
         #region private fields
         private DateTime _dueDate;
-
         private DateTime _createdOn;
         #endregion
 
@@ -44,7 +44,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
         }
 
         [JsonValueSerializer]
-        public IEnumerable<OriginalWallet> OriginalWallets { get; set; }
+        public IEnumerable<BlockchainWallet> BlockchainWallets { get; set; }
 
         public static class ByMerchantId
         {
@@ -53,9 +53,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
                 return merchantId;
             }
 
-            public static string GenerateRowKey()
+            public static string GenerateRowKey(string walletId = null)
             {
-                return Guid.NewGuid().ToString();
+                return walletId ?? Guid.NewGuid().ToString();
             }
 
             public static VirtualWalletEntity Create(IVirtualWallet src)
@@ -67,8 +67,46 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
                     DueDate = src.DueDate,
                     MerchantId = src.MerchantId,
                     CreatedOn = src.CreatedOn,
-                    OriginalWallets = src.OriginalWallets
+                    BlockchainWallets = src.BlockchainWallets
                 };
+            }
+        }
+
+        public static class IndexByWalletId
+        {
+            public static string GeneratePartitionKey(string walletId)
+            {
+                return walletId;
+            }
+
+            public static string GenerateRowKey()
+            {
+                return "WalletIdIndex";
+            }
+
+            public static AzureIndex Create(VirtualWalletEntity src)
+            {
+                return AzureIndex.Create(GeneratePartitionKey(src.Id), GenerateRowKey(), src);
+            }
+        }
+
+        public static class IndexByDueDate
+        {
+            public static string GeneratePartitionKey(DateTime dueDate)
+            {
+                var dueDateIso = dueDate.ToString("O");
+
+                return $"DD_{dueDateIso}";
+            }
+
+            public static string GenerateRowKey(string walletId)
+            {
+                return walletId;
+            }
+
+            public static AzureIndex Create(VirtualWalletEntity src)
+            {
+                return AzureIndex.Create(GeneratePartitionKey(src.DueDate), GenerateRowKey(src.Id), src);
             }
         }
     }

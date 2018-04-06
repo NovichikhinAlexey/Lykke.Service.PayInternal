@@ -5,9 +5,10 @@ namespace Lykke.Service.PayInternal.Core.Domain.Wallet
 {
     public class VirtualWallet : IVirtualWallet
     {
+        public string Id { get; set; }
         public string MerchantId { get; set; }
         public DateTime DueDate { get; set; }
         public DateTime CreatedOn { get; set; }
-        public IEnumerable<OriginalWallet> OriginalWallets { get; set; }
+        public IList<BlockchainWallet> BlockchainWallets { get; set; }
     }
 }

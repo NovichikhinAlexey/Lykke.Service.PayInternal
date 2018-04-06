@@ -193,5 +193,12 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request"></param>
         /// <returns></returns>
         Task SetPersonalAvailableAssetsAsync(UpdateAssetAvailabilityByMerchantRequest request);
+
+        /// <summary>
+        /// Marks wallet as expired
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task SetWalletExpiredAsync(BlockchainWalletExpiredRequest request);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.Services.Domain
@@ -12,7 +13,7 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public string AssetId { get; set; }
         public int Confirmations { get; set; }
         public string BlockId { get; set; }
-        public string Blockchain { get; set; }
+        public BlockchainType Blockchain { get; set; }
         public DateTime? FirstSeen { get; set; }
         public DateTime? DueDate { get; set; }
         public TransactionType Type { get; set; }

@@ -66,11 +66,11 @@ namespace Lykke.Service.PayInternal.Services
             };
         }
 
-        public static ICreateTransaction ToDomain(this ICreateTransactionRequest src)
+        public static ICreateTransaction ToDomain(this ICreateTransactionRequest src, string virtualAddress, TransactionType transactionType)
         {
             return new CreateTransaction
             {
-                WalletAddress = src.WalletAddress,
+                WalletAddress = virtualAddress,
                 Amount = (decimal) src.Amount,
                 FirstSeen = src.FirstSeen,
                 Confirmations = src.Confirmations,
@@ -78,15 +78,16 @@ namespace Lykke.Service.PayInternal.Services
                 TransactionId = src.TransactionId,
                 Blockchain = src.Blockchain,
                 AssetId = src.AssetId,
-                SourceWalletAddresses = src.SourceWalletAddresses
+                SourceWalletAddresses = src.SourceWalletAddresses,
+                Type = transactionType
             };
         }
 
-        public static IUpdateTransaction ToDomain(this IUpdateTransactionRequest src)
+        public static IUpdateTransaction ToDomain(this IUpdateTransactionRequest src, string virtualAddress)
         {
             return new UpdateTransaction
             {
-                WalletAddress = src.WalletAddress,
+                WalletAddress = virtualAddress,
                 Amount = src.Amount,
                 Confirmations = src.Confirmations,
                 BlockId = src.BlockId,

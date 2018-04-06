@@ -10,9 +10,9 @@ using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
+using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -20,32 +20,32 @@ namespace Lykke.Service.PayInternal.Services
     public class PaymentRequestService : IPaymentRequestService
     {
         private readonly IPaymentRequestRepository _paymentRequestRepository;
-        private readonly IMerchantWalletsService _merchantWalletsService;
         private readonly IPaymentRequestTransactionRepository _transactionRepository;
         private readonly IOrderService _orderService;
         private readonly IPaymentRequestPublisher _paymentRequestPublisher;
         private readonly ITransferService _transferService;
         private readonly IPaymentRequestStatusResolver _paymentRequestStatusResolver;
+        private readonly IWalletManager _walletsManager;
         private readonly ILog _log;
 
         public PaymentRequestService(
             IPaymentRequestRepository paymentRequestRepository,
-            IMerchantWalletsService merchantWalletsService,
             IPaymentRequestTransactionRepository transactionRepository,
             IOrderService orderService,
             IPaymentRequestPublisher paymentRequestPublisher,
             ITransferService transferService,
             IPaymentRequestStatusResolver paymentRequestStatusResolver,
-            ILog log)
+            ILog log, 
+            IWalletManager walletsManager)
         {
             _paymentRequestRepository = paymentRequestRepository;
-            _merchantWalletsService = merchantWalletsService;
             _transactionRepository = transactionRepository;
             _orderService = orderService;
             _paymentRequestPublisher = paymentRequestPublisher;
             _transferService = transferService;
             _paymentRequestStatusResolver = paymentRequestStatusResolver;
             _log = log;
+            _walletsManager = walletsManager;
         }
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -92,12 +92,11 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<IPaymentRequest> CreateAsync(IPaymentRequest paymentRequest)
         {
             paymentRequest.Status = PaymentRequestStatus.New;
-            paymentRequest.WalletAddress =
-                await _merchantWalletsService.CreateAddress(new CreateWallet
-                {
-                    DueDate = paymentRequest.DueDate,
-                    MerchantId = paymentRequest.MerchantId
-                });
+
+            IVirtualWallet wallet = await _walletsManager.CreateAsync(paymentRequest.MerchantId,
+                paymentRequest.DueDate, paymentRequest.PaymentAssetId);
+
+            paymentRequest.WalletAddress = wallet.Id;
 
             IPaymentRequest createdPaymentRequest = await _paymentRequestRepository.InsertAsync(paymentRequest);
 
