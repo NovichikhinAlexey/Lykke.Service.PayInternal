@@ -201,6 +201,10 @@ namespace Lykke.Service.PayInternal.Modules
                 .AsSelf()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LykkeBlockchainExplorer))
                 .SingleInstance();
+
+            builder.RegisterType<BlockchainWalletAddressValueResolver>()
+                .AsSelf()
+                .SingleInstance();
         }
     }
 }
