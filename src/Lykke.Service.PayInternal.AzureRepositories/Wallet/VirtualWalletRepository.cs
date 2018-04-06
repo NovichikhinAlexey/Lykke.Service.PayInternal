@@ -10,7 +10,8 @@ using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
 {
-    public class VirtualWalletRepository : IVirtualWalletRepository
+    public class 
+        VirtualWalletRepository : IVirtualWalletRepository
     {
         private readonly INoSQLTableStorage<VirtualWalletEntity> _tableStorage;
         private readonly INoSQLTableStorage<AzureIndex> _walletIdIndexStorage;
