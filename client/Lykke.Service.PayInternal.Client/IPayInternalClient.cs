@@ -87,7 +87,14 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="orderId">The order id.</param>
         /// <returns>The payment request order.</returns>
         Task<OrderModel> GetOrderAsync(string paymentRequestId, string orderId);
-        
+
+        /// <summary>
+        /// Creates an order if it does not exist or expired.
+        /// </summary>
+        /// <param name="model">The order creation information.</param>
+        /// <returns>An active order related with payment request.</returns>
+        Task<OrderModel> ChechoutOrderAsync(ChechoutRequestModel model);
+
         /// <summary>
         /// Returns merchant payment requests.
         /// </summary>

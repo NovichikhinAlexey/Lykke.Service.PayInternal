@@ -6,6 +6,7 @@ using Newtonsoft.Json.Converters;
 
 namespace Lykke.Service.PayInternal.Models.PaymentRequests
 {
+    [Obsolete]
     public class PaymentRequestDetailsModel
     {
         public PaymentRequestDetailsModel()
