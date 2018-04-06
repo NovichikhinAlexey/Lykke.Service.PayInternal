@@ -1,9 +1,9 @@
 ﻿using System;
-using JetBrains.Annotations;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
 using Lykke.Service.PayInternal.AzureRepositories.Serializers;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
@@ -16,7 +16,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         private DateTime? _firstSeen;
         private DateTime _dueDate;
         private TransactionType _transactionType;
-        
+        private BlockchainType _blockchain;
+
         public PaymentRequestTransactionEntity()
         {
         }
@@ -74,7 +75,15 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
         public string AssetId { get; set; }
 
-        [CanBeNull] public string Blockchain { get; set; }
+        public BlockchainType Blockchain
+        {
+            get => _blockchain;
+            set
+            {
+                _blockchain = value;
+                MarkValueTypePropertyAsDirty(nameof(Blockchain));
+            }
+        }
 
         public TransactionType TransactionType
         {

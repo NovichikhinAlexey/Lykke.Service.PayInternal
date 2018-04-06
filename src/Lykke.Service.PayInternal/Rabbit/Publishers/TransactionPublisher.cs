@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Autofac;
 using Common;
 using Common.Log;
@@ -39,7 +40,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
                 Amount = transaction.Amount,
                 Confirmations = transaction.Confirmations,
                 BlockId = transaction.BlockId,
-                Blockchain = transaction.Blockchain,
+                Blockchain = Enum.Parse<BlockchainType>(transaction.Blockchain.ToString()),
                 DueDate = transaction.DueDate
             });
         }
