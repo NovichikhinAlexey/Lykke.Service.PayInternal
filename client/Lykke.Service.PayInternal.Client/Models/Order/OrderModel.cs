@@ -30,12 +30,12 @@ namespace Lykke.Service.PayInternal.Client.Models.Order
         /// <summary>
         /// Gets or sets the settlement amount.
         /// </summary>
-        public double SettlementAmount { get; set; }
+        public decimal SettlementAmount { get; set; }
         
         /// <summary>
         /// Gets or sets the payment amount.
         /// </summary>
-        public double PaymentAmount { get; set; }
+        public decimal PaymentAmount { get; set; }
         
         /// <summary>
         /// Gets or sets the order due date.

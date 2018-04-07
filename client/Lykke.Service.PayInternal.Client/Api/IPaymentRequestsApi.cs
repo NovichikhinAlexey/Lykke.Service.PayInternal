@@ -22,9 +22,6 @@ namespace Lykke.Service.PayInternal.Client.Api
         [Post("/api/merchants/paymentrequests")]
         Task<PaymentRequestModel> CreateAsync([Body] CreatePaymentRequestModel model);
         
-        [Post("/api/merchants/{merchantId}/paymentrequests/{paymentRequestId}")]
-        Task<PaymentRequestDetailsModel> ChechoutAsync(string merchantId, string paymentRequestId);
-
         [Post("/api/transfers/BtcFreeTransfer")]
         Task<BtcTransferResponse> BtcFreeTransferAsync([Body] BtcFreeTransferRequest request);
 
