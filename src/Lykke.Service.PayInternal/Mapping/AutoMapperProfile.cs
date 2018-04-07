@@ -38,7 +38,8 @@ namespace Lykke.Service.PayInternal.Mapping
         {
             CreateMap<IPaymentRequest, PaymentRequestModel>(MemberList.Source)
                 .ForSourceMember(src => src.OrderId, opt => opt.Ignore())
-                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.ExternalOrderId));
+                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.ExternalOrderId))
+                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<BlockchainWalletAddressValueResolver>());
 
             CreateMap<CreatePaymentRequestModel, PaymentRequest>(MemberList.Destination)
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -53,7 +54,8 @@ namespace Lykke.Service.PayInternal.Mapping
 
             CreateMap<IPaymentRequest, PaymentRequestDetailsModel>(MemberList.Source)
                 .ForSourceMember(src => src.OrderId, opt => opt.Ignore())
-                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.ExternalOrderId));
+                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.ExternalOrderId))
+                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<BlockchainWalletAddressValueResolver>());
 
             CreateMap<IOrder, PaymentRequestOrderModel>(MemberList.Source)
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())
@@ -89,7 +91,8 @@ namespace Lykke.Service.PayInternal.Mapping
         private void PaymentRequestMessages()
         {
             CreateMap<IPaymentRequest, PaymentRequestDetailsMessage>(MemberList.Source)
-                .ForMember(dest => dest.Order, opt => opt.MapFrom(src => src.ExternalOrderId));
+                .ForMember(dest => dest.Order, opt => opt.MapFrom(src => src.ExternalOrderId))
+                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<BlockchainWalletAddressValueResolver>());
 
             CreateMap<IOrder, PaymentRequestOrder>(MemberList.Source)
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())
