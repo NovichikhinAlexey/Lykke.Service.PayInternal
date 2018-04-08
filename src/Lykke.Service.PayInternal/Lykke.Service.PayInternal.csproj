@@ -29,7 +29,7 @@
     <PackageReference Include="Lykke.Logs" Version="3.6.2" />
     <PackageReference Include="Lykke.Service.Assets.Client" Version="3.3.1" />
     <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.0.20" />
-    <PackageReference Include="Lykke.Service.PayInternal.Contract" Version="1.0.21" />
+    <PackageReference Include="Lykke.Service.PayInternal.Contract" Version="1.0.22" />
     <PackageReference Include="Lykke.Service.Session" Version="1.0.33" />
     <PackageReference Include="Lykke.SettingsReader" Version="2.1.0" />
     <PackageReference Include="Lykke.SlackNotification.AzureQueue" Version="2.0.1" />
