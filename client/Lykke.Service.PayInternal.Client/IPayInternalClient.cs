@@ -15,13 +15,6 @@ namespace Lykke.Service.PayInternal.Client
     public interface IPayInternalClient
     {
         /// <summary>
-        /// Creates new wallet address in bitcoin blockchain
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        Task<WalletAddressResponse> CreateAddressAsync(CreateWalletRequest request);
-
-        /// <summary>
         /// Returns wallet addresses that are not considered as expired
         /// </summary>
         /// <returns></returns>

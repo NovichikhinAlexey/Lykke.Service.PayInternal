@@ -10,10 +10,8 @@ using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.PayInternal.AzureRepositories.Transaction;
-using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
-using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
 using Lykke.Service.PayInternal.Mapping;
@@ -68,10 +66,6 @@ namespace Lykke.Service.PayInternal.Modules
 
         private void RegisterAzureRepositories(ContainerBuilder builder)
         {
-            builder.RegisterInstance<IWalletRepository>(new WalletRepository(
-                AzureTableStorage<WalletEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantWalletConnString),
-                    "MerchantWallets", _log)));
-
             builder.RegisterInstance<IPaymentRequestTransactionRepository>(new PaymentRequestTransactionRepository(
                 AzureTableStorage<PaymentRequestTransactionEntity>.Create(
                     _dbSettings.ConnectionString(x => x.MerchantConnString),
@@ -90,10 +84,6 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<ShutdownManager>()
                 .As<IShutdownManager>()
-                .SingleInstance();
-
-            builder.RegisterType<MerchantWalletsService>()
-                .As<IMerchantWalletsService>()
                 .SingleInstance();
 
             builder.RegisterType<AssetsAvailabilityService>()
@@ -201,11 +191,15 @@ namespace Lykke.Service.PayInternal.Modules
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LykkeBlockchainExplorer))
                 .SingleInstance();
 
-            builder.RegisterType<BlockchainWalletAddressValueResolver>()
+            builder.RegisterType<PaymentRequestBcnWalletAddressValueResolver>()
                 .AsSelf()
                 .SingleInstance();
 
             builder.RegisterType<RefundAmountResolver>()
+                .AsSelf()
+                .SingleInstance();
+
+            builder.RegisterType<PaymentTxBcnWalletAddressValueResolver>()
                 .AsSelf()
                 .SingleInstance();
         }
