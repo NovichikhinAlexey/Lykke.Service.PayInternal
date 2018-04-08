@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Lykke.Service.PayInternal.Core;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Lykke.Service.PayInternal.Models
 {
@@ -17,6 +19,7 @@ namespace Lykke.Service.PayInternal.Models
         public decimal Amount { get; set; }
         public string AssetId { get; set; }
         public string BlockId { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public BlockchainType Blockchain { get; set; }
         public int Confirmations { get; set; }
         public string WalletAddress { get; set; }
