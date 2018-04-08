@@ -11,6 +11,8 @@ namespace Lykke.Service.PayInternal.Core.Services
 
         Task<IVirtualWallet> GetAsync(string merchantId, string walletId);
 
+        Task<IVirtualWallet> FindAsync(string walletId);
+
         Task<IVirtualWallet> AddAddressAsync(string merchantId, string walletId, BlockchainWallet blockchainWallet);
 
         Task<IReadOnlyList<IVirtualWallet>> GetNotExpiredAsync();

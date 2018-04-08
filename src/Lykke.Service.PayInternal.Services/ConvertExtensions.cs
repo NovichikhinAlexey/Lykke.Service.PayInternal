@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
@@ -93,25 +92,6 @@ namespace Lykke.Service.PayInternal.Services
                 BlockId = src.BlockId,
                 TransactionId = src.TransactionId,
                 FirstSeen = src.FirstSeen
-            };
-        }
-
-        public static TransferCommand ToRefundTransferCommand(this IPaymentRequestTransaction src, string destination = null)
-        {
-            return new TransferCommand
-            {
-                AssetId = src.AssetId,
-                Amounts = new List<TransferAmount>
-                {
-                    new TransferAmount
-                    {
-                        Amount = src.Amount,
-                        Source = src.WalletAddress,
-                        Destination = string.IsNullOrWhiteSpace(destination)
-                            ? src.SourceWalletAddresses.Single()
-                            : destination,
-                    }
-                }
             };
         }
     }

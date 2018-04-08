@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Common;
 using Common.Log;
 using Lykke.Service.PayInternal.Core;
@@ -88,8 +89,10 @@ namespace Lykke.Service.PayInternal.Services
 
             try
             {
-                transferResult =
-                    await _transferService.ExecuteAsync(tx.ToRefundTransferCommand(destinationWalletAddress));
+                TransferCommand refundTransferCommand = Mapper.Map<TransferCommand>(tx,
+                    opts => opts.Items["destinationAddress"] = destinationWalletAddress);
+
+                transferResult = await _transferService.ExecuteAsync(refundTransferCommand);
 
                 refundDueDate = transferResult.Timestamp.Add(_refundExpirationPeriod);
 
