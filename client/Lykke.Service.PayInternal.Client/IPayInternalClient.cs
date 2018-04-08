@@ -131,13 +131,7 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="model">The payment request creation information.</param>
         /// <returns>The payment request.</returns>
         Task<PaymentRequestModel> CreatePaymentRequestAsync(CreatePaymentRequestModel model);
-
-        /// <summary>
-        /// Creates an order if it does not exist or expired and returns payment request details.
-        /// </summary>
-        /// <returns>The payment request details.</returns>
-        Task<PaymentRequestDetailsModel> ChechoutAsync(string merchantId, string paymentRequestId);
-
+        
         /// <summary>
         /// Transfers BTC from source addresses with amount provided to destination address without LykkePay fees
         /// </summary>
