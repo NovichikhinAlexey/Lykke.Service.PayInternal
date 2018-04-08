@@ -19,6 +19,7 @@ using Lykke.Service.PayInternal.Core.Settings;
 using Lykke.Service.PayInternal.Mapping;
 using Lykke.Service.PayInternal.Rabbit.Publishers;
 using Lykke.Service.PayInternal.Services;
+using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 using QBitNinja.Client;
@@ -201,6 +202,10 @@ namespace Lykke.Service.PayInternal.Modules
                 .SingleInstance();
 
             builder.RegisterType<BlockchainWalletAddressValueResolver>()
+                .AsSelf()
+                .SingleInstance();
+
+            builder.RegisterType<RefundAmountResolver>()
                 .AsSelf()
                 .SingleInstance();
         }

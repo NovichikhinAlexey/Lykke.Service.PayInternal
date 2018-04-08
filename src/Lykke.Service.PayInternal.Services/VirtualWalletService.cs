@@ -34,6 +34,11 @@ namespace Lykke.Service.PayInternal.Services
             return await _virtualWalletRepository.GetAsync(merchantId, walletId);
         }
 
+        public async Task<IVirtualWallet> FindAsync(string walletId)
+        {
+            return await _virtualWalletRepository.FindAsync(walletId);
+        }
+
         public async Task<IVirtualWallet> AddAddressAsync(string merchantId, string walletId, BlockchainWallet blockchainWallet)
         {
             IVirtualWallet wallet = await _virtualWalletRepository.GetAsync(merchantId, walletId);

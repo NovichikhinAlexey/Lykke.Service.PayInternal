@@ -151,5 +151,18 @@ namespace Lykke.Service.PayInternal.Services
 
             return walletStateResult;
         }
+
+        public async Task<string> ResolveBlockchainAddress(string virtualAddress, string assetId)
+        {
+            IVirtualWallet wallet = await _virtualWalletService.FindAsync(virtualAddress);
+
+            if (wallet == null)
+                throw new WalletNotFoundException(virtualAddress);
+
+            BlockchainWallet bcnWallet =
+                wallet.BlockchainWallets.SingleOrDefault(x => x.AssetId == assetId);
+
+            return bcnWallet?.Address;
+        }
     }
 }
