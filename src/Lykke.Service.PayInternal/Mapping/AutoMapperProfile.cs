@@ -5,10 +5,13 @@ using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Domain.Transfer;
+using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.Assets;
 using Lykke.Service.PayInternal.Models.Orders;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
+using Lykke.Service.PayInternal.Models.Transfers;
 using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Mapping
@@ -30,6 +33,12 @@ namespace Lykke.Service.PayInternal.Mapping
 
             CreateMap<IAssetAvailabilityByMerchant, AssetAvailabilityByMerchantResponse>();
 
+            CreateMap<BtcTransferSourceInfo, AddressAmount>(MemberList.Destination);
+
+            CreateMap<BtcFreeTransferRequest, BtcTransfer>(MemberList.Destination)
+                .ForMember(dest => dest.FeeRate, opt => opt.MapFrom(x => 0))
+                .ForMember(dest => dest.FixedFee, opt => opt.MapFrom(x => 0));
+
             PaymentRequestApiModels();
             PaymentRequestMessages();
         }
@@ -39,7 +48,7 @@ namespace Lykke.Service.PayInternal.Mapping
             CreateMap<IPaymentRequest, PaymentRequestModel>(MemberList.Source)
                 .ForSourceMember(src => src.OrderId, opt => opt.Ignore())
                 .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.ExternalOrderId))
-                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<BlockchainWalletAddressValueResolver>());
+                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<PaymentRequestBcnWalletAddressValueResolver>());
 
             CreateMap<CreatePaymentRequestModel, PaymentRequest>(MemberList.Destination)
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -55,7 +64,7 @@ namespace Lykke.Service.PayInternal.Mapping
             CreateMap<IPaymentRequest, PaymentRequestDetailsModel>(MemberList.Source)
                 .ForSourceMember(src => src.OrderId, opt => opt.Ignore())
                 .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.ExternalOrderId))
-                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<BlockchainWalletAddressValueResolver>());
+                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<PaymentRequestBcnWalletAddressValueResolver>());
 
             CreateMap<IOrder, PaymentRequestOrderModel>(MemberList.Source)
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())
@@ -76,6 +85,12 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.Url, opt => opt.ResolveUsing<PaymentTxUrlValueResolver>())
                 .ForMember(dest => dest.RefundUrl, opt => opt.Ignore());
 
+            CreateMap<IPaymentRequestTransaction, PayTransactionStateResponse>(MemberList.Destination)
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.ResolveUsing<PaymentTxBcnWalletAddressValueResolver>());
+
+            CreateMap<IWalletState, WalletStateResponse>(MemberList.Destination);
+
             CreateMap<RefundTransactionResult, RefundTransactionReponseModel>();
 
             CreateMap<RefundResult, RefundResponseModel>(MemberList.Source)
@@ -92,7 +107,7 @@ namespace Lykke.Service.PayInternal.Mapping
         {
             CreateMap<IPaymentRequest, PaymentRequestDetailsMessage>(MemberList.Source)
                 .ForMember(dest => dest.Order, opt => opt.MapFrom(src => src.ExternalOrderId))
-                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<BlockchainWalletAddressValueResolver>());
+                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<PaymentRequestBcnWalletAddressValueResolver>());
 
             CreateMap<IOrder, PaymentRequestOrder>(MemberList.Source)
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())

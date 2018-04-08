@@ -70,10 +70,6 @@ namespace Lykke.Service.PayInternal.Modules
 
         private void RegisterAzureRepositories(ContainerBuilder builder)
         {
-            builder.RegisterInstance<IWalletRepository>(new WalletRepository(
-                AzureTableStorage<WalletEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantWalletConnString),
-                    "MerchantWallets", _log)));
-
             builder.RegisterInstance<IPaymentRequestTransactionRepository>(new PaymentRequestTransactionRepository(
                 AzureTableStorage<PaymentRequestTransactionEntity>.Create(
                     _dbSettings.ConnectionString(x => x.MerchantConnString),
@@ -92,10 +88,6 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<ShutdownManager>()
                 .As<IShutdownManager>()
-                .SingleInstance();
-
-            builder.RegisterType<MerchantWalletsService>()
-                .As<IMerchantWalletsService>()
                 .SingleInstance();
 
             builder.RegisterType<AssetsAvailabilityService>()
@@ -203,11 +195,15 @@ namespace Lykke.Service.PayInternal.Modules
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LykkeBlockchainExplorer))
                 .SingleInstance();
 
-            builder.RegisterType<BlockchainWalletAddressValueResolver>()
+            builder.RegisterType<PaymentRequestBcnWalletAddressValueResolver>()
                 .AsSelf()
                 .SingleInstance();
 
             builder.RegisterType<RefundAmountResolver>()
+                .AsSelf()
+                .SingleInstance();
+
+            builder.RegisterType<PaymentTxBcnWalletAddressValueResolver>()
                 .AsSelf()
                 .SingleInstance();
         }

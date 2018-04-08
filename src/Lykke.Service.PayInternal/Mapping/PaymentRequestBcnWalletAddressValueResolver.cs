@@ -4,11 +4,11 @@ using Lykke.Service.PayInternal.Core.Services;
 
 namespace Lykke.Service.PayInternal.Mapping
 {
-    public class BlockchainWalletAddressValueResolver : IValueResolver<IPaymentRequest, object, string>
+    public class PaymentRequestBcnWalletAddressValueResolver : IValueResolver<IPaymentRequest, object, string>
     {
         private readonly IWalletManager _walletManager;
 
-        public BlockchainWalletAddressValueResolver(IWalletManager walletManager)
+        public PaymentRequestBcnWalletAddressValueResolver(IWalletManager walletManager)
         {
             _walletManager = walletManager;
         }

@@ -9,6 +9,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         [AzureTableCheck]
         public string LogsConnString { get; set; }
         [AzureTableCheck]
+        //todo: consider removing it
         public string MerchantWalletConnString { get; set; }
         [AzureTableCheck]
         public string MerchantOrderConnString { get; set; }
