@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
@@ -31,6 +30,13 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
         public async Task<IMerchant> GetAsync(string merchantName)
         {
             return await _storage.GetDataAsync(GetPartitionKey(), GetRowKey(merchantName));
+        }
+
+        public async Task<IReadOnlyList<IMerchant>> FindAsync(string apiKey)
+        {
+            IList<MerchantEntity> entities = await _storage.GetDataAsync(merchant => merchant.ApiKey == apiKey);
+
+            return entities.ToList();
         }
 
         public async Task<IMerchant> InsertAsync(IMerchant merchant)
