@@ -26,6 +26,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransferService _transferService;
         private readonly IPaymentRequestStatusResolver _paymentRequestStatusResolver;
         private readonly IWalletManager _walletsManager;
+        private readonly ITransactionsService _transactionsService;
         private readonly ILog _log;
 
         public PaymentRequestService(
@@ -36,7 +37,8 @@ namespace Lykke.Service.PayInternal.Services
             ITransferService transferService,
             IPaymentRequestStatusResolver paymentRequestStatusResolver,
             ILog log, 
-            IWalletManager walletsManager)
+            IWalletManager walletsManager, 
+            ITransactionsService transactionsService)
         {
             _paymentRequestRepository = paymentRequestRepository;
             _transactionRepository = transactionRepository;
@@ -46,6 +48,7 @@ namespace Lykke.Service.PayInternal.Services
             _paymentRequestStatusResolver = paymentRequestStatusResolver;
             _log = log;
             _walletsManager = walletsManager;
+            _transactionsService = transactionsService;
         }
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -60,9 +63,8 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<PaymentRequestRefund> GetRefundInfoAsync(string paymentRequestId)
         {
-            //todo: move to transactionsService
             IReadOnlyList<IPaymentRequestTransaction> transactions =
-                (await _transactionRepository.GetByPaymentRequest(paymentRequestId)).Where(x => x.IsRefund()).ToList();
+                (await _transactionsService.GetByPaymentRequestAsync(paymentRequestId)).Where(x => x.IsRefund()).ToList();
 
             if (!transactions.Any()) 
                 return null;
@@ -158,6 +160,7 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task UpdateStatusByTransactionAsync(string transactionId)
         {
+            //todo: move to transactionsService
             IEnumerable<IPaymentRequestTransaction> txs =
                 await _transactionRepository.GetByTransactionAsync(transactionId);
             

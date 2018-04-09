@@ -121,7 +121,6 @@ namespace Lykke.Service.PayInternal.Services
                             TransferId = transferResult.Id
                         });
 
-                    //todo: think of moving this call inside  _transactionsService
                     await _transactionPublisher.PublishAsync(refundTransaction);
                 }
 
