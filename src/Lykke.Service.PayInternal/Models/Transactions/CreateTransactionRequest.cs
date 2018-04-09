@@ -14,7 +14,7 @@ namespace Lykke.Service.PayInternal.Models.Transactions
         public string WalletAddress { get; set; }
 
         [Required]
-        public double Amount { get; set; }
+        public decimal Amount { get; set; }
 
         [Required]
         public string AssetId { get; set; }

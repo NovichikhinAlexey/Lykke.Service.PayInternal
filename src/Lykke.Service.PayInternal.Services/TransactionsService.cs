@@ -55,7 +55,7 @@ namespace Lykke.Service.PayInternal.Services
             return result;
         }
 
-        public async Task<IPaymentRequestTransaction> CreateTransaction(ICreateTransaction request)
+        public async Task<IPaymentRequestTransaction> CreateTransactionAsync(ICreateTransactionCommand request)
         {
             var paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
 
@@ -82,7 +82,7 @@ namespace Lykke.Service.PayInternal.Services
             return await _transactionRepository.AddAsync(transactionEntity);
         }
 
-        public async Task Update(IUpdateTransaction request)
+        public async Task UpdateAsync(IUpdateTransactionCommand request)
         {
             if (string.IsNullOrEmpty(request.WalletAddress))
             {

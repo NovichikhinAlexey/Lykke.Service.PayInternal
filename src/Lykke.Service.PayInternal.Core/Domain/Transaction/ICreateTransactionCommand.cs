@@ -2,7 +2,7 @@
 
 namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 {
-    public interface ICreateTransaction
+    public interface ICreateTransactionCommand
     {
         string TransactionId { get; set; }
         string WalletAddress { get; set; }

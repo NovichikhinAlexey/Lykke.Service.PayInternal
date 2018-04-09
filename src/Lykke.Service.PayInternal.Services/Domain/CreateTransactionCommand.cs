@@ -4,7 +4,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.Services.Domain
 {
-    public class CreateTransaction : ICreateTransaction
+    public class CreateTransactionCommand : ICreateTransactionCommand
     {
         public string TransactionId { get; set; }
         public string WalletAddress { get; set; }
