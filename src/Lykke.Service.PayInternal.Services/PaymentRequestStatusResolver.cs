@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
+using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -105,10 +106,11 @@ namespace Lykke.Service.PayInternal.Services
 
             var paidDate = txs.GetLatestDate();
 
-            var actualOrder = await _orderService.GetAsync(paymentRequest.Id, paidDate);
-
-            if (actualOrder == null)
+            if (paidDate > paymentRequest.DueDate)
                 return PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.PaymentExpired, btcPaid, paidDate);
+
+            IOrder actualOrder = await _orderService.GetActualAsync(paymentRequest.Id, paidDate) ??
+                                 await _orderService.GetLatestOrCreateAsync(paymentRequest);
 
             bool allConfirmed = txs.All(x => x.Confirmed(_transactionConfirmationCount));
 

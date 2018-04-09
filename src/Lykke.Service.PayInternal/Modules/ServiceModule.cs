@@ -84,6 +84,7 @@ namespace Lykke.Service.PayInternal.Modules
                 .SingleInstance();
 
             builder.RegisterType<StartupManager>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue))
                 .As<IStartupManager>()
                 .SingleInstance();
 

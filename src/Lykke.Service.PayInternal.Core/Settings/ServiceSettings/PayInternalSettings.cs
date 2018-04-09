@@ -33,7 +33,14 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
 
     public class ExpirationPeriodsSettings
     {
-        public TimeSpan Order { get; set; }
+        public OrderExpirationPeriodsSettings Order { get; set; }
+
         public TimeSpan Refund { get; set; }
+    }
+
+    public class OrderExpirationPeriodsSettings
+    {
+        public TimeSpan Primary { get; set; }
+        public TimeSpan Extended { get; set; }
     }
 }
