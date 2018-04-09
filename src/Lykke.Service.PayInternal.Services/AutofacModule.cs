@@ -8,19 +8,16 @@ namespace Lykke.Service.PayInternal.Services
 {
     public class AutofacModule: Module
     {
-        private readonly TimeSpan _orderExpiration;
-        private readonly TimeSpan _refundExpiration;
+        private readonly ExpirationPeriodsSettings _expirationPeriods;
         private readonly int _transactionConfirmationCount;
         private readonly IList<BlockchainWalletAllocationPolicy> _walletAllocationSettings;
 
         public AutofacModule(
-            TimeSpan orderExpiration,
-            TimeSpan refundExpiration,
+            ExpirationPeriodsSettings expirationPeriods,
             int transactionConfirmationCount,
             IList<BlockchainWalletAllocationPolicy> walletAllocationSettings)
         {
-            _orderExpiration = orderExpiration;
-            _refundExpiration = refundExpiration;
+            _expirationPeriods = expirationPeriods;
             _transactionConfirmationCount = transactionConfirmationCount;
             _walletAllocationSettings = walletAllocationSettings;
         }
@@ -36,10 +33,10 @@ namespace Lykke.Service.PayInternal.Services
 
             builder.RegisterType<RefundService>()
                 .As<IRefundService>()
-                .WithParameter(TypedParameter.From(_refundExpiration));
+                .WithParameter(TypedParameter.From(_expirationPeriods.Refund));
 
             builder.RegisterType<OrderService>()
-                .WithParameter(TypedParameter.From(_orderExpiration))
+                .WithParameter(TypedParameter.From(_expirationPeriods.Order))
                 .As<IOrderService>();
 
             builder.RegisterType<PaymentRequestStatusResolver>()

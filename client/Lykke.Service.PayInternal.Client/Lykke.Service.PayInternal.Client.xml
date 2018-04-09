@@ -668,6 +668,11 @@
             Gets or sets the order due date.
             </summary>
         </member>
+        <member name="P:Lykke.Service.PayInternal.Client.Models.Order.OrderModel.ExtendedDueDate">
+            <summary>
+            Gets or sets the order extended due date
+            </summary>
+        </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.Order.OrderModel.CreatedDate">
             <summary>
             Gets or sets the order created date.

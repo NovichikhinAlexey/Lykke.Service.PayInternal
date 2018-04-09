@@ -12,6 +12,7 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public decimal SettlementAmount { get; set; }
         public decimal PaymentAmount { get; set; }
         public DateTime DueDate { get; set; }
+        public DateTime ExtendedDueDate { get; set; }
         public DateTime CreatedDate { get; set; }
         public decimal? ExchangeRate { get; set; }
     }

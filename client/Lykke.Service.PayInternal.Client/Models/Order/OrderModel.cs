@@ -41,6 +41,11 @@ namespace Lykke.Service.PayInternal.Client.Models.Order
         /// Gets or sets the order due date.
         /// </summary>
         public DateTime DueDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the order extended due date
+        /// </summary>
+        public DateTime ExtendedDueDate { get; set; }
         
         /// <summary>
         /// Gets or sets the order created date.
