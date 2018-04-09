@@ -8,6 +8,8 @@ namespace Lykke.Service.PayInternal.Core.Services
     {
         Task<IEnumerable<IPaymentRequestTransaction>> GetAsync(string walletAddress);
 
+        Task<IEnumerable<IPaymentRequestTransaction>> GetByPaymentRequestAsync(string paymentRequestId);
+
         Task<IEnumerable<IPaymentRequestTransaction>> GetConfirmedAsync(string walletAddress);
 
         Task<IEnumerable<IPaymentRequestTransaction>> GetAllMonitoredAsync();

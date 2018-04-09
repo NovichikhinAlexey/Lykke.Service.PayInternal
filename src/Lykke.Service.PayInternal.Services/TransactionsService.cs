@@ -42,6 +42,11 @@ namespace Lykke.Service.PayInternal.Services
             return await _transactionRepository.GetAsync(walletAddress);
         }
 
+        public async Task<IEnumerable<IPaymentRequestTransaction>> GetByPaymentRequestAsync(string paymentRequestId)
+        {
+            return await _transactionRepository.GetByPaymentRequest(paymentRequestId);
+        }
+
         public async Task<IEnumerable<IPaymentRequestTransaction>> GetConfirmedAsync(string walletAddress)
         {
             var transactions = await GetAsync(walletAddress);

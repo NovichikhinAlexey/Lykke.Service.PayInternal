@@ -13,6 +13,9 @@ using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Rabbit.Publishers
 {
+    /// <summary>
+    /// Publishes messages about new transactions which have been created by service
+    /// </summary>
     [UsedImplicitly]
     public class TransactionPublisher : ITransactionPublisher, IStartable, IStopable
     {
