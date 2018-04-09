@@ -2,6 +2,7 @@
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
+using Lykke.Service.PayInternal.Services.Domain;
 using Lykke.Service.PayInternal.Services.Mapping;
 
 namespace Lykke.Service.PayInternal.Services
@@ -17,6 +18,17 @@ namespace Lykke.Service.PayInternal.Services
 
             CreateMap<IPaymentRequestTransaction, TransferCommand>(MemberList.Destination)
                 .ForMember(dest => dest.Amounts, opt => opt.ResolveUsing<RefundAmountResolver>());
+
+            CreateMap<ICreateTransactionRequest, CreateTransactionCommand>(MemberList.Destination)
+                .ForMember(dest => dest.DueDate, opt => opt.Ignore())
+                .ForMember(dest => dest.TransferId, opt => opt.Ignore())
+                .ForMember(dest => dest.Type,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.Type = (TransactionType) resContext.Items["TransactionType"]))
+                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<VirtualAddressResolver>());
+
+            CreateMap<IUpdateTransactionRequest, UpdateTransactionCommand>(MemberList.Destination)
+                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<VirtualAddressResolver>());
         }
     }
 }

@@ -11,7 +11,7 @@ using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Transactions;
-using Lykke.Service.PayInternal.Services;
+using Lykke.Service.PayInternal.Services.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -22,19 +22,19 @@ namespace Lykke.Service.PayInternal.Controllers
     {
         private readonly IPaymentRequestService _paymentRequestService;
         private readonly ITransactionsService _transactionsService;
-        private readonly IBcnWalletUsageService _bcnWalletUsageService;
+        private readonly ITransactionsManager _transactionsManager;
         private readonly ILog _log;
 
         public TransactionsController(
             ITransactionsService transactionsService,
             IPaymentRequestService paymentRequestService,
             ILog log, 
-            IBcnWalletUsageService bcnWalletUsageService)
+            ITransactionsManager transactionsManager)
         {
             _paymentRequestService = paymentRequestService;
             _transactionsService = transactionsService;
             _log = log;
-            _bcnWalletUsageService = bcnWalletUsageService;
+            _transactionsManager = transactionsManager;
         }
 
         /// <summary>
@@ -47,24 +47,15 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation(nameof(CreatePaymentTransaction))]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         [ValidateModel]
         public async Task<IActionResult> CreatePaymentTransaction([FromBody] CreateTransactionRequest request)
         {
             try
             {
-                //todo: move this business logic to transactions manager service
-                string virtualAddress =
-                    await _bcnWalletUsageService.ResolveOccupierAsync(request.WalletAddress, request.Blockchain);
+                var command = Mapper.Map<CreateTransactionCommand>(request,
+                    opts => opts.Items["TransactionType"] = TransactionType.Payment);
 
-                if (string.IsNullOrEmpty(virtualAddress))
-                    throw new BlockchainWalletNotLinkedException(request.WalletAddress, request.Blockchain);
-
-                var domainRequest = request.ToDomain(virtualAddress, TransactionType.Payment);
-
-                await _transactionsService.CreateTransaction(domainRequest);
-
-                await _paymentRequestService.UpdateStatusAsync(virtualAddress);
+                await _transactionsManager.CreateTransactionAsync(command);
 
                 return Ok();
             }
@@ -101,9 +92,9 @@ namespace Lykke.Service.PayInternal.Controllers
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction), ex);
-            }
 
-            return StatusCode((int) HttpStatusCode.InternalServerError);
+                throw;
+            }
         }
         /// <summary>
         /// Return payment transactions
@@ -149,34 +140,14 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPut]
         [SwaggerOperation("UpdateTransaction")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         [ValidateModel]
         public async Task<IActionResult> UpdateTransaction([FromBody] UpdateTransactionRequest request)
         {
             try
             {
-                //todo: move this business logic to transactions manager service
-                var virtualAddress = string.Empty;
+                var command = Mapper.Map<UpdateTransactionCommand>(request);
 
-                if (!string.IsNullOrEmpty(request.WalletAddress))
-                {
-                    virtualAddress =
-                        await _bcnWalletUsageService.ResolveOccupierAsync(request.WalletAddress, request.Blockchain);
-
-                    if (string.IsNullOrEmpty(virtualAddress))
-                        throw new BlockchainWalletNotLinkedException(request.WalletAddress, request.Blockchain);
-                }
-
-                await _transactionsService.Update(request.ToDomain(virtualAddress));
-
-                if (string.IsNullOrEmpty(virtualAddress))
-                {
-                    await _paymentRequestService.UpdateStatusByTransactionAsync(request.TransactionId);
-                }
-                else
-                {
-                    await _paymentRequestService.UpdateStatusAsync(virtualAddress);
-                }
+                await _transactionsManager.UpdateTransactionAsync(command);
 
                 return Ok();
             }
@@ -213,9 +184,9 @@ namespace Lykke.Service.PayInternal.Controllers
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), ex);
-            }
 
-            return StatusCode((int) HttpStatusCode.InternalServerError);
+                throw;
+            }
         }
 
         /// <summary>
@@ -226,7 +197,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("GetAllMonitored")]
         [SwaggerOperation("GetAllMonitored")]
         [ProducesResponseType(typeof(List<TransactionStateResponse>), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetAllMonitoredAsync()
         {
             try
@@ -238,9 +208,9 @@ namespace Lykke.Service.PayInternal.Controllers
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(TransactionsController), nameof(GetAllMonitoredAsync), ex);
-            }
 
-            return StatusCode((int) HttpStatusCode.InternalServerError);
+                throw;
+            }
         }
 
 
@@ -253,7 +223,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("expired")]
         [SwaggerOperation("SetExpired")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
         [ValidateModel]
         public async Task<IActionResult> Expired([FromBody] TransactionExpiredRequest request)
         {
@@ -266,9 +235,9 @@ namespace Lykke.Service.PayInternal.Controllers
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(TransactionsController), nameof(Expired), ex);
-            }
 
-            return StatusCode((int) HttpStatusCode.InternalServerError);
+                throw;
+            }
         }
     }
 }

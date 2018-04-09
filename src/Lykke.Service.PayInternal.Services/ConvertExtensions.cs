@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
-using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Services.Domain;
 
@@ -62,36 +61,6 @@ namespace Lykke.Service.PayInternal.Services
                 DeltaSpread = src.DeltaSpread,
                 LpPips = src.LpMarkupPips,
                 LpFixedFee = src.MarkupFixedFee
-            };
-        }
-
-        public static ICreateTransaction ToDomain(this ICreateTransactionRequest src, string virtualAddress, TransactionType transactionType)
-        {
-            return new CreateTransaction
-            {
-                WalletAddress = virtualAddress,
-                Amount = (decimal) src.Amount,
-                FirstSeen = src.FirstSeen,
-                Confirmations = src.Confirmations,
-                BlockId = src.BlockId,
-                TransactionId = src.TransactionId,
-                Blockchain = src.Blockchain,
-                AssetId = src.AssetId,
-                SourceWalletAddresses = src.SourceWalletAddresses,
-                Type = transactionType
-            };
-        }
-
-        public static IUpdateTransaction ToDomain(this IUpdateTransactionRequest src, string virtualAddress)
-        {
-            return new UpdateTransaction
-            {
-                WalletAddress = virtualAddress,
-                Amount = src.Amount,
-                Confirmations = src.Confirmations,
-                BlockId = src.BlockId,
-                TransactionId = src.TransactionId,
-                FirstSeen = src.FirstSeen
             };
         }
     }

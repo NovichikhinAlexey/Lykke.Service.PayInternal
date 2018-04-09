@@ -206,6 +206,10 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<PaymentTxBcnWalletAddressValueResolver>()
                 .AsSelf()
                 .SingleInstance();
+
+            builder.RegisterType<VirtualAddressResolver>()
+                .AsSelf()
+                .SingleInstance();
         }
     }
 }

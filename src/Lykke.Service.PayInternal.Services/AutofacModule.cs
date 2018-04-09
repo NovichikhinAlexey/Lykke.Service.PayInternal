@@ -55,6 +55,9 @@ namespace Lykke.Service.PayInternal.Services
             builder.RegisterType<WalletManager>()
                 .WithParameter(TypedParameter.From(_walletAllocationSettings))
                 .As<IWalletManager>();
+
+            builder.RegisterType<TransactionsManager>()
+                .As<ITransactionsManager>();
         }
     }
 }

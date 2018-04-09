@@ -106,8 +106,8 @@ namespace Lykke.Service.PayInternal.Services
                         continue;
                     }
 
-                    IPaymentRequestTransaction refundTransaction = await _transactionsService.CreateTransaction(
-                        new CreateTransaction
+                    IPaymentRequestTransaction refundTransaction = await _transactionsService.CreateTransactionAsync(
+                        new CreateTransactionCommand
                         {
                             Amount = transferResultTransaction.Amount,
                             AssetId = transferResultTransaction.AssetId,
