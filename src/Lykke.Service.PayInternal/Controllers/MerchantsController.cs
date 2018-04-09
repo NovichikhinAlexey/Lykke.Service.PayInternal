@@ -105,17 +105,17 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<MerchantModel>(createdMerchant));
             }
-            catch (DuplicateMerchantNameException duplicateEx)
+            catch (Exception exception) when (exception is DuplicateMerchantNameException ||
+                                              exception is DuplicateMerchantApiKeyException)
             {
-                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(CreateAsync), request.ToJson(), duplicateEx);
-
-                return BadRequest(ErrorResponse.Create(duplicateEx.Message));
-
+                await _log.WriteWarningAsync(nameof(MerchantsController), nameof(CreateAsync), request.ToJson(),
+                    exception);
+                return BadRequest(ErrorResponse.Create(exception.Message));
             }
             catch (Exception exception)
             {
-                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(CreateAsync), request.ToJson(), exception);
-
+                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(CreateAsync), request.ToJson(),
+                    exception);
                 throw;
             }
         }

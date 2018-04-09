@@ -9,6 +9,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Merchant
         
         Task<IMerchant> GetAsync(string merchantName);
 
+        Task<IReadOnlyList<IMerchant>> FindAsync(string apiKey);
+
         Task<IMerchant> InsertAsync(IMerchant merchant);
         
         Task ReplaceAsync(IMerchant merchant);

@@ -35,6 +35,11 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IMerchant> CreateAsync(IMerchant merchant)
         {
+            IReadOnlyList<IMerchant> merchants = await _merchantRepository.FindAsync(merchant.ApiKey);
+
+            if(merchants.Count>0)
+                throw new DuplicateMerchantApiKeyException(merchant.ApiKey);
+
             IMerchant createdMerchant = await _merchantRepository.InsertAsync(merchant);
 
             await _log.WriteInfoAsync(nameof(MerchantService), nameof(CreateAsync),

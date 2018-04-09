@@ -38,6 +38,13 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
             return await _storage.GetDataAsync(GetPartitionKey(merchantName), GetRowKey(merchantName));
         }
 
+        public async Task<IReadOnlyList<IMerchant>> FindAsync(string apiKey)
+        {
+            IList<MerchantEntity> entities = await _storage.GetDataAsync(merchant => merchant.ApiKey == apiKey);
+
+            return entities.ToList();
+        }
+
         public async Task<IMerchant> InsertAsync(IMerchant merchant)
         {
             var entity = new MerchantEntity(GetPartitionKey(merchant.Name), GetRowKey(merchant.Name));
