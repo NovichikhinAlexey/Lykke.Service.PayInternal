@@ -3,7 +3,6 @@ using Lykke.Service.PayInternal.Core;
 
 namespace Lykke.Service.PayInternal.Models.Transactions
 {
-    // TODO: remove this class after Contract assembly update.
     public class TransactionStateResponse
     {
         public string Id { get; set; }
