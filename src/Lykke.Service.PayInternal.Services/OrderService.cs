@@ -55,14 +55,22 @@ namespace Lykke.Service.PayInternal.Services
                 .FirstOrDefault();
         }
 
-        public async Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest)
+        public async Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest, bool force = false)
         {
             IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequest.Id);
 
-            IOrder latestOrder = orders.OrderByDescending(x => x.DueDate).FirstOrDefault();
+            IOrder latestOrder = orders.OrderByDescending(x => x.ExtendedDueDate).FirstOrDefault();
 
-            if (latestOrder?.DueDate > DateTime.UtcNow)
-                return latestOrder;
+            var now = DateTime.UtcNow;
+
+            if (latestOrder != null)
+            {
+                if (now < latestOrder.DueDate)
+                    return latestOrder;
+
+                if (now < latestOrder.ExtendedDueDate && !force)
+                    return latestOrder;
+            }
 
             IMerchant merchant = await _merchantRepository.GetAsync(paymentRequest.MerchantId);
 
@@ -101,9 +109,9 @@ namespace Lykke.Service.PayInternal.Services
                 AssetPairId = assetPair.Id,
                 SettlementAmount = paymentRequest.Amount,
                 PaymentAmount = paymentAmount,
-                DueDate = DateTime.UtcNow.Add(_orderExpirationPeriods.Primary),
-                ExtendedDueDate = DateTime.UtcNow.Add(_orderExpirationPeriods.Extended),
-                CreatedDate = DateTime.UtcNow,
+                DueDate = now.Add(_orderExpirationPeriods.Primary),
+                ExtendedDueDate = now.Add(_orderExpirationPeriods.Extended),
+                CreatedDate = now,
                 ExchangeRate = rate
             };
 

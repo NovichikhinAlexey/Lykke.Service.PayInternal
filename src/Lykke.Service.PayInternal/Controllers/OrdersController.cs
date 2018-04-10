@@ -80,7 +80,7 @@ namespace Lykke.Service.PayInternal.Controllers
             try
             {
                 IPaymentRequest paymentRequest =
-                    await _paymentRequestService.CheckoutAsync(model.MerchantId, model.PaymentRequestId);
+                    await _paymentRequestService.CheckoutAsync(model.MerchantId, model.PaymentRequestId, model.Force);
 
                 IOrder order = await _orderService.GetAsync(paymentRequest.Id, paymentRequest.OrderId);
 

@@ -628,6 +628,11 @@
             The payment request which should be checkouted.
             </summary>
         </member>
+        <member name="P:Lykke.Service.PayInternal.Client.Models.Order.ChechoutRequestModel.Force">
+            <summary>
+            Will force to create new order if the actual order is expired but can be considered as actual till extended due date
+            </summary>
+        </member>
         <member name="T:Lykke.Service.PayInternal.Client.Models.Order.OrderModel">
             <summary>
             Represent an payment request order.

@@ -5,5 +5,7 @@
         public string MerchantId { get; set; }
 
         public string PaymentRequestId { get; set; }
+
+        public bool Force { get; set; }
     }
 }

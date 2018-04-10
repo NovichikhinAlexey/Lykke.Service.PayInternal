@@ -122,7 +122,7 @@ namespace Lykke.Service.PayInternal.Services
                 new PaymentRequestStatusInfo {Status = PaymentRequestStatus.Cancelled});
         }
 
-        public async Task<IPaymentRequest> CheckoutAsync(string merchantId, string paymentRequestId)
+        public async Task<IPaymentRequest> CheckoutAsync(string merchantId, string paymentRequestId, bool force = false)
         {
             IPaymentRequest paymentRequest = await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
 
@@ -133,7 +133,7 @@ namespace Lykke.Service.PayInternal.Services
             if (paymentRequest.Status != PaymentRequestStatus.New)
                 return paymentRequest;
 
-            IOrder order = await _orderService.GetLatestOrCreateAsync(paymentRequest);
+            IOrder order = await _orderService.GetLatestOrCreateAsync(paymentRequest, force);
 
             if (paymentRequest.OrderId != order.Id)
             {
