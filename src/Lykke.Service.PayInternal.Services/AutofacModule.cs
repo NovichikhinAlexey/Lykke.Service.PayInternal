@@ -58,6 +58,9 @@ namespace Lykke.Service.PayInternal.Services
 
             builder.RegisterType<TransactionsManager>()
                 .As<ITransactionsManager>();
+
+            builder.RegisterType<BlockchainClientProvider>()
+                .As<IBlockchainClientProvider>();
         }
     }
 }

@@ -7,6 +7,8 @@ namespace Lykke.Service.PayInternal.Core.Services
     {
         Task<IBcnWalletUsage> OccupyAsync(string walletAddress, BlockchainType blockchain, string occupiedBy);
 
+        Task<IBcnWalletUsage> OccupyAsync(BlockchainType blockchain, string occupiedBy);
+
         Task<IBcnWalletUsage> ReleaseAsync(string walletAddress, BlockchainType blockchain);
 
         Task<IBcnWalletUsage> GetAsync(string walletAddress, BlockchainType blockchain);

@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Lykke.Service.PayInternal.Core.Domain.Wallet
 {
@@ -7,6 +8,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Wallet
         Task<IBcnWalletUsage> CreateAsync(IBcnWalletUsage usage);
 
         Task<IBcnWalletUsage> GetAsync(string walletAddress, BlockchainType blockchain);
+
+        Task<IList<IBcnWalletUsage>> GetVacantAsync(BlockchainType blockchain);
 
         Task<bool> TryLockAsync(IBcnWalletUsage usage);
 

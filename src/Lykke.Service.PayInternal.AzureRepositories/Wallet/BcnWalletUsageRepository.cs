@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using AzureStorage;
@@ -73,6 +74,14 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
             });
 
             return Mapper.Map<BcnWalletUsage>(usage);
+        }
+
+        public async Task<IList<IBcnWalletUsage>> GetVacantAsync(BlockchainType blockchain)
+        {
+            IList<BcnWalletUsageEntity> usages = await _tableStorage.GetDataAsync(x =>
+                x.Blockchain == blockchain && string.IsNullOrEmpty(x.OccupiedBy));
+
+            return Mapper.Map<IList<IBcnWalletUsage>>(usages);
         }
     }
 }

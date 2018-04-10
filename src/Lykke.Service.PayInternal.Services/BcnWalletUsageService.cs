@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -15,7 +17,8 @@ namespace Lykke.Service.PayInternal.Services
             _walletUsageRepository = walletUsageRepository;
         }
 
-        public async Task<IBcnWalletUsage> OccupyAsync(string walletAddress, BlockchainType blockchain, string occupiedBy)
+        public async Task<IBcnWalletUsage> OccupyAsync(string walletAddress, BlockchainType blockchain,
+            string occupiedBy)
         {
             BcnWalletUsage usage = new BcnWalletUsage
             {
@@ -25,11 +28,40 @@ namespace Lykke.Service.PayInternal.Services
             };
 
             bool isLocked = await _walletUsageRepository.TryLockAsync(usage);
-            
+
             if (!isLocked)
                 throw new WalletAddressInUseException(walletAddress, blockchain);
 
             return usage;
+        }
+
+        public async Task<IBcnWalletUsage> OccupyAsync(BlockchainType blockchain, string occupiedBy)
+        {
+            IEnumerable<IBcnWalletUsage> vacantWallets = await _walletUsageRepository.GetVacantAsync(blockchain);
+
+            if (!vacantWallets.Any())
+                throw new WalletAddressAllocationException(blockchain);
+
+            foreach (IBcnWalletUsage vacantWalletUsage in vacantWallets)
+            {
+                IBcnWalletUsage lockedUsage;
+
+                try
+                {
+                    lockedUsage = await OccupyAsync(
+                        vacantWalletUsage.WalletAddress, 
+                        vacantWalletUsage.Blockchain,
+                        occupiedBy);
+                }
+                catch (WalletAddressInUseException)
+                {
+                    continue;
+                }
+
+                return lockedUsage;
+            }
+
+            throw new WalletAddressAllocationException(blockchain);
         }
 
         public async Task<IBcnWalletUsage> ReleaseAsync(string walletAddress, BlockchainType blockchain)

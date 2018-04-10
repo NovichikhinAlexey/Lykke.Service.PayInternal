@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Autofac.Features.Indexed;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
@@ -17,28 +16,28 @@ namespace Lykke.Service.PayInternal.Services
     public class WalletManager : IWalletManager
     {
         private readonly IVirtualWalletService _virtualWalletService;
-        private readonly IIndex<BlockchainType, IBlockchainApiClient> _blockchainClients;
         private readonly IList<BlockchainWalletAllocationPolicy> _walletAllocationSettings;
         private readonly IBcnWalletUsageService _bcnWalletUsageService;
         private readonly IWalletEventsPublisher _walletEventsPublisher;
         private readonly IPaymentRequestTransactionRepository _blockchainTransactionRepository;
+        private readonly IBlockchainClientProvider _blockchainClientProvider;
 
         private const int BatchPieceSize = 15;
 
         public WalletManager(
             IVirtualWalletService virtualWalletService,
-            IIndex<BlockchainType, IBlockchainApiClient> blockchainClients,
-            IList<BlockchainWalletAllocationPolicy> walletAllocationSettings, 
-            IBcnWalletUsageService bcnWalletUsageService, 
-            IWalletEventsPublisher walletEventsPublisher, 
-            IPaymentRequestTransactionRepository blockchainTransactionRepository)
+            IList<BlockchainWalletAllocationPolicy> walletAllocationSettings,
+            IBcnWalletUsageService bcnWalletUsageService,
+            IWalletEventsPublisher walletEventsPublisher,
+            IPaymentRequestTransactionRepository blockchainTransactionRepository, 
+            IBlockchainClientProvider blockchainClientProvider)
         {
             _virtualWalletService = virtualWalletService;
-            _blockchainClients = blockchainClients;
             _walletAllocationSettings = walletAllocationSettings;
             _bcnWalletUsageService = bcnWalletUsageService;
             _walletEventsPublisher = walletEventsPublisher;
             _blockchainTransactionRepository = blockchainTransactionRepository;
+            _blockchainClientProvider = blockchainClientProvider;
         }
 
         public async Task<IVirtualWallet> CreateAsync(string merchantId, DateTime dueDate, string assetId = null)
@@ -60,60 +59,56 @@ namespace Lykke.Service.PayInternal.Services
             if (virtualWallet == null)
                 throw new WalletNotFoundException(walletId);
 
-            BlockchainType blockchainType;
+            BlockchainType blockchainType = assetId.GetBlockchainType();
 
-            switch (assetId)
-            {
-                case LykkeConstants.BitcoinAssetId:
-                case LykkeConstants.SatoshiAssetId:
-                    blockchainType = BlockchainType.Bitcoin;
-                    break;
-                default: throw new AssetNotSupportedException(assetId);
-            }
+            IBlockchainApiClient blockchainClient = _blockchainClientProvider.Get(blockchainType);
 
-            if (!_blockchainClients.TryGetValue(blockchainType, out IBlockchainApiClient blockchainClient))
-                throw new InvalidOperationException($"Blockchain client of type [{blockchainType}] not found");
+            WalletAllocationPolicy policy = _walletAllocationSettings.GetPolicy(blockchainType);
 
-            BlockchainWalletAllocationPolicy walletAllocationSetting =
-                _walletAllocationSettings.SingleOrDefault(x => x.Blockchain == blockchainType);
-
-            WalletAllocationPolicy policy =
-                walletAllocationSetting?.WalletAllocationPolicy ?? WalletAllocationPolicy.New;
-
-            IVirtualWallet updatedWallet;
+            IBcnWalletUsage walletUsage;
 
             switch (policy)
             {
                 case WalletAllocationPolicy.New:
                     string address = await blockchainClient.CreateAddress();
 
-                    await _bcnWalletUsageService.OccupyAsync(address, blockchainType, virtualWallet.Id);
-
-                    updatedWallet = await _virtualWalletService.AddAddressAsync(
-                        virtualWallet.MerchantId, 
-                        virtualWallet.Id,
-                        new BlockchainWallet
-                        {
-                            AssetId = assetId,
-                            Address = address,
-                            Blockchain = blockchainType
-                        });
-                    //todo: update to take into account blockchain, now address is considered as bitcoin blockchain address
-                    await _walletEventsPublisher.PublishAsync(new Wallet
-                    {
-                        Address = address,
-                        DueDate = virtualWallet.DueDate
-                    });
+                    walletUsage = await _bcnWalletUsageService.OccupyAsync(address, blockchainType, virtualWallet.Id);
 
                     break;
                 case WalletAllocationPolicy.Reuse:
-                    //todo: try to lock vacant wallet
-                    throw  new NotImplementedException();
+                    try
+                    {
+                        walletUsage = await _bcnWalletUsageService.OccupyAsync(blockchainType, virtualWallet.Id);
+                    }
+                    catch (WalletAddressAllocationException)
+                    {
+                        string newAddress = await blockchainClient.CreateAddress();
+
+                        walletUsage =
+                            await _bcnWalletUsageService.OccupyAsync(newAddress, blockchainType, virtualWallet.Id);
+                    }
 
                     break;
                 default:
                     throw new UnknownWalletAllocationPolicyException(policy.ToString());
             }
+
+            IVirtualWallet updatedWallet = await _virtualWalletService.AddAddressAsync(
+                virtualWallet.MerchantId,
+                virtualWallet.Id,
+                new BlockchainWallet
+                {
+                    AssetId = assetId,
+                    Address = walletUsage.WalletAddress,
+                    Blockchain = walletUsage.Blockchain
+                });
+
+            //todo: update to take into account blockchain, now address is considered as bitcoin blockchain address
+            await _walletEventsPublisher.PublishAsync(new Wallet
+            {
+                Address = walletUsage.WalletAddress,
+                DueDate = virtualWallet.DueDate
+            });
 
             return updatedWallet;
         }
