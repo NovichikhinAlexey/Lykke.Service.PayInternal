@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using AzureStorage.Tables.Templates.Index;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
@@ -72,6 +73,24 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
                     Amounts = src.Amounts.ToList(),
                     Transactions = src.Transactions
                 };
+            }
+        }
+
+        public static class IndexById
+        {
+            public static string GeneratePartitionKey(string transferId)
+            {
+                return transferId;
+            }
+
+            public static string GenerateRowKey()
+            {
+                return "TransferIdIndex";
+            }
+
+            public static AzureIndex Create(TransferEntity entity)
+            {
+                return AzureIndex.Create(GeneratePartitionKey(entity.Id), GenerateRowKey(), entity);
             }
         }
     }

@@ -85,9 +85,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                 AzureTableStorage<AssetAvailabilityByMerchantEntity>.Create(_paymentRequestsConnectionString,
                     assetsAvailabilityByMerchantTableName, _log)));
 
-            builder.RegisterInstance<ITransferRepository>(
-                new TransferRepository(AzureTableStorage<TransferEntity>.Create(_transfersConnectionString,
-                        transfersTableName, _log)));
+            builder.RegisterInstance<ITransferRepository>(new TransferRepository(
+                AzureTableStorage<TransferEntity>.Create(_transfersConnectionString, transfersTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_transfersConnectionString, transfersTableName, _log)));
         }
     }
 }
