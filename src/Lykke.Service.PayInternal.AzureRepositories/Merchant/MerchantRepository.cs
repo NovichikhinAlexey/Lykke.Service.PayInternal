@@ -84,7 +84,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
 
         private static string GetPartitionKey(string merchantName)
         {
-            string hash = Convert.ToBase64String(SHA1.Create().ComputeHash(merchantName.ToUtf8Bytes()));
+            string hash = Convert
+                .ToBase64String(SHA1.Create().ComputeHash(merchantName.ToUtf8Bytes()))
+                .Replace('/', '_');
 
             return new string(hash.Take(PartitionKeyLength).ToArray());
         }
