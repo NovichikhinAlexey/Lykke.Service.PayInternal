@@ -15,4 +15,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Lykke.Service.PayInternal\Lykke.Service.PayInternal.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Properties\launchSettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
