@@ -134,6 +134,7 @@ namespace Lykke.Service.PayInternal.Services
                 {
                     DueDate = virtualWallet.DueDate,
                     Address = bcnWallet.Address,
+                    Blockchain = bcnWallet.Blockchain,
                     Transactions = transactions.Where(t =>
                         t.WalletAddress == virtualWallet.Id && t.Blockchain == bcnWallet.Blockchain)
                 }));

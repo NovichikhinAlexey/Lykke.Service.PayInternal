@@ -6,6 +6,7 @@ namespace Lykke.Service.PayInternal.Client.Models.Wallets
     public class WalletStateResponse
     {
         public string Address { get; set; }
+        public BlockchainType Blockchain { get; set; }
         public DateTime DueDate { get; set; }
         public IEnumerable<TransactionStateResponse> Transactions { get; set; }
     }
