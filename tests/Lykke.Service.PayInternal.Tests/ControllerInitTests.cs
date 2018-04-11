@@ -22,7 +22,7 @@ namespace Lykke.Service.PayInternal.Tests
         [TestInitialize]
         public void Initialize()
         {
-            using (var file = File.OpenText(@"Properties\launchSettings.json"))
+            using (var file = File.OpenText(Path.Combine("Properties","launchSettings.json")))
             {
                 var reader = new JsonTextReader(file);
 
