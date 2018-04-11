@@ -1,10 +1,10 @@
-﻿using System.Threading.Tasks;
-using Lykke.Service.PayInternal.Core.Domain.Wallet;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface IWalletEventsPublisher
     {
-        Task PublishAsync(IWallet wallet);
+        Task PublishAsync(string walletAddress, BlockchainType blockchain, DateTime dueDate);
     }
 }

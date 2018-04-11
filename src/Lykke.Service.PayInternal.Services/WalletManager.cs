@@ -103,12 +103,7 @@ namespace Lykke.Service.PayInternal.Services
                     Blockchain = walletUsage.Blockchain
                 });
 
-            //todo: update to take into account blockchain, now address is considered as bitcoin blockchain address
-            await _walletEventsPublisher.PublishAsync(new Wallet
-            {
-                Address = walletUsage.WalletAddress,
-                DueDate = virtualWallet.DueDate
-            });
+            await _walletEventsPublisher.PublishAsync(walletUsage.WalletAddress, blockchainType, virtualWallet.DueDate);
 
             return updatedWallet;
         }
