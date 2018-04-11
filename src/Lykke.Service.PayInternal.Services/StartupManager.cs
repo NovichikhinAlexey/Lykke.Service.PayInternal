@@ -24,8 +24,6 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task StartAsync()
         {
-            // TODO: Implement your startup logic here. Good idea is to log every step
-
             await Task.CompletedTask;
         }
     }
