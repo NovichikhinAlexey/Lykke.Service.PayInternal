@@ -10,6 +10,9 @@ namespace Lykke.Service.PayInternal.Models
     {
         public string Address { get; set; }
 
+        [JsonConverter(typeof(StringEnumConverter))]
+        public BlockchainType Blockchain { get; set; }
+
         public DateTime DueDate { get; set; }
 
         public IEnumerable<PayTransactionStateResponse> Transactions { get; set; }
