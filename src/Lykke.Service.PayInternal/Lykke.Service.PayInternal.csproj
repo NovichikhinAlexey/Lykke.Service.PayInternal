@@ -31,7 +31,7 @@
     <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.0.20" />
     <PackageReference Include="Lykke.Service.PayInternal.Contract" Version="1.0.23" />
     <PackageReference Include="Lykke.Service.Session" Version="1.0.33" />
-    <PackageReference Include="Lykke.SettingsReader" Version="2.1.0" />
+    <PackageReference Include="Lykke.SettingsReader" Version="2.2.0" />
     <PackageReference Include="Lykke.SlackNotification.AzureQueue" Version="2.0.1" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.2.1" />
     <PackageReference Include="Microsoft.AspNetCore" Version="2.0.1" />

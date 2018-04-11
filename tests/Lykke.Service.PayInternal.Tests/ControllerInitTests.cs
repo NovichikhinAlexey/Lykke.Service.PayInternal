@@ -9,7 +9,6 @@ using Lykke.Service.PayInternal.Modules;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Newtonsoft.Json;
@@ -20,6 +19,8 @@ namespace Lykke.Service.PayInternal.Tests
     [TestClass]
     public class ControllerInitTests
     {
+        public const string DefaultConfigurationKey = "SettingsUrl";
+
         [TestInitialize]
         public void Initialize()
         {
@@ -58,11 +59,11 @@ namespace Lykke.Service.PayInternal.Tests
 
             var configuration = configBuilder.Build();
 
-            configuration["SettingsUrl"] = configuration["SettingsUrlForApiTests"];
+            configuration[DefaultConfigurationKey] = configuration["SettingsUrlForApiTests"];
 
             var builder = new ContainerBuilder();
 
-            var appSettings = configuration.LoadSettings<AppSettings>();
+            var appSettings = configuration.LoadSettings<AppSettings>(DefaultConfigurationKey, true);
 
             builder.RegisterModule(new AzureRepositories.AutofacModule(
                 appSettings.Nested(o => o.PayInternalService.Db.MerchantOrderConnString),
