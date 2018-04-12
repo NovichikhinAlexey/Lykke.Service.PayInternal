@@ -20,7 +20,6 @@ namespace Lykke.Service.PayInternal.Services
     public class PaymentRequestService : IPaymentRequestService
     {
         private readonly IPaymentRequestRepository _paymentRequestRepository;
-        private readonly IPaymentRequestTransactionRepository _transactionRepository;
         private readonly IOrderService _orderService;
         private readonly IPaymentRequestPublisher _paymentRequestPublisher;
         private readonly ITransferService _transferService;
@@ -31,7 +30,6 @@ namespace Lykke.Service.PayInternal.Services
 
         public PaymentRequestService(
             IPaymentRequestRepository paymentRequestRepository,
-            IPaymentRequestTransactionRepository transactionRepository,
             IOrderService orderService,
             IPaymentRequestPublisher paymentRequestPublisher,
             ITransferService transferService,
@@ -41,7 +39,6 @@ namespace Lykke.Service.PayInternal.Services
             ITransactionsService transactionsService)
         {
             _paymentRequestRepository = paymentRequestRepository;
-            _transactionRepository = transactionRepository;
             _orderService = orderService;
             _paymentRequestPublisher = paymentRequestPublisher;
             _transferService = transferService;
@@ -61,10 +58,10 @@ namespace Lykke.Service.PayInternal.Services
             return await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
         }
 
-        public async Task<PaymentRequestRefund> GetRefundInfoAsync(string paymentRequestId)
+        public async Task<PaymentRequestRefund> GetRefundInfoAsync(string walletAddress)
         {
             IReadOnlyList<IPaymentRequestTransaction> transactions =
-                (await _transactionsService.GetByPaymentRequestAsync(paymentRequestId)).Where(x => x.IsRefund()).ToList();
+                (await _transactionsService.GetByWalletAsync(walletAddress)).Where(x => x.IsRefund()).ToList();
 
             if (!transactions.Any()) 
                 return null;
@@ -167,21 +164,19 @@ namespace Lykke.Service.PayInternal.Services
             await _paymentRequestRepository.UpdateAsync(paymentRequest);
 
             //todo: move to separate builder service
-            PaymentRequestRefund refundInfo = await GetRefundInfoAsync(paymentRequest.Id);
+            PaymentRequestRefund refundInfo = await GetRefundInfoAsync(paymentRequest.WalletAddress);
 
             await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
         }
 
-        public async Task UpdateStatusByTransactionAsync(string transactionId)
+        public async Task UpdateStatusByTransactionAsync(string transactionId, BlockchainType blockchain)
         {
-            //todo: move to transactionsService
-            IEnumerable<IPaymentRequestTransaction> txs =
-                await _transactionRepository.GetByTransactionAsync(transactionId);
-            
-            foreach (string walletAddress in txs.Unique(x => x.WalletAddress))
-            {
-                await UpdateStatusAsync(walletAddress);
-            }
+            IPaymentRequestTransaction tx = await _transactionsService.GetByIdAsync(transactionId, blockchain);
+
+            if (tx == null)
+                throw new TransactionNotFoundException(transactionId, blockchain);
+
+            await UpdateStatusAsync(tx.WalletAddress);
         }
     }
 }

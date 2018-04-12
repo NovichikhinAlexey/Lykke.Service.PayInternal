@@ -120,10 +120,11 @@ namespace Lykke.Service.PayInternal.Controllers
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
                 IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
-                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment())
+                    (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment())
                     .ToList();
 
-                PaymentRequestRefund refund = await _paymentRequestService.GetRefundInfoAsync(paymentRequestId);
+                PaymentRequestRefund refund =
+                    await _paymentRequestService.GetRefundInfoAsync(paymentRequest.WalletAddress);
 
                 var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
                 model.Order = Mapper.Map<PaymentRequestOrderModel>(order);

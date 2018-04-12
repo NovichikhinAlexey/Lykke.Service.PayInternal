@@ -1,4 +1,6 @@
 ﻿using System;
+using AutoMapper;
+using AzureStorage.Tables.Templates.Index;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
@@ -102,6 +104,69 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             {
                 _dueDate = value;
                 MarkValueTypePropertyAsDirty(nameof(DueDate));
+            }
+        }
+
+        public static class ByWalletAddress
+        {
+            public static string GeneratePartitionKey(string walletAddress)
+            {
+                return walletAddress;
+            }
+
+            public static string GenerateRowKey(string transactionId)
+            {
+                return transactionId;
+            }
+
+            public static PaymentRequestTransactionEntity Create(IPaymentRequestTransaction src)
+            {
+                var entity = new PaymentRequestTransactionEntity
+                {
+                    PartitionKey = GeneratePartitionKey(src.WalletAddress),
+                    RowKey = GenerateRowKey(src.TransactionId),
+                };
+
+                return Mapper.Map(src, entity);
+            }
+        }
+
+        public static class IndexByTransactionId
+        {
+            public static string GeneratePartitionKey(string transactionId)
+            {
+                return transactionId;
+            }
+
+            public static string GenerateRowKey(BlockchainType blockchain)
+            {
+                return blockchain.ToString();
+            }
+
+            public static AzureIndex Create(PaymentRequestTransactionEntity entity)
+            {
+                return AzureIndex.Create(GeneratePartitionKey(entity.TransactionId), GenerateRowKey(entity.Blockchain), entity);
+            }
+        }
+
+        public static class IndexByDueDate
+        {
+            public static string GeneratePartitionKey(DateTime dueDate)
+            {
+                var dueDateIso = dueDate.ToString("O");
+
+                return $"DD_{dueDateIso}";
+            }
+
+            public static string GenerateRowKey(string transactionId, BlockchainType blockchain)
+            {
+                return $"{transactionId}_{blockchain}";
+            }
+
+            public static AzureIndex Create(PaymentRequestTransactionEntity entity)
+            {
+                return AzureIndex.Create(GeneratePartitionKey(entity.DueDate),
+                    GenerateRowKey(entity.TransactionId, entity.Blockchain), entity);
             }
         }
     }

@@ -10,7 +10,7 @@ namespace Lykke.Service.PayInternal.Core.Services
         
         Task<IPaymentRequest> GetAsync(string merchantId, string paymentRequestId);
 
-        Task<PaymentRequestRefund> GetRefundInfoAsync(string paymentRequestId);
+        Task<PaymentRequestRefund> GetRefundInfoAsync(string walletAddress);
 
         Task<IPaymentRequest> FindAsync(string walletAddress);
 
@@ -22,6 +22,6 @@ namespace Lykke.Service.PayInternal.Core.Services
 
         Task UpdateStatusAsync(string walletAddress, PaymentRequestStatusInfo statusInfo = null);
 
-        Task UpdateStatusByTransactionAsync(string transactionId);
+        Task UpdateStatusByTransactionAsync(string transactionId, BlockchainType blockchain);
     }
 }
