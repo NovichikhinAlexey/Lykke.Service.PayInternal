@@ -55,7 +55,7 @@ namespace Lykke.Service.PayInternal.Services
                 throw new RefundValidationException(RefundErrorType.NotAllowedInStatus);
 
             IEnumerable<IPaymentRequestTransaction> paymentTxs =
-                (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
+                (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
 
             if (!paymentTxs.Any())
                 throw new RefundValidationException(RefundErrorType.NoPaymentTransactions);

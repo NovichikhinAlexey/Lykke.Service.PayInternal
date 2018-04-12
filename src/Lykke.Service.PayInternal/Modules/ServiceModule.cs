@@ -3,6 +3,7 @@ using System.Linq;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AzureStorage.Tables;
+using AzureStorage.Tables.Templates.Index;
 using Common;
 using Common.Log;
 using Lykke.Bitcoin.Api.Client;
@@ -49,8 +50,6 @@ namespace Lykke.Service.PayInternal.Modules
                 .As<ILog>()
                 .SingleInstance();
 
-            RegisterAzureRepositories(builder);
-
             RegisterServiceClients(builder);
 
             RegisterAppServices(builder);
@@ -62,14 +61,6 @@ namespace Lykke.Service.PayInternal.Modules
             RegisterMapperValueResolvers(builder);
 
             builder.Populate(_services);
-        }
-
-        private void RegisterAzureRepositories(ContainerBuilder builder)
-        {
-            builder.RegisterInstance<IPaymentRequestTransactionRepository>(new PaymentRequestTransactionRepository(
-                AzureTableStorage<PaymentRequestTransactionEntity>.Create(
-                    _dbSettings.ConnectionString(x => x.MerchantConnString),
-                    "MerchantWalletTransactions", _log)));
         }
 
         private void RegisterAppServices(ContainerBuilder builder)

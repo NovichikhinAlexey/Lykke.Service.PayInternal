@@ -28,7 +28,7 @@ namespace Lykke.Service.PayInternal.Controllers
         public TransactionsController(
             ITransactionsService transactionsService,
             IPaymentRequestService paymentRequestService,
-            ILog log, 
+            ILog log,
             ITransactionsManager transactionsManager)
         {
             _paymentRequestService = paymentRequestService;
@@ -120,7 +120,8 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), new
                 {
-                    ex.TransactionId
+                    ex.TransactionId,
+                    ex.Blockchain
                 }.ToJson(), ex);
 
                 return BadRequest(ErrorResponse.Create(ex.Message));
@@ -166,7 +167,7 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                var response = await _transactionsService.GetAllMonitoredAsync();
+                var response = await _transactionsService.GetNotExpiredAsync();
 
                 return Ok(Mapper.Map<List<TransactionStateResponse>>(response));
             }
@@ -193,7 +194,7 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                await _paymentRequestService.UpdateStatusByTransactionAsync(request.TransactionId);
+                await _paymentRequestService.UpdateStatusByTransactionAsync(request.TransactionId, request.Blockchain);
 
                 return Ok();
             }

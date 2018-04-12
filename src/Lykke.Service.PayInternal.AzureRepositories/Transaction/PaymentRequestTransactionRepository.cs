@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using AzureStorage;
+using AzureStorage.Tables.Templates.Index;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Microsoft.WindowsAzure.Storage.Table;
 
@@ -12,68 +14,87 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
     public class PaymentRequestTransactionRepository : IPaymentRequestTransactionRepository
     {
         private readonly INoSQLTableStorage<PaymentRequestTransactionEntity> _storage;
+        private readonly INoSQLTableStorage<AzureIndex> _indexByTransactionIdStorage;
+        private readonly INoSQLTableStorage<AzureIndex> _indexByDueDateStorage;
 
-        public PaymentRequestTransactionRepository(INoSQLTableStorage<PaymentRequestTransactionEntity> storage)
+        public PaymentRequestTransactionRepository(
+            INoSQLTableStorage<PaymentRequestTransactionEntity> storage,
+            INoSQLTableStorage<AzureIndex> indexByTransactionIdStorage,
+            INoSQLTableStorage<AzureIndex> indexByDueDateStorage)
         {
             _storage = storage;
-        }
-
-        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetAsync(string walletAddress)
-        {
-            IEnumerable<PaymentRequestTransactionEntity> entities =
-                await _storage.GetDataAsync(GetPartitionKey(walletAddress));
-
-            return Mapper.Map<IEnumerable<PaymentRequestTransaction>>(entities).ToList();
-        }
-        
-        public async Task<IPaymentRequestTransaction> GetAsync(string walletAddress, string transactionId)
-        {
-            PaymentRequestTransactionEntity entity =
-                await _storage.GetDataAsync(GetPartitionKey(walletAddress), GetRowKey(transactionId));
-
-            return Mapper.Map<PaymentRequestTransaction>(entity);
-        }
-
-        public async Task<IEnumerable<IPaymentRequestTransaction>> GetByTransactionAsync(string transactionId)
-        {
-            IEnumerable<PaymentRequestTransactionEntity> entities =
-                await _storage.GetDataAsync(t => t.Id == transactionId);
-
-            return Mapper.Map<IEnumerable<PaymentRequestTransaction>>(entities);
+            _indexByTransactionIdStorage = indexByTransactionIdStorage;
+            _indexByDueDateStorage = indexByDueDateStorage;
         }
 
         public async Task<IPaymentRequestTransaction> AddAsync(IPaymentRequestTransaction transaction)
         {
-            var entity = new PaymentRequestTransactionEntity(
-                GetPartitionKey(transaction.WalletAddress),
-                GetRowKey(transaction.TransactionId));
-
-            Mapper.Map(transaction, entity);
+            PaymentRequestTransactionEntity
+                entity = PaymentRequestTransactionEntity.ByWalletAddress.Create(transaction);
 
             await _storage.InsertOrMergeAsync(entity);
+
+            AzureIndex indexByTransactionId = PaymentRequestTransactionEntity.IndexByTransactionId.Create(entity);
+
+            await _indexByTransactionIdStorage.InsertOrMergeAsync(indexByTransactionId);
+
+            AzureIndex indexByDueDate = PaymentRequestTransactionEntity.IndexByDueDate.Create(entity);
+
+            await _indexByDueDateStorage.InsertOrMergeAsync(indexByDueDate);
 
             return Mapper.Map<PaymentRequestTransaction>(entity);
         }
 
-        public async Task<IEnumerable<IPaymentRequestTransaction>> GetNotExpiredAsync(int minConfirmationsCount)
+        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetByWalletAsync(string walletAddress)
         {
+            string partitionKey = PaymentRequestTransactionEntity.ByWalletAddress.GeneratePartitionKey(walletAddress);
+
+            IEnumerable<PaymentRequestTransactionEntity> entities = await _storage.GetDataAsync(partitionKey);
+
+            return Mapper.Map<IEnumerable<PaymentRequestTransaction>>(entities).ToList();
+        }
+
+        public async Task<IPaymentRequestTransaction> GetByIdAsync(string transactionId,
+            BlockchainType blockchain)
+        {
+            AzureIndex index = await _indexByTransactionIdStorage.GetDataAsync(
+                PaymentRequestTransactionEntity.IndexByTransactionId.GeneratePartitionKey(transactionId),
+                PaymentRequestTransactionEntity.IndexByTransactionId.GenerateRowKey(blockchain));
+
+            if (index == null) return null;
+
+            PaymentRequestTransactionEntity entity = await _storage.GetDataAsync(index);
+
+            return Mapper.Map<PaymentRequestTransaction>(entity);
+        }
+
+        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetByDueDate(DateTime dueDateGreaterThan)
+        {
+            string gtDate = PaymentRequestTransactionEntity.IndexByDueDate.GeneratePartitionKey(dueDateGreaterThan);
+
+            // fake date to fit partitionKey format and not to get data from other partitions 
+            string ltDate =
+                PaymentRequestTransactionEntity.IndexByDueDate.GeneratePartitionKey(dueDateGreaterThan.AddYears(100));
+
             var filter = TableQuery.CombineFilters(
-                TableQuery.GenerateFilterConditionForDate("DueDate", QueryComparisons.GreaterThan, DateTime.UtcNow),
+                TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.GreaterThan, gtDate),
                 TableOperators.And,
-                TableQuery.GenerateFilterConditionForInt("Confirmations", QueryComparisons.LessThan, minConfirmationsCount));
+                TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.LessThan, ltDate));
 
-            var query = new TableQuery<PaymentRequestTransactionEntity>().Where(filter);
+            var query = new TableQuery<AzureIndex>().Where(filter);
 
-            IEnumerable<PaymentRequestTransactionEntity> entities = await _storage.WhereAsync(query);
+            IEnumerable<AzureIndex> indecies = await _indexByDueDateStorage.WhereAsync(query);
 
-            return Mapper.Map<IEnumerable<PaymentRequestTransaction>>(entities);
+            IEnumerable<PaymentRequestTransactionEntity> entities = await _storage.GetDataAsync(indecies);
+
+            return Mapper.Map<IEnumerable<PaymentRequestTransaction>>(entities).ToList();
         }
 
         public async Task UpdateAsync(IPaymentRequestTransaction transaction)
         {
             await _storage.MergeAsync(
-                GetPartitionKey(transaction.WalletAddress),
-                GetRowKey(transaction.TransactionId),
+                PaymentRequestTransactionEntity.ByWalletAddress.GeneratePartitionKey(transaction.WalletAddress),
+                PaymentRequestTransactionEntity.ByWalletAddress.GenerateRowKey(transaction.TransactionId),
                 entity =>
                 {
                     entity.Amount = transaction.Amount;
@@ -85,24 +106,5 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
                     return entity;
                 });
         }
-
-        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetByPaymentRequest(string paymentRequestId)
-        {
-            // todo: optimize transactions repository
-
-            string filter = TableQuery.GenerateFilterCondition("PaymentRequestId", QueryComparisons.Equal, paymentRequestId);
-
-            var query = new TableQuery<PaymentRequestTransactionEntity>().Where(filter);
-
-            IEnumerable<PaymentRequestTransactionEntity> entities = await _storage.WhereAsync(query);
-
-            return Mapper.Map<IEnumerable<PaymentRequestTransaction>>(entities).ToList();
-        }
-
-        private static string GetPartitionKey(string walletAddress)
-            => walletAddress;
-
-        private static string GetRowKey(string transactionId)
-            => transactionId;
     }
 }

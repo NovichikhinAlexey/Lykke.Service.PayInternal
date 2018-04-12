@@ -30,14 +30,7 @@ namespace Lykke.Service.PayInternal.Services
         {
             await _transactionsService.UpdateAsync(command);
 
-            if (string.IsNullOrEmpty(command.WalletAddress))
-            {
-                await _paymentRequestService.UpdateStatusByTransactionAsync(command.TransactionId);
-            }
-            else
-            {
-                await _paymentRequestService.UpdateStatusAsync(command.WalletAddress);
-            }
+            await _paymentRequestService.UpdateStatusByTransactionAsync(command.TransactionId, command.Blockchain);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IList<BlockchainWalletAllocationPolicy> _walletAllocationSettings;
         private readonly IBcnWalletUsageService _bcnWalletUsageService;
         private readonly IWalletEventsPublisher _walletEventsPublisher;
-        private readonly IPaymentRequestTransactionRepository _blockchainTransactionRepository;
+        private readonly ITransactionsService _transactionsService;
         private readonly IBlockchainClientProvider _blockchainClientProvider;
 
         private const int BatchPieceSize = 15;
@@ -29,15 +29,15 @@ namespace Lykke.Service.PayInternal.Services
             IList<BlockchainWalletAllocationPolicy> walletAllocationSettings,
             IBcnWalletUsageService bcnWalletUsageService,
             IWalletEventsPublisher walletEventsPublisher,
-            IPaymentRequestTransactionRepository blockchainTransactionRepository, 
-            IBlockchainClientProvider blockchainClientProvider)
+            IBlockchainClientProvider blockchainClientProvider, 
+            ITransactionsService transactionsService)
         {
             _virtualWalletService = virtualWalletService;
             _walletAllocationSettings = walletAllocationSettings;
             _bcnWalletUsageService = bcnWalletUsageService;
             _walletEventsPublisher = walletEventsPublisher;
-            _blockchainTransactionRepository = blockchainTransactionRepository;
             _blockchainClientProvider = blockchainClientProvider;
+            _transactionsService = transactionsService;
         }
 
         public async Task<IVirtualWallet> CreateAsync(string merchantId, DateTime dueDate, string assetId = null)
@@ -116,7 +116,7 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (IEnumerable<IVirtualWallet> batch in wallets.Batch(BatchPieceSize))
             {
-                await Task.WhenAll(batch.Select(x => _blockchainTransactionRepository.GetAsync(x.Id)
+                await Task.WhenAll(batch.Select(x => _transactionsService.GetByWalletAsync(x.Id)
                     .ContinueWith(t =>
                     {
                         lock (transactions)

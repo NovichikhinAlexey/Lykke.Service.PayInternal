@@ -6,12 +6,14 @@ using Lykke.Service.PayInternal.AzureRepositories.Asset;
 using Lykke.Service.PayInternal.AzureRepositories.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.Order;
 using Lykke.Service.PayInternal.AzureRepositories.PaymentRequest;
+using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.AzureRepositories.Transfer;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.SettingsReader;
@@ -50,6 +52,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             const string transfersTableName = "Transfers";
             const string bcnWalletsUsageTableName = "BlockchainWalletsUsage";
             const string virtualWalletsTableName = "VirtualWallets";
+            const string merchantTransactionsTableName = "MerchantWalletTransactions";
 
             builder.RegisterInstance<IMerchantRepository>(new MerchantRepository(
                 AzureTableStorage<MerchantEntity>.Create(_merchantsConnectionString,
@@ -88,6 +91,11 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             builder.RegisterInstance<ITransferRepository>(new TransferRepository(
                 AzureTableStorage<TransferEntity>.Create(_transfersConnectionString, transfersTableName, _log),
                 AzureTableStorage<AzureIndex>.Create(_transfersConnectionString, transfersTableName, _log)));
+
+            builder.RegisterInstance<IPaymentRequestTransactionRepository>(new PaymentRequestTransactionRepository(
+                AzureTableStorage<PaymentRequestTransactionEntity>.Create(_merchantsConnectionString,merchantTransactionsTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantTransactionsTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantTransactionsTableName, _log)));
         }
     }
 }
