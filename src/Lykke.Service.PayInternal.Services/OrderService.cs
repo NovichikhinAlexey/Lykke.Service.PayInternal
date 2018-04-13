@@ -42,11 +42,17 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IOrder> GetAsync(string paymentRequestId, string orderId)
         {
+            if (string.IsNullOrEmpty(paymentRequestId) || string.IsNullOrEmpty(orderId))
+                return null;
+
             return await _orderRepository.GetAsync(paymentRequestId, orderId);
         }
 
         public async Task<IOrder> GetActualAsync(string paymentRequestId, DateTime date)
         {
+            if (string.IsNullOrEmpty(paymentRequestId))
+                return null;
+
             IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequestId);
 
             return orders
