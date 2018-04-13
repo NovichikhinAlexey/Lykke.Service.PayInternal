@@ -198,6 +198,6 @@ namespace Lykke.Service.PayInternal.Client
         /// </summary>
         /// <param name="paymentRequestId"></param>
         /// <returns></returns>
-        Task<IReadOnlyList<TransactionByPaymentRequestResponse>> GetTransactionsByPaymentRequestAsync(string paymentRequestId);
+        Task<IReadOnlyList<TransactionByPaymentRequestResponse>> GetTransactionsSourceWalletsAsync(string walletAddress);
     }
 }

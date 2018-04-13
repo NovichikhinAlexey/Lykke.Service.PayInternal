@@ -190,9 +190,9 @@ namespace Lykke.Service.PayInternal.Client
             _httpClient?.Dispose();
         }
 
-        public async Task<IReadOnlyList<TransactionByPaymentRequestResponse>> GetTransactionsByPaymentRequestAsync(string paymentRequestId)
+        public async Task<IReadOnlyList<TransactionByPaymentRequestResponse>> GetTransactionsSourceWalletsAsync(string walletAddress)
         {
-            return await _runner.RunAsync(() => _payInternalApi.GetTransactionsByPaymentRequestAsync(paymentRequestId));
+            return await _runner.RunAsync(() => _payInternalApi.GetTransactionsSourceWalletsAsync(walletAddress));
         }
     }
 }
