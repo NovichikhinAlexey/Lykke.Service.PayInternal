@@ -21,6 +21,11 @@
         public const string PaymentInProgress = "PAYMENT_INPROGRESS";
 
         /// <summary>
+        /// Payment has benn cancelled
+        /// </summary>
+        public const string PaymentCancelled = "PAYMENT_CANCELLED";
+
+        /// <summary>
         /// Payment error
         /// </summary>
         public const string PaymentError = "PAYMENT_ERROR";
