@@ -1,7 +1,11 @@
-﻿namespace Lykke.Service.PayInternal.Core.Domain.Wallet
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
+namespace Lykke.Service.PayInternal.Core.Domain.Wallet
 {
     public class BlockchainWallet
     {
+        [JsonConverter(typeof(StringEnumConverter))]
         public BlockchainType Blockchain { get; set; }
 
         public string AssetId { get; set; }
