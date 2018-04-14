@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using AzureStorage;
@@ -59,21 +58,23 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Wallet
                 });
         }
 
-        public async Task<IBcnWalletUsage> ReleaseAsync(string walletAddress, BlockchainType blockchain)
+        public async Task<bool> ReleaseAsync(string walletAddress, BlockchainType blockchain)
         {
             string partitionKey = BcnWalletUsageEntity.ByWalletAddress.GeneratePartitionKey(walletAddress);
 
             string rowKey = BcnWalletUsageEntity.ByWalletAddress.GenerateRowKey(blockchain);
 
-            BcnWalletUsageEntity usage = await _tableStorage.MergeAsync(partitionKey, rowKey, entity =>
-            {
-                entity.OccupiedBy = null;
-                entity.Since = DateTime.UtcNow;
+            var vacant = BcnWalletUsage.CreateVacant(walletAddress, blockchain);
 
-                return entity;
-            });
+            return await _tableStorage.InsertOrModifyAsync(partitionKey, rowKey,
+                () => BcnWalletUsageEntity.ByWalletAddress.Create(vacant),
+                existing =>
+                {
+                    existing.OccupiedBy = vacant.OccupiedBy;
+                    existing.Since = vacant.Since;
 
-            return Mapper.Map<BcnWalletUsage>(usage);
+                    return true;
+                });
         }
 
         public async Task<IList<IBcnWalletUsage>> GetVacantAsync(BlockchainType blockchain)

@@ -20,12 +20,7 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<IBcnWalletUsage> OccupyAsync(string walletAddress, BlockchainType blockchain,
             string occupiedBy)
         {
-            BcnWalletUsage usage = new BcnWalletUsage
-            {
-                Blockchain = blockchain,
-                WalletAddress = walletAddress,
-                OccupiedBy = occupiedBy
-            };
+            var usage = BcnWalletUsage.Create(walletAddress, blockchain, occupiedBy);
 
             bool isLocked = await _walletUsageRepository.TryLockAsync(usage);
 
@@ -64,7 +59,7 @@ namespace Lykke.Service.PayInternal.Services
             throw new WalletAddressAllocationException(blockchain);
         }
 
-        public async Task<IBcnWalletUsage> ReleaseAsync(string walletAddress, BlockchainType blockchain)
+        public async Task<bool> ReleaseAsync(string walletAddress, BlockchainType blockchain)
         {
             return await _walletUsageRepository.ReleaseAsync(walletAddress, blockchain);
         }

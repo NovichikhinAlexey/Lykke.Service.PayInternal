@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common;
 using Common.Log;
+using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Filters;
@@ -40,15 +41,19 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [Route("expired")]
         [SwaggerOperation("SetExpired")]
-        [ProducesResponseType(typeof(void), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ValidateModel]
         public async Task<IActionResult> SetExpired([FromBody] BlockchainWalletExpiredRequest request)
         {
             try
             {
-                await _bcnWalletUsageService.ReleaseAsync(request.WalletAddress, request.Blockchain);
+                bool released = await _bcnWalletUsageService.ReleaseAsync(request.WalletAddress, request.Blockchain);
 
-                return Ok();
+                if (released)
+                    return Ok();
+
+                return BadRequest(ErrorResponse.Create("Couldn't set wallet as expired"));
             }
             catch (Exception ex)
             {

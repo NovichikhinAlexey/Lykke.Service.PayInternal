@@ -13,6 +13,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Wallet
 
         Task<bool> TryLockAsync(IBcnWalletUsage usage);
 
-        Task<IBcnWalletUsage> ReleaseAsync(string walletAddress, BlockchainType blockchain);
+        Task<bool> ReleaseAsync(string walletAddress, BlockchainType blockchain);
     }
 }
