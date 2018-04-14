@@ -195,12 +195,15 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="paymentRequestId">Payment request id</param>
         /// <returns></returns>
         Task CancelAsync(string merchantId, string paymentRequestId);
-        /// <summary>
+
+
+		/// <summary>
         /// Return source wallets of payment request transactions
         /// </summary>
         /// <param name="walletAddress"></param>
         /// <returns></returns>
         Task<IReadOnlyList<string>> GetTransactionsSourceWalletsAsync(string walletAddress);
+
         /// <summary>
         /// Marks wallet as expired
         /// </summary>
