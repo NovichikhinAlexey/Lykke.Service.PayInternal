@@ -283,5 +283,43 @@ namespace Lykke.Service.PayInternal.Controllers
                 return BadRequest(new RefundErrorModel {Code = RefundErrorType.Unknown});
             }
         }
+
+        /// <summary>
+        /// Cancels the payment request
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <param name="paymentRequestId"></param>
+        /// <returns></returns>
+        [HttpDelete]
+        [Route("merchants/{merchantId}/paymentrequests/{paymentRequestId}")]
+        [SwaggerOperation("Cancel")]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> CancelAsync(string merchantId, string paymentRequestId)
+        {
+            try
+            {
+                await _paymentRequestService.CancelAsync(merchantId, paymentRequestId);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(CancelAsync), new
+                {
+                    merchantId,
+                    paymentRequestId
+                }.ToJson(), ex);
+
+                if (ex is PaymentRequestNotFoundException notFoundEx)
+                    return NotFound(ErrorResponse.Create(notFoundEx.Message));
+
+                if (ex is NotAllowedStatusException notAllowedEx)
+                    return BadRequest(ErrorResponse.Create(notAllowedEx.Message));
+
+                throw;
+            }
+        }
     }
 }

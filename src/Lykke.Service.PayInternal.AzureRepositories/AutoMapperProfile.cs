@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
+using Lykke.Service.PayInternal.AzureRepositories.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.PaymentRequest;
 using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.AzureRepositories.Transfer;
+using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -27,6 +29,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                 .ForSourceMember(src => src.CreatedOn, opt => opt.Ignore());
 
             CreateMap<TransferEntity, Core.Domain.Transfer.Transfer>(MemberList.Destination);
+
+            CreateMap<IMerchant, MerchantEntity>(MemberList.Source)
+                .ForSourceMember(src => src.Id, opt => opt.Ignore());
 
             CreateMap<VirtualWalletEntity, VirtualWallet>(MemberList.Destination);
 

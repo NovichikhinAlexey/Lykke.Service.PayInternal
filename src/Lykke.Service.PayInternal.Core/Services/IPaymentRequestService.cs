@@ -15,6 +15,8 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task<IPaymentRequest> FindAsync(string walletAddress);
 
         Task<IPaymentRequest> CreateAsync(IPaymentRequest paymentRequest);
+
+        Task CancelAsync(string merchantId, string paymentRequestId);
         
         Task<IPaymentRequest> CheckoutAsync(string merchantId, string paymentRequestId);
 

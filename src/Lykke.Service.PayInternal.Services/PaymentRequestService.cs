@@ -105,6 +105,20 @@ namespace Lykke.Service.PayInternal.Services
             return createdPaymentRequest;
         }
 
+        public async Task CancelAsync(string merchantId, string paymentRequestId)
+        {
+            IPaymentRequest paymentRequest = await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
+
+            if (paymentRequest == null)
+                throw new PaymentRequestNotFoundException(merchantId, paymentRequestId);
+
+            if (paymentRequest.Status != PaymentRequestStatus.New)
+                throw new NotAllowedStatusException(paymentRequest.Status);
+
+            await UpdateStatusAsync(paymentRequest.WalletAddress,
+                new PaymentRequestStatusInfo {Status = PaymentRequestStatus.Cancelled});
+        }
+
         public async Task<IPaymentRequest> CheckoutAsync(string merchantId, string paymentRequestId)
         {
             IPaymentRequest paymentRequest = await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);

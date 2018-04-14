@@ -16,6 +16,11 @@
         public string Name { get; set; }
 
         /// <summary>
+        /// Gets ot sets the merchant display name
+        /// </summary>
+        public string DisplayName { get; set; }
+
+        /// <summary>
         /// Gets or sets the merchant public key.
         /// </summary>
         public string PublicKey { get; set; }

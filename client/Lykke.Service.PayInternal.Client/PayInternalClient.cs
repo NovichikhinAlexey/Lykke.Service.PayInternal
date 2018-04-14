@@ -176,6 +176,11 @@ namespace Lykke.Service.PayInternal.Client
             await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetPersonalAvailableAssetsAsync(request));
         }
 
+        public async Task CancelAsync(string merchantId, string paymentRequestId)
+        {
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.CancelAsync(merchantId, paymentRequestId));
+        }
+
         public async Task SetWalletExpiredAsync(BlockchainWalletExpiredRequest request)
         {
             await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.SetWalletExpiredAsync(request));
