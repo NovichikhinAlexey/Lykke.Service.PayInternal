@@ -8,6 +8,8 @@ namespace Lykke.Service.PayInternal.Services.Domain
 
         public string Name { get; set; }
 
+        public string DisplayName { get; set; }
+
         public string PublicKey { get; set; }
 
         public string ApiKey { get; set; }

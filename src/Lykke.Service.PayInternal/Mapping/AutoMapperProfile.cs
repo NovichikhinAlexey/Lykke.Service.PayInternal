@@ -18,6 +18,7 @@ namespace Lykke.Service.PayInternal.Mapping
         public AutoMapperProfile()
         {
             CreateMap<IMerchant, MerchantModel>(MemberList.Source);
+
             CreateMap<CreateMerchantRequest, Merchant>(MemberList.Destination)
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.PublicKey, opt => opt.Ignore());
