@@ -1,7 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Core.Settings;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -16,15 +19,28 @@ namespace Lykke.Service.PayInternal.Services
     {
         // ReSharper disable once NotAccessedField.Local
         private readonly ILog _log;
+        private readonly AppSettings _appSettings;
 
-        public StartupManager(ILog log)
+        public StartupManager(
+            ILog log,
+            AppSettings appSettings)
         {
             _log = log;
+            _appSettings = appSettings;
         }
 
         public async Task StartAsync()
         {
-            await Task.CompletedTask;
+            await _log.WriteInfoAsync(nameof(StartupManager), nameof(StartAsync), "Checking app settings consistency...");
+
+            TimeSpan primaryExpPeriod = _appSettings.PayInternalService.ExpirationPeriods.Order.Primary;
+
+            TimeSpan extendedExpPeriod = _appSettings.PayInternalService.ExpirationPeriods.Order.Extended;
+
+            if (primaryExpPeriod > extendedExpPeriod)
+                throw new OrderExpirationSettingsInconsistentException(primaryExpPeriod, extendedExpPeriod);
+
+            await _log.WriteInfoAsync(nameof(StartupManager), nameof(StartAsync), "Settings checked successfully.");
         }
     }
 }

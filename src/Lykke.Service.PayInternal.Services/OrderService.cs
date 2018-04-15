@@ -10,6 +10,7 @@ using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
@@ -21,7 +22,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IMerchantRepository _merchantRepository;
         private readonly ICalculationService _calculationService;
         private readonly ILog _log;
-        private readonly TimeSpan _orderExpiration;
+        private readonly OrderExpirationPeriodsSettings _orderExpirationPeriods;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -29,14 +30,14 @@ namespace Lykke.Service.PayInternal.Services
             IMerchantRepository merchantRepository,
             ICalculationService calculationService,
             ILog log,
-            TimeSpan orderExpiration)
+            OrderExpirationPeriodsSettings orderExpirationPeriods)
         {
             _orderRepository = orderRepository;
             _assetsLocalCache = assetsLocalCache;
             _merchantRepository = merchantRepository;
             _calculationService = calculationService;
             _log = log;
-            _orderExpiration = orderExpiration;
+            _orderExpirationPeriods = orderExpirationPeriods;
         }
 
         public async Task<IOrder> GetAsync(string paymentRequestId, string orderId)
@@ -47,7 +48,7 @@ namespace Lykke.Service.PayInternal.Services
             return await _orderRepository.GetAsync(paymentRequestId, orderId);
         }
 
-        public async Task<IOrder> GetAsync(string paymentRequestId, DateTime date)
+        public async Task<IOrder> GetActualAsync(string paymentRequestId, DateTime date)
         {
             if (string.IsNullOrEmpty(paymentRequestId))
                 return null;
@@ -55,19 +56,27 @@ namespace Lykke.Service.PayInternal.Services
             IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequestId);
 
             return orders
-                .Where(o => date < o.DueDate)
-                .OrderBy(o => o.DueDate)
+                .Where(o => date < o.ExtendedDueDate)
+                .OrderBy(o => o.ExtendedDueDate)
                 .FirstOrDefault();
         }
 
-        public async Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest)
+        public async Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest, bool force = false)
         {
             IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequest.Id);
 
-            IOrder latestOrder = orders.OrderByDescending(x => x.DueDate).FirstOrDefault();
+            IOrder latestOrder = orders.OrderByDescending(x => x.ExtendedDueDate).FirstOrDefault();
 
-            if (latestOrder?.DueDate > DateTime.UtcNow)
-                return latestOrder;
+            var now = DateTime.UtcNow;
+
+            if (latestOrder != null)
+            {
+                if (now < latestOrder.DueDate)
+                    return latestOrder;
+
+                if (now < latestOrder.ExtendedDueDate && !force)
+                    return latestOrder;
+            }
 
             IMerchant merchant = await _merchantRepository.GetAsync(paymentRequest.MerchantId);
 
@@ -106,8 +115,9 @@ namespace Lykke.Service.PayInternal.Services
                 AssetPairId = assetPair.Id,
                 SettlementAmount = paymentRequest.Amount,
                 PaymentAmount = paymentAmount,
-                DueDate = DateTime.UtcNow.Add(_orderExpiration),
-                CreatedDate = DateTime.UtcNow,
+                DueDate = now.Add(_orderExpirationPeriods.Primary),
+                ExtendedDueDate = now.Add(_orderExpirationPeriods.Extended),
+                CreatedDate = now,
                 ExchangeRate = rate
             };
 
