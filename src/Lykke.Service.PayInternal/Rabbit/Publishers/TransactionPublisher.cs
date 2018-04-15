@@ -13,6 +13,9 @@ using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Rabbit.Publishers
 {
+    /// <summary>
+    /// Publishes messages about new transactions which have been created by service
+    /// </summary>
     [UsedImplicitly]
     public class TransactionPublisher : ITransactionPublisher, IStartable, IStopable
     {
@@ -40,7 +43,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
                 Amount = transaction.Amount,
                 Confirmations = transaction.Confirmations,
                 BlockId = transaction.BlockId,
-                Blockchain = Enum.Parse<BlockchainType>(transaction.Blockchain),
+                Blockchain = Enum.Parse<BlockchainType>(transaction.Blockchain.ToString()),
                 DueDate = transaction.DueDate
             });
         }

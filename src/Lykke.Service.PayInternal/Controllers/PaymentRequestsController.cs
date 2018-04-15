@@ -120,10 +120,11 @@ namespace Lykke.Service.PayInternal.Controllers
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
                 IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
-                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment())
+                    (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment())
                     .ToList();
 
-                PaymentRequestRefund refund = await _paymentRequestService.GetRefundInfoAsync(paymentRequestId);
+                PaymentRequestRefund refund =
+                    await _paymentRequestService.GetRefundInfoAsync(paymentRequest.WalletAddress);
 
                 var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
                 model.Order = Mapper.Map<PaymentRequestOrderModel>(order);
@@ -241,6 +242,44 @@ namespace Lykke.Service.PayInternal.Controllers
                 }
                 
                 return BadRequest(new RefundErrorModel {Code = RefundErrorType.Unknown});
+            }
+        }
+
+        /// <summary>
+        /// Cancels the payment request
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <param name="paymentRequestId"></param>
+        /// <returns></returns>
+        [HttpDelete]
+        [Route("merchants/{merchantId}/paymentrequests/{paymentRequestId}")]
+        [SwaggerOperation("Cancel")]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> CancelAsync(string merchantId, string paymentRequestId)
+        {
+            try
+            {
+                await _paymentRequestService.CancelAsync(merchantId, paymentRequestId);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(CancelAsync), new
+                {
+                    merchantId,
+                    paymentRequestId
+                }.ToJson(), ex);
+
+                if (ex is PaymentRequestNotFoundException notFoundEx)
+                    return NotFound(ErrorResponse.Create(notFoundEx.Message));
+
+                if (ex is NotAllowedStatusException notAllowedEx)
+                    return BadRequest(ErrorResponse.Create(notAllowedEx.Message));
+
+                throw;
             }
         }
     }

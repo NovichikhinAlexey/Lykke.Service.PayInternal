@@ -27,5 +27,8 @@ namespace Lykke.Service.PayInternal.Client.Api
 
         [Post("/api/merchants/paymentrequests/refunds")]
         Task<RefundResponse> RefundAsync([Body] RefundRequestModel request);
+
+        [Delete("/api/merchants/{merchantId}/paymentrequests/{paymentRequestId}")]
+        Task CancelAsync(string merchantId, string paymentRequestId);
     }
 }

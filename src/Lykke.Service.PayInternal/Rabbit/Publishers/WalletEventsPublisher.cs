@@ -1,13 +1,14 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Autofac;
 using Common;
 using Common.Log;
 using Lykke.RabbitMqBroker.Publisher;
 using Lykke.RabbitMqBroker.Subscriber;
 using Lykke.Service.PayInternal.Contract;
-using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
+using BlockchainType = Lykke.Service.PayInternal.Core.BlockchainType;
 
 namespace Lykke.Service.PayInternal.Rabbit.Publishers
 {
@@ -48,18 +49,19 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
             _publisher?.Stop();
         }
 
-        public async Task PublishAsync(IWallet wallet)
-        {
-            await PublishAsync(new NewWalletMessage
-            {
-                Address = wallet.Address,
-                DueDate = wallet.DueDate
-            });
-        }
-
         public async Task PublishAsync(NewWalletMessage message)
         {
             await _publisher.ProduceAsync(message);
+        }
+
+        public async Task PublishAsync(string walletAddress, BlockchainType blockchain, DateTime dueDate)
+        {
+            await PublishAsync(new NewWalletMessage
+            {
+                Address = walletAddress,
+                Blockchain = Enum.Parse<Contract.BlockchainType>(blockchain.ToString()),
+                DueDate = dueDate
+            });
         }
     }
 }

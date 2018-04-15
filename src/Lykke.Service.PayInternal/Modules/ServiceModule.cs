@@ -3,6 +3,7 @@ using System.Linq;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AzureStorage.Tables;
+using AzureStorage.Tables.Templates.Index;
 using Common;
 using Common.Log;
 using Lykke.Bitcoin.Api.Client;
@@ -10,15 +11,14 @@ using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.PayInternal.AzureRepositories.Transaction;
-using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
-using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
 using Lykke.Service.PayInternal.Mapping;
 using Lykke.Service.PayInternal.Rabbit.Publishers;
 using Lykke.Service.PayInternal.Services;
+using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 using QBitNinja.Client;
@@ -50,8 +50,6 @@ namespace Lykke.Service.PayInternal.Modules
                 .As<ILog>()
                 .SingleInstance();
 
-            RegisterAzureRepositories(builder);
-
             RegisterServiceClients(builder);
 
             RegisterAppServices(builder);
@@ -63,18 +61,6 @@ namespace Lykke.Service.PayInternal.Modules
             RegisterMapperValueResolvers(builder);
 
             builder.Populate(_services);
-        }
-
-        private void RegisterAzureRepositories(ContainerBuilder builder)
-        {
-            builder.RegisterInstance<IWalletRepository>(new WalletRepository(
-                AzureTableStorage<WalletEntity>.Create(_dbSettings.ConnectionString(x => x.MerchantWalletConnString),
-                    "MerchantWallets", _log)));
-
-            builder.RegisterInstance<IPaymentRequestTransactionRepository>(new PaymentRequestTransactionRepository(
-                AzureTableStorage<PaymentRequestTransactionEntity>.Create(
-                    _dbSettings.ConnectionString(x => x.MerchantConnString),
-                    "MerchantWalletTransactions", _log)));
         }
 
         private void RegisterAppServices(ContainerBuilder builder)
@@ -90,10 +76,6 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<ShutdownManager>()
                 .As<IShutdownManager>()
-                .SingleInstance();
-
-            builder.RegisterType<MerchantWalletsService>()
-                .As<IMerchantWalletsService>()
                 .SingleInstance();
 
             builder.RegisterType<AssetsAvailabilityService>()
@@ -199,6 +181,22 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<RefundTxUrlValueResolver>()
                 .AsSelf()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LykkeBlockchainExplorer))
+                .SingleInstance();
+
+            builder.RegisterType<PaymentRequestBcnWalletAddressValueResolver>()
+                .AsSelf()
+                .SingleInstance();
+
+            builder.RegisterType<RefundAmountResolver>()
+                .AsSelf()
+                .SingleInstance();
+
+            builder.RegisterType<PaymentTxBcnWalletAddressValueResolver>()
+                .AsSelf()
+                .SingleInstance();
+
+            builder.RegisterType<VirtualAddressResolver>()
+                .AsSelf()
                 .SingleInstance();
         }
     }

@@ -15,13 +15,6 @@ namespace Lykke.Service.PayInternal.Client
     public interface IPayInternalClient
     {
         /// <summary>
-        /// Creates new wallet address in bitcoin blockchain
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        Task<WalletAddressResponse> CreateAddressAsync(CreateWalletRequest request);
-
-        /// <summary>
         /// Returns wallet addresses that are not considered as expired
         /// </summary>
         /// <returns></returns>
@@ -194,5 +187,20 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request"></param>
         /// <returns></returns>
         Task SetPersonalAvailableAssetsAsync(UpdateAssetAvailabilityByMerchantRequest request);
+
+        /// <summary>
+        /// Cancels payment request
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <param name="paymentRequestId">Payment request id</param>
+        /// <returns></returns>
+        Task CancelAsync(string merchantId, string paymentRequestId);
+
+        /// <summary>
+        /// Marks wallet as expired
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task SetWalletExpiredAsync(BlockchainWalletExpiredRequest request);
     }
 }

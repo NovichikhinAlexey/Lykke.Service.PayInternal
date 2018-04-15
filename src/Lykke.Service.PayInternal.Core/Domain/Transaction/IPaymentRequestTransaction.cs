@@ -19,7 +19,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 
         [CanBeNull] string BlockId { get; set; }
 
-        string Blockchain { get; set; }
+        BlockchainType Blockchain { get; set; }
 
         int Confirmations { get; set; }
 

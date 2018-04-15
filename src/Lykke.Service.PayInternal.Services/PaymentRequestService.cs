@@ -10,9 +10,9 @@ using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
+using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -20,32 +20,32 @@ namespace Lykke.Service.PayInternal.Services
     public class PaymentRequestService : IPaymentRequestService
     {
         private readonly IPaymentRequestRepository _paymentRequestRepository;
-        private readonly IMerchantWalletsService _merchantWalletsService;
-        private readonly IPaymentRequestTransactionRepository _transactionRepository;
         private readonly IOrderService _orderService;
         private readonly IPaymentRequestPublisher _paymentRequestPublisher;
         private readonly ITransferService _transferService;
         private readonly IPaymentRequestStatusResolver _paymentRequestStatusResolver;
+        private readonly IWalletManager _walletsManager;
+        private readonly ITransactionsService _transactionsService;
         private readonly ILog _log;
 
         public PaymentRequestService(
             IPaymentRequestRepository paymentRequestRepository,
-            IMerchantWalletsService merchantWalletsService,
-            IPaymentRequestTransactionRepository transactionRepository,
             IOrderService orderService,
             IPaymentRequestPublisher paymentRequestPublisher,
             ITransferService transferService,
             IPaymentRequestStatusResolver paymentRequestStatusResolver,
-            ILog log)
+            ILog log, 
+            IWalletManager walletsManager, 
+            ITransactionsService transactionsService)
         {
             _paymentRequestRepository = paymentRequestRepository;
-            _merchantWalletsService = merchantWalletsService;
-            _transactionRepository = transactionRepository;
             _orderService = orderService;
             _paymentRequestPublisher = paymentRequestPublisher;
             _transferService = transferService;
             _paymentRequestStatusResolver = paymentRequestStatusResolver;
             _log = log;
+            _walletsManager = walletsManager;
+            _transactionsService = transactionsService;
         }
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -58,11 +58,10 @@ namespace Lykke.Service.PayInternal.Services
             return await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
         }
 
-        public async Task<PaymentRequestRefund> GetRefundInfoAsync(string paymentRequestId)
+        public async Task<PaymentRequestRefund> GetRefundInfoAsync(string walletAddress)
         {
-            //todo: move to transactionsService
             IReadOnlyList<IPaymentRequestTransaction> transactions =
-                (await _transactionRepository.GetByPaymentRequest(paymentRequestId)).Where(x => x.IsRefund()).ToList();
+                (await _transactionsService.GetByWalletAsync(walletAddress)).Where(x => x.IsRefund()).ToList();
 
             if (!transactions.Any()) 
                 return null;
@@ -92,12 +91,11 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<IPaymentRequest> CreateAsync(IPaymentRequest paymentRequest)
         {
             paymentRequest.Status = PaymentRequestStatus.New;
-            paymentRequest.WalletAddress =
-                await _merchantWalletsService.CreateAddress(new CreateWallet
-                {
-                    DueDate = paymentRequest.DueDate,
-                    MerchantId = paymentRequest.MerchantId
-                });
+
+            IVirtualWallet wallet = await _walletsManager.CreateAsync(paymentRequest.MerchantId,
+                paymentRequest.DueDate, paymentRequest.PaymentAssetId);
+
+            paymentRequest.WalletAddress = wallet.Id;
 
             IPaymentRequest createdPaymentRequest = await _paymentRequestRepository.InsertAsync(paymentRequest);
 
@@ -105,6 +103,20 @@ namespace Lykke.Service.PayInternal.Services
                 paymentRequest.ToJson(), "Payment request created.");
 
             return createdPaymentRequest;
+        }
+
+        public async Task CancelAsync(string merchantId, string paymentRequestId)
+        {
+            IPaymentRequest paymentRequest = await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
+
+            if (paymentRequest == null)
+                throw new PaymentRequestNotFoundException(merchantId, paymentRequestId);
+
+            if (paymentRequest.Status != PaymentRequestStatus.New)
+                throw new NotAllowedStatusException(paymentRequest.Status);
+
+            await UpdateStatusAsync(paymentRequest.WalletAddress,
+                new PaymentRequestStatusInfo {Status = PaymentRequestStatus.Cancelled});
         }
 
         public async Task<IPaymentRequest> CheckoutAsync(string merchantId, string paymentRequestId, bool force)
@@ -152,20 +164,19 @@ namespace Lykke.Service.PayInternal.Services
             await _paymentRequestRepository.UpdateAsync(paymentRequest);
 
             //todo: move to separate builder service
-            PaymentRequestRefund refundInfo = await GetRefundInfoAsync(paymentRequest.Id);
+            PaymentRequestRefund refundInfo = await GetRefundInfoAsync(paymentRequest.WalletAddress);
 
             await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
         }
 
-        public async Task UpdateStatusByTransactionAsync(string transactionId)
+        public async Task UpdateStatusByTransactionAsync(string transactionId, BlockchainType blockchain)
         {
-            IEnumerable<IPaymentRequestTransaction> txs =
-                await _transactionRepository.GetByTransactionAsync(transactionId);
-            
-            foreach (string walletAddress in txs.Unique(x => x.WalletAddress))
-            {
-                await UpdateStatusAsync(walletAddress);
-            }
+            IPaymentRequestTransaction tx = await _transactionsService.GetByIdAsync(transactionId, blockchain);
+
+            if (tx == null)
+                throw new TransactionNotFoundException(transactionId, blockchain);
+
+            await UpdateStatusAsync(tx.WalletAddress);
         }
     }
 }

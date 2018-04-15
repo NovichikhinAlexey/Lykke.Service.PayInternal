@@ -6,12 +6,16 @@ using Lykke.Service.PayInternal.AzureRepositories.Asset;
 using Lykke.Service.PayInternal.AzureRepositories.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.Order;
 using Lykke.Service.PayInternal.AzureRepositories.PaymentRequest;
+using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.AzureRepositories.Transfer;
+using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
+using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.SettingsReader;
 
 namespace Lykke.Service.PayInternal.AzureRepositories
@@ -46,6 +50,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             const string assetsAvailabilityTableName = "AssetsAvailability";
             const string assetsAvailabilityByMerchantTableName = "AssetsAvailabilityByMerchant";
             const string transfersTableName = "Transfers";
+            const string bcnWalletsUsageTableName = "BlockchainWalletsUsage";
+            const string virtualWalletsTableName = "VirtualWallets";
+            const string merchantTransactionsTableName = "MerchantWalletTransactions";
 
             builder.RegisterInstance<IMerchantRepository>(new MerchantRepository(
                 AzureTableStorage<MerchantEntity>.Create(_merchantsConnectionString,
@@ -56,6 +63,18 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                     paymentRequestsTableName, _log),
                 AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
                     paymentRequestsTableName, _log)));
+
+            builder.RegisterInstance<IVirtualWalletRepository>(new VirtualWalletRepository(
+                AzureTableStorage<VirtualWalletEntity>.Create(_paymentRequestsConnectionString,
+                    virtualWalletsTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
+                    virtualWalletsTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
+                    virtualWalletsTableName, _log)));
+
+            builder.RegisterInstance<IBcnWalletUsageRepository>(new BcnWalletUsageRepository(
+                AzureTableStorage<BcnWalletUsageEntity>.Create(_paymentRequestsConnectionString,
+                    bcnWalletsUsageTableName, _log)));
             
             builder.RegisterInstance<IOrderRepository>(new OrdersRepository(
                 AzureTableStorage<OrderEntity>.Create(_ordersConnectionString,
@@ -69,9 +88,14 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                 AzureTableStorage<AssetAvailabilityByMerchantEntity>.Create(_paymentRequestsConnectionString,
                     assetsAvailabilityByMerchantTableName, _log)));
 
-            builder.RegisterInstance<ITransferRepository>(
-                new TransferRepository(AzureTableStorage<TransferEntity>.Create(_transfersConnectionString,
-                        transfersTableName, _log)));
+            builder.RegisterInstance<ITransferRepository>(new TransferRepository(
+                AzureTableStorage<TransferEntity>.Create(_transfersConnectionString, transfersTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_transfersConnectionString, transfersTableName, _log)));
+
+            builder.RegisterInstance<IPaymentRequestTransactionRepository>(new PaymentRequestTransactionRepository(
+                AzureTableStorage<PaymentRequestTransactionEntity>.Create(_merchantsConnectionString,merchantTransactionsTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantTransactionsTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantTransactionsTableName, _log)));
         }
     }
 }

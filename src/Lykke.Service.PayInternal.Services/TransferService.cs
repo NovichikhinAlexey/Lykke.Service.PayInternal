@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Autofac.Features.Indexed;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
-using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 
 namespace Lykke.Service.PayInternal.Services
@@ -16,34 +14,22 @@ namespace Lykke.Service.PayInternal.Services
     /// </summary>
     public class TransferService : ITransferService
     {
-        private readonly IIndex<BlockchainType, IBlockchainApiClient> _blockchainClients;
+        private readonly IBlockchainClientProvider _blockchainClientProvider;
         private readonly ITransferRepository _transferRepository;
 
         public TransferService(
-            IIndex<BlockchainType, IBlockchainApiClient> blockchainClients,
-            ITransferRepository transferRepository)
+            ITransferRepository transferRepository, 
+            IBlockchainClientProvider blockchainClientProvider)
         {
-            _blockchainClients = blockchainClients;
             _transferRepository = transferRepository ?? throw new ArgumentNullException(nameof(transferRepository));
+            _blockchainClientProvider = blockchainClientProvider ?? throw new ArgumentNullException(nameof(blockchainClientProvider));
         }
 
         public async Task<TransferResult> ExecuteAsync(TransferCommand transferCommand)
         {
-            BlockchainType blockchainType;
+            BlockchainType blockchainType = transferCommand.AssetId.GetBlockchainType();
 
-            switch (transferCommand.AssetId)
-            {
-                case LykkeConstants.BitcoinAssetId:
-                case LykkeConstants.SatoshiAssetId:
-                    blockchainType = BlockchainType.Bitcoin;
-                    break;
-                default: throw new AssetNotSupportedException(transferCommand.AssetId);
-            }
-
-            if (!_blockchainClients.TryGetValue(blockchainType, out IBlockchainApiClient blockchainClient))
-            {
-                throw new InvalidOperationException($"Blockchain client of type [{blockchainType}] not found");
-            }
+            IBlockchainApiClient blockchainClient = _blockchainClientProvider.Get(blockchainType);
 
             BlockchainTransferResult blockchainTransferResult =
                 await blockchainClient.TransferAsync(transferCommand.ToBlockchainTransfer());

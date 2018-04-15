@@ -7,7 +7,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Serializers
     {
         private const char Delimiter = ';';
 
-        public string Serialize(object value)
+        public string Serialize(object value, Type type)
         {
             if (!(value is string[] sources))
                 throw new Exception("Source is not a string array");
@@ -17,7 +17,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Serializers
             return serialized;
         }
 
-        public object Deserialize(string serialized)
+        public object Deserialize(string serialized, Type type)
         {
             string[] result = serialized.Split(Delimiter);
 

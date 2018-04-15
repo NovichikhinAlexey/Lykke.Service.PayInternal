@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 
 namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
@@ -13,6 +14,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public int TransactionConfirmationCount { get; set; }
         public BlockchainExplorerSettings LykkeBlockchainExplorer { get; set; }
         public AssetsAvailabilitySettings AssetsAvailability { get; set; }
+        public BlockchainSettings Blockchain { get; set; }
     }
 
     public class LpMarkupSettings
@@ -36,6 +38,23 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public OrderExpirationPeriodsSettings Order { get; set; }
 
         public TimeSpan Refund { get; set; }
+    }
+
+    public class BlockchainSettings
+    {
+        public BlockchainWalletAllocationSettings WalletAllocationPolicy { get; set; }
+    }
+
+    public class BlockchainWalletAllocationPolicy
+    {
+        public BlockchainType Blockchain { get; set; }
+
+        public WalletAllocationPolicy WalletAllocationPolicy { get; set; }
+    }
+
+    public class BlockchainWalletAllocationSettings
+    {
+        public IList<BlockchainWalletAllocationPolicy> Policies { get; set; }
     }
 
     public class OrderExpirationPeriodsSettings

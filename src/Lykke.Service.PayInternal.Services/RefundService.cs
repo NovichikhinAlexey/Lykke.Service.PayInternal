@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Common;
 using Common.Log;
 using Lykke.Service.PayInternal.Core;
@@ -54,7 +55,7 @@ namespace Lykke.Service.PayInternal.Services
                 throw new RefundValidationException(RefundErrorType.NotAllowedInStatus);
 
             IEnumerable<IPaymentRequestTransaction> paymentTxs =
-                (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
+                (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
 
             if (!paymentTxs.Any())
                 throw new RefundValidationException(RefundErrorType.NoPaymentTransactions);
@@ -88,8 +89,10 @@ namespace Lykke.Service.PayInternal.Services
 
             try
             {
-                transferResult =
-                    await _transferService.ExecuteAsync(tx.ToRefundTransferCommand(destinationWalletAddress));
+                TransferCommand refundTransferCommand = Mapper.Map<TransferCommand>(tx,
+                    opts => opts.Items["destinationAddress"] = destinationWalletAddress);
+
+                transferResult = await _transferService.ExecuteAsync(refundTransferCommand);
 
                 refundDueDate = transferResult.Timestamp.Add(_refundExpirationPeriod);
 
@@ -103,8 +106,8 @@ namespace Lykke.Service.PayInternal.Services
                         continue;
                     }
 
-                    IPaymentRequestTransaction refundTransaction = await _transactionsService.CreateTransaction(
-                        new CreateTransaction
+                    IPaymentRequestTransaction refundTransaction = await _transactionsService.CreateTransactionAsync(
+                        new CreateTransactionCommand
                         {
                             Amount = transferResultTransaction.Amount,
                             AssetId = transferResultTransaction.AssetId,
@@ -118,7 +121,6 @@ namespace Lykke.Service.PayInternal.Services
                             TransferId = transferResult.Id
                         });
 
-                    //todo: think of moving this call inside  _transactionsService
                     await _transactionPublisher.PublishAsync(refundTransaction);
                 }
 

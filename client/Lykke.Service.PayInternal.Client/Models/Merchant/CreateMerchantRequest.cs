@@ -11,6 +11,11 @@
         public string Name { get; set; }
 
         /// <summary>
+        /// Gets ot sets the merchant display name
+        /// </summary>
+        public string DisplayName { get; set; }
+
+        /// <summary>
         /// Gets or sets the merchant api key.
         /// </summary>
         public string ApiKey { get; set; }

@@ -75,7 +75,8 @@ namespace Lykke.Service.PayInternal
 
                 builder.RegisterModule(new Services.AutofacModule(
                     appSettings.CurrentValue.PayInternalService.ExpirationPeriods,
-                    appSettings.CurrentValue.PayInternalService.TransactionConfirmationCount));
+                    appSettings.CurrentValue.PayInternalService.TransactionConfirmationCount,
+                    appSettings.CurrentValue.PayInternalService.Blockchain.WalletAllocationPolicy.Policies));
 
                 builder.RegisterModule(new ServiceModule(appSettings, Log));
 

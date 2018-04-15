@@ -8,10 +8,7 @@ namespace Lykke.Service.PayInternal.Client.Api
 {
     internal interface IPayInternalApi
     {
-        [Post("/api/bitcoin/address")]
-        Task<WalletAddressResponse> CreateAddressAsync([Body] CreateWalletRequest request);
-
-        [Get("/api/bitcoin/wallets/notExpired")]
+        [Get("/api/wallets/notExpired")]
         Task<IEnumerable<WalletStateResponse>> GetNotExpiredWalletsAsync();
 
         [Post("/api/transactions/payment")]
@@ -25,5 +22,8 @@ namespace Lykke.Service.PayInternal.Client.Api
 
         [Post("/api/transactions/expired")]
         Task SetTransactionExpiredAsync([Body] TransactionExpiredRequest request);
+
+        [Post("/api/wallets/expired")]
+        Task SetWalletExpiredAsync([Body] BlockchainWalletExpiredRequest request);
     }
 }

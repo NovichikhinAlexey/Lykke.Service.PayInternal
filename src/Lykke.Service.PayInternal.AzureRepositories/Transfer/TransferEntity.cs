@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using AzureStorage.Tables.Templates.Index;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
 using Lykke.Service.PayInternal.AzureRepositories.Serializers;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
@@ -13,12 +15,22 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
     public class TransferEntity : AzureTableEntity
     {
         private DateTime _createdOn;
+        private BlockchainType _blockchain;
 
         public string Id => RowKey;
 
         public string AssetId { get; set; }
 
-        public string Blockchain { get; set; }
+        public BlockchainType Blockchain
+        {
+            get => _blockchain;
+
+            set
+            {
+                _blockchain = value;
+                MarkValueTypePropertyAsDirty(nameof(Blockchain));
+            }
+        }
 
         [ValueSerializer(typeof(AmountsListSerializer))]
         public IEnumerable<TransferAmount> Amounts { get; set; }
@@ -61,6 +73,24 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transfer
                     Amounts = src.Amounts.ToList(),
                     Transactions = src.Transactions
                 };
+            }
+        }
+
+        public static class IndexById
+        {
+            public static string GeneratePartitionKey(string transferId)
+            {
+                return transferId;
+            }
+
+            public static string GenerateRowKey()
+            {
+                return "TransferIdIndex";
+            }
+
+            public static AzureIndex Create(TransferEntity entity)
+            {
+                return AzureIndex.Create(GeneratePartitionKey(entity.Id), GenerateRowKey(), entity);
             }
         }
     }
