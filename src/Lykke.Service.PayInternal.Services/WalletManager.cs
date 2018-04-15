@@ -70,7 +70,7 @@ namespace Lykke.Service.PayInternal.Services
             switch (policy)
             {
                 case WalletAllocationPolicy.New:
-                    string address = await blockchainClient.CreateAddress();
+                    string address = await blockchainClient.CreateAddressAsync();
 
                     walletUsage = await _bcnWalletUsageService.OccupyAsync(address, blockchainType, virtualWallet.Id);
 
@@ -82,7 +82,7 @@ namespace Lykke.Service.PayInternal.Services
                     }
                     catch (WalletAddressAllocationException)
                     {
-                        string newAddress = await blockchainClient.CreateAddress();
+                        string newAddress = await blockchainClient.CreateAddressAsync();
 
                         walletUsage =
                             await _bcnWalletUsageService.OccupyAsync(newAddress, blockchainType, virtualWallet.Id);
@@ -143,7 +143,7 @@ namespace Lykke.Service.PayInternal.Services
             return walletStateResult;
         }
 
-        public async Task<string> ResolveBlockchainAddress(string virtualAddress, string assetId)
+        public async Task<string> ResolveBlockchainAddressAsync(string virtualAddress, string assetId)
         {
             IVirtualWallet wallet = await _virtualWalletService.FindAsync(virtualAddress);
 

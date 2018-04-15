@@ -7,6 +7,6 @@ namespace Lykke.Service.PayInternal.Core.Services
     {
         Task<BlockchainTransferResult> TransferAsync(BlockchainTransferCommand transfer);
 
-        Task<string> CreateAddress();
+        Task<string> CreateAddressAsync();
     }
 }
