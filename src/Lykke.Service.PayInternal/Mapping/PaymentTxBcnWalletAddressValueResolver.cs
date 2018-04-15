@@ -16,7 +16,7 @@ namespace Lykke.Service.PayInternal.Mapping
         public string Resolve(IPaymentRequestTransaction source, object destination, string destMember,
             ResolutionContext context)
         {
-            return _walletManager.ResolveBlockchainAddress(source.WalletAddress, source.AssetId).GetAwaiter()
+            return _walletManager.ResolveBlockchainAddressAsync(source.WalletAddress, source.AssetId).GetAwaiter()
                 .GetResult();
         }
     }

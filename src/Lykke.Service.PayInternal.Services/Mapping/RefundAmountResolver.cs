@@ -21,7 +21,7 @@ namespace Lykke.Service.PayInternal.Services.Mapping
         {
             string destinationAddress = context.Items["destinationAddress"].ToString();
 
-            string bcnAddress = _walletManager.ResolveBlockchainAddress(source.WalletAddress, source.AssetId)
+            string bcnAddress = _walletManager.ResolveBlockchainAddressAsync(source.WalletAddress, source.AssetId)
                 .GetAwaiter().GetResult();
 
             return new List<TransferAmount>
