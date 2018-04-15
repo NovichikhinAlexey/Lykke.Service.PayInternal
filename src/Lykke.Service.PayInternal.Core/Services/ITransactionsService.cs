@@ -6,10 +6,16 @@ namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface ITransactionsService
     {
-        Task<IEnumerable<IPaymentRequestTransaction>> GetAsync(string walletAddress);
-        Task<IEnumerable<IPaymentRequestTransaction>> GetConfirmedAsync(string walletAddress);
-        Task<IEnumerable<IPaymentRequestTransaction>> GetAllMonitoredAsync();
-        Task<IPaymentRequestTransaction> CreateTransaction(ICreateTransaction request);
-        Task Update(IUpdateTransaction request);
+        Task<IReadOnlyList<IPaymentRequestTransaction>> GetByWalletAsync(string walletAddress);
+
+        Task<IPaymentRequestTransaction> GetByIdAsync(string transactionId, BlockchainType blockchain);
+
+        Task<IReadOnlyList<IPaymentRequestTransaction>> GetConfirmedAsync(string walletAddress);
+
+        Task<IReadOnlyList<IPaymentRequestTransaction>> GetNotExpiredAsync();
+
+        Task<IPaymentRequestTransaction> CreateTransactionAsync(ICreateTransactionCommand request);
+
+        Task UpdateAsync(IUpdateTransactionCommand request);
     }
 }

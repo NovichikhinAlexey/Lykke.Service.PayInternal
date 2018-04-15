@@ -15,22 +15,22 @@ namespace Lykke.Service.PayInternal.Services
     {
         private readonly int _transactionConfirmationCount;
         private readonly IPaymentRequestRepository _paymentRequestRepository;
-        private readonly IPaymentRequestTransactionRepository _transactionRepository;
+        private readonly ITransactionsService _transactionsService;
         private readonly IOrderService _orderService;
         private readonly ICalculationService _calculationService;
 
         public PaymentRequestStatusResolver(
             int transactionConfirmationCount,
             IPaymentRequestRepository paymentRequestRepository,
-            IPaymentRequestTransactionRepository transactionRepository,
             IOrderService orderService,
-            ICalculationService calculationService)
+            ICalculationService calculationService, 
+            ITransactionsService transactionsService)
         {
             _transactionConfirmationCount = transactionConfirmationCount;
             _paymentRequestRepository = paymentRequestRepository;
-            _transactionRepository = transactionRepository;
             _orderService = orderService;
             _calculationService = calculationService;
+            _transactionsService = transactionsService;
         }
 
         public async Task<PaymentRequestStatusInfo> GetStatus(string walletAddress)
@@ -39,9 +39,9 @@ namespace Lykke.Service.PayInternal.Services
 
             if(paymentRequest == null)
                 throw new PaymentRequestNotFoundException(walletAddress);
-            
+
             IReadOnlyList<IPaymentRequestTransaction> txs =
-                await _transactionRepository.GetAsync(paymentRequest.WalletAddress);
+                await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress);
 
             PaymentRequestStatusInfo paymentStatusInfo;
 
@@ -69,7 +69,7 @@ namespace Lykke.Service.PayInternal.Services
         private async Task<PaymentRequestStatusInfo> GetStatusForRefund(IPaymentRequest paymentRequest)
         {
             IReadOnlyList<IPaymentRequestTransaction> txs =
-                (await _transactionRepository.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsRefund()).ToList();
+                (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress)).Where(x => x.IsRefund()).ToList();
 
             if (txs.All(x => x.Confirmed(_transactionConfirmationCount)))
                 return PaymentRequestStatusInfo.Refunded();
@@ -82,7 +82,7 @@ namespace Lykke.Service.PayInternal.Services
         private async Task<PaymentRequestStatusInfo> GetStatusForPayment(IPaymentRequest paymentRequest)
         {
             IReadOnlyList<IPaymentRequestTransaction> txs =
-                (await _transactionRepository.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
+                (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
 
             if (!txs.Any())
                 return PaymentRequestStatusInfo.New();

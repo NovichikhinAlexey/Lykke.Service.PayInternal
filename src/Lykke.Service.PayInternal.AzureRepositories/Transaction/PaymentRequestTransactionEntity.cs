@@ -1,9 +1,11 @@
 ﻿using System;
-using JetBrains.Annotations;
+using AutoMapper;
+using AzureStorage.Tables.Templates.Index;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
 using Lykke.Service.PayInternal.AzureRepositories.Serializers;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
@@ -16,7 +18,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         private DateTime? _firstSeen;
         private DateTime _dueDate;
         private TransactionType _transactionType;
-        
+        private BlockchainType _blockchain;
+
         public PaymentRequestTransactionEntity()
         {
         }
@@ -74,7 +77,15 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
         public string AssetId { get; set; }
 
-        [CanBeNull] public string Blockchain { get; set; }
+        public BlockchainType Blockchain
+        {
+            get => _blockchain;
+            set
+            {
+                _blockchain = value;
+                MarkValueTypePropertyAsDirty(nameof(Blockchain));
+            }
+        }
 
         public TransactionType TransactionType
         {
@@ -93,6 +104,69 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             {
                 _dueDate = value;
                 MarkValueTypePropertyAsDirty(nameof(DueDate));
+            }
+        }
+
+        public static class ByWalletAddress
+        {
+            public static string GeneratePartitionKey(string walletAddress)
+            {
+                return walletAddress;
+            }
+
+            public static string GenerateRowKey(string transactionId)
+            {
+                return transactionId;
+            }
+
+            public static PaymentRequestTransactionEntity Create(IPaymentRequestTransaction src)
+            {
+                var entity = new PaymentRequestTransactionEntity
+                {
+                    PartitionKey = GeneratePartitionKey(src.WalletAddress),
+                    RowKey = GenerateRowKey(src.TransactionId),
+                };
+
+                return Mapper.Map(src, entity);
+            }
+        }
+
+        public static class IndexByTransactionId
+        {
+            public static string GeneratePartitionKey(string transactionId)
+            {
+                return transactionId;
+            }
+
+            public static string GenerateRowKey(BlockchainType blockchain)
+            {
+                return blockchain.ToString();
+            }
+
+            public static AzureIndex Create(PaymentRequestTransactionEntity entity)
+            {
+                return AzureIndex.Create(GeneratePartitionKey(entity.TransactionId), GenerateRowKey(entity.Blockchain), entity);
+            }
+        }
+
+        public static class IndexByDueDate
+        {
+            public static string GeneratePartitionKey(DateTime dueDate)
+            {
+                var dueDateIso = dueDate.ToString("O");
+
+                return $"DD_{dueDateIso}";
+            }
+
+            public static string GenerateRowKey(string transactionId, BlockchainType blockchain)
+            {
+                return $"{transactionId}_{blockchain}";
+            }
+
+            public static AzureIndex Create(PaymentRequestTransactionEntity entity)
+            {
+                return AzureIndex.Create(GeneratePartitionKey(entity.DueDate),
+                    GenerateRowKey(entity.TransactionId, entity.Blockchain), entity);
             }
         }
     }

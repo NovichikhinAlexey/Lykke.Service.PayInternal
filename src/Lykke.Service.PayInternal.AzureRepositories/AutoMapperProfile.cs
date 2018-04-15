@@ -4,8 +4,10 @@ using Lykke.Service.PayInternal.AzureRepositories.PaymentRequest;
 using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.AzureRepositories.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
+using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Domain.Wallet;
 
 namespace Lykke.Service.PayInternal.AzureRepositories
 {
@@ -30,6 +32,10 @@ namespace Lykke.Service.PayInternal.AzureRepositories
 
             CreateMap<IMerchant, MerchantEntity>(MemberList.Source)
                 .ForSourceMember(src => src.Id, opt => opt.Ignore());
+
+            CreateMap<VirtualWalletEntity, VirtualWallet>(MemberList.Destination);
+
+            CreateMap<BcnWalletUsageEntity, BcnWalletUsage>(MemberList.Destination);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Autofac;
 using Common;
 using Common.Log;
@@ -12,6 +13,9 @@ using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Rabbit.Publishers
 {
+    /// <summary>
+    /// Publishes messages about new transactions which have been created by service
+    /// </summary>
     [UsedImplicitly]
     public class TransactionPublisher : ITransactionPublisher, IStartable, IStopable
     {
@@ -39,7 +43,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
                 Amount = transaction.Amount,
                 Confirmations = transaction.Confirmations,
                 BlockId = transaction.BlockId,
-                Blockchain = transaction.Blockchain,
+                Blockchain = Enum.Parse<BlockchainType>(transaction.Blockchain.ToString()),
                 DueDate = transaction.DueDate
             });
         }
