@@ -73,11 +73,6 @@ namespace Lykke.Service.PayInternal.Services
                 if (tx.SourceWalletAddresses.MoreThanOne())
                     throw new RefundValidationException(RefundErrorType.InvalidDestinationAddress);
             }
-            else
-            {
-                if (!tx.SourceWalletAddresses.Contains(destinationWalletAddress))
-                    throw new RefundValidationException(RefundErrorType.InvalidDestinationAddress);
-            }
 
             //validation finished, refund request accepted
             await _paymentRequestService.UpdateStatusAsync(paymentRequest.WalletAddress,
