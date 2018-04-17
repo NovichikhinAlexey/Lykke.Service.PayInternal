@@ -47,7 +47,7 @@ namespace Lykke.Service.PayInternal.Controllers
             _transactionsService = transactionsService;
             _assetsLocalCache = assetsLocalCache;
             _refundService = refundService;
-            _log = log;
+            _log = log.CreateComponentScope(nameof(PaymentRequestsController));
         }
 
         /// <summary>
@@ -119,7 +119,8 @@ namespace Lykke.Service.PayInternal.Controllers
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
                 IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
-                    (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment())
+                    (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress))
+                    .Where(x => x.IsPayment())
                     .ToList();
 
                 PaymentRequestRefund refund =
@@ -134,7 +135,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(GetDetailsAsync),
+                await _log.WriteErrorAsync(nameof(GetDetailsAsync),
                     new
                     {
                         MerchantId = merchantId,
@@ -205,8 +206,8 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (Exception exception)
             {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(CreateAsync), model.ToJson(),
-                    exception);
+                await _log.WriteErrorAsync(nameof(CreateAsync), model.ToJson(), exception);
+
                 throw;
             }
         }
@@ -230,7 +231,8 @@ namespace Lykke.Service.PayInternal.Controllers
                 IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
 
                 IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
-                    (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment())
+                    (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress))
+                    .Where(x => x.IsPayment())
                     .ToList();
 
                 var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
@@ -241,7 +243,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (Exception exception)
             {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(ChechoutAsync),
+                await _log.WriteErrorAsync(nameof(ChechoutAsync),
                     new
                     {
                         MerchantId = merchantId,
@@ -273,13 +275,16 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(RefundAsync), request.ToJson(), ex);
+                await _log.WriteErrorAsync(nameof(RefundAsync), request.ToJson(), ex);
 
                 if (ex is RefundValidationException validationEx)
                 {
+                    await _log.WriteErrorAsync(nameof(RefundAsync),
+                        new {errorType = validationEx.ErrorType.ToString()}.ToJson(), validationEx);
+
                     return BadRequest(new RefundErrorModel {Code = validationEx.ErrorType});
                 }
-                
+
                 return BadRequest(new RefundErrorModel {Code = RefundErrorType.Unknown});
             }
         }
@@ -306,17 +311,31 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(CancelAsync), new
+                await _log.WriteErrorAsync(nameof(CancelAsync), new
                 {
                     merchantId,
                     paymentRequestId
                 }.ToJson(), ex);
 
                 if (ex is PaymentRequestNotFoundException notFoundEx)
+                {
+                    await _log.WriteErrorAsync(nameof(CancelAsync), new
+                    {
+                        notFoundEx.WalletAddress,
+                        notFoundEx.MerchantId,
+                        notFoundEx.PaymentRequestId
+                    }.ToJson(), notFoundEx);
+
                     return NotFound(ErrorResponse.Create(notFoundEx.Message));
+                }
 
                 if (ex is NotAllowedStatusException notAllowedEx)
+                {
+                    await _log.WriteErrorAsync(nameof(CancelAsync),
+                        new {status = notAllowedEx.Status.ToString()}.ToJson(), notAllowedEx);
+
                     return BadRequest(ErrorResponse.Create(notAllowedEx.Message));
+                }
 
                 throw;
             }
