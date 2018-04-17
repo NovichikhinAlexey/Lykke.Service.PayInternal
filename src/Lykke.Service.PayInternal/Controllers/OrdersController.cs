@@ -5,8 +5,10 @@ using AutoMapper;
 using Common;
 using Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.Order;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Models.Orders;
+using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -15,13 +17,16 @@ namespace Lykke.Service.PayInternal.Controllers
     [Route("api")]
     public class OrdersController : Controller
     {
+        private readonly IPaymentRequestService _paymentRequestService;
         private readonly IOrderService _orderService;
         private readonly ILog _log;
 
         public OrdersController(
+            IPaymentRequestService paymentRequestService,
             IOrderService orderService,
             ILog log)
         {
+            _paymentRequestService = paymentRequestService;
             _orderService = orderService;
             _log = log;
         }
@@ -56,6 +61,35 @@ namespace Lykke.Service.PayInternal.Controllers
                 await _log.WriteErrorAsync(nameof(OrdersController), nameof(GetAsync),
                     new {PaymentRequestId = paymentRequestId}.ToJson(), exception);
 
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Creates an order if it does not exist or expired.
+        /// </summary>
+        /// <param name="model">The order creation information.</param>
+        /// <returns>An active order related with payment request.</returns>
+        /// <response code="200">An active order related with payment request.</response>
+        [HttpPost]
+        [Route("orders")]
+        [SwaggerOperation("OrdersChechout")]
+        [ProducesResponseType(typeof(OrderModel), (int)HttpStatusCode.OK)]
+        public async Task<IActionResult> ChechoutAsync([FromBody] ChechoutRequestModel model)
+        {
+            try
+            {
+                IPaymentRequest paymentRequest =
+                    await _paymentRequestService.CheckoutAsync(model.MerchantId, model.PaymentRequestId, model.Force);
+
+                IOrder order = await _orderService.GetAsync(paymentRequest.Id, paymentRequest.OrderId);
+
+                return Ok(Mapper.Map<OrderModel>(order));
+            }
+            catch (Exception exception)
+            {
+                await _log.WriteErrorAsync(nameof(OrdersController), nameof(ChechoutAsync),
+                    model.ToJson(), exception);
                 throw;
             }
         }

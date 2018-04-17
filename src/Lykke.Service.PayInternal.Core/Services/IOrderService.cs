@@ -9,8 +9,8 @@ namespace Lykke.Service.PayInternal.Core.Services
     {
         Task<IOrder> GetAsync(string paymentRequestId, string orderId);
 
-        Task<IOrder> GetAsync(string paymentRequestId, DateTime date);
+        Task<IOrder> GetActualAsync(string paymentRequestId, DateTime date);
         
-        Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest);
+        Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest, bool force = false);
     }
 }

@@ -106,6 +106,11 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.GetByIdAsync(merchantId, paymentRequestId));
         }
 
+        public async Task<OrderModel> ChechoutOrderAsync(ChechoutRequestModel model)
+        {
+            return await _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.ChechoutAsync(model));
+        }
+
         public async Task<IReadOnlyList<PaymentRequestModel>> GetPaymentRequestsAsync(string merchantId)
         {
             return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetAllAsync(merchantId));
@@ -130,12 +135,7 @@ namespace Lykke.Service.PayInternal.Client
         {
             return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.CreateAsync(model));
         }
-
-        public async Task<PaymentRequestDetailsModel> ChechoutAsync(string merchantId, string paymentRequestId)
-        {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.ChechoutAsync(merchantId, paymentRequestId));
-        }
-
+        
         public async Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request)
         {
             return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.BtcFreeTransferAsync(request));

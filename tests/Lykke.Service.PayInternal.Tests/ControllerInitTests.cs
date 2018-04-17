@@ -73,8 +73,7 @@ namespace Lykke.Service.PayInternal.Tests
                 new Mock<ILog>().Object));
 
             builder.RegisterModule(new Services.AutofacModule(
-                appSettings.CurrentValue.PayInternalService.ExpirationPeriods.Order,
-                appSettings.CurrentValue.PayInternalService.ExpirationPeriods.Refund,
+                appSettings.CurrentValue.PayInternalService.ExpirationPeriods,
                 appSettings.CurrentValue.PayInternalService.TransactionConfirmationCount,
                 appSettings.CurrentValue.PayInternalService.Blockchain.WalletAllocationPolicy.Policies));
 

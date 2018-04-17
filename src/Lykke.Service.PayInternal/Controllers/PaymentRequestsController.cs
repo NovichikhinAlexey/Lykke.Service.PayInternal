@@ -102,6 +102,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <returns>The payment request details.</returns>
         /// <response code="200">The payment request.</response>
         /// <response code="404">Payment request not found.</response>
+        [Obsolete("Need to remove")]
         [HttpGet]
         [Route("merchants/{merchantId}/paymentrequests/details/{paymentRequestId}")]
         [SwaggerOperation("PaymentRequestDetailsGetById")]
@@ -208,47 +209,6 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 await _log.WriteErrorAsync(nameof(CreateAsync), model.ToJson(), exception);
 
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Creates an order if it does not exist or expired and returns payment request details.
-        /// </summary>
-        /// <returns>The payment request details.</returns>
-        /// <response code="200">The payment request details.</response>
-        [HttpPost]
-        [Route("merchants/{merchantId}/paymentrequests/{paymentRequestId}")]
-        [SwaggerOperation("PaymentRequestsCreate")]
-        [ProducesResponseType(typeof(PaymentRequestDetailsModel), (int) HttpStatusCode.OK)]
-        public async Task<IActionResult> ChechoutAsync(string merchantId, string paymentRequestId)
-        {
-            try
-            {
-                IPaymentRequest paymentRequest =
-                    await _paymentRequestService.CheckoutAsync(merchantId, paymentRequestId);
-
-                IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
-
-                IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
-                    (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress))
-                    .Where(x => x.IsPayment())
-                    .ToList();
-
-                var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
-                model.Order = Mapper.Map<PaymentRequestOrderModel>(order);
-                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(paymentTransactions);
-
-                return Ok(model);
-            }
-            catch (Exception exception)
-            {
-                await _log.WriteErrorAsync(nameof(ChechoutAsync),
-                    new
-                    {
-                        MerchantId = merchantId,
-                        PaymentRequestId = paymentRequestId
-                    }.ToJson(), exception);
                 throw;
             }
         }

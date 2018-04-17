@@ -8,5 +8,8 @@ namespace Lykke.Service.PayInternal.Client.Api
     {
         [Get("/api/merchants/paymentrequests/{paymentRequestId}/orders/{orderId}")]
         Task<OrderModel> GetByIdAsync(string paymentRequestId, string orderId);
+
+        [Post("/api/orders")]
+        Task<OrderModel> ChechoutAsync([Body] ChechoutRequestModel model);
     }
 }
