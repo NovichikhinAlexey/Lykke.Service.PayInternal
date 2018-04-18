@@ -2,17 +2,14 @@
 using System.Linq;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using AzureStorage.Tables;
-using AzureStorage.Tables.Templates.Index;
 using Common;
 using Common.Log;
 using Lykke.Bitcoin.Api.Client;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
+using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.MarketProfile.Client;
-using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.Core;
-using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
 using Lykke.Service.PayInternal.Mapping;
@@ -108,6 +105,11 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<BitcoinApiClient>()
                 .Keyed<IBlockchainApiClient>(BlockchainType.Bitcoin)
                 .SingleInstance();
+
+            builder.RegisterType<EthereumApiClient>()
+                .Keyed<IBlockchainApiClient>(BlockchainType.Ethereum)
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum))
+                .SingleInstance();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
@@ -123,6 +125,9 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterInstance(new QBitNinjaClient(_settings.CurrentValue.NinjaServiceClient.ServiceUrl))
                 .AsSelf();
+
+            builder.RegisterInstance<IEthereumCoreAPI>(
+                new EthereumCoreAPI(new Uri(_settings.CurrentValue.EthereumServiceClient.ServiceUrl)));
         }
 
         private void RegisterCaches(ContainerBuilder builder)

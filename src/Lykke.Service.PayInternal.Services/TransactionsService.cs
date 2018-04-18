@@ -87,6 +87,7 @@ namespace Lykke.Service.PayInternal.Services
             if (transaction == null)
                 throw new TransactionNotFoundException(request.TransactionId, request.Blockchain);
 
+            //todo: add transaction hash
             transaction.BlockId = request.BlockId;
             transaction.Confirmations = request.Confirmations;
             transaction.FirstSeen = request.FirstSeen;

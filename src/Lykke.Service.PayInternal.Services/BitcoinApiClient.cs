@@ -29,7 +29,7 @@ namespace Lykke.Service.PayInternal.Services
             _bitcoinServiceClient =
                 bitcoinServiceClient ?? throw new ArgumentNullException(nameof(bitcoinServiceClient));
             _feeProvider = feeProvider ?? throw new ArgumentNullException(nameof(feeProvider));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _log = log?.CreateComponentScope(nameof(BitcoinApiClient)) ?? throw new ArgumentNullException(nameof(log));
         }
 
         public async Task<BlockchainTransferResult> TransferAsync(BlockchainTransferCommand transfer)
@@ -85,7 +85,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (wallet.HasError)
             {
-                await _log.WriteWarningAsync(nameof(BitcoinApiClient), nameof(CreateAddressAsync), wallet.Error?.Message);
+                await _log.WriteWarningAsync(nameof(CreateAddressAsync), "New bitcoin address generation", wallet.Error?.Message);
 
                 throw new WalletAddressAllocationException(BlockchainType.Bitcoin);
             }

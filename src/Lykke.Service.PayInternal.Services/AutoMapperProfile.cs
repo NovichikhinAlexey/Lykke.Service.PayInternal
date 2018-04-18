@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Lykke.Service.EthereumCore.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
@@ -29,6 +30,13 @@ namespace Lykke.Service.PayInternal.Services
 
             CreateMap<IUpdateTransactionRequest, UpdateTransactionCommand>(MemberList.Destination)
                 .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<VirtualAddressResolver>());
+
+            CreateMap<TransferAmount, TransferFromDepositRequest>(MemberList.Destination)
+                .ForMember(dest => dest.DepositAddress, opt => opt.MapFrom(src => src.Source))
+                .ForMember(dest => dest.DestinationAddress, opt => opt.MapFrom(src => src.Destination))
+                .ForMember(dest => dest.TokenAddress,
+                    opt => opt.ResolveUsing((src, dest, destMemeber, resContext) =>
+                        dest.TokenAddress = (string) resContext.Items["TokenAddress"]));
         }
     }
 }
