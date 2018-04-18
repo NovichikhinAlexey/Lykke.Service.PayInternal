@@ -15,11 +15,13 @@ namespace Lykke.Service.PayInternal.AzureRepositories
     {
         public AutoMapperProfile()
         {
-            CreateMap<PaymentRequestEntity, Core.Domain.PaymentRequests.PaymentRequest>(MemberList.Destination);
+            CreateMap<PaymentRequestEntity, Core.Domain.PaymentRequests.PaymentRequest>(MemberList.Destination)
+                .ForMember(dest => dest.Timestamp, opt => opt.MapFrom(src => src.CreatedOn));
 
             CreateMap<IPaymentRequest, PaymentRequestEntity>(MemberList.Source)
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.Timestamp, opt => opt.Ignore());
+                .ForMember(dest => dest.Timestamp, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedOn, opt => opt.MapFrom(src => src.Timestamp));
 
             CreateMap<PaymentRequestTransactionEntity, PaymentRequestTransaction>(MemberList.Destination)
                 .ForMember(dest => dest.CreatedOn, opt => opt.MapFrom(src => src.Timestamp));
