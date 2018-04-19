@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -91,6 +92,8 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<IPaymentRequest> CreateAsync(IPaymentRequest paymentRequest)
         {
             paymentRequest.Status = PaymentRequestStatus.New;
+
+            paymentRequest.Timestamp = DateTime.UtcNow;
 
             IVirtualWallet wallet = await _walletsManager.CreateAsync(paymentRequest.MerchantId,
                 paymentRequest.DueDate, paymentRequest.PaymentAssetId);

@@ -16,6 +16,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         private decimal _paidAmount;
         private double _markupFixedFee;
         private PaymentRequestProcessingError _processingError;
+        private DateTime _createdOn;
         
         public PaymentRequestEntity()
         {
@@ -112,6 +113,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
             {
                 _processingError = value;
                 MarkValueTypePropertyAsDirty(nameof(ProcessingError));
+            }
+        }
+
+        public DateTime CreatedOn
+        {
+            get => _createdOn;
+            set
+            {
+                _createdOn = value;
+                MarkValueTypePropertyAsDirty(nameof(CreatedOn));
             }
         }
     }
