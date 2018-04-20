@@ -20,18 +20,22 @@ namespace Lykke.Service.PayInternal.Services
         // ReSharper disable once NotAccessedField.Local
         private readonly ILog _log;
         private readonly AppSettings _appSettings;
+        private readonly IPaymentRequestExpirationHandler _paymentRequestExpirationHandler;
 
         public StartupManager(
             ILog log,
-            AppSettings appSettings)
+            AppSettings appSettings,
+            IPaymentRequestExpirationHandler paymentRequestExpirationHandler)
         {
-            _log = log;
-            _appSettings = appSettings;
+            _log = log?.CreateComponentScope(nameof(StartupManager)) ?? throw new ArgumentNullException(nameof(log));
+            _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
+            _paymentRequestExpirationHandler = paymentRequestExpirationHandler ??
+                                               throw new ArgumentNullException(nameof(paymentRequestExpirationHandler));
         }
 
         public async Task StartAsync()
         {
-            await _log.WriteInfoAsync(nameof(StartupManager), nameof(StartAsync), "Checking app settings consistency...");
+            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty, "Checking app settings consistency...");
 
             TimeSpan primaryExpPeriod = _appSettings.PayInternalService.ExpirationPeriods.Order.Primary;
 
@@ -40,7 +44,15 @@ namespace Lykke.Service.PayInternal.Services
             if (primaryExpPeriod > extendedExpPeriod)
                 throw new OrderExpirationSettingsInconsistentException(primaryExpPeriod, extendedExpPeriod);
 
-            await _log.WriteInfoAsync(nameof(StartupManager), nameof(StartAsync), "Settings checked successfully.");
+            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty, "Settings checked successfully.");
+
+            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty,
+                "Starting payment request expiration handler ...");
+
+            _paymentRequestExpirationHandler.Start();
+
+            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty,
+                "Payment request expiration handler successfully started.");
         }
     }
 }

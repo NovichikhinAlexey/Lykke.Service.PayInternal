@@ -6,7 +6,7 @@ using Lykke.Service.PayInternal.Core.Services;
 
 namespace Lykke.Service.PayInternal.PeriodicalHandlers
 {
-    public class PaymentRequestExpiraitonHandler : TimerPeriod
+    public class PaymentRequestExpiraitonHandler : TimerPeriod, IPaymentRequestExpirationHandler
     {
         private readonly IPaymentRequestService _paymentRequestService;
         private readonly ILog _log;
