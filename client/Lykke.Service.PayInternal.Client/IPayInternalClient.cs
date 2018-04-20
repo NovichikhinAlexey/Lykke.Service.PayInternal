@@ -189,20 +189,17 @@ namespace Lykke.Service.PayInternal.Client
         Task SetPersonalAvailableAssetsAsync(UpdateAssetAvailabilityByMerchantRequest request);
 
         /// <summary>
+        /// Return payment transactions
+        /// </summary>
+        /// <param name="paymentRequestId"></param>
+        /// <returns></returns>
+        Task<IReadOnlyList<string>> GetTransactionsSourceWalletsAsync(string paymentRequestId);
         /// Cancels payment request
         /// </summary>
         /// <param name="merchantId">Merchant id</param>
         /// <param name="paymentRequestId">Payment request id</param>
         /// <returns></returns>
         Task CancelAsync(string merchantId, string paymentRequestId);
-
-
-		/// <summary>
-        /// Return source wallets of payment request transactions
-        /// </summary>
-        /// <param name="walletAddress"></param>
-        /// <returns></returns>
-        Task<IReadOnlyList<string>> GetTransactionsSourceWalletsAsync(string walletAddress);
 
         /// <summary>
         /// Marks wallet as expired

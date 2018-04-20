@@ -98,10 +98,10 @@ namespace Lykke.Service.PayInternal.Services
 
             await _transactionRepository.UpdateAsync(transaction);
         }
-        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetTransactionsByPaymentRequestAsync(string walletAddress)
+        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetTransactionsByPaymentRequestAsync(string paymentRequestId)
         {
             IReadOnlyList<IPaymentRequestTransaction> transactions =
-                (await _transactionRepository.GetByWalletAsync(walletAddress)).Where(x => x.IsPayment()).ToList();
+                (await _transactionRepository.GetByPaymentRequestAsync(paymentRequestId)).Where(x => x.IsPayment()).ToList();
 
             if (!transactions.Any())
                 return null;
