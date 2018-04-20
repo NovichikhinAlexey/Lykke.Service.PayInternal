@@ -19,7 +19,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         private double _markupFixedFee;
         private PaymentRequestProcessingError _processingError;
         private DateTime _createdOn;
-        
+        private PaymentRequestStatus _status;
+        private DateTime? _paidDate;
+
         public string Id => RowKey;
         
         public string MerchantId { get; set; }
@@ -83,8 +85,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         }
         
         public string WalletAddress { get; set; }
-        
-        public PaymentRequestStatus Status { get; set; }
+
+        public PaymentRequestStatus Status
+        {
+            get => _status;
+            set
+            {
+                _status = value;
+                MarkValueTypePropertyAsDirty(nameof(Status));
+            }
+        }
         
         public decimal PaidAmount
         {
@@ -95,8 +105,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
                 MarkValueTypePropertyAsDirty(nameof(PaidAmount));
             }
         }
-        
-        public DateTime? PaidDate { get; set; }
+
+        public DateTime? PaidDate
+        {
+            get => _paidDate;
+            set
+            {
+                _paidDate = value;
+                MarkValueTypePropertyAsDirty(nameof(PaidDate));
+            }
+        }
 
         public PaymentRequestProcessingError ProcessingError
         {
