@@ -14,6 +14,7 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         public decimal Amount { get; set; }
 
         public string OrderId { get; set; }
+        public string ExternalOrderId { get; set; }
 
         public string SettlementAssetId { get; set; }
 
