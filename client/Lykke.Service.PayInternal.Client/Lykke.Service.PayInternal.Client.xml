@@ -893,6 +893,11 @@
             An error occurred during processing payment request.
             </summary>
         </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestStatus.PastDue">
+            <summary>
+            Payment due date expired and no payment transactions detected
+            </summary>
+        </member>
         <member name="T:Lykke.Service.PayInternal.Client.Models.PaymentRequest.RefundErrorType">
             <summary>
             Validation errors for payment request operations 
