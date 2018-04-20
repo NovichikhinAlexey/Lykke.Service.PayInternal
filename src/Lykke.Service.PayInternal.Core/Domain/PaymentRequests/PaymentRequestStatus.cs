@@ -43,6 +43,11 @@
         /// <summary>
         /// An error occurred during processing payment request.
         /// </summary>
-        Error
+        Error,
+
+        /// <summary>
+        /// Payment due date expired and no payment transactions detected
+        /// </summary>
+        PastDue
     }
 }

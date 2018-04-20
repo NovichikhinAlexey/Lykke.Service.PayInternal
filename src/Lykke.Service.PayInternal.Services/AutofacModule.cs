@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Autofac;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
@@ -29,7 +28,7 @@ namespace Lykke.Service.PayInternal.Services
 
             builder.RegisterType<PaymentRequestService>()
                 .As<IPaymentRequestService>()
-                .WithParameter(TypedParameter.From(_transactionConfirmationCount));
+                .WithParameter(TypedParameter.From(_expirationPeriods));
 
             builder.RegisterType<RefundService>()
                 .As<IRefundService>()

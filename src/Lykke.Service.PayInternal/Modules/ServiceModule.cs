@@ -2,20 +2,17 @@
 using System.Linq;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using AzureStorage.Tables;
-using AzureStorage.Tables.Templates.Index;
 using Common;
 using Common.Log;
 using Lykke.Bitcoin.Api.Client;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.MarketProfile.Client;
-using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.Core;
-using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
 using Lykke.Service.PayInternal.Mapping;
+using Lykke.Service.PayInternal.PeriodicalHandlers;
 using Lykke.Service.PayInternal.Rabbit.Publishers;
 using Lykke.Service.PayInternal.Services;
 using Lykke.Service.PayInternal.Services.Mapping;
@@ -59,6 +56,8 @@ namespace Lykke.Service.PayInternal.Modules
             RegisterRabbitMqPublishers(builder);
 
             RegisterMapperValueResolvers(builder);
+
+            RegisterPeriodicalHandlers(builder);
 
             builder.Populate(_services);
         }
@@ -197,6 +196,15 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<VirtualAddressResolver>()
                 .AsSelf()
+                .SingleInstance();
+        }
+
+        private void RegisterPeriodicalHandlers(ContainerBuilder builder)
+        {
+            builder.RegisterType<PaymentRequestExpiraitonHandler>()
+                .As<IStartable>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.JobPeriods.PaymentRequestExpirationHandling))
+                .AutoActivate()
                 .SingleInstance();
         }
     }
