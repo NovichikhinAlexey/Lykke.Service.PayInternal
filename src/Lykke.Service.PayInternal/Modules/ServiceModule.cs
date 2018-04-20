@@ -206,9 +206,8 @@ namespace Lykke.Service.PayInternal.Modules
         private void RegisterPeriodicalHandlers(ContainerBuilder builder)
         {
             builder.RegisterType<PaymentRequestExpiraitonHandler>()
-                .As<IStartable>()
+                .As<IPaymentRequestExpirationHandler>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.JobPeriods.PaymentRequestExpirationHandling))
-                .AutoActivate()
                 .SingleInstance();
         }
     }
