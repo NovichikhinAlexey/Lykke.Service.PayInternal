@@ -81,5 +81,13 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
                 Status = PaymentRequestStatus.Refunded
             };
         }
+
+        public static PaymentRequestStatusInfo PastDue()
+        {
+            return new PaymentRequestStatusInfo
+            {
+                Status = PaymentRequestStatus.PastDue
+            };
+        }
     }
 }

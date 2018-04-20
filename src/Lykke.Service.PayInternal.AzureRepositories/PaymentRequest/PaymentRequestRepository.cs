@@ -14,95 +14,101 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
     {
         private readonly INoSQLTableStorage<PaymentRequestEntity> _storage;
         private readonly INoSQLTableStorage<AzureIndex> _walletAddressIndexStorage;
+        private readonly INoSQLTableStorage<AzureIndex> _dueDateIndexStorage;
 
         public PaymentRequestRepository(
             INoSQLTableStorage<PaymentRequestEntity> storage,
-            INoSQLTableStorage<AzureIndex> walletAddressIndexStorage)
+            INoSQLTableStorage<AzureIndex> walletAddressIndexStorage, 
+            INoSQLTableStorage<AzureIndex> dueDateIndexStorage)
         {
             _storage = storage;
             _walletAddressIndexStorage = walletAddressIndexStorage;
+            _dueDateIndexStorage = dueDateIndexStorage;
         }
         
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
         {
             IEnumerable<PaymentRequestEntity> paymentRequestEntities
-                = await _storage.GetDataAsync(GetPartitionKey(merchantId));
+                = await _storage.GetDataAsync(PaymentRequestEntity.ByMerchant.GeneratePartitionKey(merchantId));
 
             return Mapper.Map<IEnumerable<Core.Domain.PaymentRequests.PaymentRequest>>(paymentRequestEntities).ToList();
         }
 
         public async Task<IPaymentRequest> GetAsync(string merchantId, string paymentRequestId)
         {
-            PaymentRequestEntity entity =
-                await _storage.GetDataAsync(GetPartitionKey(merchantId), GetRowKey(paymentRequestId));
+            PaymentRequestEntity entity = await _storage.GetDataAsync(
+                    PaymentRequestEntity.ByMerchant.GeneratePartitionKey(merchantId),
+                    PaymentRequestEntity.ByMerchant.GenerateRowKey(paymentRequestId));
 
             return Mapper.Map<Core.Domain.PaymentRequests.PaymentRequest>(entity);
         }
 
         public async Task<IPaymentRequest> FindAsync(string walletAddress)
         {
-            AzureIndex index = await _walletAddressIndexStorage
-                .GetDataAsync(GetWalletAddressIndexPartitionKey(walletAddress), GetWalletAddressIndexRowKey());
+            AzureIndex index = await _walletAddressIndexStorage.GetDataAsync(
+                PaymentRequestEntity.IndexByWallet.GeneratePartitionKey(walletAddress),
+                PaymentRequestEntity.IndexByWallet.GenerateRowKey());
 
-            if (index == null)
-                return null;
+            if (index == null) return null;
 
             PaymentRequestEntity entity = await _storage.GetDataAsync(index);
 
             return Mapper.Map<Core.Domain.PaymentRequests.PaymentRequest>(entity);
         }
 
-        public async Task<IEnumerable<IPaymentRequest>> GetNotExpiredAsync()
+        public async Task<IReadOnlyList<IPaymentRequest>> GetByDueDate(DateTime from, DateTime to)
         {
-            var filter =
-                TableQuery.GenerateFilterConditionForDate("DueDate", QueryComparisons.GreaterThanOrEqual, DateTimeOffset.UtcNow);
+            string gtDate = PaymentRequestEntity.IndexByDueDate.GeneratePartitionKey(from);
 
-            var query = new TableQuery<PaymentRequestEntity>().Where(filter);
+            string ltDate = PaymentRequestEntity.IndexByDueDate.GeneratePartitionKey(to);
 
-            IEnumerable<PaymentRequestEntity> entities = await _storage.WhereAsync(query);
+            var filter = TableQuery.CombineFilters(
+                TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.GreaterThan, gtDate),
+                TableOperators.And,
+                TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.LessThan, ltDate));
 
-            return Mapper.Map<IEnumerable<Core.Domain.PaymentRequests.PaymentRequest>>(entities);
+            var query = new TableQuery<AzureIndex>().Where(filter);
+
+            IEnumerable<AzureIndex> indecies = await _dueDateIndexStorage.WhereAsync(query);
+
+            IEnumerable<PaymentRequestEntity> entities = await _storage.GetDataAsync(indecies);
+
+            return Mapper.Map<IEnumerable<Core.Domain.PaymentRequests.PaymentRequest>>(entities).ToList();
         }
 
         public async Task<IPaymentRequest> InsertAsync(IPaymentRequest paymentRequest)
         {
-            var entity = new PaymentRequestEntity(GetPartitionKey(paymentRequest.MerchantId), GetRowKey());
-
-            Mapper.Map(paymentRequest, entity);
+            var entity = PaymentRequestEntity.ByMerchant.Create(paymentRequest);
 
             await _storage.InsertAsync(entity);
 
-            var index = AzureIndex.Create(GetWalletAddressIndexPartitionKey(entity.WalletAddress), GetWalletAddressIndexRowKey(), entity);
+            var indexByWallet = PaymentRequestEntity.IndexByWallet.Create(entity);
             
-            await _walletAddressIndexStorage.InsertAsync(index);
+            await _walletAddressIndexStorage.InsertAsync(indexByWallet);
+
+            var indexByDueDate = PaymentRequestEntity.IndexByDueDate.Create(entity);
+
+            await _dueDateIndexStorage.InsertAsync(indexByDueDate);
             
             return Mapper.Map<Core.Domain.PaymentRequests.PaymentRequest>(entity);
         }
 
         public async Task UpdateAsync(IPaymentRequest paymentRequest)
         {
-            var entity = new PaymentRequestEntity(GetPartitionKey(paymentRequest.MerchantId), GetRowKey(paymentRequest.Id));
+            await _storage.MergeAsync(
+                PaymentRequestEntity.ByMerchant.GeneratePartitionKey(paymentRequest.MerchantId),
+                PaymentRequestEntity.ByMerchant.GenerateRowKey(paymentRequest.Id),
+                entity =>
+                {
+                    entity.Amount = paymentRequest.Amount;
+                    entity.OrderId = paymentRequest.OrderId;
+                    entity.PaidAmount = paymentRequest.PaidAmount;
+                    entity.PaidDate = paymentRequest.PaidDate;
+                    entity.ProcessingError = paymentRequest.ProcessingError;
+                    entity.Status = paymentRequest.Status;
 
-            Mapper.Map(paymentRequest, entity);
-
-            entity.ETag = "*";
-            
-            await _storage.ReplaceAsync(entity);
+                    return entity;
+                });
         }
-
-        private static string GetPartitionKey(string merchantId)
-            => merchantId;
-
-        private static string GetRowKey(string paymentRequestId)
-            => paymentRequestId;
-
-        private static string GetRowKey()
-            => Guid.NewGuid().ToString("D");
-        
-        private static string GetWalletAddressIndexPartitionKey(string walletAddress)
-            => walletAddress;
-
-        private static string GetWalletAddressIndexRowKey()
-            => "WalletAddressIndex";
     }
 }

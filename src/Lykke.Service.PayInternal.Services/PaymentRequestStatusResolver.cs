@@ -86,7 +86,9 @@ namespace Lykke.Service.PayInternal.Services
                 (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
 
             if (!txs.Any())
-                return PaymentRequestStatusInfo.New();
+                return (paymentRequest.DueDate < DateTime.UtcNow)
+                    ? PaymentRequestStatusInfo.PastDue()
+                    : PaymentRequestStatusInfo.New();
 
             decimal btcPaid;
 
