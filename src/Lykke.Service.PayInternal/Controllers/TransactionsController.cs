@@ -92,16 +92,16 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <param name="paymentRequestId"></param>
         /// <returns></returns>
         [HttpGet]
-        [Route("{walletAddress}")]
+        [Route("{paymentRequestId}")]
         [SwaggerOperation(nameof(PaymentTransaction))]
         [ProducesResponseType(typeof(IReadOnlyList<string>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(void), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> PaymentTransaction(string walletAddress)
+        public async Task<IActionResult> PaymentTransaction(string paymentRequestId)
         {
             try
             {
-                var transactions = await _transactionsService.GetTransactionsByPaymentRequestAsync(walletAddress);
+                var transactions = await _transactionsService.GetTransactionsByPaymentRequestAsync(paymentRequestId);
                 var addresses = new List<string>();
                 if (transactions != null)
                 {
