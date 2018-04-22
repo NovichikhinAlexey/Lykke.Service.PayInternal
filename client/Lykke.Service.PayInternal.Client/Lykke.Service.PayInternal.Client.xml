@@ -361,21 +361,14 @@
             <param name="request"></param>
             <returns></returns>
         </member>
-        <member name="M:Lykke.Service.PayInternal.Client.IPayInternalClient.CancelAsync(System.String,System.String)">
-            <summary>
-            Cancels payment request
-            </summary>
-            <param name="merchantId">Merchant id</param>
-            <param name="paymentRequestId">Payment request id</param>
-            <returns></returns>
-        </member>
         <member name="M:Lykke.Service.PayInternal.Client.IPayInternalClient.GetTransactionsSourceWalletsAsync(System.String)">
             <summary>
-            Return source wallets of payment request transactions
+            Return payment transactions
             </summary>
-            <param name="walletAddress"></param>
+            <param name="paymentRequestId"></param>
             <returns></returns>
         </member>
+        <!-- Badly formed XML comment ignored for member "M:Lykke.Service.PayInternal.Client.IPayInternalClient.CancelAsync(System.String,System.String)" -->
         <member name="M:Lykke.Service.PayInternal.Client.IPayInternalClient.SetWalletExpiredAsync(Lykke.Service.PayInternal.Client.Models.Wallets.BlockchainWalletExpiredRequest)">
             <summary>
             Marks wallet as expired
@@ -761,6 +754,11 @@
         <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel.OrderId">
             <summary>
             Gets or sets the order id
+            </summary>
+        </member>
+        <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel.ExternalOrderId">
+            <summary>
+            Get or set ExternalOrderId
             </summary>
         </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestModel.SettlementAssetId">

@@ -8,11 +8,7 @@ using Lykke.Bitcoin.Api.Client;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.MarketProfile.Client;
-using Lykke.Service.PayInternal.AzureRepositories.Transfer;
-using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core;
-using Lykke.Service.PayInternal.Core.Domain.Transfer;
-using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
 using Lykke.Service.PayInternal.Mapping;
@@ -22,7 +18,6 @@ using Lykke.Service.PayInternal.Services;
 using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
-using QBitNinja.Client;
 using DbSettings = Lykke.Service.PayInternal.Core.Settings.ServiceSettings.DbSettings;
 
 namespace Lykke.Service.PayInternal.Modules
@@ -111,6 +106,11 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<BitcoinApiClient>()
                 .Keyed<IBlockchainApiClient>(BlockchainType.Bitcoin)
                 .SingleInstance();
+
+            builder.RegisterType<BlockchainAddressValidator>()
+                .As<IBlockchainAddressValidator>()
+                .WithParameter(
+                    TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Bitcoin.Network));
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
@@ -123,9 +123,6 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<LykkeMarketProfile>()
                 .As<ILykkeMarketProfile>()
                 .WithParameter("baseUri", new Uri(_settings.CurrentValue.MarketProfileServiceClient.ServiceUrl));
-
-            builder.RegisterInstance(new QBitNinjaClient(_settings.CurrentValue.NinjaServiceClient.ServiceUrl))
-                .AsSelf();
         }
 
         private void RegisterCaches(ContainerBuilder builder)
