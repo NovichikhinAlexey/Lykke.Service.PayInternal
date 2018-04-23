@@ -2,8 +2,8 @@
 {
     public class TransactionExpiredRequest
     {
-        public string TransactionId { get; set; }
-
         public BlockchainType Blockchain { get; set; }
+        public TransactionIdentityType IdentityType { get; set; }
+        public string Identity { get; set; }
     }
 }

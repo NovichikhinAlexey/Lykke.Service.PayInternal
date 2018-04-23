@@ -37,6 +37,23 @@ namespace Lykke.Service.PayInternal.Services
                 .ForMember(dest => dest.TokenAddress,
                     opt => opt.ResolveUsing((src, dest, destMemeber, resContext) =>
                         dest.TokenAddress = (string) resContext.Items["TokenAddress"]));
+
+            CreateMap<ICreateTransactionCommand, PaymentRequestTransaction>(MemberList.Source)
+                .ForMember(dest => dest.TransactionId, opt => opt.MapFrom(src => src.Hash))
+                .ForMember(dest => dest.PaymentRequestId,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.PaymentRequestId = ((IPaymentRequest) resContext.Items["PaymentRequest"])?.Id))
+                .ForMember(dest => dest.TransactionType, opt => opt.MapFrom(src => src.Type))
+                .ForMember(dest => dest.DueDate,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        src.DueDate ?? ((IPaymentRequest) resContext.Items["PaymentRequest"])?.DueDate));
+
+            CreateMap<BlockchainTransactionResult, TransferTransaction>(MemberList.Destination);
+
+            CreateMap<TransferTransaction, TransferTransactionResult>(MemberList.Destination);
+
+            CreateMap<ITransfer, TransferResult>(MemberList.Destination)
+                .ForMember(dest => dest.Timestamp, opt => opt.MapFrom(src => src.CreatedOn));
         }
     }
 }

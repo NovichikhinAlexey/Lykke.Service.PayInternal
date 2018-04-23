@@ -168,15 +168,5 @@ namespace Lykke.Service.PayInternal.Services
 
             await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
         }
-
-        public async Task UpdateStatusByTransactionAsync(string transactionId, BlockchainType blockchain)
-        {
-            IPaymentRequestTransaction tx = await _transactionsService.GetByIdAsync(transactionId, blockchain);
-
-            if (tx == null)
-                throw new TransactionNotFoundException(transactionId, blockchain);
-
-            await UpdateStatusAsync(tx.WalletAddress);
-        }
     }
 }

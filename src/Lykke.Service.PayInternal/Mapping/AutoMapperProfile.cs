@@ -81,6 +81,8 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.DueDate, opt => opt.Ignore())
                 .ForSourceMember(src => src.TransferId, opt => opt.Ignore())
                 .ForSourceMember(src => src.CreatedOn, opt => opt.Ignore())
+                .ForSourceMember(src => src.IdentityType, opt => opt.Ignore())
+                .ForSourceMember(src => src.Identity, opt => opt.Ignore())
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId))
                 .ForMember(dest => dest.Url, opt => opt.ResolveUsing<PaymentTxUrlValueResolver>())
                 .ForMember(dest => dest.RefundUrl, opt => opt.Ignore());
@@ -125,6 +127,8 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.DueDate, opt => opt.Ignore())
                 .ForSourceMember(src => src.TransferId, opt => opt.Ignore())
                 .ForSourceMember(src => src.CreatedOn, opt => opt.Ignore())
+                .ForSourceMember(src => src.IdentityType, opt => opt.Ignore())
+                .ForSourceMember(src => src.Identity, opt => opt.Ignore())
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId))
                 .ForMember(dest => dest.Url, opt => opt.ResolveUsing<PaymentTxUrlValueResolver>());
 

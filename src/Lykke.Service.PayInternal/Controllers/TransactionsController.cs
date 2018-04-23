@@ -120,8 +120,9 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), new
                 {
-                    ex.TransactionId,
-                    ex.Blockchain
+                    ex.Blockchain,
+                    ex.IdentityType,
+                    ex.Identity
                 }.ToJson(), ex);
 
                 return BadRequest(ErrorResponse.Create(ex.Message));
@@ -189,12 +190,19 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("expired")]
         [SwaggerOperation("SetExpired")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ValidateModel]
         public async Task<IActionResult> Expired([FromBody] TransactionExpiredRequest request)
         {
             try
             {
-                await _paymentRequestService.UpdateStatusByTransactionAsync(request.TransactionId, request.Blockchain);
+                IPaymentRequestTransaction tx =
+                    await _transactionsService.GetByIdAsync(request.Blockchain, request.IdentityType, request.Identity);
+
+                if (tx == null)
+                    return NotFound(ErrorResponse.Create("Transaction not found"));
+
+                await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
 
                 return Ok();
             }

@@ -4,7 +4,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 {
     public interface IUpdateTransactionCommand
     {
-        string TransactionId { get; set; }
+        string Hash { get; set; }
 
         BlockchainType Blockchain { get; set; }
 
@@ -17,6 +17,10 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         string BlockId { get; set; }
 
         DateTime? FirstSeen { get; set; }
+
+        TransactionIdentityType IdentityType { get; set; }
+
+        string Identity { get; set; }
 
         bool IsPayment();
     }

@@ -8,6 +8,7 @@ using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.EthereumCore.Client.Models;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -73,8 +74,9 @@ namespace Lykke.Service.PayInternal.Services
                 {
                     Amount = transferAmount.Amount,
                     AssetId = asset.Id,
-                    // todo
-                    Hash = operationId,
+                    Hash = string.Empty,
+                    IdentityType = TransactionIdentityType.Specific,
+                    Identity = operationId,
                     Sources = new List<string> { transferAmount.Source },
                     Destinations = new List<string> { transferAmount.Destination },
                     Error = errorMessage

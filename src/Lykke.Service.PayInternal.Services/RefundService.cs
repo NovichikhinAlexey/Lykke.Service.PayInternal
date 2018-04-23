@@ -107,13 +107,15 @@ namespace Lykke.Service.PayInternal.Services
                             Amount = transferResultTransaction.Amount,
                             AssetId = transferResultTransaction.AssetId,
                             Confirmations = 0,
-                            TransactionId = transferResultTransaction.Hash,
+                            Hash = transferResultTransaction.Hash,
                             WalletAddress = paymentRequest.WalletAddress,
                             Type = TransactionType.Refund,
                             Blockchain = transferResult.Blockchain,
                             FirstSeen = null,
                             DueDate = refundDueDate,
-                            TransferId = transferResult.Id
+                            TransferId = transferResult.Id,
+                            IdentityType = transferResultTransaction.IdentityType,
+                            Identity = transferResultTransaction.Identity
                         });
 
                     await _transactionPublisher.PublishAsync(refundTransaction);

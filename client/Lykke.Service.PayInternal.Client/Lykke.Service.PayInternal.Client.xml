@@ -928,5 +928,20 @@
             Multiple payment transactions exists
             </summary>
         </member>
+        <member name="T:Lykke.Service.PayInternal.Client.Models.Transactions.TransactionIdentityType">
+            <summary>
+            The identity type of transaction
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.Transactions.TransactionIdentityType.Hash">
+            <summary>
+            Transaction is identified by blockchain hash
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.Transactions.TransactionIdentityType.Specific">
+            <summary>
+            The transaction identification is specific to implementation
+            </summary>
+        </member>
     </members>
 </doc>
