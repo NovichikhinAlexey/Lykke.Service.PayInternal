@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using AutoMapper;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Services;
@@ -40,10 +41,10 @@ namespace Lykke.Service.PayInternal.Services
                 Blockchain = blockchainTransferResult.Blockchain,
                 CreatedOn = DateTime.UtcNow,
                 Amounts = transferCommand.Amounts,
-                Transactions = blockchainTransferResult.Transactions.Select(x => x.ToTransfer())
+                Transactions = Mapper.Map<IEnumerable<TransferTransaction>>(blockchainTransferResult.Transactions)
             });
 
-            return transfer.ToResult();
+            return Mapper.Map<TransferResult>(transfer);
         }
 
         public async Task<Transfer> GetAsync(string id)

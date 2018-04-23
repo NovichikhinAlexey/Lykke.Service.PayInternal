@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 
 namespace Lykke.Service.PayInternal.Services
@@ -30,7 +31,20 @@ namespace Lykke.Service.PayInternal.Services
         {
             await _transactionsService.UpdateAsync(command);
 
-            await _paymentRequestService.UpdateStatusByTransactionAsync(command.TransactionId, command.Blockchain);
+            string walletAddress = command.WalletAddress;
+
+            if (string.IsNullOrEmpty(walletAddress))
+            {
+                IPaymentRequestTransaction tx =
+                    await _transactionsService.GetByIdAsync(command.Blockchain, command.IdentityType, command.Identity);
+
+                if (tx == null)
+                    throw new TransactionNotFoundException(command.Blockchain, command.IdentityType, command.Identity);
+
+                walletAddress = tx.WalletAddress;
+            }
+
+            await _paymentRequestService.UpdateStatusAsync(walletAddress);
         }
     }
 }

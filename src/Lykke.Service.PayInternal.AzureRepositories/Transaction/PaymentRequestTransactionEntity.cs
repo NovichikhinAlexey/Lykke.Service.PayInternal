@@ -19,6 +19,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         private DateTime _dueDate;
         private TransactionType _transactionType;
         private BlockchainType _blockchain;
+        private TransactionIdentityType _transactionIdentityType;
 
         public PaymentRequestTransactionEntity()
         {
@@ -107,6 +108,18 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             }
         }
 
+        public TransactionIdentityType IdentityType
+        {
+            get => _transactionIdentityType;
+            set
+            {
+                _transactionIdentityType = value;
+                MarkValueTypePropertyAsDirty(nameof(IdentityType));
+            }
+        }
+
+        public string Identity { get; set; }
+
         public static class ByWalletAddress
         {
             public static string GeneratePartitionKey(string walletAddress)
@@ -131,21 +144,24 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             }
         }
 
-        public static class IndexByTransactionId
+        public static class IndexByIdentity
         {
-            public static string GeneratePartitionKey(string transactionId)
+            public static string GeneratePartitionKey(BlockchainType blockchain, TransactionIdentityType identityType, string value)
             {
-                return transactionId;
+                return $"{blockchain.ToString()}_{identityType.ToString()}_{value}";
             }
 
-            public static string GenerateRowKey(BlockchainType blockchain)
+            public static string GenerateRowKey()
             {
-                return blockchain.ToString();
+                return "IdentityIndex";
             }
 
             public static AzureIndex Create(PaymentRequestTransactionEntity entity)
             {
-                return AzureIndex.Create(GeneratePartitionKey(entity.TransactionId), GenerateRowKey(entity.Blockchain), entity);
+                return AzureIndex.Create(
+                    GeneratePartitionKey(entity.Blockchain, entity.IdentityType, entity.Identity),
+                    GenerateRowKey(), 
+                    entity);
             }
         }
 
@@ -165,8 +181,10 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
             public static AzureIndex Create(PaymentRequestTransactionEntity entity)
             {
-                return AzureIndex.Create(GeneratePartitionKey(entity.DueDate),
-                    GenerateRowKey(entity.TransactionId, entity.Blockchain), entity);
+                return AzureIndex.Create(
+                    GeneratePartitionKey(entity.DueDate),
+                    GenerateRowKey(entity.TransactionId, entity.Blockchain), 
+                    entity);
             }
         }
     }

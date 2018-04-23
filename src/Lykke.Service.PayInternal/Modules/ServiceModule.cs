@@ -7,6 +7,7 @@ using Common.Log;
 using Lykke.Bitcoin.Api.Client;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
+using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Services;
@@ -107,6 +108,11 @@ namespace Lykke.Service.PayInternal.Modules
                 .Keyed<IBlockchainApiClient>(BlockchainType.Bitcoin)
                 .SingleInstance();
 
+            builder.RegisterType<EthereumApiClient>()
+                .Keyed<IBlockchainApiClient>(BlockchainType.Ethereum)
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum))
+                .SingleInstance();
+
             builder.RegisterType<BlockchainAddressValidator>()
                 .As<IBlockchainAddressValidator>()
                 .WithParameter(
@@ -123,6 +129,9 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<LykkeMarketProfile>()
                 .As<ILykkeMarketProfile>()
                 .WithParameter("baseUri", new Uri(_settings.CurrentValue.MarketProfileServiceClient.ServiceUrl));
+
+            builder.RegisterInstance<IEthereumCoreAPI>(
+                new EthereumCoreAPI(new Uri(_settings.CurrentValue.EthereumServiceClient.ServiceUrl)));
         }
 
         private void RegisterCaches(ContainerBuilder builder)
