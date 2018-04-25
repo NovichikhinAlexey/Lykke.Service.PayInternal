@@ -78,7 +78,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
         
         public async Task PublishAsync(PaymentRequestDetailsMessage message)
         {
-            await _log.WriteInfoAsync(nameof(PaymentRequestPublisher), nameof(PublishAsync), message.ToJson(),
+            await _log.WriteInfoAsync(nameof(PaymentRequestPublisher), nameof(PublishAsync), $"message = {message.ToJson()}",
                 "Publishing payment request status update message");
       
             await _publisher.ProduceAsync(message);
