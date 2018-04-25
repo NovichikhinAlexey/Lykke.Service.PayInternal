@@ -21,16 +21,19 @@ namespace Lykke.Service.PayInternal.Controllers
     {
         private readonly IBcnWalletUsageService _bcnWalletUsageService;
         private readonly IWalletManager _walletManager;
+        private readonly IBlockchainAddressValidator _blockchainAddressValidator;
         private readonly ILog _log;
 
         public WalletsController(
             IBcnWalletUsageService bcnWalletUsageService, 
             ILog log, 
-            IWalletManager walletManager)
+            IWalletManager walletManager, 
+            IBlockchainAddressValidator blockchainAddressValidator)
         {
             _bcnWalletUsageService = bcnWalletUsageService;
             _log = log;
             _walletManager = walletManager;
+            _blockchainAddressValidator = blockchainAddressValidator;
         }
 
         /// <summary>
@@ -46,6 +49,11 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> SetExpired([FromBody] BlockchainWalletExpiredRequest request)
         {
+            bool isValid = _blockchainAddressValidator.Execute(request.WalletAddress, request.Blockchain);
+
+            if (!isValid)
+                return BadRequest(ErrorResponse.Create("Wallet address is not valid"));
+
             try
             {
                 bool released = await _bcnWalletUsageService.ReleaseAsync(request.WalletAddress, request.Blockchain);
