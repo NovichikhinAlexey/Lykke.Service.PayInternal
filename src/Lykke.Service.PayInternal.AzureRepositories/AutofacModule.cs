@@ -62,6 +62,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                 AzureTableStorage<PaymentRequestEntity>.Create(_paymentRequestsConnectionString,
                     paymentRequestsTableName, _log),
                 AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
+                    paymentRequestsTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString, 
                     paymentRequestsTableName, _log)));
 
             builder.RegisterInstance<IVirtualWalletRepository>(new VirtualWalletRepository(

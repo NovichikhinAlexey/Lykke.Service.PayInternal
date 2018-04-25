@@ -42,5 +42,10 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
         {
             return Status == PaymentRequestStatus.Error;
         }
+
+        public bool StatusValidForPastDueTransition()
+        {
+            return Status == PaymentRequestStatus.New;
+        }
     }
 }

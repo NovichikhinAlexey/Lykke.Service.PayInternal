@@ -14,6 +14,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -27,6 +28,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IPaymentRequestStatusResolver _paymentRequestStatusResolver;
         private readonly IWalletManager _walletsManager;
         private readonly ITransactionsService _transactionsService;
+        private readonly ExpirationPeriodsSettings _expirationPeriods;
         private readonly ILog _log;
 
         public PaymentRequestService(
@@ -37,7 +39,8 @@ namespace Lykke.Service.PayInternal.Services
             IPaymentRequestStatusResolver paymentRequestStatusResolver,
             ILog log, 
             IWalletManager walletsManager, 
-            ITransactionsService transactionsService)
+            ITransactionsService transactionsService, 
+            ExpirationPeriodsSettings expirationPeriods)
         {
             _paymentRequestRepository = paymentRequestRepository;
             _orderService = orderService;
@@ -47,6 +50,7 @@ namespace Lykke.Service.PayInternal.Services
             _log = log;
             _walletsManager = walletsManager;
             _transactionsService = transactionsService;
+            _expirationPeriods = expirationPeriods;
         }
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -180,6 +184,22 @@ namespace Lykke.Service.PayInternal.Services
                 throw new TransactionNotFoundException(transactionId, blockchain);
 
             await UpdateStatusAsync(tx.WalletAddress);
+        }
+
+        public async Task HandleExpiredAsync()
+        {
+            DateTime dateTo = DateTime.UtcNow;
+
+            DateTime dateFrom = dateTo.Add(-_expirationPeriods.WalletExtra);
+
+            IReadOnlyList<IPaymentRequest> expired = await _paymentRequestRepository.GetByDueDate(dateFrom, dateTo);
+
+            IEnumerable<IPaymentRequest> eligibleForTransition = expired.Where(x => x.StatusValidForPastDueTransition());
+
+            foreach (IPaymentRequest paymentRequest in eligibleForTransition)
+            {
+                await UpdateStatusAsync(paymentRequest.WalletAddress, PaymentRequestStatusInfo.PastDue());
+            }
         }
     }
 }

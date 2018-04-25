@@ -15,6 +15,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public BlockchainExplorerSettings LykkeBlockchainExplorer { get; set; }
         public AssetsAvailabilitySettings AssetsAvailability { get; set; }
         public BlockchainSettings Blockchain { get; set; }
+        public JobPeriods JobPeriods { get; set; }
     }
 
     public class LpMarkupSettings
@@ -38,6 +39,12 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public OrderExpirationPeriodsSettings Order { get; set; }
 
         public TimeSpan Refund { get; set; }
+
+        /// <summary>
+        /// By default wallet address has the same dueDate as payment request. 
+        /// WalletExtra is an extra time to keep wallet address in lock after payment request expired in order to wait for late payments.
+        /// </summary>
+        public TimeSpan WalletExtra { get; set; }
     }
 
     public class BlockchainSettings
@@ -66,5 +73,10 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class BitcoinSettings
     {
         public string Network { get; set; }
+    }
+
+    public class JobPeriods
+    {
+        public TimeSpan PaymentRequestExpirationHandling { get; set; }
     }
 }
