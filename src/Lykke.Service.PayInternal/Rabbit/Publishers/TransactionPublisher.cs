@@ -48,7 +48,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
             };
 
             await _log.WriteInfoAsync(nameof(TransactionPublisher), nameof(PublishAsync), message.ToJson(),
-                "Published transaction body");
+                "Publishing new transaction message");
 
             await _publisher.ProduceAsync(message);
         }
