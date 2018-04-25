@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Common;
+using Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
@@ -21,6 +23,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IWalletEventsPublisher _walletEventsPublisher;
         private readonly ITransactionsService _transactionsService;
         private readonly IBlockchainClientProvider _blockchainClientProvider;
+        private readonly ILog _log;
 
         private const int BatchPieceSize = 15;
 
@@ -30,7 +33,8 @@ namespace Lykke.Service.PayInternal.Services
             IBcnWalletUsageService bcnWalletUsageService,
             IWalletEventsPublisher walletEventsPublisher,
             IBlockchainClientProvider blockchainClientProvider, 
-            ITransactionsService transactionsService)
+            ITransactionsService transactionsService, 
+            ILog log)
         {
             _virtualWalletService = virtualWalletService;
             _walletAllocationSettings = walletAllocationSettings;
@@ -38,6 +42,7 @@ namespace Lykke.Service.PayInternal.Services
             _walletEventsPublisher = walletEventsPublisher;
             _blockchainClientProvider = blockchainClientProvider;
             _transactionsService = transactionsService;
+            _log = log;
         }
 
         public async Task<IVirtualWallet> CreateAsync(string merchantId, DateTime dueDate, string assetId = null)
@@ -48,6 +53,9 @@ namespace Lykke.Service.PayInternal.Services
             {
                 wallet = await AddAssetAsync(wallet.MerchantId, wallet.Id, assetId);
             }
+
+            await _log.WriteInfoAsync(nameof(WalletManager), nameof(CreateAsync), wallet.ToJson(),
+                "New virtual wallet created");
 
             return wallet;
         }

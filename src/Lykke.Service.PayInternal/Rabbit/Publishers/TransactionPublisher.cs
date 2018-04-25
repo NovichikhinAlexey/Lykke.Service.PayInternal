@@ -36,7 +36,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
 
         public async Task PublishAsync(IPaymentRequestTransaction transaction)
         {
-            await _publisher.ProduceAsync(new NewTransactionMessage
+            var message = new NewTransactionMessage
             {
                 Id = transaction.Id,
                 AssetId = transaction.AssetId,
@@ -45,7 +45,12 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
                 BlockId = transaction.BlockId,
                 Blockchain = Enum.Parse<BlockchainType>(transaction.Blockchain.ToString()),
                 DueDate = transaction.DueDate
-            });
+            };
+
+            await _log.WriteInfoAsync(nameof(TransactionPublisher), nameof(PublishAsync), message.ToJson(),
+                "Publishing new transaction message");
+
+            await _publisher.ProduceAsync(message);
         }
 
         public void Start()
