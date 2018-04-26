@@ -16,6 +16,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 
         Task<IPaymentRequestTransaction> AddAsync(IPaymentRequestTransaction transaction);
 
-        Task UpdateAsync(IPaymentRequestTransaction transaction);
+        Task<IPaymentRequestTransaction> UpdateAsync(IPaymentRequestTransaction transaction);
     }
 }
