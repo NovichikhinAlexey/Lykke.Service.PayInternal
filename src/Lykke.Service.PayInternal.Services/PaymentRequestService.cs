@@ -178,12 +178,13 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task UpdateStatusByTransactionAsync(string transactionId, BlockchainType blockchain)
         {
-            IPaymentRequestTransaction tx = await _transactionsService.GetByIdAsync(transactionId, blockchain);
+            IReadOnlyList<IPaymentRequestTransaction> businessTransactions =
+                await _transactionsService.GetByTransactionIdAsync(transactionId, blockchain);
 
-            if (tx == null)
-                throw new TransactionNotFoundException(transactionId, blockchain);
-
-            await UpdateStatusAsync(tx.WalletAddress);
+            foreach (IPaymentRequestTransaction tx in businessTransactions)
+            {
+                await UpdateStatusAsync(tx.WalletAddress);
+            }
         }
 
         public async Task HandleExpiredAsync()
