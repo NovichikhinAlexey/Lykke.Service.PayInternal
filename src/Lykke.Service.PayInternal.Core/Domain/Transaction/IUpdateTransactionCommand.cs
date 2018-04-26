@@ -10,7 +10,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 
         string WalletAddress { get; set; }
 
-        double Amount { get; set; }
+        decimal Amount { get; set; }
 
         int Confirmations { get; set; }
 

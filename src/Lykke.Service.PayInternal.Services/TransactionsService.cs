@@ -9,6 +9,7 @@ using AutoMapper;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
+using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -60,13 +61,21 @@ namespace Lykke.Service.PayInternal.Services
             if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(request.WalletAddress);
 
+            IPaymentRequestTransaction existing =
+                await _transactionRepository.GetByIdAsync(request.Blockchain, request.IdentityType, request.Identity);
+
+            if (existing != null)
+            {
+                return await UpdateAsync(Mapper.Map<UpdateTransactionCommand>(request));
+            }
+
             var transactionEntity =
                 Mapper.Map<PaymentRequestTransaction>(request, opts => opts.Items["PaymentRequest"] = paymentRequest);
 
             return await _transactionRepository.AddAsync(transactionEntity);
         }
 
-        public async Task UpdateAsync(IUpdateTransactionCommand request)
+        public async Task<IPaymentRequestTransaction> UpdateAsync(IUpdateTransactionCommand request)
         {
             IPaymentRequestTransaction transaction =
                 await _transactionRepository.GetByIdAsync(request.Blockchain, request.IdentityType, request.Identity);
@@ -88,7 +97,7 @@ namespace Lykke.Service.PayInternal.Services
                 transaction.Amount = (decimal) request.Amount;
             }
 
-            await _transactionRepository.UpdateAsync(transaction);
+            return await _transactionRepository.UpdateAsync(transaction);
         }
     }
 }

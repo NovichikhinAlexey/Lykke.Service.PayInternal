@@ -47,6 +47,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
                 DueDate = transaction.DueDate
             };
 
+            //todo: remove logging
             await _log.WriteInfoAsync(nameof(TransactionPublisher), nameof(PublishAsync), message.ToJson(),
                 "Published transaction body");
 

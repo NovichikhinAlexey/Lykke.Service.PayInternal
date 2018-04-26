@@ -54,6 +54,8 @@ namespace Lykke.Service.PayInternal.Services
 
             CreateMap<ITransfer, TransferResult>(MemberList.Destination)
                 .ForMember(dest => dest.Timestamp, opt => opt.MapFrom(src => src.CreatedOn));
+
+            CreateMap<ICreateTransactionCommand, UpdateTransactionCommand>(MemberList.Destination);
         }
     }
 }

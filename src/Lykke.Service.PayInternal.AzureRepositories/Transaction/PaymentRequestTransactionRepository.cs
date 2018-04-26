@@ -89,22 +89,24 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             return Mapper.Map<IEnumerable<PaymentRequestTransaction>>(entities).ToList();
         }
 
-        public async Task UpdateAsync(IPaymentRequestTransaction transaction)
+        public async Task<IPaymentRequestTransaction> UpdateAsync(IPaymentRequestTransaction transaction)
         {
-            await _storage.MergeAsync(
+            PaymentRequestTransactionEntity entity = await _storage.MergeAsync(
                 PaymentRequestTransactionEntity.ByWalletAddress.GeneratePartitionKey(transaction.WalletAddress),
                 PaymentRequestTransactionEntity.ByWalletAddress.GenerateRowKey(transaction.TransactionId),
-                entity =>
+                e =>
                 {
-                    entity.TransactionId = transaction.TransactionId;
-                    entity.Amount = transaction.Amount;
-                    entity.BlockId = transaction.BlockId;
-                    entity.Confirmations = transaction.Confirmations;
-                    entity.FirstSeen = transaction.FirstSeen;
-                    entity.PaymentRequestId = transaction.PaymentRequestId;
+                    e.TransactionId = transaction.TransactionId;
+                    e.Amount = transaction.Amount;
+                    e.BlockId = transaction.BlockId;
+                    e.Confirmations = transaction.Confirmations;
+                    e.FirstSeen = transaction.FirstSeen;
+                    e.PaymentRequestId = transaction.PaymentRequestId;
 
-                    return entity;
+                    return e;
                 });
+
+            return Mapper.Map<PaymentRequestTransaction>(entity);
         }
     }
 }

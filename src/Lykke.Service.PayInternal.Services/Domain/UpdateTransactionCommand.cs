@@ -12,7 +12,7 @@ namespace Lykke.Service.PayInternal.Services.Domain
 
         public string WalletAddress { get; set; }
 
-        public double Amount { get; set; }
+        public decimal Amount { get; set; }
 
         public int Confirmations { get; set; }
 
