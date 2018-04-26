@@ -33,9 +33,9 @@ namespace Lykke.Service.PayInternal.Services
             return await _transactionRepository.GetByWalletAsync(walletAddress);
         }
 
-        public async Task<IPaymentRequestTransaction> GetByIdAsync(string transactionId, BlockchainType blockchain)
+        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetByTransactionIdAsync(string transactionId, BlockchainType blockchain)
         {
-            return await _transactionRepository.GetByIdAsync(transactionId, blockchain);
+            return await _transactionRepository.GetByTransactionIdAsync(transactionId, blockchain);
         }
 
         public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetConfirmedAsync(string walletAddress)
@@ -81,22 +81,22 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task UpdateAsync(IUpdateTransactionCommand request)
         {
-            IPaymentRequestTransaction transaction =
-                await _transactionRepository.GetByIdAsync(request.TransactionId, request.Blockchain);
+            IReadOnlyList<IPaymentRequestTransaction> businessTransactions =
+                await _transactionRepository.GetByTransactionIdAsync(request.TransactionId, request.Blockchain);
 
-            if (transaction == null)
-                throw new TransactionNotFoundException(request.TransactionId, request.Blockchain);
-
-            transaction.BlockId = request.BlockId;
-            transaction.Confirmations = request.Confirmations;
-            transaction.FirstSeen = request.FirstSeen;
-
-            if (request.IsPayment())
+            foreach (IPaymentRequestTransaction tx in businessTransactions)
             {
-                transaction.Amount = (decimal) request.Amount;
-            }
+                tx.BlockId = request.BlockId;
+                tx.Confirmations = request.Confirmations;
+                tx.FirstSeen = request.FirstSeen;
 
-            await _transactionRepository.UpdateAsync(transaction);
+                if (request.IsPayment())
+                {
+                    tx.Amount = (decimal) request.Amount;
+                }
+
+                await _transactionRepository.UpdateAsync(tx);
+            }
         }
     }
 }

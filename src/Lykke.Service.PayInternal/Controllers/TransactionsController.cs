@@ -121,7 +121,8 @@ namespace Lykke.Service.PayInternal.Controllers
                 await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), new
                 {
                     ex.TransactionId,
-                    ex.Blockchain
+                    ex.Blockchain,
+                    ex.WalletAddress
                 }.ToJson(), ex);
 
                 return BadRequest(ErrorResponse.Create(ex.Message));

@@ -9,10 +9,11 @@ namespace Lykke.Service.PayInternal.Core.Exceptions
         {
         }
 
-        public TransactionNotFoundException(string transactionId, BlockchainType blockchain) : base("Transaction not found")
+        public TransactionNotFoundException(string transactionId, BlockchainType blockchain, string walletAddress) : base("Transaction not found")
         {
             TransactionId = transactionId;
             Blockchain = blockchain;
+            WalletAddress = walletAddress;
         }
 
         public TransactionNotFoundException(string message, Exception innerException) : base(message, innerException)
@@ -26,5 +27,7 @@ namespace Lykke.Service.PayInternal.Core.Exceptions
         public string TransactionId { get; set; }
 
         public BlockchainType Blockchain { get; set; }
+
+        public string WalletAddress { get; set; }
     }
 }

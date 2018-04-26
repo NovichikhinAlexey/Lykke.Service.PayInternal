@@ -55,17 +55,27 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         }
 
         public async Task<IPaymentRequestTransaction> GetByIdAsync(string transactionId,
-            BlockchainType blockchain)
+            BlockchainType blockchain, string walletAddress)
         {
             AzureIndex index = await _indexByTransactionIdStorage.GetDataAsync(
-                PaymentRequestTransactionEntity.IndexByTransactionId.GeneratePartitionKey(transactionId),
-                PaymentRequestTransactionEntity.IndexByTransactionId.GenerateRowKey(blockchain));
+                PaymentRequestTransactionEntity.IndexByTransactionId.GeneratePartitionKey(transactionId, blockchain),
+                PaymentRequestTransactionEntity.IndexByTransactionId.GenerateRowKey(walletAddress));
 
             if (index == null) return null;
 
             PaymentRequestTransactionEntity entity = await _storage.GetDataAsync(index);
 
             return Mapper.Map<PaymentRequestTransaction>(entity);
+        }
+
+        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetByTransactionIdAsync(string transactionId, BlockchainType blockchain)
+        {
+            IEnumerable<AzureIndex> indecies = await _indexByTransactionIdStorage.GetDataAsync(
+                PaymentRequestTransactionEntity.IndexByTransactionId.GeneratePartitionKey(transactionId, blockchain));
+
+            IEnumerable<PaymentRequestTransactionEntity> entities = await _storage.GetDataAsync(indecies);
+
+            return Mapper.Map<IEnumerable<PaymentRequestTransaction>>(entities).ToList();
         }
 
         public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetByDueDate(DateTime dueDateGreaterThan)

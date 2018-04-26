@@ -133,19 +133,20 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
         public static class IndexByTransactionId
         {
-            public static string GeneratePartitionKey(string transactionId)
+            public static string GeneratePartitionKey(string transactionId, BlockchainType blockchain)
             {
-                return transactionId;
+                return $"{blockchain.ToString()}_{transactionId}";
             }
 
-            public static string GenerateRowKey(BlockchainType blockchain)
+            public static string GenerateRowKey(string walletAddress)
             {
-                return blockchain.ToString();
+                return walletAddress;
             }
 
             public static AzureIndex Create(PaymentRequestTransactionEntity entity)
             {
-                return AzureIndex.Create(GeneratePartitionKey(entity.TransactionId), GenerateRowKey(entity.Blockchain), entity);
+                return AzureIndex.Create(GeneratePartitionKey(entity.TransactionId, entity.Blockchain),
+                    GenerateRowKey(entity.WalletAddress), entity);
             }
         }
 
@@ -158,15 +159,15 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
                 return $"DD_{dueDateIso}";
             }
 
-            public static string GenerateRowKey(string transactionId, BlockchainType blockchain)
+            public static string GenerateRowKey(string transactionId, BlockchainType blockchain, string walletAddress)
             {
-                return $"{transactionId}_{blockchain}";
+                return $"{transactionId}_{blockchain}_{walletAddress}";
             }
 
             public static AzureIndex Create(PaymentRequestTransactionEntity entity)
             {
                 return AzureIndex.Create(GeneratePartitionKey(entity.DueDate),
-                    GenerateRowKey(entity.TransactionId, entity.Blockchain), entity);
+                    GenerateRowKey(entity.TransactionId, entity.Blockchain, entity.WalletAddress), entity);
             }
         }
     }
