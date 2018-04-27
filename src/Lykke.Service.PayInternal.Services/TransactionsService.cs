@@ -33,7 +33,8 @@ namespace Lykke.Service.PayInternal.Services
             return await _transactionRepository.GetByWalletAsync(walletAddress);
         }
 
-        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetByTransactionIdAsync(string transactionId, BlockchainType blockchain)
+        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetByTransactionIdAsync(string transactionId,
+            BlockchainType blockchain)
         {
             return await _transactionRepository.GetByTransactionIdAsync(transactionId, blockchain);
         }
@@ -81,8 +82,22 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task UpdateAsync(IUpdateTransactionCommand request)
         {
-            IReadOnlyList<IPaymentRequestTransaction> businessTransactions =
-                await _transactionRepository.GetByTransactionIdAsync(request.TransactionId, request.Blockchain);
+            var businessTransactions = new List<IPaymentRequestTransaction>();
+
+            if (!string.IsNullOrEmpty(request.WalletAddress))
+            {
+                IPaymentRequestTransaction tx = await _transactionRepository.GetByIdAsync(request.TransactionId,
+                    request.Blockchain, request.WalletAddress);
+
+                businessTransactions.Add(tx);
+            }
+            else
+            {
+                IReadOnlyList<IPaymentRequestTransaction> txs =
+                    await _transactionRepository.GetByTransactionIdAsync(request.TransactionId, request.Blockchain);
+
+                businessTransactions.AddRange(txs);
+            }
 
             foreach (IPaymentRequestTransaction tx in businessTransactions)
             {

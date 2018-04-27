@@ -10,7 +10,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IPaymentRequestService _paymentRequestService;
 
         public TransactionsManager(
-            ITransactionsService transactionsService, 
+            ITransactionsService transactionsService,
             IPaymentRequestService paymentRequestService)
         {
             _transactionsService = transactionsService;
@@ -30,7 +30,14 @@ namespace Lykke.Service.PayInternal.Services
         {
             await _transactionsService.UpdateAsync(command);
 
-            await _paymentRequestService.UpdateStatusByTransactionAsync(command.TransactionId, command.Blockchain);
+            if (string.IsNullOrEmpty(command.WalletAddress))
+            {
+                await _paymentRequestService.UpdateStatusByTransactionAsync(command.TransactionId, command.Blockchain);
+            }
+            else
+            {
+                await _paymentRequestService.UpdateStatusAsync(command.WalletAddress);
+            }
         }
     }
 }
