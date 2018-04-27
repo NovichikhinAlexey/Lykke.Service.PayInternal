@@ -89,6 +89,9 @@ namespace Lykke.Service.PayInternal.Services
                 IPaymentRequestTransaction tx = await _transactionRepository.GetByIdAsync(request.TransactionId,
                     request.Blockchain, request.WalletAddress);
 
+                if (tx == null)
+                    throw new TransactionNotFoundException(request.TransactionId, request.Blockchain, request.WalletAddress);
+
                 businessTransactions.Add(tx);
             }
             else
