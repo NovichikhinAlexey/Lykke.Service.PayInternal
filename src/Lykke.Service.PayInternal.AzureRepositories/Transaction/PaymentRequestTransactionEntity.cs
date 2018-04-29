@@ -160,7 +160,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             {
                 return AzureIndex.Create(
                     GeneratePartitionKey(entity.Blockchain, entity.IdentityType, entity.Identity),
-                    GenerateRowKey(), 
+                    GenerateRowKey(),
                     entity);
             }
         }

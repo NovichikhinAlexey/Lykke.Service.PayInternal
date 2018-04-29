@@ -29,5 +29,11 @@ namespace Lykke.Service.PayInternal.Client.Api
 
         [Get("/api/merchants/{merchantId}/assets")]
         Task<AvailableAssetsResponse> GetAvailableAssetsAsync(string merchantId, [Query] AssetAvailabilityType type);
+
+        [Get("/api/merchants/{merchantId}/settlementAssets")]
+        Task<AvailableAssetsResponse> GetAvailableSettlementAssetsAsync(string merchantId);
+
+        [Get("/api/merchants/{merchantId}/paymentAssets")]
+        Task<AvailableAssetsResponse> GetAvailablePaymentAssetsAsync(string merchantId, [Query] string settlementAssetId);
     }
 }
