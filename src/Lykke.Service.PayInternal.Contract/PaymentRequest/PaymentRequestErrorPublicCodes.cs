@@ -21,6 +21,11 @@
         public const string PaymentExpired = "PAYMENT_EXPIRED";
 
         /// <summary>
+        /// Payment request order has been expired
+        /// </summary>
+        public const string LatePaid = "LATE_PAID";
+
+        /// <summary>
         /// Any payment request transaction type has not been confirmed
         /// </summary>
         public const string TransactionNotConfirmed = "TRANSACTION_NOT_CONFIRMED";
