@@ -108,8 +108,10 @@ namespace Lykke.Service.PayInternal.Mapping
         private void PaymentRequestMessages()
         {
             CreateMap<IPaymentRequest, PaymentRequestDetailsMessage>(MemberList.Source)
-                .ForMember(dest => dest.Order, opt => opt.MapFrom(src => src.ExternalOrderId))
-                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<PaymentRequestBcnWalletAddressValueResolver>());
+                .ForMember(dest => dest.Order, opt => opt.Ignore())
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.ResolveUsing<PaymentRequestBcnWalletAddressValueResolver>())
+                .ForSourceMember(src => src.ExternalOrderId, opt => opt.Ignore());
 
             CreateMap<IOrder, PaymentRequestOrder>(MemberList.Source)
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())

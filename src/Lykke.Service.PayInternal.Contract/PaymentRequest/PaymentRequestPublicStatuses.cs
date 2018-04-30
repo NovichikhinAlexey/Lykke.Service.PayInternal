@@ -21,7 +21,7 @@
         public const string PaymentInProgress = "PAYMENT_INPROGRESS";
 
         /// <summary>
-        /// Payment has benn cancelled
+        /// Payment has been cancelled
         /// </summary>
         public const string PaymentCancelled = "PAYMENT_CANCELLED";
 
@@ -30,6 +30,10 @@
         /// </summary>
         public const string PaymentError = "PAYMENT_ERROR";
 
+        /// <summary>
+        /// Payment past due
+        /// </summary>
+        public const string PaymenPastDue = "PAYMENT_PASTDUE";
 
         /// <summary>
         /// Refund is in progress

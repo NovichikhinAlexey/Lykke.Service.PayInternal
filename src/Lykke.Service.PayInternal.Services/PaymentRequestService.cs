@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -13,6 +14,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -26,6 +28,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IPaymentRequestStatusResolver _paymentRequestStatusResolver;
         private readonly IWalletManager _walletsManager;
         private readonly ITransactionsService _transactionsService;
+        private readonly ExpirationPeriodsSettings _expirationPeriods;
         private readonly ILog _log;
 
         public PaymentRequestService(
@@ -34,9 +37,10 @@ namespace Lykke.Service.PayInternal.Services
             IPaymentRequestPublisher paymentRequestPublisher,
             ITransferService transferService,
             IPaymentRequestStatusResolver paymentRequestStatusResolver,
-            ILog log, 
-            IWalletManager walletsManager, 
-            ITransactionsService transactionsService)
+            ILog log,
+            IWalletManager walletsManager,
+            ITransactionsService transactionsService,
+            ExpirationPeriodsSettings expirationPeriods)
         {
             _paymentRequestRepository = paymentRequestRepository;
             _orderService = orderService;
@@ -46,6 +50,7 @@ namespace Lykke.Service.PayInternal.Services
             _log = log;
             _walletsManager = walletsManager;
             _transactionsService = transactionsService;
+            _expirationPeriods = expirationPeriods;
         }
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -63,7 +68,7 @@ namespace Lykke.Service.PayInternal.Services
             IReadOnlyList<IPaymentRequestTransaction> transactions =
                 (await _transactionsService.GetByWalletAsync(walletAddress)).Where(x => x.IsRefund()).ToList();
 
-            if (!transactions.Any()) 
+            if (!transactions.Any())
                 return null;
 
             IEnumerable<string> transferIds = transactions.Unique(x => x.TransferId).ToList();
@@ -91,6 +96,8 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<IPaymentRequest> CreateAsync(IPaymentRequest paymentRequest)
         {
             paymentRequest.Status = PaymentRequestStatus.New;
+
+            paymentRequest.Timestamp = DateTime.UtcNow;
 
             IVirtualWallet wallet = await _walletsManager.CreateAsync(paymentRequest.MerchantId,
                 paymentRequest.DueDate, paymentRequest.PaymentAssetId);
@@ -167,6 +174,32 @@ namespace Lykke.Service.PayInternal.Services
             PaymentRequestRefund refundInfo = await GetRefundInfoAsync(paymentRequest.WalletAddress);
 
             await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
+        }
+
+        public async Task HandleExpiredAsync()
+        {
+            DateTime dateTo = DateTime.UtcNow;
+
+            DateTime dateFrom = dateTo.Add(-_expirationPeriods.WalletExtra);
+
+            IReadOnlyList<IPaymentRequest> expired = await _paymentRequestRepository.GetByDueDate(dateFrom, dateTo);
+
+            IEnumerable<IPaymentRequest> eligibleForTransition =
+                expired.Where(x => x.StatusValidForPastDueTransition()).ToList();
+
+            if (eligibleForTransition.Any())
+            {
+                await _log.WriteInfoAsync(nameof(PaymentRequestService), nameof(HandleExpiredAsync),
+                    $"Found payment requests eligible to move to Past Due: {eligibleForTransition.Count()}");
+            }
+
+            foreach (IPaymentRequest paymentRequest in eligibleForTransition)
+            {
+                await UpdateStatusAsync(paymentRequest.WalletAddress, PaymentRequestStatusInfo.PastDue());
+
+                await _log.WriteInfoAsync(nameof(PaymentRequestService), nameof(HandleExpiredAsync),
+                    $"Payment request with id {paymentRequest.Id} was moved to Past Due");
+            }
         }
     }
 }

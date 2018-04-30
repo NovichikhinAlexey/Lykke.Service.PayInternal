@@ -56,12 +56,17 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
 
         public async Task PublishAsync(string walletAddress, BlockchainType blockchain, DateTime dueDate)
         {
-            await PublishAsync(new NewWalletMessage
+            var message = new NewWalletMessage
             {
                 Address = walletAddress,
                 Blockchain = Enum.Parse<Contract.BlockchainType>(blockchain.ToString()),
                 DueDate = dueDate
-            });
+            };
+
+            await _log.WriteInfoAsync(nameof(WalletEventsPublisher), nameof(PublishAsync), message.ToJson(),
+                "Publishing new wallet message");
+
+            await PublishAsync(message);
         }
     }
 }

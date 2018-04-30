@@ -13,12 +13,12 @@ using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
 using Lykke.Service.PayInternal.Mapping;
+using Lykke.Service.PayInternal.PeriodicalHandlers;
 using Lykke.Service.PayInternal.Rabbit.Publishers;
 using Lykke.Service.PayInternal.Services;
 using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
-using QBitNinja.Client;
 using DbSettings = Lykke.Service.PayInternal.Core.Settings.ServiceSettings.DbSettings;
 
 namespace Lykke.Service.PayInternal.Modules
@@ -56,6 +56,8 @@ namespace Lykke.Service.PayInternal.Modules
             RegisterRabbitMqPublishers(builder);
 
             RegisterMapperValueResolvers(builder);
+
+            RegisterPeriodicalHandlers(builder);
 
             builder.Populate(_services);
         }
@@ -106,6 +108,11 @@ namespace Lykke.Service.PayInternal.Modules
                 .Keyed<IBlockchainApiClient>(BlockchainType.Bitcoin)
                 .SingleInstance();
 
+            builder.RegisterType<BlockchainAddressValidator>()
+                .As<IBlockchainAddressValidator>()
+                .WithParameter(
+                    TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Bitcoin.Network));
+
             builder.RegisterType<EthereumApiClient>()
                 .Keyed<IBlockchainApiClient>(BlockchainType.Ethereum)
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum))
@@ -122,9 +129,6 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<LykkeMarketProfile>()
                 .As<ILykkeMarketProfile>()
                 .WithParameter("baseUri", new Uri(_settings.CurrentValue.MarketProfileServiceClient.ServiceUrl));
-
-            builder.RegisterInstance(new QBitNinjaClient(_settings.CurrentValue.NinjaServiceClient.ServiceUrl))
-                .AsSelf();
 
             builder.RegisterInstance<IEthereumCoreAPI>(
                 new EthereumCoreAPI(new Uri(_settings.CurrentValue.EthereumServiceClient.ServiceUrl)));
@@ -202,6 +206,14 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<VirtualAddressResolver>()
                 .AsSelf()
+                .SingleInstance();
+        }
+
+        private void RegisterPeriodicalHandlers(ContainerBuilder builder)
+        {
+            builder.RegisterType<PaymentRequestExpiraitonHandler>()
+                .As<IPaymentRequestExpirationHandler>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.JobPeriods.PaymentRequestExpirationHandling))
                 .SingleInstance();
         }
     }

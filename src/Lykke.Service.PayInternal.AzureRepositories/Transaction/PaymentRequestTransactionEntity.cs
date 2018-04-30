@@ -151,16 +151,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
                 return $"{blockchain.ToString()}_{identityType.ToString()}_{value}";
             }
 
-            public static string GenerateRowKey()
+            public static string GenerateRowKey(string walletAddress)
             {
-                return "IdentityIndex";
+                return walletAddress;
             }
 
             public static AzureIndex Create(PaymentRequestTransactionEntity entity)
             {
                 return AzureIndex.Create(
                     GeneratePartitionKey(entity.Blockchain, entity.IdentityType, entity.Identity),
-                    GenerateRowKey(),
+                    GenerateRowKey(entity.WalletAddress),
                     entity);
             }
         }
@@ -174,17 +174,15 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
                 return $"DD_{dueDateIso}";
             }
 
-            public static string GenerateRowKey(string transactionId, BlockchainType blockchain)
+            public static string GenerateRowKey(string transactionId, BlockchainType blockchain, string walletAddress)
             {
-                return $"{transactionId}_{blockchain}";
+                return $"{transactionId}_{blockchain}_{walletAddress}";
             }
 
             public static AzureIndex Create(PaymentRequestTransactionEntity entity)
             {
-                return AzureIndex.Create(
-                    GeneratePartitionKey(entity.DueDate),
-                    GenerateRowKey(entity.TransactionId, entity.Blockchain), 
-                    entity);
+                return AzureIndex.Create(GeneratePartitionKey(entity.DueDate),
+                    GenerateRowKey(entity.TransactionId, entity.Blockchain, entity.WalletAddress), entity);
             }
         }
     }
