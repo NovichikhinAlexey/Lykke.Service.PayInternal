@@ -99,8 +99,10 @@ namespace Lykke.Service.PayInternal.Services
 
             paymentRequest.Timestamp = DateTime.UtcNow;
 
-            IVirtualWallet wallet = await _walletsManager.CreateAsync(paymentRequest.MerchantId,
-                paymentRequest.DueDate, paymentRequest.PaymentAssetId);
+            DateTime walletDueDate = paymentRequest.DueDate.Add(_expirationPeriods.WalletExtra);
+
+            IVirtualWallet wallet = await _walletsManager.CreateAsync(paymentRequest.MerchantId, walletDueDate,
+                paymentRequest.PaymentAssetId);
 
             paymentRequest.WalletAddress = wallet.Id;
 

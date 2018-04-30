@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core;
@@ -62,7 +63,8 @@ namespace Lykke.Service.PayInternal.Services
             return paymentStatusInfo;
         }
 
-        private async Task<PaymentRequestStatusInfo> GetStatusForSettlement(IPaymentRequest paymentRequest)
+        [SuppressMessage("ReSharper", "UnusedParameter.Local")]
+        private Task<PaymentRequestStatusInfo> GetStatusForSettlement(IPaymentRequest paymentRequest)
         {
             throw new TransactionTypeNotSupportedException();
         }
@@ -106,15 +108,20 @@ namespace Lykke.Service.PayInternal.Services
                     throw new UnexpectedAssetException(assetId);
             }
 
+            bool allConfirmed = txs.All(x => x.Confirmed(_transactionConfirmationCount));
+
             var paidDate = txs.GetLatestDate();
 
             if (paidDate > paymentRequest.DueDate)
-                return PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.LatePaid, btcPaid, paidDate);
+            {
+                if (allConfirmed)
+                    return PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.LatePaid, btcPaid, paidDate);
+
+                return paymentRequest.GetCurrentStatusInfo();
+            }
 
             IOrder actualOrder = await _orderService.GetActualAsync(paymentRequest.Id, paidDate) ??
                                  await _orderService.GetLatestOrCreateAsync(paymentRequest);
-
-            bool allConfirmed = txs.All(x => x.Confirmed(_transactionConfirmationCount));
 
             if (!allConfirmed)
                 return PaymentRequestStatusInfo.InProcess();
