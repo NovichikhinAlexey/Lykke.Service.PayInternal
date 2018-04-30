@@ -87,7 +87,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (!txs.Any())
                 return (paymentRequest.DueDate < DateTime.UtcNow)
-                    ? PaymentRequestStatusInfo.PastDue()
+                    ? PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.PaymentExpired)
                     : PaymentRequestStatusInfo.New();
 
             decimal btcPaid;
@@ -109,7 +109,7 @@ namespace Lykke.Service.PayInternal.Services
             var paidDate = txs.GetLatestDate();
 
             if (paidDate > paymentRequest.DueDate)
-                return PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.PaymentExpired, btcPaid, paidDate);
+                return PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.LatePaid, btcPaid, paidDate);
 
             IOrder actualOrder = await _orderService.GetActualAsync(paymentRequest.Id, paidDate) ??
                                  await _orderService.GetLatestOrCreateAsync(paymentRequest);

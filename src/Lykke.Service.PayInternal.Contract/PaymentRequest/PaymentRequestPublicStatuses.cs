@@ -31,11 +31,6 @@
         public const string PaymentError = "PAYMENT_ERROR";
 
         /// <summary>
-        /// Payment past due
-        /// </summary>
-        public const string PaymenPastDue = "PAYMENT_PASTDUE";
-
-        /// <summary>
         /// Refund is in progress
         /// </summary>
         public const string RefundInProgress = "REFUND_INPROGRESS";

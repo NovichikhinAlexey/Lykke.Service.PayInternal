@@ -195,7 +195,7 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (IPaymentRequest paymentRequest in eligibleForTransition)
             {
-                await UpdateStatusAsync(paymentRequest.WalletAddress, PaymentRequestStatusInfo.PastDue());
+                await UpdateStatusAsync(paymentRequest.WalletAddress, PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.PaymentExpired));
 
                 await _log.WriteInfoAsync(nameof(PaymentRequestService), nameof(HandleExpiredAsync),
                     $"Payment request with id {paymentRequest.Id} was moved to Past Due");

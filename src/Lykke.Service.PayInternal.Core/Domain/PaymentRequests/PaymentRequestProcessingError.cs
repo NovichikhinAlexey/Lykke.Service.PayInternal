@@ -31,13 +31,18 @@
         PaymentAmountBelow,
 
         /// <summary>
-        /// Payment order expired
+        /// Payment was not made till the payment request's due date
         /// </summary>
         PaymentExpired,
 
         /// <summary>
         /// Refund was not confirmed before expiration date
         /// </summary>
-        RefundNotConfirmed
+        RefundNotConfirmed,
+
+        /// <summary>
+        /// Payment was made after the payment request's due date
+        /// </summary>
+        LatePaid
     }
 }
