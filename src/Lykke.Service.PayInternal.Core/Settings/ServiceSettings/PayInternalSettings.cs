@@ -50,10 +50,9 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class BlockchainSettings
     {
         public BlockchainWalletAllocationSettings WalletAllocationPolicy { get; set; }
+        public BitcoinSettings Bitcoin { get; set; }
 
         public EthereumBlockchainSettings Ethereum { get; set; }
-
-        public BitcoinSettings Bitcoin { get; set; }
     }
 
     public class BlockchainWalletAllocationPolicy
@@ -73,11 +72,6 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public TimeSpan Extended { get; set; }
     }
 
-    public class EthereumBlockchainSettings
-    {
-        public string ApiKey { get; set; }
-    }
-
     public class BitcoinSettings
     {
         public string Network { get; set; }
@@ -86,5 +80,10 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class JobPeriods
     {
         public TimeSpan PaymentRequestExpirationHandling { get; set; }
+    }
+
+    public class EthereumBlockchainSettings
+    {
+        public string ApiKey { get; set; }
     }
 }

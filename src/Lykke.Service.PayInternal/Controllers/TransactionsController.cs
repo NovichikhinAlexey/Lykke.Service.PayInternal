@@ -163,7 +163,8 @@ namespace Lykke.Service.PayInternal.Controllers
                 {
                     ex.Blockchain,
                     ex.IdentityType,
-                    ex.Identity
+                    ex.Identity,
+					ex.WalletAddress
                 }.ToJson(), ex);
 
                 return BadRequest(ErrorResponse.Create(ex.Message));
@@ -237,13 +238,13 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                IPaymentRequestTransaction tx =
-                    await _transactionsService.GetByIdAsync(request.Blockchain, request.IdentityType, request.Identity);
+                IEnumerable<IPaymentRequestTransaction> txs =
+                    await _transactionsService.GetByBcnIdentityAsync(request.Blockchain, request.IdentityType, request.Identity);
 
-                if (tx == null)
-                    return NotFound(ErrorResponse.Create("Transaction not found"));
-
-                await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
+                foreach (IPaymentRequestTransaction tx in txs)
+                {
+                    await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
+                }
 
                 return Ok();
             }

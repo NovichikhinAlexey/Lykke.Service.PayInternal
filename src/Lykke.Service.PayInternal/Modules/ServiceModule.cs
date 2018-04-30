@@ -108,15 +108,15 @@ namespace Lykke.Service.PayInternal.Modules
                 .Keyed<IBlockchainApiClient>(BlockchainType.Bitcoin)
                 .SingleInstance();
 
-            builder.RegisterType<EthereumApiClient>()
-                .Keyed<IBlockchainApiClient>(BlockchainType.Ethereum)
-                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum))
-                .SingleInstance();
-
             builder.RegisterType<BlockchainAddressValidator>()
                 .As<IBlockchainAddressValidator>()
                 .WithParameter(
                     TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Bitcoin.Network));
+
+            builder.RegisterType<EthereumApiClient>()
+                .Keyed<IBlockchainApiClient>(BlockchainType.Ethereum)
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum))
+                .SingleInstance();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)

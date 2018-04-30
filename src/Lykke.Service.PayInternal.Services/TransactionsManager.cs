@@ -1,6 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
-using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 
 namespace Lykke.Service.PayInternal.Services
@@ -11,7 +11,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IPaymentRequestService _paymentRequestService;
 
         public TransactionsManager(
-            ITransactionsService transactionsService, 
+            ITransactionsService transactionsService,
             IPaymentRequestService paymentRequestService)
         {
             _transactionsService = transactionsService;
@@ -31,20 +31,20 @@ namespace Lykke.Service.PayInternal.Services
         {
             await _transactionsService.UpdateAsync(command);
 
-            string walletAddress = command.WalletAddress;
-
-            if (string.IsNullOrEmpty(walletAddress))
+            if (string.IsNullOrEmpty(command.WalletAddress))
             {
-                IPaymentRequestTransaction tx =
-                    await _transactionsService.GetByIdAsync(command.Blockchain, command.IdentityType, command.Identity);
+                IEnumerable<IPaymentRequestTransaction> txs =
+                    await _transactionsService.GetByBcnIdentityAsync(command.Blockchain, command.IdentityType, command.Identity);
 
-                if (tx == null)
-                    throw new TransactionNotFoundException(command.Blockchain, command.IdentityType, command.Identity);
-
-                walletAddress = tx.WalletAddress;
+                foreach (IPaymentRequestTransaction tx in txs)
+                {
+                    await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
+                }
             }
-
-            await _paymentRequestService.UpdateStatusAsync(walletAddress);
+            else
+            {
+                await _paymentRequestService.UpdateStatusAsync(command.WalletAddress);
+            }
         }
     }
 }

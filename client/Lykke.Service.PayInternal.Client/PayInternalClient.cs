@@ -156,6 +156,18 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetAvailableAssetsAsync(merchantId, type));
         }
 
+        public async Task<AvailableAssetsResponse> GetAvailableSettlementAssetsAsync(string merchantId)
+        {
+            return await _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _merchantsApi.GetAvailableSettlementAssetsAsync(merchantId));
+        }
+
+        public async Task<AvailableAssetsResponse> GetAvailablePaymentAssetsAsync(string merchantId, string settlementAssetId)
+        {
+            return await _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _merchantsApi.GetAvailablePaymentAssetsAsync(merchantId, settlementAssetId));
+        }
+
         public async Task<AvailableAssetsResponse> GetGeneralAvailableAssetsAsync(AssetAvailabilityType type)
         {
             return await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetGeneralAvailableAssetsAsync(type));
