@@ -32,6 +32,7 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly ITransactionsService _transactionsService;
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IRefundService _refundService;
+        private readonly IAssetsAvailabilityService _assetsAvailabilityService;
         private readonly ILog _log;
 
         public PaymentRequestsController(
@@ -40,13 +41,15 @@ namespace Lykke.Service.PayInternal.Controllers
             ITransactionsService transactionsService,
             IAssetsLocalCache assetsLocalCache,
             IRefundService refundService,
-            ILog log)
+            ILog log, 
+            IAssetsAvailabilityService assetsAvailabilityService)
         {
             _paymentRequestService = paymentRequestService;
             _orderService = orderService;
             _transactionsService = transactionsService;
             _assetsLocalCache = assetsLocalCache;
             _refundService = refundService;
+            _assetsAvailabilityService = assetsAvailabilityService;
             _log = log.CreateComponentScope(nameof(PaymentRequestsController));
         }
 
@@ -196,6 +199,18 @@ namespace Lykke.Service.PayInternal.Controllers
 
             if (await _assetsLocalCache.GetAssetPairAsync(model.PaymentAssetId, model.SettlementAssetId) == null)
                 return BadRequest(ErrorResponse.Create("Asset pair doesn't exist"));
+
+            IReadOnlyList<string> settlementAssets =
+                await _assetsAvailabilityService.ResolveSettlementAsync(model.MerchantId);
+
+            if (!settlementAssets.Contains(model.SettlementAssetId))
+                return BadRequest(ErrorResponse.Create("Settlement asset is not available"));
+
+            IReadOnlyList<string> paymentAssets =
+                await _assetsAvailabilityService.ResolvePaymentAsync(model.MerchantId, model.SettlementAssetId);
+
+            if (!paymentAssets.Contains(model.PaymentAssetId))
+                return BadRequest(ErrorResponse.Create("Payment asset is not available"));
 
             try
             {
