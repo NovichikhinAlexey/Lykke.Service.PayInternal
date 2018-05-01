@@ -111,7 +111,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         {
             PaymentRequestTransactionEntity entity = await _storage.MergeAsync(
                 PaymentRequestTransactionEntity.ByWalletAddress.GeneratePartitionKey(transaction.WalletAddress),
-                PaymentRequestTransactionEntity.ByWalletAddress.GenerateRowKey(transaction.TransactionId),
+                PaymentRequestTransactionEntity.ByWalletAddress.GenerateRowKey(transaction.Blockchain, transaction.IdentityType, transaction.Identity),
                 e =>
                 {
                     e.TransactionId = transaction.TransactionId;
