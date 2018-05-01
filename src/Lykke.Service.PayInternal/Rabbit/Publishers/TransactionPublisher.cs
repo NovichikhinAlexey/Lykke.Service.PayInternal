@@ -38,7 +38,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
         {
             var message = new NewTransactionMessage
             {
-                Id = transaction.Id,
+                Id = transaction.TransactionId,
                 AssetId = transaction.AssetId,
                 Amount = transaction.Amount,
                 Confirmations = transaction.Confirmations,
