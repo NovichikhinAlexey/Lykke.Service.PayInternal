@@ -117,6 +117,10 @@ namespace Lykke.Service.PayInternal.Modules
                 .Keyed<IBlockchainApiClient>(BlockchainType.Ethereum)
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum))
                 .SingleInstance();
+
+            builder.RegisterType<LykkeAssetsResolver>()
+                .As<ILykkeAssetsResolver>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.AssetsMap));
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
