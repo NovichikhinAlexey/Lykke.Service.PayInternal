@@ -840,12 +840,17 @@
         </member>
         <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError.PaymentExpired">
             <summary>
-            Payment order expired
+             Payment was not made till the payment request's due date
             </summary>
         </member>
         <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError.RefundNotConfirmed">
             <summary>
             Refund was not confirmed before expiration date
+            </summary>
+        </member>
+        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestProcessingError.LatePaid">
+            <summary>
+            Payment was made after the payment request's due date
             </summary>
         </member>
         <member name="T:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestStatus">
@@ -891,11 +896,6 @@
         <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestStatus.Error">
             <summary>
             An error occurred during processing payment request.
-            </summary>
-        </member>
-        <member name="F:Lykke.Service.PayInternal.Client.Models.PaymentRequest.PaymentRequestStatus.PastDue">
-            <summary>
-            Payment due date expired and no payment transactions detected
             </summary>
         </member>
         <member name="T:Lykke.Service.PayInternal.Client.Models.PaymentRequest.RefundErrorType">
