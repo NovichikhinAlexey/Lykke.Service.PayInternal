@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Common;
 using Common.Log;
-using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -18,6 +17,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Models;
+using ErrorResponse = Lykke.Common.Api.Contract.Responses.ErrorResponse;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -33,6 +33,7 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IRefundService _refundService;
         private readonly IAssetsAvailabilityService _assetsAvailabilityService;
+        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
 
         public PaymentRequestsController(
@@ -42,7 +43,8 @@ namespace Lykke.Service.PayInternal.Controllers
             IAssetsLocalCache assetsLocalCache,
             IRefundService refundService,
             ILog log, 
-            IAssetsAvailabilityService assetsAvailabilityService)
+            IAssetsAvailabilityService assetsAvailabilityService, 
+            ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _paymentRequestService = paymentRequestService;
             _orderService = orderService;
@@ -50,6 +52,7 @@ namespace Lykke.Service.PayInternal.Controllers
             _assetsLocalCache = assetsLocalCache;
             _refundService = refundService;
             _assetsAvailabilityService = assetsAvailabilityService;
+            _lykkeAssetsResolver = lykkeAssetsResolver;
             _log = log.CreateComponentScope(nameof(PaymentRequestsController));
         }
 
@@ -191,13 +194,17 @@ namespace Lykke.Service.PayInternal.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
 
-            if (await _assetsLocalCache.GetAssetByIdAsync(model.SettlementAssetId) == null)
+            string lykkeSettlementAssetId = await _lykkeAssetsResolver.GetLykkeId(model.SettlementAssetId);
+
+            string lykkePaymentAssetId = await _lykkeAssetsResolver.GetLykkeId(model.PaymentAssetId);
+
+            if (lykkeSettlementAssetId == null)
                 return BadRequest(ErrorResponse.Create("Settlement asset doesn't exist"));
 
-            if (await _assetsLocalCache.GetAssetByIdAsync(model.PaymentAssetId) == null)
+            if (lykkePaymentAssetId == null)
                 return BadRequest(ErrorResponse.Create("Payment asset doesn't exist"));
 
-            if (await _assetsLocalCache.GetAssetPairAsync(model.PaymentAssetId, model.SettlementAssetId) == null)
+            if (await _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId) == null)
                 return BadRequest(ErrorResponse.Create("Asset pair doesn't exist"));
 
             IReadOnlyList<string> settlementAssets =

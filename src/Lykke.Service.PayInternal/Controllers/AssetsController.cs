@@ -23,19 +23,22 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly IAssetsAvailabilityService _assetsAvailabilityService;
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IMerchantService _merchantService;
+        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
 
         public AssetsController(
             IAssetsAvailabilityService assetsAvailabilityService,
             IAssetsLocalCache assetsLocalCache,
             IMerchantService merchantService,
-            ILog log)
+            ILog log, 
+            ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _assetsAvailabilityService = assetsAvailabilityService ??
                                          throw new ArgumentNullException(nameof(assetsAvailabilityService));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
             _log = log ?? throw new ArgumentNullException(nameof(log));
+            _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
         }
 
         /// <summary>
@@ -75,7 +78,12 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> SetGeneralAssetsSettings([FromBody] UpdateAssetAvailabilityRequest request)
         {
-            Asset asset = await _assetsLocalCache.GetAssetByIdAsync(request.AssetId);
+            string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(request.AssetId);
+
+            if (lykkeAssetId == null)
+                return NotFound(ErrorResponse.Create($"Asset {request.AssetId} can't be resolved"));
+
+            Asset asset = await _assetsLocalCache.GetAssetByIdAsync(lykkeAssetId);
 
             if (asset == null)
                 return NotFound(ErrorResponse.Create($"Asset {request.AssetId} not found"));
