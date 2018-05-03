@@ -92,7 +92,7 @@ namespace Lykke.Service.PayInternal.Services
             if (fact < 0)
                 throw new NegativeValueException(fact);
 
-            var asset = await _assetsLocalCache.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId);
+            var asset = await _assetsLocalCache.GetAssetByIdAsync(LykkeConstants.BitcoinAsset);
 
             decimal diff = plan - fact;
 

@@ -2,7 +2,8 @@
 {
     public static class LykkeConstants
     {
-        public const string BitcoinAssetId = "BTC";
-        public const string SatoshiAssetId = "Satoshi";
+        public const string BitcoinAsset = "BTC";
+        public const string SatoshiAsset = "Satoshi";
+        public const string Erc20PktAsset = "PKT";
     }
 }

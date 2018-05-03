@@ -21,6 +21,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IMerchantRepository _merchantRepository;
         private readonly ICalculationService _calculationService;
+        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
         private readonly OrderExpirationPeriodsSettings _orderExpirationPeriods;
 
@@ -30,7 +31,7 @@ namespace Lykke.Service.PayInternal.Services
             IMerchantRepository merchantRepository,
             ICalculationService calculationService,
             ILog log,
-            OrderExpirationPeriodsSettings orderExpirationPeriods)
+            OrderExpirationPeriodsSettings orderExpirationPeriods, ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _orderRepository = orderRepository;
             _assetsLocalCache = assetsLocalCache;
@@ -38,6 +39,7 @@ namespace Lykke.Service.PayInternal.Services
             _calculationService = calculationService;
             _log = log;
             _orderExpirationPeriods = orderExpirationPeriods;
+            _lykkeAssetsResolver = lykkeAssetsResolver;
         }
 
         public async Task<IOrder> GetAsync(string paymentRequestId, string orderId)
@@ -83,9 +85,18 @@ namespace Lykke.Service.PayInternal.Services
             if (merchant == null)
                 throw new MerchantNotFoundException(paymentRequest.MerchantId);
 
+            string lykkePaymentAssetId = await _lykkeAssetsResolver.GetLykkeId(paymentRequest.PaymentAssetId);
+
+            if (lykkePaymentAssetId == null)
+                throw new AssetUnknownException(paymentRequest.PaymentAssetId);
+
+            string lykkeSettlementAssetId = await _lykkeAssetsResolver.GetLykkeId(paymentRequest.SettlementAssetId);
+
+            if (lykkeSettlementAssetId == null)
+                throw new AssetUnknownException(paymentRequest.SettlementAssetId);
+
             AssetPair assetPair =
-                await _assetsLocalCache.GetAssetPairAsync(paymentRequest.PaymentAssetId,
-                    paymentRequest.SettlementAssetId);
+                await _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId);
 
             var merchantMarkup = new MerchantMarkup
             {
