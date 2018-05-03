@@ -21,17 +21,19 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IEthereumCoreAPI _ethereumServiceClient;
         private readonly EthereumBlockchainSettings _ethereumSettings;
         private readonly IAssetsLocalCache _assetsLocalCache;
+        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
 
         public EthereumApiClient(
             IEthereumCoreAPI ethereumServiceClient, 
             EthereumBlockchainSettings ethereumSettings, 
             ILog log, 
-            IAssetsLocalCache assetsLocalCache)
+            IAssetsLocalCache assetsLocalCache, ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _ethereumServiceClient = ethereumServiceClient ?? throw new ArgumentNullException(nameof(ethereumServiceClient));
             _ethereumSettings = ethereumSettings ?? throw new ArgumentNullException(nameof(ethereumSettings));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
+            _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
             _log = log?.CreateComponentScope(nameof(EthereumApiClient)) ?? throw new ArgumentNullException(nameof(log));
         }
 
@@ -39,10 +41,15 @@ namespace Lykke.Service.PayInternal.Services
         {
             BlockchainTransferResult result = new BlockchainTransferResult { Blockchain = BlockchainType.Ethereum };
 
-            Asset asset = await _assetsLocalCache.GetAssetByIdAsync(transfer.AssetId);
+            string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(transfer.AssetId);
+
+            if (lykkeAssetId == null)
+                throw new AssetUnknownException(transfer.AssetId);
+
+            Asset asset = await _assetsLocalCache.GetAssetByIdAsync(lykkeAssetId);
 
             if (asset.Type != AssetType.Erc20Token || !asset.IsTradable)
-                throw new AssetNotSupportedException(asset.Id);
+                throw new AssetNotSupportedException(asset.Name);
 
             foreach (TransferAmount transferAmount in transfer.Amounts)
             {
@@ -73,7 +80,7 @@ namespace Lykke.Service.PayInternal.Services
                 result.Transactions.Add(new BlockchainTransactionResult
                 {
                     Amount = transferAmount.Amount,
-                    AssetId = asset.Id,
+                    AssetId = asset.Name,
                     Hash = string.Empty,
                     IdentityType = TransactionIdentityType.Specific,
                     Identity = operationId,

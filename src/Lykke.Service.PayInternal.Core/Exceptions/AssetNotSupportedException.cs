@@ -9,9 +9,9 @@ namespace Lykke.Service.PayInternal.Core.Exceptions
         {
         }
 
-        public AssetNotSupportedException(string assetId) : base("Asset not supported")
+        public AssetNotSupportedException(string asset) : base("Asset not supported")
         {
-            AssetId = assetId;
+            Asset = asset;
         }
 
         public AssetNotSupportedException(string message, Exception innerException) : base(message, innerException)
@@ -22,6 +22,6 @@ namespace Lykke.Service.PayInternal.Core.Exceptions
         {
         }
 
-        public string AssetId { get; set; }
+        public string Asset { get; set; }
     }
 }
