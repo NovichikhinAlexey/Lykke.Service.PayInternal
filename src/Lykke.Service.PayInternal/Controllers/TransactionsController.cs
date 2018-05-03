@@ -158,6 +158,9 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 await _transactionsManager.UpdateTransactionAsync(command);
 
+                await _log.WriteInfoAsync(nameof(TransactionsController), nameof(UpdateTransaction),
+                    command.ToJson(), "Update transaction command");
+
                 return Ok();
             }
             catch (TransactionNotFoundException ex)
