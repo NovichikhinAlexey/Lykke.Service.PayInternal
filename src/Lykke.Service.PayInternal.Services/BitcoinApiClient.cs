@@ -45,9 +45,9 @@ namespace Lykke.Service.PayInternal.Services
                 {
                     switch (transfer.AssetId)
                     {
-                        case LykkeConstants.BitcoinAssetId: 
+                        case LykkeConstants.BitcoinAsset: 
                             return new ToOneAddress(x.Source, x.Amount);
-                        case LykkeConstants.SatoshiAssetId:
+                        case LykkeConstants.SatoshiAsset:
                             return new ToOneAddress(x.Source, x.Amount.SatoshiToBtc());
                         default: 
                             throw new AssetNotSupportedException(transfer.AssetId);
@@ -57,7 +57,7 @@ namespace Lykke.Service.PayInternal.Services
                 OnchainResponse response = await _bitcoinServiceClient.TransactionMultipleTransfer(
                     Guid.NewGuid(),
                     destination,
-                    LykkeConstants.BitcoinAssetId,
+                    LykkeConstants.BitcoinAsset,
                     _feeProvider.FeeRate,
                     _feeProvider.FixedFee,
                     sources);
@@ -69,7 +69,7 @@ namespace Lykke.Service.PayInternal.Services
                 result.Transactions.Add(new BlockchainTransactionResult
                 {
                     Amount = sources.Sum(x => x.Amount ?? 0),
-                    AssetId = LykkeConstants.BitcoinAssetId,
+                    AssetId = LykkeConstants.BitcoinAsset,
                     Hash = response.Transaction?.Hash,
                     IdentityType = TransactionIdentityType.Hash,
                     Identity = response.Transaction?.Hash,

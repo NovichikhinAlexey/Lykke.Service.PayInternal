@@ -98,14 +98,12 @@ namespace Lykke.Service.PayInternal.Services
 
             switch (assetId)
             {
-                case LykkeConstants.BitcoinAssetId:
-                    btcPaid = txs.GetTotal();
-                    break;
-                case LykkeConstants.SatoshiAssetId:
+                case LykkeConstants.SatoshiAsset:
                     btcPaid = txs.GetTotal().SatoshiToBtc();
                     break;
                 default:
-                    throw new UnexpectedAssetException(assetId);
+                    btcPaid = txs.GetTotal();
+                    break;
             }
 
             bool allConfirmed = txs.All(x => x.Confirmed(_transactionConfirmationCount));

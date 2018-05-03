@@ -88,7 +88,8 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<string> CreateAddressAsync()
         {
-            object response = await _ethereumServiceClient.ApiLykkePayErc20depositsPostAsync(_ethereumSettings.ApiKey);
+            object response =
+                await _ethereumServiceClient.ApiLykkePayErc20depositsPostAsync(_ethereumSettings.ApiKey, Guid.NewGuid().ToString());
 
             if (response is ApiException ex)
             {

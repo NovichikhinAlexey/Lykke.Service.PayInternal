@@ -57,6 +57,9 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 await _transactionsManager.CreateTransactionAsync(command);
 
+                await _log.WriteInfoAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction),
+                    command.ToJson(), "Create new transaction command");
+
                 return Ok();
             }
             catch (PaymentRequestNotFoundException ex)
