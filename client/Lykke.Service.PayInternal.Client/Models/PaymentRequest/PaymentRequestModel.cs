@@ -80,7 +80,12 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         /// Gets or sets the paid date.
         /// </summary>
         public DateTime? PaidDate { get; set; }
-        
+
+        /// <summary>
+        /// Gets or sets the Timestamp.
+        /// </summary>
+        public DateTime? Timestamp { get; set; }
+
         /// <summary>
         /// Gets or sets the error occurred during processing payment request.
         /// </summary>
