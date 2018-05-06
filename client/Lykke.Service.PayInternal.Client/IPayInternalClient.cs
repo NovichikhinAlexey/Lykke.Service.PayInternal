@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.Asset;
+using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
@@ -33,20 +34,20 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request"></param>
         /// <returns></returns>
         Task UpdateTransactionAsync(UpdateTransactionRequest request);
-        
+
         /// <summary>
         /// Returns all merchants.
         /// </summary>
         /// <returns>The collection of merchants.</returns>
         Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync();
-        
+
         /// <summary>
         /// Returns merchant.
         /// </summary>
         /// <param name="merchantId">The merchant id.</param>
         /// <returns>The merchant.</returns>
         Task<MerchantModel> GetMerchantByIdAsync(string merchantId);
-        
+
         /// <summary>
         /// Creates merchant.
         /// </summary>
@@ -94,7 +95,7 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="merchantId">The merchant id.</param>
         /// <returns>The collection of merchant payment requests.</returns>
         Task<IReadOnlyList<PaymentRequestModel>> GetPaymentRequestsAsync(string merchantId);
-        
+
         /// <summary>
         /// Returns merchant payment request.
         /// </summary>
@@ -117,14 +118,14 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="walletAddress">Wallet address</param>
         /// <returns>The payment request.</returns>
         Task<PaymentRequestModel> GetPaymentRequestByAddressAsync(string walletAddress);
-        
+
         /// <summary>
         /// Creates a payment request and wallet.
         /// </summary>
         /// <param name="model">The payment request creation information.</param>
         /// <returns>The payment request.</returns>
         Task<PaymentRequestModel> CreatePaymentRequestAsync(CreatePaymentRequestModel model);
-        
+
         /// <summary>
         /// Transfers BTC from source addresses with amount provided to destination address without LykkePay fees
         /// </summary>
@@ -202,5 +203,58 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request"></param>
         /// <returns></returns>
         Task SetWalletExpiredAsync(BlockchainWalletExpiredRequest request);
+
+        /// <summary>
+        /// Returns markup values for merchant and asset pair
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <param name="assetPairId">Asset pair id</param>
+        /// <returns></returns>
+        Task<MarkupResponse> ResolveMarkupByMerchantAsync(string merchantId, string assetPairId);
+
+        /// <summary>
+        /// Returns the default markup values for all asset pairs
+        /// </summary>
+        /// <returns></returns>
+        Task<IReadOnlyList<MarkupResponse>> GetDefaultMarkupsAsync();
+
+        /// <summary>
+        /// Returns the default markup values for asset pair id
+        /// </summary>
+        /// <param name="assetPairId">Asset pair id</param>
+        /// <returns></returns>
+        Task<MarkupResponse> GetDefaultMarkupAsync(string assetPairId);
+
+        /// <summary>
+        /// Updates markup values for asset pair id
+        /// </summary>
+        /// <param name="assetPairId">Asset pair id</param>
+        /// <param name="request">Markup values</param>
+        /// <returns></returns>
+        Task SetDefaultMarkupAsync(string assetPairId, UpdateMarkupRequest request);
+
+        /// <summary>
+        /// Returns all markup values for merchant
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <returns></returns>
+        Task<IReadOnlyList<MarkupResponse>> GetMarkupsForMerchantAsync(string merchantId);
+
+        /// <summary>
+        /// Returns markup value for merchant and asset pair id
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <param name="assetPairId">Asset pair id</param>
+        /// <returns></returns>
+        Task<MarkupResponse> GetMarkupForMerchantAsync(string merchantId, string assetPairId);
+
+        /// <summary>
+        /// Updates markup values for merchant and asset pair
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <param name="assetPairId">Asset pair id</param>
+        /// <param name="request">Markup values</param>
+        /// <returns></returns>
+        Task SetMarkupForMerchantAsync(string merchantId, string assetPairId, UpdateMarkupRequest request);
     }
 }

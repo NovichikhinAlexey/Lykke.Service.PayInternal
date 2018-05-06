@@ -111,6 +111,9 @@ namespace Lykke.Service.PayInternal.Modules
                 .As<IBlockchainAddressValidator>()
                 .WithParameter(
                     TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Bitcoin.Network));
+
+            builder.RegisterType<MarkupService>()
+                .As<IMarkupService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
