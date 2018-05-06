@@ -113,6 +113,9 @@ namespace Lykke.Service.PayInternal.Modules
                 .WithParameter(
                     TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Bitcoin.Network));
 
+            builder.RegisterType<MarkupService>()
+                .As<IMarkupService>();
+
             builder.RegisterType<EthereumApiClient>()
                 .Keyed<IBlockchainApiClient>(BlockchainType.Ethereum)
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum))
