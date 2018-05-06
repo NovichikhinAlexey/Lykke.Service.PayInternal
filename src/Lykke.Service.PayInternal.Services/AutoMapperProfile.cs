@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AzureStorage.Tables.Templates;
 using Lykke.Service.EthereumCore.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -56,6 +57,11 @@ namespace Lykke.Service.PayInternal.Services
                 .ForMember(dest => dest.Timestamp, opt => opt.MapFrom(src => src.CreatedOn));
 
             CreateMap<ICreateTransactionCommand, UpdateTransactionCommand>(MemberList.Destination);
+
+            CreateMap<IPaymentRequest, RequestMarkup>(MemberList.Destination)
+                .ForMember(dest => dest.Percent, opt => opt.MapFrom(src => src.MarkupPercent))
+                .ForMember(dest => dest.Pips, opt => opt.MapFrom(src => src.MarkupPips))
+                .ForMember(dest => dest.FixedFee, opt => opt.MapFrom(src => src.MarkupFixedFee));
         }
     }
 }

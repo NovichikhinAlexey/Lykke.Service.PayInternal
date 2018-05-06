@@ -90,6 +90,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 await _log.WriteErrorAsync(nameof(OrdersController), nameof(ChechoutAsync),
                     model.ToJson(), exception);
+
                 throw;
             }
         }
