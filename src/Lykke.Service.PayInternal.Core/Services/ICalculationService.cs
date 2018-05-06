@@ -1,28 +1,28 @@
 ﻿using System.Threading.Tasks;
 using Lykke.Service.MarketProfile.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
+using Lykke.Service.PayInternal.Core.Domain.Markup;
 
 namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface ICalculationService
     {
-        Task<decimal> GetAmountAsync(string assetPairId, decimal amount, IRequestMarkup requestMarkup, IMerchantMarkup merchantMarkup);
+        Task<decimal> GetAmountAsync(string assetPairId, decimal amount, IRequestMarkup requestMarkup, IMarkup merchantMarkup);
 
-        Task<decimal> GetRateAsync(string assetPairId, double markupPercent, int markupPips, IMerchantMarkup merchantMarkup);
+        Task<decimal> GetRateAsync(string assetPairId, double markupPercent, int markupPips, IMarkup merchantMarkup);
 
         Task<AmountFullFillmentStatus> CalculateBtcAmountFullfillmentAsync(decimal plan, decimal fact);
 
         decimal CalculatePrice(AssetPairModel assetPairRate, int pairAccuracy, int assetAccuracy, double markupPercent,
-            int markupPips, PriceCalculationMethod priceValueType, IMerchantMarkup merchantMarkup);
+            int markupPips, PriceCalculationMethod priceValueType, IMarkup merchantMarkup);
 
         double GetOriginalPriceByMethod(double bid, double ask, PriceCalculationMethod method);
 
-        double GetSpread(double originalPrice, double deltaSpreadPercent);
+        double GetSpread(double originalPrice, decimal deltaSpreadPercent);
 
         double GetPriceWithSpread(double originalPrice, double spread, PriceCalculationMethod method);
 
-        double GetMerchantFee(double originalPrice, double merchantPercent);
+        double GetMerchantFee(double originalPrice, decimal merchantPercent);
 
         double GetMerchantPips(double merchantPips);
 

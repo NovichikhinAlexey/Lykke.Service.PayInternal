@@ -538,29 +538,9 @@
             Gets or sets the merchant api key.
             </summary>
         </member>
-        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.CreateMerchantRequest.DeltaSpread">
-            <summary>
-            Gets or sets the merchant delta spread.
-            </summary>
-        </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.CreateMerchantRequest.TimeCacheRates">
             <summary>
             Gets or sets the merchant time cache rates.
-            </summary>
-        </member>
-        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.CreateMerchantRequest.LpMarkupPercent">
-            <summary>
-            Gets or sets the merchant markup percent.
-            </summary>
-        </member>
-        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.CreateMerchantRequest.LpMarkupPips">
-            <summary>
-            Gets or sets the merchant markup pips.
-            </summary>
-        </member>
-        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.CreateMerchantRequest.MarkupFixedFee">
-            <summary>
-            Gets or sets the merchant fixed fee.
             </summary>
         </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.CreateMerchantRequest.LwId">
@@ -598,29 +578,9 @@
             Gets or sets the merchant api key.
             </summary>
         </member>
-        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.MerchantModel.DeltaSpread">
-            <summary>
-            Gets or sets the merchant delta spread.
-            </summary>
-        </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.MerchantModel.TimeCacheRates">
             <summary>
             Gets or sets the merchant time cache rates.
-            </summary>
-        </member>
-        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.MerchantModel.LpMarkupPercent">
-            <summary>
-            Gets or sets the merchant markup percent.
-            </summary>
-        </member>
-        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.MerchantModel.LpMarkupPips">
-            <summary>
-            Gets or sets the merchant markup pips.
-            </summary>
-        </member>
-        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.MerchantModel.MarkupFixedFee">
-            <summary>
-            Gets or sets the merchant fixed fee.
             </summary>
         </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.MerchantModel.LwId">
@@ -653,29 +613,9 @@
             Gets or sets the merchant api key.
             </summary>
         </member>
-        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.UpdateMerchantRequest.DeltaSpread">
-            <summary>
-            Gets or sets the merchant delta spread.
-            </summary>
-        </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.UpdateMerchantRequest.TimeCacheRates">
             <summary>
             Gets or sets the merchant time cache rates.
-            </summary>
-        </member>
-        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.UpdateMerchantRequest.LpMarkupPercent">
-            <summary>
-            Gets or sets the merchant markup percent.
-            </summary>
-        </member>
-        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.UpdateMerchantRequest.LpMarkupPips">
-            <summary>
-            Gets or sets the merchant markup pips.
-            </summary>
-        </member>
-        <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.UpdateMerchantRequest.MarkupFixedFee">
-            <summary>
-            Gets or sets the merchant fixed fee.
             </summary>
         </member>
         <member name="P:Lykke.Service.PayInternal.Client.Models.Merchant.UpdateMerchantRequest.LwId">
