@@ -113,5 +113,25 @@ namespace Lykke.Service.PayInternal.Services
 
             throw new UnrecognizedApiResponse(response?.GetType().FullName);
         }
+
+        public async Task<bool> ValidateAddressAsync(string address)
+        {
+            object response = await _ethereumServiceClient.ApiValidationGetAsync(address);
+
+            if (response is ApiException ex)
+            {
+                await _log.WriteWarningAsync(nameof(ValidateAddressAsync), "Ethereum address validation",
+                    ex.Error?.Message);
+
+                throw new WalletAddressValidationException(BlockchainType.Ethereum, address);
+            }
+
+            if (response is IsAddressValidResponse result)
+            {
+                return result.IsValid;
+            }
+
+            throw new UnrecognizedApiResponse(response?.GetType().FullName);
+        }
     }
 }
