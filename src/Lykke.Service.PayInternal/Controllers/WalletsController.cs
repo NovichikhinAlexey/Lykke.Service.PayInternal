@@ -49,7 +49,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> SetExpired([FromBody] BlockchainWalletExpiredRequest request)
         {
-            bool isValid = _blockchainAddressValidator.Execute(request.WalletAddress, request.Blockchain);
+            bool isValid = await _blockchainAddressValidator.Execute(request.WalletAddress, request.Blockchain);
 
             if (!isValid)
                 return BadRequest(ErrorResponse.Create("Wallet address is not valid"));

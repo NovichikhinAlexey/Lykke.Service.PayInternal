@@ -11,26 +11,28 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using NBitcoin;
 
 namespace Lykke.Service.PayInternal.Services
 {
     public class BitcoinApiClient : IBlockchainApiClient
     {
         private readonly IBitcoinApiClient _bitcoinServiceClient;
-
         private readonly IFeeProvider _feeProvider;
-
+        private readonly Network _bitcoinNetwork;
         private readonly ILog _log;
 
         public BitcoinApiClient(
             IBitcoinApiClient bitcoinServiceClient,
             IFeeProvider feeProvider,
-            ILog log)
+            ILog log,
+            string bitcoinNetwork)
         {
             _bitcoinServiceClient =
                 bitcoinServiceClient ?? throw new ArgumentNullException(nameof(bitcoinServiceClient));
             _feeProvider = feeProvider ?? throw new ArgumentNullException(nameof(feeProvider));
             _log = log?.CreateComponentScope(nameof(BitcoinApiClient)) ?? throw new ArgumentNullException(nameof(log));
+            _bitcoinNetwork = Network.GetNetwork(bitcoinNetwork);
         }
 
         public async Task<BlockchainTransferResult> TransferAsync(BlockchainTransferCommand transfer)
@@ -94,6 +96,20 @@ namespace Lykke.Service.PayInternal.Services
             }
 
             return wallet.Address;
+        }
+
+        public Task<bool> ValidateAddressAsync(string address)
+        {
+            try
+            {
+                _bitcoinNetwork.Parse(address);
+            }
+            catch (Exception)
+            {
+                return Task.FromResult(false);
+            }
+
+            return Task.FromResult(true);
         }
     }
 }
