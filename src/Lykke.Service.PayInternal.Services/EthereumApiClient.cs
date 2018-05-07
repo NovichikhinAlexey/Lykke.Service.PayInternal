@@ -43,9 +43,6 @@ namespace Lykke.Service.PayInternal.Services
 
             string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(transfer.AssetId);
 
-            if (lykkeAssetId == null)
-                throw new AssetUnknownException(transfer.AssetId);
-
             Asset asset = await _assetsLocalCache.GetAssetByIdAsync(lykkeAssetId);
 
             if (asset.Type != AssetType.Erc20Token || !asset.IsTradable)

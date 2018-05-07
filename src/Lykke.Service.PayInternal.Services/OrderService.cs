@@ -93,13 +93,7 @@ namespace Lykke.Service.PayInternal.Services
 
             string lykkePaymentAssetId = await _lykkeAssetsResolver.GetLykkeId(paymentRequest.PaymentAssetId);
 
-            if (lykkePaymentAssetId == null)
-                throw new AssetUnknownException(paymentRequest.PaymentAssetId);
-
             string lykkeSettlementAssetId = await _lykkeAssetsResolver.GetLykkeId(paymentRequest.SettlementAssetId);
-
-            if (lykkeSettlementAssetId == null)
-                throw new AssetUnknownException(paymentRequest.SettlementAssetId);
 
             AssetPair assetPair =
                 await _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId);

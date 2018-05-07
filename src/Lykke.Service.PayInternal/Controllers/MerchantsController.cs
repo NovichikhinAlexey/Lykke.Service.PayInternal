@@ -283,6 +283,52 @@ namespace Lykke.Service.PayInternal.Controllers
         }
 
         /// <summary>
+        /// Returns markup values for merchant and asset pair according to merchant's and default's settings
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <param name="assetPairId"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("merchants/{merchantId}/markups/{assetPairId}")]
+        [SwaggerOperation("ResolveMarkupByMerchant")]
+        [ProducesResponseType(typeof(MarkupResponse), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> ResolveMarkupByMerchant(string merchantId, string assetPairId)
+        {
+            IMerchant merchant = await _merchantService.GetAsync(merchantId);
+
+            if (merchant == null)
+                return NotFound(ErrorResponse.Create("Couldn't find merchant"));
+
+            try
+            {
+                IMarkup markup = await _markupService.ResolveAsync(merchantId, assetPairId);
+
+                return Ok(Mapper.Map<MarkupResponse>(markup));
+            }
+            catch (MarkupNotFoundException markupNotFoundEx)
+            {
+                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(ResolveMarkupByMerchant), new
+                {
+                    markupNotFoundEx.MerchantId,
+                    markupNotFoundEx.AssetPairId
+                }.ToJson(), markupNotFoundEx);
+
+                return NotFound(ErrorResponse.Create(markupNotFoundEx.Message));
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(ResolveMarkupByMerchant), new
+                {
+                    merchantId,
+                    assetPairId
+                }.ToJson(), ex);
+
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Returns list of settlement assets available for merchant according to general and personal asset settings
         /// </summary>
         /// <param name="merchantId"></param>
@@ -324,8 +370,9 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("merchants/{merchantId}/paymentAssets")]
-        [ProducesResponseType(typeof(AvailableAssetsResponseModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(AvailableAssetsResponseModel), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         public async Task<IActionResult> ResolvePaymentAssets(string merchantId, [FromQuery] string settlementAssetId)
         {
             IMerchant merchant = await _merchantService.GetAsync(merchantId);
@@ -345,58 +392,19 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(new AvailableAssetsResponseModel {Assets = assets});
             }
+            catch (AssetUnknownException assetEx)
+            {
+                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(ResolvePaymentAssets),
+                    new { assetEx.Asset }.ToJson(), assetEx);
+
+                return BadRequest(ErrorResponse.Create(assetEx.Message));
+            }
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(MerchantsController), nameof(ResolvePaymentAssets), new
                 {
                     merchantId,
                     settlementAssetId
-                }.ToJson(), ex);
-
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Returns markup values for merchant and asset pair according to merchant's and default's settings
-        /// </summary>
-        /// <param name="merchantId"></param>
-        /// <param name="assetPairId"></param>
-        /// <returns></returns>
-        [HttpGet]
-        [Route("merchants/{merchantId}/markups/{assetPairId}")]
-        [SwaggerOperation("ResolveMarkupByMerchant")]
-        [ProducesResponseType(typeof(MarkupResponse), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
-        public async Task<IActionResult> ResolveMarkupByMerchant(string merchantId, string assetPairId)
-        {
-            IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Couldn't find merchant"));
-
-            try
-            {
-                IMarkup markup = await _markupService.ResolveAsync(merchantId, assetPairId);
-
-                return Ok(Mapper.Map<MarkupResponse>(markup));
-            }
-            catch (MarkupNotFoundException markupNotFoundEx)
-            {
-                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(ResolveMarkupByMerchant), new
-                {
-                    markupNotFoundEx.MerchantId,
-                    markupNotFoundEx.AssetPairId
-                }.ToJson(), markupNotFoundEx);
-
-                return NotFound(ErrorResponse.Create(markupNotFoundEx.Message));
-            }
-            catch (Exception ex)
-            {
-                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(ResolveMarkupByMerchant), new
-                {
-                    merchantId,
-                    assetPairId
                 }.ToJson(), ex);
 
                 throw;
