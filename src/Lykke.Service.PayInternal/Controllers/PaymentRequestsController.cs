@@ -194,42 +194,43 @@ namespace Lykke.Service.PayInternal.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
 
-            string lykkeSettlementAssetId = await _lykkeAssetsResolver.GetLykkeId(model.SettlementAssetId);
-
-            string lykkePaymentAssetId = await _lykkeAssetsResolver.GetLykkeId(model.PaymentAssetId);
-
-            if (lykkeSettlementAssetId == null)
-                return BadRequest(ErrorResponse.Create("Settlement asset doesn't exist"));
-
-            if (lykkePaymentAssetId == null)
-                return BadRequest(ErrorResponse.Create("Payment asset doesn't exist"));
-
-            if (await _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId) == null)
-                return BadRequest(ErrorResponse.Create("Asset pair doesn't exist"));
-
-            IReadOnlyList<string> settlementAssets =
-                await _assetsAvailabilityService.ResolveSettlementAsync(model.MerchantId);
-
-            if (!settlementAssets.Contains(model.SettlementAssetId))
-                return BadRequest(ErrorResponse.Create("Settlement asset is not available"));
-
-            IReadOnlyList<string> paymentAssets =
-                await _assetsAvailabilityService.ResolvePaymentAsync(model.MerchantId, model.SettlementAssetId);
-
-            if (!paymentAssets.Contains(model.PaymentAssetId))
-                return BadRequest(ErrorResponse.Create("Payment asset is not available"));
-
             try
             {
+                string lykkeSettlementAssetId = await _lykkeAssetsResolver.GetLykkeId(model.SettlementAssetId);
+
+                string lykkePaymentAssetId = await _lykkeAssetsResolver.GetLykkeId(model.PaymentAssetId);
+
+                if (await _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId) == null)
+                    return BadRequest(ErrorResponse.Create("Asset pair doesn't exist"));
+
+                IReadOnlyList<string> settlementAssets =
+                    await _assetsAvailabilityService.ResolveSettlementAsync(model.MerchantId);
+
+                if (!settlementAssets.Contains(model.SettlementAssetId))
+                    return BadRequest(ErrorResponse.Create("Settlement asset is not available"));
+
+                IReadOnlyList<string> paymentAssets =
+                    await _assetsAvailabilityService.ResolvePaymentAsync(model.MerchantId, model.SettlementAssetId);
+
+                if (!paymentAssets.Contains(model.PaymentAssetId))
+                    return BadRequest(ErrorResponse.Create("Payment asset is not available"));
+
                 var paymentRequest = Mapper.Map<PaymentRequest>(model);
 
                 IPaymentRequest createdPaymentRequest = await _paymentRequestService.CreateAsync(paymentRequest);
 
                 return Ok(Mapper.Map<PaymentRequestModel>(createdPaymentRequest));
             }
-            catch (Exception exception)
+            catch (AssetUnknownException assetEx)
             {
-                await _log.WriteErrorAsync(nameof(CreateAsync), model.ToJson(), exception);
+                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(CreateAsync),
+                    new {assetEx.Asset}.ToJson(), assetEx);
+
+                return BadRequest(ErrorResponse.Create($"Asset {assetEx.Asset} can't be resolved"));
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(CreateAsync), model.ToJson(), ex);
 
                 throw;
             }
@@ -255,6 +256,10 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<RefundResponseModel>(refundResult));
             }
+            catch (AssetUnknownException assetEx)
+            {
+                await _log.WriteErrorAsync(nameof(RefundAsync), new {assetEx.Asset}.ToJson(), assetEx);
+            }
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(RefundAsync), request.ToJson(), ex);
@@ -266,9 +271,9 @@ namespace Lykke.Service.PayInternal.Controllers
 
                     return BadRequest(new RefundErrorModel {Code = validationEx.ErrorType});
                 }
-
-                return BadRequest(new RefundErrorModel {Code = RefundErrorType.Unknown});
             }
+
+            return BadRequest(new RefundErrorModel { Code = RefundErrorType.Unknown });
         }
 
         /// <summary>

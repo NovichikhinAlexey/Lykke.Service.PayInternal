@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
-using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
@@ -53,35 +52,31 @@ namespace Lykke.Service.PayInternal.Services
         {
             IReadOnlyList<string> assets = await ResolveAsync(merchantId, AssetAvailabilityType.Payment);
 
-            return assets.Where(x =>
+            var result = new List<string>();
+
+            string lykkeSettlementAssetId = _lykkeAssetsResolver.GetLykkeId(settlementAssetId).GetAwaiter().GetResult();
+
+            foreach (string assetId in assets)
             {
-                string lykkePaymentAssetId = _lykkeAssetsResolver.GetLykkeId(x).GetAwaiter().GetResult();
-
-                if (lykkePaymentAssetId == null)
-                    throw new AssetUnknownException(x);
-
-                string lykkeSettlementAssetId = _lykkeAssetsResolver.GetLykkeId(settlementAssetId).GetAwaiter().GetResult();
-
-                if (lykkeSettlementAssetId == null)
-                    throw new AssetUnknownException(settlementAssetId);
+                string lykkePaymentAssetId = _lykkeAssetsResolver.GetLykkeId(assetId).GetAwaiter().GetResult();
 
                 AssetPair assetPair = _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId)
                     .GetAwaiter().GetResult();
 
-                if (assetPair == null)
-                    return false;
+                if (assetPair == null) continue;
 
                 try
                 {
-                    IMarkup markup =_markupService.ResolveAsync(merchantId, assetPair.Id).GetAwaiter().GetResult();
+                    _markupService.ResolveAsync(merchantId, assetPair.Id).GetAwaiter().GetResult();
 
-                    return markup != null;
+                    result.Add(assetId);
                 }
                 catch (MarkupNotFoundException)
                 {
-                    return false;
                 }
-            }).ToList();
+            }
+
+            return result;
         }
 
         public async Task<IAssetAvailabilityByMerchant> GetPersonalAsync(string merchantId)

@@ -4,11 +4,13 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common;
 using Common.Log;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Models.Assets;
 using Microsoft.AspNetCore.Mvc;
@@ -78,25 +80,31 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> SetGeneralAssetsSettings([FromBody] UpdateAssetAvailabilityRequest request)
         {
-            string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(request.AssetId);
-
-            if (lykkeAssetId == null)
-                return NotFound(ErrorResponse.Create($"Asset {request.AssetId} can't be resolved"));
-
-            Asset asset = await _assetsLocalCache.GetAssetByIdAsync(lykkeAssetId);
-
-            if (asset == null)
-                return NotFound(ErrorResponse.Create($"Asset {request.AssetId} not found"));
-
             try
             {
-                await _assetsAvailabilityService.SetGeneralAsync(request.AssetId, request.AvailabilityType, request.Value);
+                string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(request.AssetId);
+
+                Asset asset = await _assetsLocalCache.GetAssetByIdAsync(lykkeAssetId);
+
+                if (asset == null)
+                    return NotFound(ErrorResponse.Create($"Asset {request.AssetId} not found"));
+
+                await _assetsAvailabilityService.SetGeneralAsync(request.AssetId, request.AvailabilityType,
+                    request.Value);
 
                 return NoContent();
+            }
+            catch (AssetUnknownException assetEx)
+            {
+                await _log.WriteErrorAsync(nameof(AssetsController), nameof(SetGeneralAssetsSettings),
+                    new {assetEx.Asset}.ToJson(), assetEx);
+
+                return NotFound(ErrorResponse.Create($"Asset {assetEx.Asset} can't be resolved"));
             }
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(AssetsController), nameof(SetGeneralAssetsSettings), ex);
+
                 throw;
             }
         }

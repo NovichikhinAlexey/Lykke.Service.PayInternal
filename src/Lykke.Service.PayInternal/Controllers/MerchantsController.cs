@@ -370,8 +370,9 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("merchants/{merchantId}/paymentAssets")]
-        [ProducesResponseType(typeof(AvailableAssetsResponseModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(AvailableAssetsResponseModel), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         public async Task<IActionResult> ResolvePaymentAssets(string merchantId, [FromQuery] string settlementAssetId)
         {
             IMerchant merchant = await _merchantService.GetAsync(merchantId);
@@ -390,6 +391,13 @@ namespace Lykke.Service.PayInternal.Controllers
                     await _assetsAvailabilityService.ResolvePaymentAsync(merchantId, settlementAssetId);
 
                 return Ok(new AvailableAssetsResponseModel {Assets = assets});
+            }
+            catch (AssetUnknownException assetEx)
+            {
+                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(ResolvePaymentAssets),
+                    new {assetEx.Asset}.ToJson(), assetEx);
+
+                return BadRequest(ErrorResponse.Create(assetEx.Message));
             }
             catch (Exception ex)
             {

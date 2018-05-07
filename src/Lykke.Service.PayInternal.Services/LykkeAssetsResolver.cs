@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Lykke.Service.Assets.Client.Models;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
@@ -30,7 +31,7 @@ namespace Lykke.Service.PayInternal.Services
                 return lykkeId;
             }
 
-            return null;
+            throw new AssetUnknownException(assetId);
         }
     }
 }
