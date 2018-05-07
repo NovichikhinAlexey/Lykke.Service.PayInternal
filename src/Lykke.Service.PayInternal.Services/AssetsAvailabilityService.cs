@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
+using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
@@ -15,22 +17,27 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IAssetPersonalAvailabilityRepository _assetPersonalAvailabilityRepository;
         private readonly AssetsAvailabilitySettings _assetsAvailabilitySettings;
         private readonly IAssetsLocalCache _assetsLocalCache;
+        private readonly IMarkupService _markupService;
 
         private const char AssetsSeparator = ';';
 
         public AssetsAvailabilityService(
-            IAssetGeneralAvailabilityRepository assetGeneralAvailabilityRepository, 
+            IAssetGeneralAvailabilityRepository assetGeneralAvailabilityRepository,
             IAssetPersonalAvailabilityRepository assetPersonalAvailabilityRepository,
-            AssetsAvailabilitySettings assetsAvailabilitySettings, 
-            IAssetsLocalCache assetsLocalCache)
+            AssetsAvailabilitySettings assetsAvailabilitySettings,
+            IAssetsLocalCache assetsLocalCache,
+            IMarkupService markupService)
         {
             _assetGeneralAvailabilityRepository = assetGeneralAvailabilityRepository ??
-                                           throw new ArgumentNullException(nameof(assetGeneralAvailabilityRepository));
+                                                  throw new ArgumentNullException(
+                                                      nameof(assetGeneralAvailabilityRepository));
             _assetPersonalAvailabilityRepository = assetPersonalAvailabilityRepository ??
-                                           throw new ArgumentNullException(nameof(assetPersonalAvailabilityRepository));
+                                                   throw new ArgumentNullException(
+                                                       nameof(assetPersonalAvailabilityRepository));
             _assetsAvailabilitySettings = assetsAvailabilitySettings ??
                                           throw new ArgumentNullException(nameof(assetsAvailabilitySettings));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
+            _markupService = markupService ?? throw new ArgumentNullException(nameof(markupService));
         }
 
         public Task<IReadOnlyList<string>> ResolveSettlementAsync(string merchantId)
@@ -42,7 +49,18 @@ namespace Lykke.Service.PayInternal.Services
         {
             IReadOnlyList<string> assets = await ResolveAsync(merchantId, AssetAvailabilityType.Payment);
 
-            return assets.Where(x => _assetsLocalCache.GetAssetPairAsync(x, settlementAssetId) != null).ToList();
+            return assets.Where(x =>
+            {
+                AssetPair assetPair =
+                    _assetsLocalCache.GetAssetPairAsync(x, settlementAssetId).GetAwaiter().GetResult();
+
+                if (assetPair == null)
+                    return false;
+
+                IMarkup markup = _markupService.ResolveAsync(merchantId, assetPair.Id).GetAwaiter().GetResult();
+
+                return markup != null;
+            }).ToList();
         }
 
         public async Task<IAssetAvailabilityByMerchant> GetPersonalAsync(string merchantId)
@@ -50,7 +68,8 @@ namespace Lykke.Service.PayInternal.Services
             return await _assetPersonalAvailabilityRepository.GetAsync(merchantId);
         }
 
-        public async Task<IAssetAvailabilityByMerchant> SetPersonalAsync(string merchantId, string paymentAssets, string settlementAssets)
+        public async Task<IAssetAvailabilityByMerchant> SetPersonalAsync(string merchantId, string paymentAssets,
+            string settlementAssets)
         {
             return await _assetPersonalAvailabilityRepository.SetAsync(paymentAssets, settlementAssets, merchantId);
         }
