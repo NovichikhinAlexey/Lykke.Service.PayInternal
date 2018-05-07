@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Api;
 using Lykke.Service.PayInternal.Client.Exceptions;
 using Lykke.Service.PayInternal.Client.Models.Asset;
+using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
@@ -24,6 +25,7 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IOrdersApi _ordersApi;
         private readonly IPaymentRequestsApi _paymentRequestsApi;
         private readonly IAssetsApi _assetsApi;
+        private readonly IMarkupsApi _markupsApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -51,12 +53,13 @@ namespace Lykke.Service.PayInternal.Client
             _ordersApi = RestService.For<IOrdersApi>(_httpClient);
             _paymentRequestsApi = RestService.For<IPaymentRequestsApi>(_httpClient);
             _assetsApi = RestService.For<IAssetsApi>(_httpClient);
+            _markupsApi = RestService.For<IMarkupsApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
-        public async Task<IEnumerable<WalletStateResponse>> GetNotExpiredWalletsAsync()
+        public Task<IEnumerable<WalletStateResponse>> GetNotExpiredWalletsAsync()
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.GetNotExpiredWalletsAsync());
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.GetNotExpiredWalletsAsync());
         }
 
         public async Task CreatePaymentTransactionAsync(CreateTransactionRequest request)
@@ -69,19 +72,19 @@ namespace Lykke.Service.PayInternal.Client
             await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.UpdateTransactionAsync(request));
         }
 
-        public async Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync()
+        public Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync()
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetAllAsync());
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetAllAsync());
         }
         
-        public async Task<MerchantModel> GetMerchantByIdAsync(string merchantId)
+        public Task<MerchantModel> GetMerchantByIdAsync(string merchantId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetByIdAsync(merchantId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetByIdAsync(merchantId));
         }
 
-        public async Task<MerchantModel> CreateMerchantAsync(CreateMerchantRequest request)
+        public Task<MerchantModel> CreateMerchantAsync(CreateMerchantRequest request)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.CreateAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.CreateAsync(request));
         }
 
         public async Task UpdateMerchantAsync(UpdateMerchantRequest request)
@@ -101,54 +104,54 @@ namespace Lykke.Service.PayInternal.Client
             await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.DeleteAsync(merchantId));
         }
         
-        public async Task<OrderModel> GetOrderAsync(string merchantId, string paymentRequestId)
+        public Task<OrderModel> GetOrderAsync(string merchantId, string paymentRequestId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.GetByIdAsync(merchantId, paymentRequestId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.GetByIdAsync(merchantId, paymentRequestId));
         }
 
-        public async Task<OrderModel> ChechoutOrderAsync(ChechoutRequestModel model)
+        public Task<OrderModel> ChechoutOrderAsync(ChechoutRequestModel model)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.ChechoutAsync(model));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.ChechoutAsync(model));
         }
 
-        public async Task<IReadOnlyList<PaymentRequestModel>> GetPaymentRequestsAsync(string merchantId)
+        public Task<IReadOnlyList<PaymentRequestModel>> GetPaymentRequestsAsync(string merchantId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetAllAsync(merchantId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetAllAsync(merchantId));
         }
 
-        public async Task<PaymentRequestModel> GetPaymentRequestAsync(string merchantId, string paymentRequestId)
+        public Task<PaymentRequestModel> GetPaymentRequestAsync(string merchantId, string paymentRequestId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetAsync(merchantId, paymentRequestId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetAsync(merchantId, paymentRequestId));
         }
 
-        public async Task<PaymentRequestDetailsModel> GetPaymentRequestDetailsAsync(string merchantId, string paymentRequestId)
+        public Task<PaymentRequestDetailsModel> GetPaymentRequestDetailsAsync(string merchantId, string paymentRequestId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetDetailsAsync(merchantId, paymentRequestId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetDetailsAsync(merchantId, paymentRequestId));
         }
 
-        public async Task<PaymentRequestModel> GetPaymentRequestByAddressAsync(string walletAddress)
+        public Task<PaymentRequestModel> GetPaymentRequestByAddressAsync(string walletAddress)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetByAddressAsync(walletAddress));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetByAddressAsync(walletAddress));
         }
 
-        public async Task<PaymentRequestModel> CreatePaymentRequestAsync(CreatePaymentRequestModel model)
+        public Task<PaymentRequestModel> CreatePaymentRequestAsync(CreatePaymentRequestModel model)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.CreateAsync(model));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.CreateAsync(model));
         }
         
-        public async Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request)
+        public Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.BtcFreeTransferAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.BtcFreeTransferAsync(request));
         }
 
-        public async Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactionsAsync()
+        public Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactionsAsync()
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.GetAllMonitoredTransactionsAsync());
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.GetAllMonitoredTransactionsAsync());
         }
 
-        public async Task<RefundResponse> RefundAsync(RefundRequestModel request)
+        public Task<RefundResponse> RefundAsync(RefundRequestModel request)
         {
-            return await _runner.RunAsync(() => _paymentRequestsApi.RefundAsync(request), ExceptionFactories.CreateRefundException);
+            return _runner.RunAsync(() => _paymentRequestsApi.RefundAsync(request), ExceptionFactories.CreateRefundException);
         }
 
         public async Task<AvailableAssetsResponse> ResolveAvailableAssetsAsync(string merchantId, AssetAvailabilityType type)
@@ -168,14 +171,14 @@ namespace Lykke.Service.PayInternal.Client
                 _merchantsApi.GetAvailablePaymentAssetsAsync(merchantId, settlementAssetId));
         }
 
-        public async Task<AvailableAssetsResponse> GetGeneralAvailableAssetsAsync(AssetAvailabilityType type)
+        public Task<AvailableAssetsResponse> GetGeneralAvailableAssetsAsync(AssetAvailabilityType type)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetGeneralAvailableAssetsAsync(type));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetGeneralAvailableAssetsAsync(type));
         }
 
-        public async Task<AvailableAssetsByMerchantResponse> GetPersonalAvailableAssetsAsync(string merchantId)
+        public Task<AvailableAssetsByMerchantResponse> GetPersonalAvailableAssetsAsync(string merchantId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetPersonalAvailableAssetsAsync(merchantId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetPersonalAvailableAssetsAsync(merchantId));
         }
 
         public async Task SetGeneralAvailableAssetsAsync(UpdateAssetAvailabilityRequest request)
@@ -196,6 +199,41 @@ namespace Lykke.Service.PayInternal.Client
         public async Task SetWalletExpiredAsync(BlockchainWalletExpiredRequest request)
         {
             await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.SetWalletExpiredAsync(request));
+        }
+
+        public Task<MarkupResponse> ResolveMarkupByMerchantAsync(string merchantId, string assetPairId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.ResolveMarkupAsync(merchantId, assetPairId));
+        }
+
+        public Task<IReadOnlyList<MarkupResponse>> GetDefaultMarkupsAsync()
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.GetDefaultsAsync());
+        }
+
+        public Task<MarkupResponse> GetDefaultMarkupAsync(string assetPairId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.GetDefaultAsync(assetPairId));
+        }
+
+        public async Task SetDefaultMarkupAsync(string assetPairId, UpdateMarkupRequest request)
+        {
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.SetDefaultAsync(assetPairId, request));
+        }
+
+        public Task<IReadOnlyList<MarkupResponse>> GetMarkupsForMerchantAsync(string merchantId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.GetForMerchantAsync(merchantId));
+        }
+
+        public Task<MarkupResponse> GetMarkupForMerchantAsync(string merchantId, string assetPairId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.GetForMerchantAsync(merchantId, assetPairId));
+        }
+
+        public async Task SetMarkupForMerchantAsync(string merchantId, string assetPairId, UpdateMarkupRequest request)
+        {
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.SetForMerchantAsync(merchantId, assetPairId, request));
         }
 
         public async Task SetTransactionExpiredAsync(TransactionExpiredRequest request)

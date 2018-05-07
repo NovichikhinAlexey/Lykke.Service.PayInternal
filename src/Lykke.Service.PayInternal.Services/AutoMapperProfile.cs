@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AzureStorage.Tables.Templates;
 using Lykke.Service.EthereumCore.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -30,6 +31,11 @@ namespace Lykke.Service.PayInternal.Services
 
             CreateMap<IUpdateTransactionRequest, UpdateTransactionCommand>(MemberList.Destination)
                 .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<VirtualAddressResolver>());
+
+            CreateMap<IPaymentRequest, RequestMarkup>(MemberList.Destination)
+                .ForMember(dest => dest.Percent, opt => opt.MapFrom(src => src.MarkupPercent))
+                .ForMember(dest => dest.Pips, opt => opt.MapFrom(src => src.MarkupPips))
+                .ForMember(dest => dest.FixedFee, opt => opt.MapFrom(src => src.MarkupFixedFee));
 
             CreateMap<TransferAmount, TransferFromDepositRequest>(MemberList.Destination)
                 .ForMember(dest => dest.DepositAddress, opt => opt.MapFrom(src => src.Source))

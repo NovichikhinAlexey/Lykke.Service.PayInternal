@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
+using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
@@ -9,6 +10,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.Assets;
+using Lykke.Service.PayInternal.Models.Markups;
 using Lykke.Service.PayInternal.Models.Orders;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Lykke.Service.PayInternal.Models.Transfers;
@@ -38,6 +40,8 @@ namespace Lykke.Service.PayInternal.Mapping
             CreateMap<BtcFreeTransferRequest, BtcTransfer>(MemberList.Destination)
                 .ForMember(dest => dest.FeeRate, opt => opt.MapFrom(x => 0))
                 .ForMember(dest => dest.FixedFee, opt => opt.MapFrom(x => 0));
+
+            CreateMap<IMarkup, MarkupResponse>(MemberList.Destination);
 
             PaymentRequestApiModels();
             PaymentRequestMessages();

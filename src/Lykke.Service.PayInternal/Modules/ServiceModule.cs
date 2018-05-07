@@ -120,6 +120,9 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<LykkeAssetsResolver>()
                 .As<ILykkeAssetsResolver>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.AssetsMap));
+
+            builder.RegisterType<MarkupService>()
+                .As<IMarkupService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)

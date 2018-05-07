@@ -3,6 +3,7 @@ using AzureStorage.Tables;
 using AzureStorage.Tables.Templates.Index;
 using Common.Log;
 using Lykke.Service.PayInternal.AzureRepositories.Asset;
+using Lykke.Service.PayInternal.AzureRepositories.Markup;
 using Lykke.Service.PayInternal.AzureRepositories.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.Order;
 using Lykke.Service.PayInternal.AzureRepositories.PaymentRequest;
@@ -10,6 +11,7 @@ using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.AzureRepositories.Transfer;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
+using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
@@ -53,6 +55,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             const string bcnWalletsUsageTableName = "BlockchainWalletsUsage";
             const string virtualWalletsTableName = "VirtualWallets";
             const string merchantTransactionsTableName = "MerchantWalletTransactions";
+            const string markupsTableName = "Markups";
 
             builder.RegisterInstance<IMerchantRepository>(new MerchantRepository(
                 AzureTableStorage<MerchantEntity>.Create(_merchantsConnectionString,
@@ -95,9 +98,13 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                 AzureTableStorage<AzureIndex>.Create(_transfersConnectionString, transfersTableName, _log)));
 
             builder.RegisterInstance<IPaymentRequestTransactionRepository>(new PaymentRequestTransactionRepository(
-                AzureTableStorage<PaymentRequestTransactionEntity>.Create(_merchantsConnectionString,merchantTransactionsTableName, _log),
+                AzureTableStorage<PaymentRequestTransactionEntity>.Create(_merchantsConnectionString, merchantTransactionsTableName, _log),
                 AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantTransactionsTableName, _log),
                 AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantTransactionsTableName, _log)));
+
+            builder.RegisterInstance<IMarkupRepository>(new MarkupRepository(
+                AzureTableStorage<MarkupEntity>.Create(_merchantsConnectionString, markupsTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, markupsTableName, _log)));
         }
     }
 }
