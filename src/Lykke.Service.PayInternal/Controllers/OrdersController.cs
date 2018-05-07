@@ -4,8 +4,10 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common;
 using Common.Log;
+using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Models.Orders;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
@@ -75,6 +77,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("orders")]
         [SwaggerOperation("OrdersChechout")]
         [ProducesResponseType(typeof(OrderModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         public async Task<IActionResult> ChechoutAsync([FromBody] ChechoutRequestModel model)
         {
             try
@@ -85,6 +88,10 @@ namespace Lykke.Service.PayInternal.Controllers
                 IOrder order = await _orderService.GetAsync(paymentRequest.Id, paymentRequest.OrderId);
 
                 return Ok(Mapper.Map<OrderModel>(order));
+            }
+            catch (MarkupNotFoundException markupNotFoundEx)
+            {
+                return BadRequest(ErrorResponse.Create(markupNotFoundEx.Message));
             }
             catch (Exception exception)
             {
