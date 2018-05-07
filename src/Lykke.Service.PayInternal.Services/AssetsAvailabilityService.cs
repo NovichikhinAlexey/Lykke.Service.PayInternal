@@ -6,6 +6,7 @@ using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
@@ -18,6 +19,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly AssetsAvailabilitySettings _assetsAvailabilitySettings;
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IMarkupService _markupService;
+        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
 
         private const char AssetsSeparator = ';';
 
@@ -26,7 +28,8 @@ namespace Lykke.Service.PayInternal.Services
             IAssetPersonalAvailabilityRepository assetPersonalAvailabilityRepository,
             AssetsAvailabilitySettings assetsAvailabilitySettings,
             IAssetsLocalCache assetsLocalCache,
-            IMarkupService markupService)
+            IMarkupService markupService, 
+            ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _assetGeneralAvailabilityRepository = assetGeneralAvailabilityRepository ??
                                                   throw new ArgumentNullException(
@@ -38,6 +41,7 @@ namespace Lykke.Service.PayInternal.Services
                                           throw new ArgumentNullException(nameof(assetsAvailabilitySettings));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _markupService = markupService ?? throw new ArgumentNullException(nameof(markupService));
+            _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
         }
 
         public Task<IReadOnlyList<string>> ResolveSettlementAsync(string merchantId)
@@ -51,15 +55,32 @@ namespace Lykke.Service.PayInternal.Services
 
             return assets.Where(x =>
             {
-                AssetPair assetPair =
-                    _assetsLocalCache.GetAssetPairAsync(x, settlementAssetId).GetAwaiter().GetResult();
+                string lykkePaymentAssetId = _lykkeAssetsResolver.GetLykkeId(x).GetAwaiter().GetResult();
+
+                if (lykkePaymentAssetId == null)
+                    throw new AssetUnknownException(x);
+
+                string lykkeSettlementAssetId = _lykkeAssetsResolver.GetLykkeId(settlementAssetId).GetAwaiter().GetResult();
+
+                if (lykkeSettlementAssetId == null)
+                    throw new AssetUnknownException(settlementAssetId);
+
+                AssetPair assetPair = _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId)
+                    .GetAwaiter().GetResult();
 
                 if (assetPair == null)
                     return false;
 
-                IMarkup markup = _markupService.ResolveAsync(merchantId, assetPair.Id).GetAwaiter().GetResult();
+                try
+                {
+                    IMarkup markup =_markupService.ResolveAsync(merchantId, assetPair.Id).GetAwaiter().GetResult();
 
-                return markup != null;
+                    return markup != null;
+                }
+                catch (MarkupNotFoundException)
+                {
+                    return false;
+                }
             }).ToList();
         }
 
