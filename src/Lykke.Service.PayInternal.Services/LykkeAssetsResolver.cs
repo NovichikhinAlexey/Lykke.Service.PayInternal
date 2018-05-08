@@ -2,7 +2,7 @@
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
+using Lykke.Service.PayInternal.Core.Settings;
 
 namespace Lykke.Service.PayInternal.Services
 {

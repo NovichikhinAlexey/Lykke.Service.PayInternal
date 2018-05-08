@@ -16,7 +16,6 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public AssetsAvailabilitySettings AssetsAvailability { get; set; }
         public BlockchainSettings Blockchain { get; set; }
         public JobPeriods JobPeriods { get; set; }
-        public AssetsMapSettings AssetsMap { get; set; }
     }
 
     public class LpMarkupSettings
@@ -86,10 +85,5 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class EthereumBlockchainSettings
     {
         public string ApiKey { get; set; }
-    }
-
-    public class AssetsMapSettings
-    {
-        public IDictionary<string, string> Values { get; set; }
     }
 }
