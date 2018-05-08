@@ -101,8 +101,7 @@ namespace Lykke.Service.PayInternal.Services
 
             DateTime walletDueDate = paymentRequest.DueDate.Add(_expirationPeriods.WalletExtra);
 
-            IVirtualWallet wallet = await _walletsManager.CreateAsync(paymentRequest.MerchantId, walletDueDate,
-                paymentRequest.PaymentAssetId);
+            IVirtualWallet wallet = await _walletsManager.CreateAsync(paymentRequest.MerchantId, walletDueDate);
 
             paymentRequest.WalletAddress = wallet.Id;
 
@@ -138,6 +137,9 @@ namespace Lykke.Service.PayInternal.Services
             // Don't create new order if payment reqest status not new. 
             if (paymentRequest.Status != PaymentRequestStatus.New)
                 return paymentRequest;
+
+            await _walletsManager.EnsureBcnAddressAllocated(paymentRequest.MerchantId, paymentRequest.WalletAddress,
+                paymentRequest.PaymentAssetId);
 
             IOrder order = await _orderService.GetLatestOrCreateAsync(paymentRequest, force);
 
