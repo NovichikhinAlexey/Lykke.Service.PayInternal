@@ -116,6 +116,21 @@ namespace Lykke.Service.PayInternal.Services
             return updatedWallet;
         }
 
+        public async Task<IVirtualWallet> EnsureBcnAddressAllocated(string merchantId, string walletId, string assetId)
+        {
+            IVirtualWallet virtualWallet = await _virtualWalletService.GetAsync(merchantId, walletId);
+
+            if (virtualWallet == null)
+                throw new WalletNotFoundException(walletId);
+
+            BlockchainType blockchainType = assetId.GetBlockchainType();
+
+            if (virtualWallet.BlockchainWallets.Any(x => x.Blockchain == blockchainType))
+                return virtualWallet;
+
+            return await AddAssetAsync(merchantId, walletId, assetId);
+        }
+
         public async Task<IEnumerable<IWalletState>> GetNotExpiredStateAsync()
         {
             IReadOnlyList<IVirtualWallet> wallets = await _virtualWalletService.GetNotExpiredAsync();
