@@ -63,11 +63,13 @@ namespace Lykke.Service.PayInternal.Services
                 AssetPair assetPair = _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId)
                     .GetAwaiter().GetResult();
 
-                if (assetPair == null) continue;
+                if (assetPair == null && lykkePaymentAssetId != lykkeSettlementAssetId) continue;
+
+                string assetPairId = assetPair?.Id ?? $"{lykkePaymentAssetId}{lykkeSettlementAssetId}";
 
                 try
                 {
-                    _markupService.ResolveAsync(merchantId, assetPair.Id).GetAwaiter().GetResult();
+                    _markupService.ResolveAsync(merchantId, assetPairId).GetAwaiter().GetResult();
 
                     result.Add(assetId);
                 }

@@ -202,8 +202,8 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             _logMock.Setup(o => o.WriteInfoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>())).Verifiable();
 
-            var rate = _service.CalculatePrice(assetPairRate, assetPair.Accuracy, BtcAccuracy, requestMarkup.Percent, requestMarkup.Pips,
-                PriceCalculationMethod.ByBid, merchantMarkup);
+            var rate = _service.CalculatePrice(assetPairRate.AskPrice, assetPairRate.BidPrice, assetPair.Accuracy,
+                BtcAccuracy, requestMarkup.Percent, requestMarkup.Pips, PriceCalculationMethod.ByBid, merchantMarkup);
 
             var btcAmount = (chfAmount + (decimal) requestMarkup.FixedFee + merchantMarkup.FixedFee) / rate;
 

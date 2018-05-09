@@ -189,7 +189,8 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 string lykkePaymentAssetId = await _lykkeAssetsResolver.GetLykkeId(model.PaymentAssetId);
 
-                if (await _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId) == null)
+                if (lykkeSettlementAssetId != lykkePaymentAssetId &&
+                    await _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId) == null)
                     return BadRequest(ErrorResponse.Create("Asset pair doesn't exist"));
 
                 IReadOnlyList<string> settlementAssets =
