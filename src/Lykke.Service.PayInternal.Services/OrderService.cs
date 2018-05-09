@@ -98,13 +98,15 @@ namespace Lykke.Service.PayInternal.Services
             AssetPair assetPair =
                 await _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId);
 
+            string assetPairId = assetPair?.Id ?? $"{lykkePaymentAssetId}{lykkeSettlementAssetId}";
+
             RequestMarkup requestMarkup = Mapper.Map<RequestMarkup>(paymentRequest);
 
             IMarkup merchantMarkup;
 
             try
             {
-                merchantMarkup = await _markupService.ResolveAsync(merchant.Id, assetPair.Id);
+                merchantMarkup = await _markupService.ResolveAsync(merchant.Id, assetPairId);
             }
             catch (MarkupNotFoundException ex)
             {
@@ -117,17 +119,17 @@ namespace Lykke.Service.PayInternal.Services
                 throw;
             }
 
-            decimal paymentAmount = await _calculationService
-                .GetAmountAsync(assetPair.Id, paymentRequest.Amount, requestMarkup, merchantMarkup);
+            decimal paymentAmount = await _calculationService.GetAmountAsync(lykkePaymentAssetId,
+                lykkeSettlementAssetId, paymentRequest.Amount, requestMarkup, merchantMarkup);
 
-            decimal rate = await _calculationService.GetRateAsync(assetPair.Id, requestMarkup.Percent,
-                requestMarkup.Pips, merchantMarkup);
+            decimal rate = await _calculationService.GetRateAsync(lykkePaymentAssetId, lykkeSettlementAssetId,
+                requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
 
             var order = new Order
             {
                 MerchantId = paymentRequest.MerchantId,
                 PaymentRequestId = paymentRequest.Id,
-                AssetPairId = assetPair.Id,
+                AssetPairId = assetPairId,
                 SettlementAmount = paymentRequest.Amount,
                 PaymentAmount = paymentAmount,
                 DueDate = now.Add(_orderExpirationPeriods.Primary),
