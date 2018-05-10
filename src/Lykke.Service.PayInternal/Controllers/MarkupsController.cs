@@ -4,13 +4,14 @@ using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common.Log;
-using Lykke.Common.Api.Contract.Responses;
+using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Models.Markups;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using ErrorResponse = Lykke.Common.Api.Contract.Responses.ErrorResponse;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -19,16 +20,19 @@ namespace Lykke.Service.PayInternal.Controllers
     {
         private readonly IMarkupService _markupService;
         private readonly IMerchantService _merchantService;
+        private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly ILog _log;
 
         public MarkupsController(
             IMarkupService markupService,
             ILog log,
-            IMerchantService merchantService)
+            IMerchantService merchantService,
+            IAssetsLocalCache assetsLocalCache)
         {
             _markupService = markupService;
             _log = log;
             _merchantService = merchantService;
+            _assetsLocalCache = assetsLocalCache;
         }
 
         /// <summary>
@@ -93,11 +97,18 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("default/{assetPairId}")]
         [SwaggerOperation("SetDefault")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> SetDefault(string assetPairId, [FromBody] UpdateMarkupRequest request)
         {
+            AssetPair priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(request.PriceAssetPairId);
+
+            if (priceAssetPair == null)
+                return NotFound(ErrorResponse.Create("Price asset pair doesn't exist"));
+
             try
             {
-                await _markupService.SetDefaultAsync(assetPairId, request.PriceAssetPairId, request.PriceMethod, request);
+                await _markupService.SetDefaultAsync(assetPairId, request.PriceAssetPairId, request.PriceMethod,
+                    request);
 
                 return Ok();
             }
@@ -193,6 +204,11 @@ namespace Lykke.Service.PayInternal.Controllers
 
             if (merchant == null)
                 return NotFound(ErrorResponse.Create("Merchant not found"));
+
+            AssetPair priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(request.PriceAssetPairId);
+
+            if (priceAssetPair == null)
+                return NotFound(ErrorResponse.Create("Price asset pair doesn't exist"));
 
             try
             {

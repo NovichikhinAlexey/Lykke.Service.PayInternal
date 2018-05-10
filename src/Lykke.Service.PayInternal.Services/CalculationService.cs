@@ -67,35 +67,62 @@ namespace Lykke.Service.PayInternal.Services
         {
             double askPrice, bidPrice;
 
-            AssetPair assetPair = null;
+            AssetPair priceAssetPair = null, assetPair = null;
 
-            if (baseAssetId == quotingAssetId)
+            if (!string.IsNullOrEmpty(merchantMarkup.PriceAssetPairId))
             {
-                askPrice = bidPrice = 1D;
-            }
-            else
+                await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetRateAsync),
+                    new {merchantMarkup.PriceAssetPairId}.ToJson(), "Price asset pair will be used");
+
+                priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(merchantMarkup.PriceAssetPairId);
+
+                AssetPairModel assetPairRate = await InvokeMarketProfileServiceAsync(priceAssetPair.Id);
+
+                await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetRateAsync),
+                    new {PriceMethod = merchantMarkup.PriceMethod.ToString()}.ToJson(), "Price method");
+
+                switch (merchantMarkup.PriceMethod)
+                {
+                    case PriceMethod.None:
+                    case PriceMethod.Direct:
+                        askPrice = assetPairRate.AskPrice;
+                        bidPrice = assetPairRate.BidPrice;
+                        break;
+                    case PriceMethod.Reverse:
+                        askPrice = 1 / assetPairRate.AskPrice;
+                        bidPrice = 1 / assetPairRate.BidPrice;
+                        break;
+                    default:
+                        throw new UnexpectedAssetPairPriceMethodException(merchantMarkup.PriceMethod);
+                }
+            } 
+            else 
             {
                 assetPair = await _assetsLocalCache.GetAssetPairAsync(baseAssetId, quotingAssetId);
 
-                var response = await _marketProfileServiceClient.ApiMarketProfileByPairCodeGetAsync(assetPair.Id);
-
-                if (response is ErrorModel error)
+                if (assetPair != null)
                 {
-                    throw new Exception(error.Message);
-                }
+                    await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetRateAsync),
+                        new {AssetPairId = assetPair.Id}.ToJson(), "Asset pair will be used");
 
-                if (response is AssetPairModel assetPairRate)
-                {
+                    AssetPairModel assetPairRate = await InvokeMarketProfileServiceAsync(assetPair.Id);
+
                     askPrice = assetPairRate.AskPrice;
 
                     bidPrice = assetPairRate.BidPrice;
                 }
-                else throw new Exception("Unknown MarketProfile API response");
+                else
+                {
+                    askPrice = bidPrice = 1D;
+                }
             }
+
+            await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetRateAsync),
+                new {askPrice, bidPrice}.ToJson(), "Market rate that will be used for calculation");
 
             Asset baseAsset = await _assetsLocalCache.GetAssetByIdAsync(baseAssetId);
 
-            int pairAccuracy = assetPair?.Accuracy ?? baseAsset.Accuracy;
+            int pairAccuracy = priceAssetPair?.Accuracy ?? assetPair?.Accuracy ?? baseAsset.Accuracy;
 
             return CalculatePrice(askPrice, bidPrice, pairAccuracy, baseAsset.Accuracy, markupPercent, markupPips,
                 PriceCalculationMethod.ByBid, merchantMarkup);
@@ -160,7 +187,7 @@ namespace Lykke.Service.PayInternal.Services
             {
                 case PriceCalculationMethod.ByAsk: return ask;
                 case PriceCalculationMethod.ByBid: return bid;
-                default: throw new UnexpectedPriceCalculationMethod(method);
+                default: throw new UnexpectedPriceCalculationMethodException(method);
             }
         }
 
@@ -178,7 +205,7 @@ namespace Lykke.Service.PayInternal.Services
             {
                 case PriceCalculationMethod.ByBid: return originalPrice - spread;
                 case PriceCalculationMethod.ByAsk: return originalPrice + spread;
-                default: throw new UnexpectedPriceCalculationMethod(method);
+                default: throw new UnexpectedPriceCalculationMethodException(method);
             }
         }
 
@@ -226,7 +253,7 @@ namespace Lykke.Service.PayInternal.Services
             {
                 case PriceCalculationMethod.ByBid: return (decimal) originalPrice - delta;
                 case PriceCalculationMethod.ByAsk: return (decimal) originalPrice + delta;
-                default: throw new UnexpectedPriceCalculationMethod(method);
+                default: throw new UnexpectedPriceCalculationMethodException(method);
             }
         }
 
@@ -243,7 +270,7 @@ namespace Lykke.Service.PayInternal.Services
                 case PriceCalculationMethod.ByAsk:
                     result = originalPrice + pairAccuracy.GetMinValue() * (decimal) 0.49;
                     break;
-                default: throw new UnexpectedPriceCalculationMethod(method);
+                default: throw new UnexpectedPriceCalculationMethodException(method);
             }
 
             decimal rounded = Math.Round(result, assetAccuracy);
@@ -253,6 +280,23 @@ namespace Lykke.Service.PayInternal.Services
             decimal ceiled = Math.Ceiling(rounded * mult) / mult;
 
             return ceiled < 0 ? 0 : ceiled;
+        }
+
+        private async Task<AssetPairModel> InvokeMarketProfileServiceAsync(string assetPairId)
+        {
+            object response = await _marketProfileServiceClient.ApiMarketProfileByPairCodeGetAsync(assetPairId);
+
+            if (response is ErrorModel error)
+            {
+                throw new Exception(error.Message);
+            }
+
+            if (response is AssetPairModel assetPairRate)
+            {
+                return assetPairRate;
+            }
+            
+            throw new Exception("Unknown MarketProfile API response");
         }
     }
 }

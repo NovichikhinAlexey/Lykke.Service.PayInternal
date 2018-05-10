@@ -26,16 +26,13 @@ namespace Lykke.Service.PayInternal.Controllers
     public class PaymentRequestsController : Controller
     {
         private readonly IPaymentRequestService _paymentRequestService;
-        private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IRefundService _refundService;
         private readonly IPaymentRequestDetailsBuilder _paymentRequestDetailsBuilder;
         private readonly IAssetsAvailabilityService _assetsAvailabilityService;
-        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
 
         public PaymentRequestsController(
             IPaymentRequestService paymentRequestService,
-            IAssetsLocalCache assetsLocalCache,
             IRefundService refundService,
             ILog log, 
             IPaymentRequestDetailsBuilder paymentRequestDetailsBuilder,
@@ -43,11 +40,9 @@ namespace Lykke.Service.PayInternal.Controllers
             ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _paymentRequestService = paymentRequestService;
-            _assetsLocalCache = assetsLocalCache;
             _refundService = refundService;
             _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder;
             _assetsAvailabilityService = assetsAvailabilityService;
-            _lykkeAssetsResolver = lykkeAssetsResolver;
             _log = log.CreateComponentScope(nameof(PaymentRequestsController));
         }
 
@@ -185,14 +180,6 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                string lykkeSettlementAssetId = await _lykkeAssetsResolver.GetLykkeId(model.SettlementAssetId);
-
-                string lykkePaymentAssetId = await _lykkeAssetsResolver.GetLykkeId(model.PaymentAssetId);
-
-                if (lykkeSettlementAssetId != lykkePaymentAssetId &&
-                    await _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId) == null)
-                    return BadRequest(ErrorResponse.Create("Asset pair doesn't exist"));
-
                 IReadOnlyList<string> settlementAssets =
                     await _assetsAvailabilityService.ResolveSettlementAsync(model.MerchantId);
 
