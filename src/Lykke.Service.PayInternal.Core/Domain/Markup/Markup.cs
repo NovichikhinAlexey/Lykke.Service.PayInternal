@@ -12,5 +12,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Markup
         public MarkupIdentityType IdentityType { get; set; }
         public string Identity { get; set; }
         public DateTime CreatedOn { get; set; }
+        public string PriceAssetPairId { get; set; }
+        public PriceMethod PriceMethod { get; set; }
     }
 }
