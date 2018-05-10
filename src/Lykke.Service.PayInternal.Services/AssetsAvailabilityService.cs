@@ -65,7 +65,7 @@ namespace Lykke.Service.PayInternal.Services
 
                 if (assetPair == null && lykkePaymentAssetId != lykkeSettlementAssetId) continue;
 
-                string assetPairId = assetPair?.Id ?? $"{lykkePaymentAssetId}{lykkeSettlementAssetId}";
+                string assetPairId = assetPair?.Id ?? $"{assetId}{settlementAssetId}";
 
                 try
                 {
