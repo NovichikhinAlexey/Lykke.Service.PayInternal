@@ -17,6 +17,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Markup
         private int _pips;
         private decimal _fixedFee;
         private MarkupIdentityType _markupIdentityType;
+        private PriceMethod _priceMethod;
         private DateTime _createdOn;
 
         public decimal DeltaSpread
@@ -60,6 +61,18 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Markup
         }
 
         public string AssetPairId { get; set; }
+
+        public string PriceAssetPairId { get; set; }
+
+        public PriceMethod PriceMethod
+        {
+            get => _priceMethod;
+            set
+            {
+                _priceMethod = value;
+                MarkValueTypePropertyAsDirty(nameof(PriceMethod));
+            }
+        }
 
         public MarkupIdentityType IdentityType
         {

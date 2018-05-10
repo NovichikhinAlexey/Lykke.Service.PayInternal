@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 
 namespace Lykke.Service.PayInternal.Models.Markups
@@ -16,5 +17,9 @@ namespace Lykke.Service.PayInternal.Models.Markups
 
         [Required]
         public decimal FixedFee { get; set; }
+
+        public string PriceAssetPairId { get; set; }
+
+        public PriceMethod PriceMethod { get; set; }
     }
 }

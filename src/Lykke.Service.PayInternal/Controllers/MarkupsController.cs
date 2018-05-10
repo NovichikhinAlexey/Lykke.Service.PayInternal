@@ -97,7 +97,7 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                await _markupService.SetDefaultAsync(assetPairId, request);
+                await _markupService.SetDefaultAsync(assetPairId, request.PriceAssetPairId, request.PriceMethod, request);
 
                 return Ok();
             }
@@ -196,7 +196,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                await _markupService.SetForMerchantAsync(assetPairId, merchantId, request);
+                await _markupService.SetForMerchantAsync(assetPairId, merchantId, request.PriceAssetPairId, request.PriceMethod, request);
 
                 return Ok();
             }
