@@ -95,10 +95,7 @@ namespace Lykke.Service.PayInternal.Services
 
             string lykkeSettlementAssetId = await _lykkeAssetsResolver.GetLykkeId(paymentRequest.SettlementAssetId);
 
-            AssetPair assetPair =
-                await _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId);
-
-            string assetPairId = assetPair?.Id ?? $"{paymentRequest.PaymentAssetId}{paymentRequest.SettlementAssetId}";
+            string assetPairId = $"{paymentRequest.PaymentAssetId}{paymentRequest.SettlementAssetId}";
 
             RequestMarkup requestMarkup = Mapper.Map<RequestMarkup>(paymentRequest);
 

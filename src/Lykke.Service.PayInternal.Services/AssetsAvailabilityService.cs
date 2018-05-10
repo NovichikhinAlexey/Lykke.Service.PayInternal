@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -16,9 +15,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IAssetGeneralAvailabilityRepository _assetGeneralAvailabilityRepository;
         private readonly IAssetPersonalAvailabilityRepository _assetPersonalAvailabilityRepository;
         private readonly AssetsAvailabilitySettings _assetsAvailabilitySettings;
-        private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IMarkupService _markupService;
-        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
 
         private const char AssetsSeparator = ';';
 
@@ -26,9 +23,7 @@ namespace Lykke.Service.PayInternal.Services
             IAssetGeneralAvailabilityRepository assetGeneralAvailabilityRepository,
             IAssetPersonalAvailabilityRepository assetPersonalAvailabilityRepository,
             AssetsAvailabilitySettings assetsAvailabilitySettings,
-            IAssetsLocalCache assetsLocalCache,
-            IMarkupService markupService, 
-            ILykkeAssetsResolver lykkeAssetsResolver)
+            IMarkupService markupService)
         {
             _assetGeneralAvailabilityRepository = assetGeneralAvailabilityRepository ??
                                                   throw new ArgumentNullException(
@@ -38,9 +33,7 @@ namespace Lykke.Service.PayInternal.Services
                                                        nameof(assetPersonalAvailabilityRepository));
             _assetsAvailabilitySettings = assetsAvailabilitySettings ??
                                           throw new ArgumentNullException(nameof(assetsAvailabilitySettings));
-            _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _markupService = markupService ?? throw new ArgumentNullException(nameof(markupService));
-            _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
         }
 
         public Task<IReadOnlyList<string>> ResolveSettlementAsync(string merchantId)
@@ -54,18 +47,9 @@ namespace Lykke.Service.PayInternal.Services
 
             var result = new List<string>();
 
-            string lykkeSettlementAssetId = _lykkeAssetsResolver.GetLykkeId(settlementAssetId).GetAwaiter().GetResult();
-
             foreach (string assetId in assets)
             {
-                string lykkePaymentAssetId = _lykkeAssetsResolver.GetLykkeId(assetId).GetAwaiter().GetResult();
-
-                AssetPair assetPair = _assetsLocalCache.GetAssetPairAsync(lykkePaymentAssetId, lykkeSettlementAssetId)
-                    .GetAwaiter().GetResult();
-
-                if (assetPair == null && lykkePaymentAssetId != lykkeSettlementAssetId) continue;
-
-                string assetPairId = assetPair?.Id ?? $"{assetId}{settlementAssetId}";
+                string assetPairId = $"{assetId}{settlementAssetId}";
 
                 try
                 {
