@@ -31,6 +31,7 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly IMerchantService _merchantService;
         private readonly IMarkupService _markupService;
         private readonly IAssetsLocalCache _assetsLocalCache;
+        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
 
         public MerchantsController(
@@ -38,13 +39,15 @@ namespace Lykke.Service.PayInternal.Controllers
             IAssetsAvailabilityService assetsAvailabilityService,
             ILog log, 
             IMarkupService markupService,
-            IAssetsLocalCache assetsLocalCache)
+            IAssetsLocalCache assetsLocalCache, 
+            ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _merchantService = merchantService;
             _assetsAvailabilityService = assetsAvailabilityService;
             _log = log;
             _markupService = markupService;
             _assetsLocalCache = assetsLocalCache;
+            _lykkeAssetsResolver = lykkeAssetsResolver;
         }
 
         /// <summary>
@@ -380,7 +383,9 @@ namespace Lykke.Service.PayInternal.Controllers
             if (merchant == null)
                 return NotFound(ErrorResponse.Create("Couldn't find merchant"));
 
-            Asset asset = await _assetsLocalCache.GetAssetByIdAsync(settlementAssetId);
+            string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(settlementAssetId);
+
+            Asset asset = await _assetsLocalCache.GetAssetByIdAsync(lykkeAssetId);
 
             if (asset == null)
                 return NotFound(ErrorResponse.Create("Couldn't find asset"));
