@@ -13,6 +13,7 @@ using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.Assets;
 using Lykke.Service.PayInternal.Models.Markups;
@@ -104,6 +105,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("MerchantsCreate")]
         [ProducesResponseType(typeof(MerchantModel), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
         public async Task<IActionResult> CreateAsync([FromBody] CreateMerchantRequest request)
         {
             if (!ModelState.IsValid)
@@ -145,6 +147,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType((int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> UpdateAsync([FromBody] UpdateMerchantRequest request)
         {
             if (!ModelState.IsValid)
@@ -185,6 +188,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType((int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> SetPublicKeyAsync(string merchantId, IFormFile file)
         {
             if (file == null || file.Length == 0)

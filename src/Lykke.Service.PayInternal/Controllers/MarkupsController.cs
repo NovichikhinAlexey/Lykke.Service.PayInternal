@@ -8,6 +8,7 @@ using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Markups;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -98,6 +99,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("SetDefault")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> SetDefault(string assetPairId, [FromBody] UpdateMarkupRequest request)
         {
             AssetPair priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(request.PriceAssetPairId);
@@ -197,6 +199,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("SetForMerchant")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> SetForMerchant(string merchantId, string assetPairId,
             [FromBody] UpdateMarkupRequest request)
         {

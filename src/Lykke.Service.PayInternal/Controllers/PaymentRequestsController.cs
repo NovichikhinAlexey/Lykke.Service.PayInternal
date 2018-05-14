@@ -183,6 +183,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("PaymentRequestsCreate")]
         [ProducesResponseType(typeof(PaymentRequestModel), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
         public async Task<IActionResult> CreateAsync([FromBody] CreatePaymentRequestModel model)
         {
             if (!ModelState.IsValid)

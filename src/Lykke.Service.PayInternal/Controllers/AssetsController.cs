@@ -12,6 +12,7 @@ using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Assets;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -78,6 +79,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("SetAssetsSettings")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> SetGeneralAssetsSettings([FromBody] UpdateAssetAvailabilityRequest request)
         {
             try
@@ -149,6 +151,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("SetAssetsPersonalSettings")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> SetAssetsPersonalSettings([FromBody] UpdateAssetAvailabilityByMerchantRequest request)
         {
             IMerchant merchant = await _merchantService.GetAsync(request.MerchantId);

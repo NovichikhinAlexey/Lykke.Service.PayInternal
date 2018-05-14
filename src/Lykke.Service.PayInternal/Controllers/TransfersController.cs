@@ -7,6 +7,7 @@ using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Transfers;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -35,6 +36,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("BtcFreeTransfer")]
         [ProducesResponseType(typeof(BtcTransferResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.InternalServerError)]
+        [ValidateModel]
         public async Task<IActionResult> BtcFreeTransferAsync([FromBody] BtcFreeTransferRequest request)
         {
             try
