@@ -9,6 +9,7 @@ using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Orders;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -77,6 +78,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("OrdersChechout")]
         [ProducesResponseType(typeof(OrderModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
         public async Task<IActionResult> ChechoutAsync([FromBody] ChechoutRequestModel model)
         {
             try
