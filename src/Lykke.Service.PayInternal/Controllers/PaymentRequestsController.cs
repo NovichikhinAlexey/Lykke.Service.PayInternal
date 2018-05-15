@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
 using Common;
 using Common.Log;
-using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
-using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
 using Lykke.Service.PayInternal.Filters;
@@ -28,25 +26,22 @@ namespace Lykke.Service.PayInternal.Controllers
     public class PaymentRequestsController : Controller
     {
         private readonly IPaymentRequestService _paymentRequestService;
-        private readonly IOrderService _orderService;
-        private readonly ITransactionsService _transactionsService;
         private readonly IRefundService _refundService;
         private readonly IAssetsAvailabilityService _assetsAvailabilityService;
+        private readonly IPaymentRequestDetailsBuilder _paymentRequestDetailsBuilder;
         private readonly ILog _log;
 
         public PaymentRequestsController(
             IPaymentRequestService paymentRequestService,
-            IOrderService orderService,
-            ITransactionsService transactionsService,
             IRefundService refundService,
+            IAssetsAvailabilityService assetsAvailabilityService,
             ILog log, 
-            IAssetsAvailabilityService assetsAvailabilityService)
+            IPaymentRequestDetailsBuilder paymentRequestDetailsBuilder)
         {
             _paymentRequestService = paymentRequestService;
-            _orderService = orderService;
-            _transactionsService = transactionsService;
             _refundService = refundService;
             _assetsAvailabilityService = assetsAvailabilityService;
+            _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder;
             _log = log.CreateComponentScope(nameof(PaymentRequestsController));
         }
 
@@ -117,20 +112,14 @@ namespace Lykke.Service.PayInternal.Controllers
                 if (paymentRequest == null)
                     return NotFound(ErrorResponse.Create("Could not find payment request"));
 
-                IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
-
-                IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
-                    (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress))
-                    .Where(x => x.IsPayment())
-                    .ToList();
-
-                PaymentRequestRefund refund =
+                PaymentRequestRefund refundInfo =
                     await _paymentRequestService.GetRefundInfoAsync(paymentRequest.WalletAddress);
 
-                var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
-                model.Order = Mapper.Map<PaymentRequestOrderModel>(order);
-                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(paymentTransactions);
-                model.Refund = Mapper.Map<PaymentRequestRefundModel>(refund);
+                PaymentRequestDetailsModel model = await _paymentRequestDetailsBuilder.Build<
+                    PaymentRequestDetailsModel, 
+                    PaymentRequestOrderModel, 
+                    PaymentRequestTransactionModel,
+                    PaymentRequestRefundModel>(paymentRequest, refundInfo);
 
                 return Ok(model);
             }
