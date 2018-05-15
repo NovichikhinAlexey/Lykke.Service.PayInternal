@@ -6,7 +6,7 @@ using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.MarketProfile.Client.Models;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
+using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
@@ -34,7 +34,7 @@ namespace Lykke.Service.PayInternal.Services
         }
 
         public async Task<decimal> GetAmountAsync(string assetPairId, decimal amount, IRequestMarkup requestMarkup,
-            IMerchantMarkup merchantMarkup)
+            IMarkup merchantMarkup)
         {
             var rate = await GetRateAsync(assetPairId, requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
 
@@ -47,7 +47,7 @@ namespace Lykke.Service.PayInternal.Services
                 CalculatedRate = rate
             }.ToJson(), "Rate calculation");
 
-            decimal result = (amount + (decimal) requestMarkup.FixedFee + (decimal) merchantMarkup.LpFixedFee) / rate;
+            decimal result = (amount + (decimal) requestMarkup.FixedFee + merchantMarkup.FixedFee) / rate;
 
             var assetPair = await _assetsLocalCache.GetAssetPairByIdAsync(assetPairId);
 
@@ -62,7 +62,7 @@ namespace Lykke.Service.PayInternal.Services
             string assetPairId,
             double markupPercent,
             int markupPips,
-            IMerchantMarkup merchantMarkup)
+            IMarkup merchantMarkup)
         {
             var response = await _marketProfileServiceClient.ApiMarketProfileByPairCodeGetAsync(assetPairId);
 
@@ -111,7 +111,7 @@ namespace Lykke.Service.PayInternal.Services
             double markupPercent,
             int markupPips,
             PriceCalculationMethod priceValueType,
-            IMerchantMarkup merchantMarkup)
+            IMarkup merchantMarkup)
         {
             _log.WriteInfoAsync(nameof(CalculationService), nameof(CalculatePrice), assetPairRate.ToJson(),
                 "Rate calculation").GetAwaiter().GetResult();
@@ -123,9 +123,9 @@ namespace Lykke.Service.PayInternal.Services
 
             double priceWithSpread = GetPriceWithSpread(originalPrice, spread, priceValueType);
 
-            double lpFee = GetMerchantFee(priceWithSpread, merchantMarkup.LpPercent);
+            double lpFee = GetMerchantFee(priceWithSpread, merchantMarkup.Percent);
 
-            double lpPips = GetMerchantPips(merchantMarkup.LpPips);
+            double lpPips = GetMerchantPips(merchantMarkup.Pips);
 
             double fee = GetMarkupFeePerRequest(priceWithSpread, markupPercent);
 
@@ -146,12 +146,12 @@ namespace Lykke.Service.PayInternal.Services
             }
         }
 
-        public double GetSpread(double originalPrice, double deltaSpreadPercent)
+        public double GetSpread(double originalPrice, decimal deltaSpreadPercent)
         {
             if (deltaSpreadPercent < 0)
-                throw new NegativeValueException((decimal) deltaSpreadPercent);
+                throw new NegativeValueException(deltaSpreadPercent);
 
-            return originalPrice * deltaSpreadPercent / 100;
+            return originalPrice * (double) deltaSpreadPercent / 100;
         }
 
         public double GetPriceWithSpread(double originalPrice, double spread, PriceCalculationMethod method)
@@ -164,9 +164,9 @@ namespace Lykke.Service.PayInternal.Services
             }
         }
 
-        public double GetMerchantFee(double originalPrice, double merchantPercent)
+        public double GetMerchantFee(double originalPrice, decimal merchantPercent)
         {
-            var percent = merchantPercent < 0 ? _lpMarkupSettings.Percent : merchantPercent;
+            var percent = merchantPercent < 0 ? _lpMarkupSettings.Percent : (double) merchantPercent;
 
             return originalPrice * percent / 100;
         }

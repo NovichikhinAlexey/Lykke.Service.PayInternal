@@ -13,10 +13,7 @@ namespace Lykke.Service.PayInternal.Services.Domain
             {
                 {nameof(merchant.Id), merchant.Id},
                 {nameof(merchant.Name), merchant.Name},
-                {nameof(merchant.DeltaSpread), merchant.DeltaSpread.ToString(CultureInfo.InvariantCulture)},
                 {nameof(merchant.TimeCacheRates), merchant.TimeCacheRates.ToString(CultureInfo.InvariantCulture)},
-                {nameof(merchant.LpMarkupPercent), merchant.LpMarkupPercent.ToString(CultureInfo.InvariantCulture)},
-                {nameof(merchant.LpMarkupPips), merchant.LpMarkupPips.ToString(CultureInfo.InvariantCulture)},
                 {nameof(merchant.LwId), merchant.LwId}
             }.ToJson();
         }

@@ -12,15 +12,7 @@
 
         string ApiKey { get; set; }
 
-        double DeltaSpread { get; set; }
-
         int TimeCacheRates { get; set; }
-
-        double LpMarkupPercent { get; set; }
-
-        int LpMarkupPips { get; set; }
-
-        double MarkupFixedFee { get; set; }
         
         string LwId { get; set; }
     }

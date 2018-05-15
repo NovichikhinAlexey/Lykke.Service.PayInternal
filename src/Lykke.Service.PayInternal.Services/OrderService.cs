@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Common;
 using Common.Log;
 using Lykke.Service.Assets.Client.Models;
+using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
@@ -21,6 +23,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IMerchantRepository _merchantRepository;
         private readonly ICalculationService _calculationService;
+        private readonly IMarkupService _markupService;
         private readonly ILog _log;
         private readonly OrderExpirationPeriodsSettings _orderExpirationPeriods;
 
@@ -30,7 +33,8 @@ namespace Lykke.Service.PayInternal.Services
             IMerchantRepository merchantRepository,
             ICalculationService calculationService,
             ILog log,
-            OrderExpirationPeriodsSettings orderExpirationPeriods)
+            OrderExpirationPeriodsSettings orderExpirationPeriods, 
+            IMarkupService markupService)
         {
             _orderRepository = orderRepository;
             _assetsLocalCache = assetsLocalCache;
@@ -38,6 +42,7 @@ namespace Lykke.Service.PayInternal.Services
             _calculationService = calculationService;
             _log = log;
             _orderExpirationPeriods = orderExpirationPeriods;
+            _markupService = markupService;
         }
 
         public async Task<IOrder> GetAsync(string paymentRequestId, string orderId)
@@ -84,23 +89,26 @@ namespace Lykke.Service.PayInternal.Services
                 throw new MerchantNotFoundException(paymentRequest.MerchantId);
 
             AssetPair assetPair =
-                await _assetsLocalCache.GetAssetPairAsync(paymentRequest.PaymentAssetId,
-                    paymentRequest.SettlementAssetId);
+                await _assetsLocalCache.GetAssetPairAsync(paymentRequest.PaymentAssetId, paymentRequest.SettlementAssetId);
 
-            var merchantMarkup = new MerchantMarkup
-            {
-                LpPercent = merchant.LpMarkupPercent,
-                DeltaSpread = merchant.DeltaSpread,
-                LpPips = merchant.LpMarkupPips,
-                LpFixedFee = merchant.MarkupFixedFee
-            };
+            RequestMarkup requestMarkup = Mapper.Map<RequestMarkup>(paymentRequest);
 
-            var requestMarkup = new RequestMarkup
+            IMarkup merchantMarkup;
+
+            try
             {
-                Percent = paymentRequest.MarkupPercent,
-                Pips = paymentRequest.MarkupPips,
-                FixedFee = paymentRequest.MarkupFixedFee
-            };
+                merchantMarkup = await _markupService.ResolveAsync(merchant.Id, assetPair.Id);
+            }
+            catch (MarkupNotFoundException ex)
+            {
+                await _log.WriteErrorAsync(nameof(OrderService), nameof(GetLatestOrCreateAsync), new
+                {
+                    ex.MerchantId,
+                    ex.AssetPairId
+                }.ToJson(), ex);
+
+                throw;
+            }
 
             decimal paymentAmount = await _calculationService
                 .GetAmountAsync(assetPair.Id, paymentRequest.Amount, requestMarkup, merchantMarkup);
