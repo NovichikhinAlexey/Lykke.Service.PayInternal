@@ -5,6 +5,6 @@ namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface IPaymentRequestDetailsBuilder
     {
-        Task<PaymentRequestDetails> Build(IPaymentRequest paymentRequest);
+        Task<TResult> Build<TResult, TOrder, TTransaction, TRefund>(IPaymentRequest paymentRequest, PaymentRequestRefund refundInfo);
     }
 }
