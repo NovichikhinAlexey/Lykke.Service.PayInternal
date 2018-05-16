@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 
@@ -32,7 +33,13 @@ namespace Lykke.Service.PayInternal.Services
 
             if (string.IsNullOrEmpty(command.WalletAddress))
             {
-                await _paymentRequestService.UpdateStatusByTransactionAsync(command.TransactionId, command.Blockchain);
+                IEnumerable<IPaymentRequestTransaction> txs =
+                    await _transactionsService.GetByBcnIdentityAsync(command.Blockchain, command.IdentityType, command.Identity);
+
+                foreach (IPaymentRequestTransaction tx in txs)
+                {
+                    await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
+                }
             }
             else
             {

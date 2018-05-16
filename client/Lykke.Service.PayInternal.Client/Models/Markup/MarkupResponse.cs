@@ -11,5 +11,9 @@
         public int Pips { get; set; }
 
         public decimal FixedFee { get; set; }
+
+        public string PriceAssetPairId { get; set; }
+
+        public PriceMethod PriceMethod { get; set; }
     }
 }

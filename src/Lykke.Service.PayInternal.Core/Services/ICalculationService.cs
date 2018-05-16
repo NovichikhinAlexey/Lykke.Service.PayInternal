@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using Lykke.Service.MarketProfile.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 
@@ -7,14 +6,13 @@ namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface ICalculationService
     {
-        Task<decimal> GetAmountAsync(string assetPairId, decimal amount, IRequestMarkup requestMarkup, IMarkup merchantMarkup);
+        Task<decimal> GetAmountAsync(string baseAssetId, string quotingAssetId, decimal amount, IRequestMarkup requestMarkup, IMarkup merchantMarkup);
 
-        Task<decimal> GetRateAsync(string assetPairId, double markupPercent, int markupPips, IMarkup merchantMarkup);
+        Task<decimal> GetRateAsync(string baseAssetId, string quotingAssetId, double markupPercent, int markupPips, IMarkup merchantMarkup);
 
         Task<AmountFullFillmentStatus> CalculateBtcAmountFullfillmentAsync(decimal plan, decimal fact);
 
-        decimal CalculatePrice(AssetPairModel assetPairRate, int pairAccuracy, int assetAccuracy, double markupPercent,
-            int markupPips, PriceCalculationMethod priceValueType, IMarkup merchantMarkup);
+        decimal CalculatePrice(double askPrice, double bidPrice, int pairAccuracy, int assetAccuracy, double markupPercent, int markupPips, PriceCalculationMethod priceValueType, IMarkup merchantMarkup);
 
         double GetOriginalPriceByMethod(double bid, double ask, PriceCalculationMethod method);
 

@@ -8,7 +8,9 @@ namespace Lykke.Service.PayInternal.Core.Services
     {
         Task<IReadOnlyList<IPaymentRequestTransaction>> GetByWalletAsync(string walletAddress);
 
-        Task<IReadOnlyList<IPaymentRequestTransaction>> GetByTransactionIdAsync(string transactionId, BlockchainType blockchain);
+        Task<IPaymentRequestTransaction> GetByIdAsync(BlockchainType blockchain, TransactionIdentityType identityType, string identity, string walletAddress);
+
+        Task<IEnumerable<IPaymentRequestTransaction>> GetByBcnIdentityAsync(BlockchainType blockchain, TransactionIdentityType identityType, string identity);
 
         Task<IReadOnlyList<IPaymentRequestTransaction>> GetConfirmedAsync(string walletAddress);
 

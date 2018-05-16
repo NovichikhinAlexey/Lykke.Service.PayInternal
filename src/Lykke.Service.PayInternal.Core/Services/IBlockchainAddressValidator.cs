@@ -4,6 +4,6 @@ namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface IBlockchainAddressValidator
     {
-        bool Execute(string address, BlockchainType blockchain);
+        Task<bool> Execute(string address, BlockchainType blockchain);
     }
 }

@@ -1,14 +1,18 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.Models.Transactions
 {
     public class TransactionExpiredRequest
     {
         [Required]
-        public string TransactionId { get; set; }
+        public BlockchainType Blockchain { get; set; }
 
         [Required]
-        public BlockchainType Blockchain { get; set; }
+        public TransactionIdentityType IdentityType { get; set; }
+
+        [Required]
+        public string Identity { get; set; }
     }
 }

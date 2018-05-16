@@ -17,7 +17,7 @@ namespace Lykke.Service.PayInternal.Services
             _markupRepository = markupRepository;
         }
 
-        public Task<IMarkup> SetDefaultAsync(string assetPairId, IMarkupValue markupValue)
+        public Task<IMarkup> SetDefaultAsync(string assetPairId, string priceAssetPairId, PriceMethod priceMethod, IMarkupValue markupValue)
         {
             return _markupRepository.SetAsync(new Markup
             {
@@ -27,12 +27,14 @@ namespace Lykke.Service.PayInternal.Services
                 Percent = markupValue.Percent,
                 Pips = markupValue.Pips,
                 FixedFee = markupValue.FixedFee,
+                PriceAssetPairId = priceAssetPairId,
+                PriceMethod = priceMethod,
                 IdentityType = MarkupIdentityType.None,
                 Identity = string.Empty
             });
         }
 
-        public Task<IMarkup> SetForMerchantAsync(string assetPairId, string merchantId, IMarkupValue markupValue)
+        public Task<IMarkup> SetForMerchantAsync(string assetPairId, string merchantId, string priceAssetPairId, PriceMethod priceMethod, IMarkupValue markupValue)
         {
             return _markupRepository.SetAsync(new Markup
             {
@@ -42,6 +44,8 @@ namespace Lykke.Service.PayInternal.Services
                 Percent = markupValue.Percent,
                 Pips = markupValue.Pips,
                 FixedFee = markupValue.FixedFee,
+                PriceAssetPairId = priceAssetPairId,
+                PriceMethod = priceMethod,
                 IdentityType = MarkupIdentityType.Merchant,
                 Identity = merchantId
             });

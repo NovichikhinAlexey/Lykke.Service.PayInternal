@@ -10,7 +10,13 @@ namespace Lykke.Service.PayInternal.Tests
         [AssemblyInitialize]
         public static void Initialize(TestContext testContext)
         {
-            Mapper.Initialize(cfg => cfg.AddProfile<AutoMapperProfile>());
+            Mapper.Initialize(cfg =>
+            {
+                cfg.AddProfile<AutoMapperProfile>();
+                cfg.AddProfile<AzureRepositories.AutoMapperProfile>();
+                cfg.AddProfile<Services.AutoMapperProfile>();
+            });
+
             Mapper.AssertConfigurationIsValid();
         }
     }

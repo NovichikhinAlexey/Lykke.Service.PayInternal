@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common;
 using Common.Log;
-using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
@@ -20,29 +19,29 @@ namespace Lykke.Service.PayInternal.Services
     public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepository;
-        private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IMerchantRepository _merchantRepository;
         private readonly ICalculationService _calculationService;
         private readonly IMarkupService _markupService;
+        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
         private readonly OrderExpirationPeriodsSettings _orderExpirationPeriods;
 
         public OrderService(
             IOrderRepository orderRepository,
-            IAssetsLocalCache assetsLocalCache,
             IMerchantRepository merchantRepository,
             ICalculationService calculationService,
             ILog log,
             OrderExpirationPeriodsSettings orderExpirationPeriods, 
-            IMarkupService markupService)
+            IMarkupService markupService,
+            ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _orderRepository = orderRepository;
-            _assetsLocalCache = assetsLocalCache;
             _merchantRepository = merchantRepository;
             _calculationService = calculationService;
             _log = log;
             _orderExpirationPeriods = orderExpirationPeriods;
             _markupService = markupService;
+            _lykkeAssetsResolver = lykkeAssetsResolver;
         }
 
         public async Task<IOrder> GetAsync(string paymentRequestId, string orderId)
@@ -88,8 +87,11 @@ namespace Lykke.Service.PayInternal.Services
             if (merchant == null)
                 throw new MerchantNotFoundException(paymentRequest.MerchantId);
 
-            AssetPair assetPair =
-                await _assetsLocalCache.GetAssetPairAsync(paymentRequest.PaymentAssetId, paymentRequest.SettlementAssetId);
+            string lykkePaymentAssetId = await _lykkeAssetsResolver.GetLykkeId(paymentRequest.PaymentAssetId);
+
+            string lykkeSettlementAssetId = await _lykkeAssetsResolver.GetLykkeId(paymentRequest.SettlementAssetId);
+
+            string assetPairId = $"{paymentRequest.PaymentAssetId}{paymentRequest.SettlementAssetId}";
 
             RequestMarkup requestMarkup = Mapper.Map<RequestMarkup>(paymentRequest);
 
@@ -97,7 +99,7 @@ namespace Lykke.Service.PayInternal.Services
 
             try
             {
-                merchantMarkup = await _markupService.ResolveAsync(merchant.Id, assetPair.Id);
+                merchantMarkup = await _markupService.ResolveAsync(merchant.Id, assetPairId);
             }
             catch (MarkupNotFoundException ex)
             {
@@ -110,17 +112,34 @@ namespace Lykke.Service.PayInternal.Services
                 throw;
             }
 
-            decimal paymentAmount = await _calculationService
-                .GetAmountAsync(assetPair.Id, paymentRequest.Amount, requestMarkup, merchantMarkup);
+            decimal paymentAmount, rate;
 
-            decimal rate = await _calculationService.GetRateAsync(assetPair.Id, requestMarkup.Percent,
-                requestMarkup.Pips, merchantMarkup);
+            try
+            {
+                paymentAmount = await _calculationService.GetAmountAsync(lykkePaymentAssetId,
+                    lykkeSettlementAssetId, paymentRequest.Amount, requestMarkup, merchantMarkup);
+
+                rate = await _calculationService.GetRateAsync(lykkePaymentAssetId, lykkeSettlementAssetId,
+                    requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
+            }
+            catch (MarketPriceZeroException priceZeroEx)
+            {
+                _log.WriteError(nameof(GetLatestOrCreateAsync), new { priceZeroEx.PriceType }, priceZeroEx);
+
+                throw;
+            }
+            catch (UnexpectedAssetPairPriceMethodException assetPairEx)
+            {
+                _log.WriteError(nameof(GetLatestOrCreateAsync), new {assetPairEx.PriceMethod}, assetPairEx);
+
+                throw;
+            }
 
             var order = new Order
             {
                 MerchantId = paymentRequest.MerchantId,
                 PaymentRequestId = paymentRequest.Id,
-                AssetPairId = assetPair.Id,
+                AssetPairId = assetPairId,
                 SettlementAmount = paymentRequest.Amount,
                 PaymentAmount = paymentAmount,
                 DueDate = now.Add(_orderExpirationPeriods.Primary),

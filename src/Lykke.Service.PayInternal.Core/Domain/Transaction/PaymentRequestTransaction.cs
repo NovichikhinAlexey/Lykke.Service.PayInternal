@@ -34,6 +34,10 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 
         public DateTime DueDate { get; set; }
 
+        public TransactionIdentityType IdentityType { get; set; }
+
+        public string Identity { get; set; }
+
         public bool IsPayment()
         {
             return TransactionType == TransactionType.Payment;

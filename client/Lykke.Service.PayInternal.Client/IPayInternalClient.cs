@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.Markup;
@@ -159,7 +160,23 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="merchantId"></param>
         /// <param name="type"></param>
         /// <returns></returns>
+        [Obsolete("Use ResolveSettlementAssetsAsync and ResolvePaymentAssetsAsync instead")]
         Task<AvailableAssetsResponse> ResolveAvailableAssetsAsync(string merchantId, AssetAvailabilityType type);
+
+        /// <summary>
+        /// Returns available settlement assets for merchant
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <returns></returns>
+        Task<AvailableAssetsResponse> GetAvailableSettlementAssetsAsync(string merchantId);
+
+        /// <summary>
+        /// Returns available payment assets for merchant and settlement asset id
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <param name="settlementAssetId"></param>
+        /// <returns></returns>
+        Task<AvailableAssetsResponse> GetAvailablePaymentAssetsAsync(string merchantId, string settlementAssetId);
 
         /// <summary>
         /// Returns general asset availability settings by type

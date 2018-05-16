@@ -6,12 +6,14 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common;
 using Common.Log;
+using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.Assets;
 using Lykke.Service.PayInternal.Models.Markups;
@@ -29,18 +31,24 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly IAssetsAvailabilityService _assetsAvailabilityService;
         private readonly IMerchantService _merchantService;
         private readonly IMarkupService _markupService;
+        private readonly IAssetsLocalCache _assetsLocalCache;
+        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
 
         public MerchantsController(
             IMerchantService merchantService,
             IAssetsAvailabilityService assetsAvailabilityService,
             ILog log, 
-            IMarkupService markupService)
+            IMarkupService markupService,
+            IAssetsLocalCache assetsLocalCache, 
+            ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _merchantService = merchantService;
             _assetsAvailabilityService = assetsAvailabilityService;
             _log = log;
             _markupService = markupService;
+            _assetsLocalCache = assetsLocalCache;
+            _lykkeAssetsResolver = lykkeAssetsResolver;
         }
 
         /// <summary>
@@ -97,6 +105,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("MerchantsCreate")]
         [ProducesResponseType(typeof(MerchantModel), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
         public async Task<IActionResult> CreateAsync([FromBody] CreateMerchantRequest request)
         {
             if (!ModelState.IsValid)
@@ -138,6 +147,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType((int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> UpdateAsync([FromBody] UpdateMerchantRequest request)
         {
             if (!ModelState.IsValid)
@@ -178,6 +188,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType((int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> SetPublicKeyAsync(string merchantId, IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -251,6 +262,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("ResolveAssetsByMerchant")]
         [ProducesResponseType(typeof(AvailableAssetsResponseModel), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [Obsolete("Use ResolveSettlementAssetsAsync and ResolvePaymentAssetsAsync instead")]
         public async Task<IActionResult> ResolveAssetsByMerchant(string merchantId,
             [FromQuery] AssetAvailabilityType type)
         {
@@ -317,6 +329,91 @@ namespace Lykke.Service.PayInternal.Controllers
                 {
                     merchantId,
                     assetPairId
+                }.ToJson(), ex);
+
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Returns list of settlement assets available for merchant according to general and personal asset settings
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("merchants/{merchantId}/settlementAssets")]
+        [ProducesResponseType(typeof(AvailableAssetsResponseModel), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        public async Task<IActionResult> ResolveSettlementAssets(string merchantId)
+        {
+            IMerchant merchant = await _merchantService.GetAsync(merchantId);
+
+            if (merchant == null)
+                return NotFound(ErrorResponse.Create("Couldn't find merchant"));
+
+            try
+            {
+                IReadOnlyList<string> assets =
+                    await _assetsAvailabilityService.ResolveSettlementAsync(merchantId);
+
+                return Ok(new AvailableAssetsResponseModel {Assets = assets});
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(ResolveSettlementAssets), new
+                {
+                    merchantId
+                }.ToJson(), ex);
+
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Returns list of payment assets available for merchant according to general and personal asset settings, settlement asset
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <param name="settlementAssetId"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("merchants/{merchantId}/paymentAssets")]
+        [ProducesResponseType(typeof(AvailableAssetsResponseModel), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> ResolvePaymentAssets(string merchantId, [FromQuery] string settlementAssetId)
+        {
+            IMerchant merchant = await _merchantService.GetAsync(merchantId);
+
+            if (merchant == null)
+                return NotFound(ErrorResponse.Create("Couldn't find merchant"));
+
+            string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(settlementAssetId);
+
+            Asset asset = await _assetsLocalCache.GetAssetByIdAsync(lykkeAssetId);
+
+            if (asset == null)
+                return NotFound(ErrorResponse.Create("Couldn't find asset"));
+
+            try
+            {
+                IReadOnlyList<string> assets =
+                    await _assetsAvailabilityService.ResolvePaymentAsync(merchantId, settlementAssetId);
+
+                return Ok(new AvailableAssetsResponseModel {Assets = assets});
+            }
+            catch (AssetUnknownException assetEx)
+            {
+                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(ResolvePaymentAssets),
+                    new {assetEx.Asset}.ToJson(), assetEx);
+
+                return BadRequest(ErrorResponse.Create(assetEx.Message));
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(MerchantsController), nameof(ResolvePaymentAssets), new
+                {
+                    merchantId,
+                    settlementAssetId
                 }.ToJson(), ex);
 
                 throw;

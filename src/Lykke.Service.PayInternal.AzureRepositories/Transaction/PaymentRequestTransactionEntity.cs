@@ -19,6 +19,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         private DateTime _dueDate;
         private TransactionType _transactionType;
         private BlockchainType _blockchain;
+        private TransactionIdentityType _transactionIdentityType;
 
         public PaymentRequestTransactionEntity()
         {
@@ -107,6 +108,18 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             }
         }
 
+        public TransactionIdentityType IdentityType
+        {
+            get => _transactionIdentityType;
+            set
+            {
+                _transactionIdentityType = value;
+                MarkValueTypePropertyAsDirty(nameof(IdentityType));
+            }
+        }
+
+        public string Identity { get; set; }
+
         public static class ByWalletAddress
         {
             public static string GeneratePartitionKey(string walletAddress)
@@ -114,9 +127,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
                 return walletAddress;
             }
 
-            public static string GenerateRowKey(string transactionId)
+            public static string GenerateRowKey(BlockchainType blockchain, TransactionIdentityType identityType, string identity)
             {
-                return transactionId;
+                return $"{blockchain.ToString()}_{identityType.ToString()}_{identity}";
             }
 
             public static PaymentRequestTransactionEntity Create(IPaymentRequestTransaction src)
@@ -124,18 +137,18 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
                 var entity = new PaymentRequestTransactionEntity
                 {
                     PartitionKey = GeneratePartitionKey(src.WalletAddress),
-                    RowKey = GenerateRowKey(src.TransactionId),
+                    RowKey = GenerateRowKey(src.Blockchain, src.IdentityType, src.Identity)
                 };
 
                 return Mapper.Map(src, entity);
             }
         }
 
-        public static class IndexByTransactionId
+        public static class IndexByIdentity
         {
-            public static string GeneratePartitionKey(string transactionId, BlockchainType blockchain)
+            public static string GeneratePartitionKey(BlockchainType blockchain, TransactionIdentityType identityType, string identity)
             {
-                return $"{blockchain.ToString()}_{transactionId}";
+                return $"{blockchain.ToString()}_{identityType.ToString()}_{identity}";
             }
 
             public static string GenerateRowKey(string walletAddress)
@@ -145,8 +158,10 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
             public static AzureIndex Create(PaymentRequestTransactionEntity entity)
             {
-                return AzureIndex.Create(GeneratePartitionKey(entity.TransactionId, entity.Blockchain),
-                    GenerateRowKey(entity.WalletAddress), entity);
+                return AzureIndex.Create(
+                    GeneratePartitionKey(entity.Blockchain, entity.IdentityType, entity.Identity),
+                    GenerateRowKey(entity.WalletAddress),
+                    entity);
             }
         }
 
@@ -159,15 +174,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
                 return $"DD_{dueDateIso}";
             }
 
-            public static string GenerateRowKey(string transactionId, BlockchainType blockchain, string walletAddress)
+            public static string GenerateRowKey(TransactionIdentityType identityType, string identity, BlockchainType blockchain, string walletAddress)
             {
-                return $"{transactionId}_{blockchain}_{walletAddress}";
+                return $"{blockchain.ToString()}_{identityType.ToString()}_{identity}_{walletAddress}";
             }
 
             public static AzureIndex Create(PaymentRequestTransactionEntity entity)
             {
                 return AzureIndex.Create(GeneratePartitionKey(entity.DueDate),
-                    GenerateRowKey(entity.TransactionId, entity.Blockchain, entity.WalletAddress), entity);
+                    GenerateRowKey(entity.IdentityType, entity.Identity, entity.Blockchain, entity.WalletAddress),
+                    entity);
             }
         }
     }

@@ -22,6 +22,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransferService _transferService;
         private readonly TimeSpan _refundExpirationPeriod;
         private readonly ITransactionPublisher _transactionPublisher;
+        private readonly IBlockchainAddressValidator _blockchainAddressValidator;
         private readonly ILog _log;
 
         public RefundService(
@@ -30,7 +31,8 @@ namespace Lykke.Service.PayInternal.Services
             ITransferService transferService,
             TimeSpan refundExpirationPeriod,
             ITransactionPublisher transactionPublisher,
-            ILog log)
+            ILog log, 
+            IBlockchainAddressValidator blockchainAddressValidator)
         {
             _paymentRequestService =
                 paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
@@ -40,6 +42,8 @@ namespace Lykke.Service.PayInternal.Services
             _transactionPublisher =
                 transactionPublisher ?? throw new ArgumentNullException(nameof(transactionPublisher));
             _log = log ?? throw new ArgumentNullException(nameof(log));
+            _blockchainAddressValidator = blockchainAddressValidator ??
+                                          throw new ArgumentNullException(nameof(blockchainAddressValidator));
         }
 
         public async Task<RefundResult> ExecuteAsync(string merchantId, string paymentRequestId,
@@ -64,6 +68,11 @@ namespace Lykke.Service.PayInternal.Services
                 throw new RefundValidationException(RefundErrorType.MultitransactionNotSupported);
 
             IPaymentRequestTransaction tx = paymentTxs.Single();
+
+            bool isValidAddress = string.IsNullOrWhiteSpace(destinationWalletAddress) ||
+                                  await _blockchainAddressValidator.Execute(destinationWalletAddress, tx.Blockchain);
+            if (!isValidAddress)
+                throw new RefundValidationException(RefundErrorType.InvalidDestinationAddress);
 
             if (!tx.SourceWalletAddresses.Any())
                 throw new RefundValidationException(RefundErrorType.InvalidDestinationAddress);
@@ -107,13 +116,15 @@ namespace Lykke.Service.PayInternal.Services
                             Amount = transferResultTransaction.Amount,
                             AssetId = transferResultTransaction.AssetId,
                             Confirmations = 0,
-                            TransactionId = transferResultTransaction.Hash,
+                            Hash = transferResultTransaction.Hash,
                             WalletAddress = paymentRequest.WalletAddress,
                             Type = TransactionType.Refund,
                             Blockchain = transferResult.Blockchain,
                             FirstSeen = null,
                             DueDate = refundDueDate,
-                            TransferId = transferResult.Id
+                            TransferId = transferResult.Id,
+                            IdentityType = transferResultTransaction.IdentityType,
+                            Identity = transferResultTransaction.Identity
                         });
 
                     await _transactionPublisher.PublishAsync(refundTransaction);

@@ -57,6 +57,9 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 await _transactionsManager.CreateTransactionAsync(command);
 
+                await _log.WriteInfoAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction),
+                    command.ToJson(), "Create new transaction command");
+
                 return Ok();
             }
             catch (PaymentRequestNotFoundException ex)
@@ -114,15 +117,19 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 await _transactionsManager.UpdateTransactionAsync(command);
 
+                await _log.WriteInfoAsync(nameof(TransactionsController), nameof(UpdateTransaction),
+                    command.ToJson(), "Update transaction command");
+
                 return Ok();
             }
             catch (TransactionNotFoundException ex)
             {
                 await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), new
                 {
-                    ex.TransactionId,
                     ex.Blockchain,
-                    ex.WalletAddress
+                    ex.IdentityType,
+                    ex.Identity,
+					ex.WalletAddress
                 }.ToJson(), ex);
 
                 return BadRequest(ErrorResponse.Create(ex.Message));
@@ -190,12 +197,19 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("expired")]
         [SwaggerOperation("SetExpired")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ValidateModel]
         public async Task<IActionResult> Expired([FromBody] TransactionExpiredRequest request)
         {
             try
             {
-                await _paymentRequestService.UpdateStatusByTransactionAsync(request.TransactionId, request.Blockchain);
+                IEnumerable<IPaymentRequestTransaction> txs =
+                    await _transactionsService.GetByBcnIdentityAsync(request.Blockchain, request.IdentityType, request.Identity);
+
+                foreach (IPaymentRequestTransaction tx in txs)
+                {
+                    await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
+                }
 
                 return Ok();
             }

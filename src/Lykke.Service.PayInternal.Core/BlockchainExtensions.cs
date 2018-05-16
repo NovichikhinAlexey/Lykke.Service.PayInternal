@@ -10,9 +10,12 @@ namespace Lykke.Service.PayInternal.Core
 
             switch (assetId)
             {
-                case LykkeConstants.BitcoinAssetId:
-                case LykkeConstants.SatoshiAssetId:
+                case LykkeConstants.BitcoinAsset:
+                case LykkeConstants.SatoshiAsset:
                     blockchainType = BlockchainType.Bitcoin;
+                    break;
+                case LykkeConstants.Erc20PktAsset:
+                    blockchainType = BlockchainType.Ethereum;
                     break;
                 default: throw new AssetNotSupportedException(assetId);
             }

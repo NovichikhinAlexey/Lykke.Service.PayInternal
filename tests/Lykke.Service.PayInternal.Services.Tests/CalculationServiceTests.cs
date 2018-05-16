@@ -54,7 +54,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             const decimal fact = 9;
 
-            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId))
+            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAsset))
                 .ReturnsAsync(new Asset {Accuracy = BtcAccuracy});
 
             var fullFillmentStatus = await _service.CalculateBtcAmountFullfillmentAsync(plan, fact);
@@ -69,7 +69,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             const decimal fact = 11;
 
-            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId))
+            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAsset))
                 .ReturnsAsync(new Asset {Accuracy = BtcAccuracy});
 
             var fullFillmentStatus = await _service.CalculateBtcAmountFullfillmentAsync(plan, fact);
@@ -84,7 +84,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             const decimal fact = 10;
 
-            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId))
+            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAsset))
                 .ReturnsAsync(new Asset {Accuracy = BtcAccuracy});
 
             var fullFillmentStatus = await _service.CalculateBtcAmountFullfillmentAsync(plan, fact);
@@ -100,7 +100,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             const decimal fact = (decimal) 10.000022226554828009123654;
 
-            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId))
+            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAsset))
                 .ReturnsAsync(new Asset {Accuracy = BtcAccuracy});
 
             var fullFillmentStatus = await _service.CalculateBtcAmountFullfillmentAsync(plan, fact);
@@ -115,7 +115,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             const decimal fact = (decimal) 10.00002221;
 
-            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId))
+            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAsset))
                 .ReturnsAsync(new Asset {Accuracy = BtcAccuracy});
 
             var fullFillmentStatus = await _service.CalculateBtcAmountFullfillmentAsync(plan, fact);
@@ -130,7 +130,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             const decimal fact = (decimal) 10.00002225;
 
-            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId))
+            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAsset))
                 .ReturnsAsync(new Asset {Accuracy = BtcAccuracy});
 
             var fullFillmentStatus = await _service.CalculateBtcAmountFullfillmentAsync(plan, fact);
@@ -202,8 +202,8 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             _logMock.Setup(o => o.WriteInfoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>())).Verifiable();
 
-            var rate = _service.CalculatePrice(assetPairRate, assetPair.Accuracy, BtcAccuracy, requestMarkup.Percent, requestMarkup.Pips,
-                PriceCalculationMethod.ByBid, merchantMarkup);
+            var rate = _service.CalculatePrice(assetPairRate.AskPrice, assetPairRate.BidPrice, assetPair.Accuracy,
+                BtcAccuracy, requestMarkup.Percent, requestMarkup.Pips, PriceCalculationMethod.ByBid, merchantMarkup);
 
             var btcAmount = (chfAmount + (decimal) requestMarkup.FixedFee + merchantMarkup.FixedFee) / rate;
 

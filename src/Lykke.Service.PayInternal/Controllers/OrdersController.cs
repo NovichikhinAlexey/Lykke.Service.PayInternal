@@ -4,11 +4,13 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common;
 using Common.Log;
+using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Orders;
-using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -75,6 +77,8 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("orders")]
         [SwaggerOperation("OrdersChechout")]
         [ProducesResponseType(typeof(OrderModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
         public async Task<IActionResult> ChechoutAsync([FromBody] ChechoutRequestModel model)
         {
             try
@@ -86,10 +90,24 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<OrderModel>(order));
             }
-            catch (Exception exception)
+            catch (AssetUnknownException assetEx)
             {
                 await _log.WriteErrorAsync(nameof(OrdersController), nameof(ChechoutAsync),
-                    model.ToJson(), exception);
+                    new {assetEx.Asset}.ToJson(), assetEx);
+
+                return BadRequest(ErrorResponse.Create(assetEx.Message));
+            }
+            catch (MarkupNotFoundException markupEx)
+            {
+                await _log.WriteErrorAsync(nameof(OrdersController), nameof(ChechoutAsync),
+                    new { markupEx.MerchantId, markupEx.AssetPairId }.ToJson(), markupEx);
+
+                return BadRequest(ErrorResponse.Create(markupEx.Message));
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(OrdersController), nameof(ChechoutAsync),
+                    model.ToJson(), ex);
 
                 throw;
             }

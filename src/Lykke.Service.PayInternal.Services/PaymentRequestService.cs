@@ -180,17 +180,6 @@ namespace Lykke.Service.PayInternal.Services
             await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
         }
 
-        public async Task UpdateStatusByTransactionAsync(string transactionId, BlockchainType blockchain)
-        {
-            IReadOnlyList<IPaymentRequestTransaction> businessTransactions =
-                await _transactionsService.GetByTransactionIdAsync(transactionId, blockchain);
-
-            foreach (IPaymentRequestTransaction tx in businessTransactions)
-            {
-                await UpdateStatusAsync(tx.WalletAddress);
-            }
-        }
-
         public async Task HandleExpiredAsync()
         {
             DateTime dateTo = DateTime.UtcNow;

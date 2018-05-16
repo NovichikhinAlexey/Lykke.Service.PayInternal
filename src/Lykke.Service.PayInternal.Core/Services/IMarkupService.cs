@@ -6,9 +6,9 @@ namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface IMarkupService
     {
-        Task<IMarkup> SetDefaultAsync(string assetPairId, IMarkupValue markupValue);
+        Task<IMarkup> SetDefaultAsync(string assetPairId, string priceAssetPairId, PriceMethod priceMethod, IMarkupValue markupValue);
 
-        Task<IMarkup> SetForMerchantAsync(string assetPairId, string merchantId, IMarkupValue markupValue);
+        Task<IMarkup> SetForMerchantAsync(string assetPairId, string merchantId, string priceAssetPairId, PriceMethod priceMethod, IMarkupValue markupValue);
 
         Task<IReadOnlyList<IMarkup>> GetDefaultsAsync();
 
