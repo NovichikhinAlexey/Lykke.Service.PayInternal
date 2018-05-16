@@ -27,22 +27,22 @@ namespace Lykke.Service.PayInternal.Controllers
     {
         private readonly IPaymentRequestService _paymentRequestService;
         private readonly IRefundService _refundService;
-        private readonly IPaymentRequestDetailsBuilder _paymentRequestDetailsBuilder;
         private readonly IAssetsAvailabilityService _assetsAvailabilityService;
+        private readonly IPaymentRequestDetailsBuilder _paymentRequestDetailsBuilder;
         private readonly ILog _log;
 
         public PaymentRequestsController(
             IPaymentRequestService paymentRequestService,
             IRefundService refundService,
+            IAssetsAvailabilityService assetsAvailabilityService,
             ILog log, 
             IPaymentRequestDetailsBuilder paymentRequestDetailsBuilder,
-            IAssetsAvailabilityService assetsAvailabilityService, 
             ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _paymentRequestService = paymentRequestService;
             _refundService = refundService;
-            _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder;
             _assetsAvailabilityService = assetsAvailabilityService;
+            _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder;
             _log = log.CreateComponentScope(nameof(PaymentRequestsController));
         }
 

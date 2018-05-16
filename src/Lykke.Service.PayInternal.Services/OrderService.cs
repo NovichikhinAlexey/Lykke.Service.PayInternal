@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common;
 using Common.Log;
-using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
@@ -20,7 +19,6 @@ namespace Lykke.Service.PayInternal.Services
     public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepository;
-        private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IMerchantRepository _merchantRepository;
         private readonly ICalculationService _calculationService;
         private readonly IMarkupService _markupService;
@@ -30,7 +28,6 @@ namespace Lykke.Service.PayInternal.Services
 
         public OrderService(
             IOrderRepository orderRepository,
-            IAssetsLocalCache assetsLocalCache,
             IMerchantRepository merchantRepository,
             ICalculationService calculationService,
             ILog log,
@@ -39,7 +36,6 @@ namespace Lykke.Service.PayInternal.Services
             ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _orderRepository = orderRepository;
-            _assetsLocalCache = assetsLocalCache;
             _merchantRepository = merchantRepository;
             _calculationService = calculationService;
             _log = log;
@@ -116,11 +112,28 @@ namespace Lykke.Service.PayInternal.Services
                 throw;
             }
 
-            decimal paymentAmount = await _calculationService.GetAmountAsync(lykkePaymentAssetId,
-                lykkeSettlementAssetId, paymentRequest.Amount, requestMarkup, merchantMarkup);
+            decimal paymentAmount, rate;
 
-            decimal rate = await _calculationService.GetRateAsync(lykkePaymentAssetId, lykkeSettlementAssetId,
-                requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
+            try
+            {
+                paymentAmount = await _calculationService.GetAmountAsync(lykkePaymentAssetId,
+                    lykkeSettlementAssetId, paymentRequest.Amount, requestMarkup, merchantMarkup);
+
+                rate = await _calculationService.GetRateAsync(lykkePaymentAssetId, lykkeSettlementAssetId,
+                    requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
+            }
+            catch (MarketPriceZeroException priceZeroEx)
+            {
+                _log.WriteError(nameof(GetLatestOrCreateAsync), new { priceZeroEx.PriceType }, priceZeroEx);
+
+                throw;
+            }
+            catch (UnexpectedAssetPairPriceMethodException assetPairEx)
+            {
+                _log.WriteError(nameof(GetLatestOrCreateAsync), new {assetPairEx.PriceMethod}, assetPairEx);
+
+                throw;
+            }
 
             var order = new Order
             {

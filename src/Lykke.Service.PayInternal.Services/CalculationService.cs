@@ -89,8 +89,12 @@ namespace Lykke.Service.PayInternal.Services
                         bidPrice = assetPairRate.BidPrice;
                         break;
                     case PriceMethod.Reverse:
-                        askPrice = 1 / assetPairRate.AskPrice;
-                        bidPrice = 1 / assetPairRate.BidPrice;
+                        askPrice = Math.Abs(assetPairRate.AskPrice) > 0
+                            ? 1 / assetPairRate.AskPrice
+                            : throw new MarketPriceZeroException("ask");
+                        bidPrice = Math.Abs(assetPairRate.BidPrice) > 0
+                            ? 1 / assetPairRate.BidPrice
+                            : throw new MarketPriceZeroException("bid");
                         break;
                     default:
                         throw new UnexpectedAssetPairPriceMethodException(merchantMarkup.PriceMethod);
