@@ -1,13 +1,15 @@
 ﻿using System;
+using AutoMapper;
+using AzureStorage.Tables.Templates.Index;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
-using Lykke.Service.PayInternal.Core.Domain.Order;
+using Lykke.Service.PayInternal.Core.Domain.Orders;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Order
 {
     [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
-    public class OrderEntity : AzureTableEntity, IOrder
+    public class OrderEntity : AzureTableEntity
     {
         private decimal _settlementAmount;
         private decimal _paymentAmount;
@@ -15,21 +17,11 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
         private DateTime _createdDate;
         private decimal? _exchangeRate;
         private DateTime _extendedDueDate;
-
-        public OrderEntity()
-        {
-        }
-
-        public OrderEntity(string partitionKey, string rowKey)
-        {
-            PartitionKey = partitionKey;
-            RowKey = rowKey;
-        }
-
         public string Id => RowKey;
         public string MerchantId { get; set; }
         public string PaymentRequestId { get; set; }
         public string AssetPairId { get; set; }
+        public string LwOperationId { get; set; }
         
         public decimal SettlementAmount
         {
@@ -91,17 +83,48 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
             }
         }
 
-        internal void Map(IOrder order)
+        public static class ByPaymentRequest
         {
-            MerchantId = order.MerchantId;
-            PaymentRequestId = order.PaymentRequestId;
-            AssetPairId = order.AssetPairId;
-            SettlementAmount = order.SettlementAmount;
-            PaymentAmount = order.PaymentAmount;
-            DueDate = order.DueDate;
-            CreatedDate = order.CreatedDate;
-            ExchangeRate = order.ExchangeRate;
-            ExtendedDueDate = order.ExtendedDueDate;
+            public static string GeneratePartitionKey(string paymentRequestId)
+            {
+                return paymentRequestId;
+            }
+
+            public static string GenerateRowKey(string orderId = null)
+            {
+                return orderId ?? Guid.NewGuid().ToString("D");
+            }
+
+            public static OrderEntity Create(IOrder order)
+            {
+                var entity = new OrderEntity
+                {
+                    PartitionKey = GeneratePartitionKey(order.PaymentRequestId),
+                    RowKey = GenerateRowKey()
+                };
+
+                return Mapper.Map(order, entity);
+            }
+        }
+
+        public static class IndexByLykkeOperationId
+        {
+            public static string GeneratePartitionKey(string operationId)
+            {
+                return operationId;
+            }
+
+            public static string GenerateRowKey()
+            {
+                return "LykkeOperationIndex";
+            }
+
+            public static AzureIndex Create(OrderEntity entity)
+            {
+                return string.IsNullOrEmpty(entity.LwOperationId)
+                    ? null
+                    : AzureIndex.Create(GeneratePartitionKey(entity.LwOperationId), GenerateRowKey(), entity);
+            }
         }
     }
 }

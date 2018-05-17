@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lykke.Service.PayInternal.Core.Domain.Order
+namespace Lykke.Service.PayInternal.Core.Domain.Orders
 {
     public interface IOrder
     {
@@ -23,5 +23,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Order
         DateTime CreatedDate { get; set; }    
         
         decimal? ExchangeRate { get; set; }
+
+        string LwOperationId { get; set; }
     }
 }

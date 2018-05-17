@@ -1,12 +1,14 @@
 ﻿using AutoMapper;
 using Lykke.Service.PayInternal.AzureRepositories.Markup;
 using Lykke.Service.PayInternal.AzureRepositories.Merchant;
+using Lykke.Service.PayInternal.AzureRepositories.Order;
 using Lykke.Service.PayInternal.AzureRepositories.PaymentRequest;
 using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.AzureRepositories.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
+using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
@@ -44,6 +46,11 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             CreateMap<IMarkup, MarkupEntity>(MemberList.Source);
 
             CreateMap<MarkupEntity, Core.Domain.Markup.Markup>(MemberList.Destination);
+
+            CreateMap<IOrder, OrderEntity>(MemberList.Source)
+                .ForMember(dest => dest.Id, opt => opt.Ignore());
+
+            CreateMap<OrderEntity, Core.Domain.Orders.Order>(MemberList.Destination);
         }
     }
 }

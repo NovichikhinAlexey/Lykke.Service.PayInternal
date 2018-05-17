@@ -13,7 +13,7 @@ using Lykke.Service.PayInternal.AzureRepositories.Transfer;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
-using Lykke.Service.PayInternal.Core.Domain.Order;
+using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
@@ -82,8 +82,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                     bcnWalletsUsageTableName, _log)));
             
             builder.RegisterInstance<IOrderRepository>(new OrdersRepository(
-                AzureTableStorage<OrderEntity>.Create(_ordersConnectionString,
-                    ordersTableName, _log)));
+                AzureTableStorage<OrderEntity>.Create(_ordersConnectionString, ordersTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_ordersConnectionString, ordersTableName, _log)));
 
             builder.RegisterInstance<IAssetGeneralAvailabilityRepository>(new AssetGeneralAvailabilityRepository(
                 AzureTableStorage<AssetAvailabilityEntity>.Create(_paymentRequestsConnectionString,

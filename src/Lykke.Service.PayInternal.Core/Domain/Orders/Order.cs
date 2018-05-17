@@ -1,7 +1,6 @@
 ﻿using System;
-using Lykke.Service.PayInternal.Core.Domain.Orders;
 
-namespace Lykke.Service.PayInternal.Services.Domain
+namespace Lykke.Service.PayInternal.Core.Domain.Orders
 {
     public class Order : IOrder
     {
