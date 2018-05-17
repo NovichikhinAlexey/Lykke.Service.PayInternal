@@ -102,10 +102,13 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> SetDefault(string assetPairId, [FromBody] UpdateMarkupRequest request)
         {
-            AssetPair priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(request.PriceAssetPairId);
+            if (!string.IsNullOrEmpty(request.PriceAssetPairId))
+            {
+                AssetPair priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(request.PriceAssetPairId);
 
-            if (priceAssetPair == null)
-                return NotFound(ErrorResponse.Create("Price asset pair doesn't exist"));
+                if (priceAssetPair == null)
+                    return NotFound(ErrorResponse.Create("Price asset pair doesn't exist"));
+            }
 
             try
             {
@@ -208,10 +211,13 @@ namespace Lykke.Service.PayInternal.Controllers
             if (merchant == null)
                 return NotFound(ErrorResponse.Create("Merchant not found"));
 
-            AssetPair priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(request.PriceAssetPairId);
+            if (!string.IsNullOrEmpty(request.PriceAssetPairId))
+            {
+                AssetPair priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(request.PriceAssetPairId);
 
-            if (priceAssetPair == null)
-                return NotFound(ErrorResponse.Create("Price asset pair doesn't exist"));
+                if (priceAssetPair == null)
+                    return NotFound(ErrorResponse.Create("Price asset pair doesn't exist"));
+            }
 
             try
             {
