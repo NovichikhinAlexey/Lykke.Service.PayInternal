@@ -22,7 +22,8 @@ namespace Lykke.Service.PayInternal.Client.Api
 
         [Post("/api/transactions/expired")]
         Task SetTransactionExpiredAsync([Body] TransactionExpiredRequest request);
-
+        [Get("/api/transactions/{paymentRequestId}")]
+        Task<IReadOnlyList<string>> GetTransactionsSourceWalletsAsync(string paymentRequestId);
         [Post("/api/wallets/expired")]
         Task SetWalletExpiredAsync([Body] BlockchainWalletExpiredRequest request);
     }

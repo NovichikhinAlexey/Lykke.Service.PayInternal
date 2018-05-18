@@ -124,5 +124,20 @@ namespace Lykke.Service.PayInternal.Services
                 await _transactionRepository.UpdateAsync(tx);
             }
         }
+        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetTransactionsByPaymentRequestAsync(string paymentRequestId)
+        {
+            IReadOnlyList<IPaymentRequestTransaction> transactions =
+                (await _transactionRepository.GetByPaymentRequest(paymentRequestId)).Where(x => x.IsPayment()).ToList();
+
+            if (!transactions.Any())
+                return null;
+
+            IEnumerable<string> transferIds = transactions.Unique(x => x.TransferId).ToList();
+
+            if (transferIds.MoreThanOne())
+                throw new MultiTransactionRefundNotSupportedException();
+
+            return transactions;
+        }
     }
 }
