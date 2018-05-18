@@ -101,45 +101,6 @@ namespace Lykke.Service.PayInternal.Controllers
             }
         }
         /// <summary>
-        /// Return payment source wallets
-        /// </summary>
-        /// <param name="paymentRequestId"></param>
-        /// <returns></returns>
-        [HttpGet]
-        [Route("{paymentRequestId}")]
-        [SwaggerOperation(nameof(PaymentTransaction))]
-        [ProducesResponseType(typeof(IReadOnlyList<string>), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
-        [ProducesResponseType(typeof(void), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> PaymentTransaction(string paymentRequestId)
-        {
-            try
-            {
-                var transactions = await _transactionsService.GetTransactionsByPaymentRequestAsync(paymentRequestId);
-                var addresses = new List<string>();
-                if (transactions != null)
-                    addresses.AddRange(transactions.SelectMany(x => x.SourceWalletAddresses));
-                return Ok(addresses);
-            }
-            catch (PaymentRequestNotFoundException ex)
-            {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(PaymentTransaction), new
-                {
-                    ex.MerchantId,
-                    ex.WalletAddress,
-                    ex.PaymentRequestId
-                }.ToJson(), ex);
-
-                return NotFound(ErrorResponse.Create(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(PaymentTransaction), ex);
-            }
-
-            return StatusCode((int)HttpStatusCode.InternalServerError);
-        }
-        /// <summary>
         /// Updates existing transaction
         /// </summary>
         /// <param name="request"></param>
