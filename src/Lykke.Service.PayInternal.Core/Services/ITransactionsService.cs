@@ -19,7 +19,5 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task<IPaymentRequestTransaction> CreateTransactionAsync(ICreateTransactionCommand request);
 
         Task UpdateAsync(IUpdateTransactionCommand request);
-
-        Task<IReadOnlyList<IPaymentRequestTransaction>> GetTransactionsByPaymentRequestAsync(string paymentRequestId);
     }
 }
