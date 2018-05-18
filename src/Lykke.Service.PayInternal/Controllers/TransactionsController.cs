@@ -14,6 +14,7 @@ using Lykke.Service.PayInternal.Models.Transactions;
 using Lykke.Service.PayInternal.Services.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Linq;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -108,7 +109,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("{paymentRequestId}")]
         [SwaggerOperation(nameof(PaymentTransaction))]
         [ProducesResponseType(typeof(IReadOnlyList<string>), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(void), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> PaymentTransaction(string paymentRequestId)
         {
@@ -117,10 +118,7 @@ namespace Lykke.Service.PayInternal.Controllers
                 var transactions = await _transactionsService.GetTransactionsByPaymentRequestAsync(paymentRequestId);
                 var addresses = new List<string>();
                 if (transactions != null)
-                {
-                    foreach (var transaction in transactions)
-                        addresses.AddRange(transaction.SourceWalletAddresses);
-                }
+                    addresses.AddRange(transactions.SelectMany(x => x.SourceWalletAddresses));
                 return Ok(addresses);
             }
             catch (PaymentRequestNotFoundException ex)
@@ -132,7 +130,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     ex.PaymentRequestId
                 }.ToJson(), ex);
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return NotFound(ErrorResponse.Create(ex.Message));
             }
             catch (Exception ex)
             {
