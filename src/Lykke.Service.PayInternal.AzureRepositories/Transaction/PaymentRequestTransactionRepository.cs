@@ -118,12 +118,5 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
             return Mapper.Map<PaymentRequestTransaction>(entity);
         }
-        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetByPaymentRequestAsync(string paymentRequestId)
-        {
-            IList<PaymentRequestTransactionEntity> entities =
-                await _storage.GetDataAsync(x => x.PaymentRequestId == paymentRequestId);
-
-            return Mapper.Map<IEnumerable<PaymentRequestTransaction>>(entities).ToList();
-        }
     }
 }

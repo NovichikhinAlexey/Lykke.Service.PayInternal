@@ -52,6 +52,5 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         /// <param name="transaction"></param>
         /// <returns></returns>
         Task<IPaymentRequestTransaction> UpdateAsync(IPaymentRequestTransaction transaction);
-        Task<IReadOnlyList<IPaymentRequestTransaction>> GetByPaymentRequestAsync(string paymentRequestId);
     }
 }
