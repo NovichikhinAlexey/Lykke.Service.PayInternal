@@ -1,7 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Core.Settings;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -16,17 +19,40 @@ namespace Lykke.Service.PayInternal.Services
     {
         // ReSharper disable once NotAccessedField.Local
         private readonly ILog _log;
+        private readonly AppSettings _appSettings;
+        private readonly IPaymentRequestExpirationHandler _paymentRequestExpirationHandler;
 
-        public StartupManager(ILog log)
+        public StartupManager(
+            ILog log,
+            AppSettings appSettings,
+            IPaymentRequestExpirationHandler paymentRequestExpirationHandler)
         {
-            _log = log;
+            _log = log?.CreateComponentScope(nameof(StartupManager)) ?? throw new ArgumentNullException(nameof(log));
+            _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
+            _paymentRequestExpirationHandler = paymentRequestExpirationHandler ??
+                                               throw new ArgumentNullException(nameof(paymentRequestExpirationHandler));
         }
 
         public async Task StartAsync()
         {
-            // TODO: Implement your startup logic here. Good idea is to log every step
+            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty, "Checking app settings consistency...");
 
-            await Task.CompletedTask;
+            TimeSpan primaryExpPeriod = _appSettings.PayInternalService.ExpirationPeriods.Order.Primary;
+
+            TimeSpan extendedExpPeriod = _appSettings.PayInternalService.ExpirationPeriods.Order.Extended;
+
+            if (primaryExpPeriod > extendedExpPeriod)
+                throw new OrderExpirationSettingsInconsistentException(primaryExpPeriod, extendedExpPeriod);
+
+            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty, "Settings checked successfully.");
+
+            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty,
+                "Starting payment request expiration handler ...");
+
+            _paymentRequestExpirationHandler.Start();
+
+            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty,
+                "Payment request expiration handler successfully started.");
         }
     }
 }

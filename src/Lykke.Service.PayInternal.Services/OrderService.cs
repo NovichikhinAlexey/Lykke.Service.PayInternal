@@ -2,14 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Common;
 using Common.Log;
-using Lykke.Service.Assets.Client.Models;
+using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
@@ -17,91 +19,132 @@ namespace Lykke.Service.PayInternal.Services
     public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepository;
-        private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IMerchantRepository _merchantRepository;
         private readonly ICalculationService _calculationService;
+        private readonly IMarkupService _markupService;
+        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
-        private readonly TimeSpan _orderExpiration;
+        private readonly OrderExpirationPeriodsSettings _orderExpirationPeriods;
 
         public OrderService(
             IOrderRepository orderRepository,
-            IAssetsLocalCache assetsLocalCache,
             IMerchantRepository merchantRepository,
             ICalculationService calculationService,
             ILog log,
-            TimeSpan orderExpiration)
+            OrderExpirationPeriodsSettings orderExpirationPeriods, 
+            IMarkupService markupService,
+            ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _orderRepository = orderRepository;
-            _assetsLocalCache = assetsLocalCache;
             _merchantRepository = merchantRepository;
             _calculationService = calculationService;
             _log = log;
-            _orderExpiration = orderExpiration;
+            _orderExpirationPeriods = orderExpirationPeriods;
+            _markupService = markupService;
+            _lykkeAssetsResolver = lykkeAssetsResolver;
         }
 
         public async Task<IOrder> GetAsync(string paymentRequestId, string orderId)
         {
+            if (string.IsNullOrEmpty(paymentRequestId) || string.IsNullOrEmpty(orderId))
+                return null;
+
             return await _orderRepository.GetAsync(paymentRequestId, orderId);
         }
 
-        public async Task<IOrder> GetAsync(string paymentRequestId, DateTime date)
+        public async Task<IOrder> GetActualAsync(string paymentRequestId, DateTime date)
         {
+            if (string.IsNullOrEmpty(paymentRequestId))
+                return null;
+
             IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequestId);
 
             return orders
-                .Where(o => date < o.DueDate)
-                .OrderBy(o => o.DueDate)
+                .Where(o => date < o.ExtendedDueDate)
+                .OrderBy(o => o.ExtendedDueDate)
                 .FirstOrDefault();
         }
 
-        public async Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest)
+        public async Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest, bool force = false)
         {
             IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequest.Id);
 
-            IOrder latestOrder = orders.OrderByDescending(x => x.DueDate).FirstOrDefault();
+            IOrder latestOrder = orders.OrderByDescending(x => x.ExtendedDueDate).FirstOrDefault();
 
-            if (latestOrder?.DueDate > DateTime.UtcNow)
-                return latestOrder;
+            var now = DateTime.UtcNow;
+
+            if (latestOrder != null)
+            {
+                if (now < latestOrder.DueDate)
+                    return latestOrder;
+
+                if (now < latestOrder.ExtendedDueDate && !force)
+                    return latestOrder;
+            }
 
             IMerchant merchant = await _merchantRepository.GetAsync(paymentRequest.MerchantId);
 
             if (merchant == null)
                 throw new MerchantNotFoundException(paymentRequest.MerchantId);
 
-            AssetPair assetPair =
-                await _assetsLocalCache.GetAssetPairAsync(paymentRequest.PaymentAssetId,
-                    paymentRequest.SettlementAssetId);
+            string lykkePaymentAssetId = await _lykkeAssetsResolver.GetLykkeId(paymentRequest.PaymentAssetId);
 
-            var merchantMarkup = new MerchantMarkup
+            string lykkeSettlementAssetId = await _lykkeAssetsResolver.GetLykkeId(paymentRequest.SettlementAssetId);
+
+            string assetPairId = $"{paymentRequest.PaymentAssetId}{paymentRequest.SettlementAssetId}";
+
+            RequestMarkup requestMarkup = Mapper.Map<RequestMarkup>(paymentRequest);
+
+            IMarkup merchantMarkup;
+
+            try
             {
-                LpPercent = merchant.LpMarkupPercent,
-                DeltaSpread = merchant.DeltaSpread,
-                LpPips = merchant.LpMarkupPips,
-                LpFixedFee = merchant.MarkupFixedFee
-            };
-
-            var requestMarkup = new RequestMarkup
+                merchantMarkup = await _markupService.ResolveAsync(merchant.Id, assetPairId);
+            }
+            catch (MarkupNotFoundException ex)
             {
-                Percent = paymentRequest.MarkupPercent,
-                Pips = paymentRequest.MarkupPips,
-                FixedFee = paymentRequest.MarkupFixedFee
-            };
+                await _log.WriteErrorAsync(nameof(OrderService), nameof(GetLatestOrCreateAsync), new
+                {
+                    ex.MerchantId,
+                    ex.AssetPairId
+                }.ToJson(), ex);
 
-            decimal paymentAmount = await _calculationService
-                .GetAmountAsync(assetPair.Id, paymentRequest.Amount, requestMarkup, merchantMarkup);
+                throw;
+            }
 
-            decimal rate = await _calculationService.GetRateAsync(assetPair.Id, requestMarkup.Percent,
-                requestMarkup.Pips, merchantMarkup);
+            decimal paymentAmount, rate;
+
+            try
+            {
+                paymentAmount = await _calculationService.GetAmountAsync(lykkePaymentAssetId,
+                    lykkeSettlementAssetId, paymentRequest.Amount, requestMarkup, merchantMarkup);
+
+                rate = await _calculationService.GetRateAsync(lykkePaymentAssetId, lykkeSettlementAssetId,
+                    requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
+            }
+            catch (MarketPriceZeroException priceZeroEx)
+            {
+                _log.WriteError(nameof(GetLatestOrCreateAsync), new { priceZeroEx.PriceType }, priceZeroEx);
+
+                throw;
+            }
+            catch (UnexpectedAssetPairPriceMethodException assetPairEx)
+            {
+                _log.WriteError(nameof(GetLatestOrCreateAsync), new {assetPairEx.PriceMethod}, assetPairEx);
+
+                throw;
+            }
 
             var order = new Order
             {
                 MerchantId = paymentRequest.MerchantId,
                 PaymentRequestId = paymentRequest.Id,
-                AssetPairId = assetPair.Id,
+                AssetPairId = assetPairId,
                 SettlementAmount = paymentRequest.Amount,
                 PaymentAmount = paymentAmount,
-                DueDate = DateTime.UtcNow.Add(_orderExpiration),
-                CreatedDate = DateTime.UtcNow,
+                DueDate = now.Add(_orderExpirationPeriods.Primary),
+                ExtendedDueDate = now.Add(_orderExpirationPeriods.Extended),
+                CreatedDate = now,
                 ExchangeRate = rate
             };
 

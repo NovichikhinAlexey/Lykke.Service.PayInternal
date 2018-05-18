@@ -1,4 +1,6 @@
 ﻿using System;
+using AutoMapper;
+using AzureStorage.Tables.Templates.Index;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
@@ -15,23 +17,19 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         private int _markupPips;
         private decimal _paidAmount;
         private double _markupFixedFee;
-        
-        public PaymentRequestEntity()
-        {
-        }
+        private PaymentRequestProcessingError _processingError;
+        private DateTime _createdOn;
+        private PaymentRequestStatus _status;
+        private DateTime? _paidDate;
 
-        public PaymentRequestEntity(string partitionKey, string rowKey)
-        {
-            PartitionKey = partitionKey;
-            RowKey = rowKey;
-        }
-        
         public string Id => RowKey;
         
         public string MerchantId { get; set; }
+
+        public string ExternalOrderId { get; set; }
         
         public string OrderId { get; set; }
-        
+
         public decimal Amount
         {
             get => _amount;
@@ -87,8 +85,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         }
         
         public string WalletAddress { get; set; }
-        
-        public PaymentRequestStatus Status { get; set; }
+
+        public PaymentRequestStatus Status
+        {
+            get => _status;
+            set
+            {
+                _status = value;
+                MarkValueTypePropertyAsDirty(nameof(Status));
+            }
+        }
         
         public decimal PaidAmount
         {
@@ -99,9 +105,97 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
                 MarkValueTypePropertyAsDirty(nameof(PaidAmount));
             }
         }
-        
-        public DateTime? PaidDate { get; set; }
-        
-        public string Error { get; set; }
+
+        public DateTime? PaidDate
+        {
+            get => _paidDate;
+            set
+            {
+                _paidDate = value;
+                MarkValueTypePropertyAsDirty(nameof(PaidDate));
+            }
+        }
+
+        public PaymentRequestProcessingError ProcessingError
+        {
+            get => _processingError;
+            set
+            {
+                _processingError = value;
+                MarkValueTypePropertyAsDirty(nameof(ProcessingError));
+            }
+        }
+
+        public DateTime CreatedOn
+        {
+            get => _createdOn;
+            set
+            {
+                _createdOn = value;
+                MarkValueTypePropertyAsDirty(nameof(CreatedOn));
+            }
+        }
+
+        public static class ByMerchant
+        {
+            public static string GeneratePartitionKey(string merchantId)
+            {
+                return merchantId;
+            }
+
+            public static string GenerateRowKey(string id = null)
+            {
+                return id ?? Guid.NewGuid().ToString();
+            }
+
+            public static PaymentRequestEntity Create(IPaymentRequest paymentRequest)
+            {
+                var entity = new PaymentRequestEntity
+                {
+                    PartitionKey = GeneratePartitionKey(paymentRequest.MerchantId),
+                    RowKey = GenerateRowKey()
+                };
+
+                return Mapper.Map(paymentRequest, entity);
+            }
+        }
+
+        public static class IndexByWallet
+        {
+            public static string GeneratePartitionKey(string walletAddress)
+            {
+                return walletAddress;
+            }
+
+            public static string GenerateRowKey()
+            {
+                return "WalletAddressIndex";
+            }
+
+            public static AzureIndex Create(PaymentRequestEntity src)
+            {
+                return AzureIndex.Create(GeneratePartitionKey(src.WalletAddress), GenerateRowKey(), src);
+            }
+        }
+
+        public static class IndexByDueDate
+        {
+            public static string GeneratePartitionKey(DateTime dueDate)
+            {
+                var dueDateIso = dueDate.ToString("O");
+
+                return $"DD_{dueDateIso}";
+            }
+
+            public static string GenerateRowKey(string paymentRequestId)
+            {
+                return paymentRequestId;
+            }
+
+            public static AzureIndex Create(PaymentRequestEntity src)
+            {
+                return AzureIndex.Create(GeneratePartitionKey(src.DueDate), GenerateRowKey(src.Id), src);
+            }
+        }
     }
 }

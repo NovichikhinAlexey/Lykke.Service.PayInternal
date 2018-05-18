@@ -1,10 +1,7 @@
 ﻿using AutoMapper;
 using Common;
 using Common.Log;
-using Lykke.Common.Api.Contract.Responses;
-using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
-using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
 using Lykke.Service.PayInternal.Filters;
@@ -16,6 +13,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Lykke.Service.PayInternal.Core.Exceptions;
+using Lykke.Service.PayInternal.Models;
+using ErrorResponse = Lykke.Common.Api.Contract.Responses.ErrorResponse;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -26,26 +26,23 @@ namespace Lykke.Service.PayInternal.Controllers
     public class PaymentRequestsController : Controller
     {
         private readonly IPaymentRequestService _paymentRequestService;
-        private readonly IOrderService _orderService;
-        private readonly ITransactionsService _transactionsService;
-        private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IRefundService _refundService;
+        private readonly IAssetsAvailabilityService _assetsAvailabilityService;
+        private readonly IPaymentRequestDetailsBuilder _paymentRequestDetailsBuilder;
         private readonly ILog _log;
 
         public PaymentRequestsController(
             IPaymentRequestService paymentRequestService,
-            IOrderService orderService,
-            ITransactionsService transactionsService,
-            IAssetsLocalCache assetsLocalCache,
             IRefundService refundService,
-            ILog log)
+            IAssetsAvailabilityService assetsAvailabilityService,
+            ILog log, 
+            IPaymentRequestDetailsBuilder paymentRequestDetailsBuilder)
         {
             _paymentRequestService = paymentRequestService;
-            _orderService = orderService;
-            _transactionsService = transactionsService;
-            _assetsLocalCache = assetsLocalCache;
             _refundService = refundService;
-            _log = log;
+            _assetsAvailabilityService = assetsAvailabilityService;
+            _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder;
+            _log = log.CreateComponentScope(nameof(PaymentRequestsController));
         }
 
         /// <summary>
@@ -57,7 +54,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpGet]
         [Route("merchants/{merchantId}/paymentrequests")]
         [SwaggerOperation("PaymentRequestsGetAll")]
-        [ProducesResponseType(typeof(List<PaymentRequestModel>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(List<PaymentRequestModel>), (int) HttpStatusCode.OK)]
         public async Task<IActionResult> GetAsync(string merchantId)
         {
             IReadOnlyList<IPaymentRequest> paymentRequests = await _paymentRequestService.GetAsync(merchantId);
@@ -66,7 +63,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
             return Ok(model);
         }
-        
+
         /// <summary>
         /// Returns merchant payment request.
         /// </summary>
@@ -78,15 +75,15 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpGet]
         [Route("merchants/{merchantId}/paymentrequests/{paymentRequestId}")]
         [SwaggerOperation("PaymentRequestsGetById")]
-        [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(PaymentRequestModel), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetAsync(string merchantId, string paymentRequestId)
         {
             IPaymentRequest paymentRequest = await _paymentRequestService.GetAsync(merchantId, paymentRequestId);
 
             if (paymentRequest == null)
                 return NotFound(ErrorResponse.Create("Couldn't find payment request"));
-            
+
             var model = Mapper.Map<PaymentRequestModel>(paymentRequest);
 
             return Ok(model);
@@ -100,11 +97,12 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <returns>The payment request details.</returns>
         /// <response code="200">The payment request.</response>
         /// <response code="404">Payment request not found.</response>
+        [Obsolete("Need to remove")]
         [HttpGet]
         [Route("merchants/{merchantId}/paymentrequests/details/{paymentRequestId}")]
         [SwaggerOperation("PaymentRequestDetailsGetById")]
         [ProducesResponseType(typeof(PaymentRequestDetailsModel), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetDetailsAsync(string merchantId, string paymentRequestId)
         {
             try
@@ -114,23 +112,20 @@ namespace Lykke.Service.PayInternal.Controllers
                 if (paymentRequest == null)
                     return NotFound(ErrorResponse.Create("Could not find payment request"));
 
-                IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
+                PaymentRequestRefund refundInfo =
+                    await _paymentRequestService.GetRefundInfoAsync(paymentRequest.WalletAddress);
 
-                IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
-                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
-
-                PaymentRequestRefund refund = await _paymentRequestService.GetRefundInfoAsync(paymentRequestId);
-
-                var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
-                model.Order = Mapper.Map<PaymentRequestOrderModel>(order);
-                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(paymentTransactions);
-                model.Refund = Mapper.Map<PaymentRequestRefundModel>(refund);
+                PaymentRequestDetailsModel model = await _paymentRequestDetailsBuilder.Build<
+                    PaymentRequestDetailsModel, 
+                    PaymentRequestOrderModel, 
+                    PaymentRequestTransactionModel,
+                    PaymentRequestRefundModel>(paymentRequest, refundInfo);
 
                 return Ok(model);
             }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(GetDetailsAsync),
+                await _log.WriteErrorAsync(nameof(GetDetailsAsync),
                     new
                     {
                         MerchantId = merchantId,
@@ -151,15 +146,15 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpGet]
         [Route("paymentrequests/byAddress/{walletAddress}")]
         [SwaggerOperation("PaymentRequestGetByWalletAddress")]
-        [ProducesResponseType(typeof(PaymentRequestModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(PaymentRequestModel), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetByAddressAsync(string walletAddress)
         {
             IPaymentRequest paymentRequest = await _paymentRequestService.FindAsync(walletAddress);
 
             if (paymentRequest == null)
                 return NotFound(ErrorResponse.Create("Couldn't find payment request by wallet address"));
-            
+
             var model = Mapper.Map<PaymentRequestModel>(paymentRequest);
 
             return Ok(model);
@@ -177,70 +172,43 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("PaymentRequestsCreate")]
         [ProducesResponseType(typeof(PaymentRequestModel), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
         public async Task<IActionResult> CreateAsync([FromBody] CreatePaymentRequestModel model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
 
-            if (await _assetsLocalCache.GetAssetByIdAsync(model.SettlementAssetId) == null)
-                return BadRequest(ErrorResponse.Create("Settlement asset doesn't exist"));
-
-            if (await _assetsLocalCache.GetAssetByIdAsync(model.PaymentAssetId) == null)
-                return BadRequest(ErrorResponse.Create("Payment asset doesn't exist"));
-            
-            if (await _assetsLocalCache.GetAssetPairAsync(model.PaymentAssetId, model.SettlementAssetId) == null)
-                return BadRequest(ErrorResponse.Create("Asset pair doesn't exist"));
-            
             try
             {
+                IReadOnlyList<string> settlementAssets =
+                    await _assetsAvailabilityService.ResolveSettlementAsync(model.MerchantId);
+
+                if (!settlementAssets.Contains(model.SettlementAssetId))
+                    return BadRequest(ErrorResponse.Create("Settlement asset is not available"));
+
+                IReadOnlyList<string> paymentAssets =
+                    await _assetsAvailabilityService.ResolvePaymentAsync(model.MerchantId, model.SettlementAssetId);
+
+                if (!paymentAssets.Contains(model.PaymentAssetId))
+                    return BadRequest(ErrorResponse.Create("Payment asset is not available"));
+
                 var paymentRequest = Mapper.Map<PaymentRequest>(model);
 
                 IPaymentRequest createdPaymentRequest = await _paymentRequestService.CreateAsync(paymentRequest);
 
                 return Ok(Mapper.Map<PaymentRequestModel>(createdPaymentRequest));
             }
-            catch (Exception exception)
+            catch (AssetUnknownException assetEx)
             {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(CreateAsync), model.ToJson(), exception);
-                throw;
+                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(CreateAsync),
+                    new {assetEx.Asset}.ToJson(), assetEx);
+
+                return BadRequest(ErrorResponse.Create($"Asset {assetEx.Asset} can't be resolved"));
             }
-        }
-
-        /// <summary>
-        /// Creates an order if it does not exist or expired and returns payment request details.
-        /// </summary>
-        /// <returns>The payment request details.</returns>
-        /// <response code="200">The payment request details.</response>
-        [HttpPost]
-        [Route("merchants/{merchantId}/paymentrequests/{paymentRequestId}")]
-        [SwaggerOperation("PaymentRequestsCreate")]
-        [ProducesResponseType(typeof(PaymentRequestDetailsModel), (int) HttpStatusCode.OK)]
-        public async Task<IActionResult> ChechoutAsync(string merchantId, string paymentRequestId)
-        {
-            try
+            catch (Exception ex)
             {
-                IPaymentRequest paymentRequest =
-                    await _paymentRequestService.CheckoutAsync(merchantId, paymentRequestId);
+                await _log.WriteErrorAsync(nameof(CreateAsync), model.ToJson(), ex);
 
-                IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
-
-                IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
-                    (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
-
-                var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
-                model.Order = Mapper.Map<PaymentRequestOrderModel>(order);
-                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(paymentTransactions);
-
-                return Ok(model);
-            }
-            catch (Exception exception)
-            {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(ChechoutAsync),
-                    new
-                    {
-                        MerchantId = merchantId,
-                        PaymentRequestId = paymentRequestId
-                    }.ToJson(), exception);
                 throw;
             }
         }
@@ -254,7 +222,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("merchants/paymentrequests/refunds")]
         [SwaggerOperation("Refund")]
         [ProducesResponseType(typeof(RefundResponseModel), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(void), (int) HttpStatusCode.InternalServerError)]
+        [ProducesResponseType(typeof(RefundErrorModel), (int) HttpStatusCode.BadRequest)]
         [ValidateModel]
         public async Task<IActionResult> RefundAsync([FromBody] RefundRequestModel request)
         {
@@ -265,12 +233,76 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<RefundResponseModel>(refundResult));
             }
-            catch (Exception e)
+            catch (AssetUnknownException assetEx)
             {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(RefundAsync), e);
+                await _log.WriteErrorAsync(nameof(RefundAsync), new {assetEx.Asset}.ToJson(), assetEx);
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(RefundAsync), request.ToJson(), ex);
+
+                if (ex is RefundValidationException validationEx)
+                {
+                    await _log.WriteErrorAsync(nameof(RefundAsync),
+                        new {errorType = validationEx.ErrorType.ToString()}.ToJson(), validationEx);
+
+                    return BadRequest(new RefundErrorModel {Code = validationEx.ErrorType});
+                }
             }
 
-            return StatusCode((int) HttpStatusCode.InternalServerError);
+            return BadRequest(new RefundErrorModel { Code = RefundErrorType.Unknown });
+        }
+
+        /// <summary>
+        /// Cancels the payment request
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <param name="paymentRequestId"></param>
+        /// <returns></returns>
+        [HttpDelete]
+        [Route("merchants/{merchantId}/paymentrequests/{paymentRequestId}")]
+        [SwaggerOperation("Cancel")]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> CancelAsync(string merchantId, string paymentRequestId)
+        {
+            try
+            {
+                await _paymentRequestService.CancelAsync(merchantId, paymentRequestId);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(CancelAsync), new
+                {
+                    merchantId,
+                    paymentRequestId
+                }.ToJson(), ex);
+
+                if (ex is PaymentRequestNotFoundException notFoundEx)
+                {
+                    await _log.WriteErrorAsync(nameof(CancelAsync), new
+                    {
+                        notFoundEx.WalletAddress,
+                        notFoundEx.MerchantId,
+                        notFoundEx.PaymentRequestId
+                    }.ToJson(), notFoundEx);
+
+                    return NotFound(ErrorResponse.Create(notFoundEx.Message));
+                }
+
+                if (ex is NotAllowedStatusException notAllowedEx)
+                {
+                    await _log.WriteErrorAsync(nameof(CancelAsync),
+                        new {status = notAllowedEx.Status.ToString()}.ToJson(), notAllowedEx);
+
+                    return BadRequest(ErrorResponse.Create(notAllowedEx.Message));
+                }
+
+                throw;
+            }
         }
     }
 }

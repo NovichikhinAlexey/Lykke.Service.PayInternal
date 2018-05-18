@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.Serialization;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.Core.Exceptions
 {
@@ -9,9 +10,12 @@ namespace Lykke.Service.PayInternal.Core.Exceptions
         {
         }
 
-        public TransactionNotFoundException(string transactionId) : base("Transaction not found")
+        public TransactionNotFoundException(BlockchainType blockchain, TransactionIdentityType identityType, string identity, string walletAddress) : base("Transaction not found")
         {
-            TransactionId = transactionId;
+            Blockchain = blockchain;
+            WalletAddress = walletAddress;
+            IdentityType = identityType;
+            Identity = identity;
         }
 
         public TransactionNotFoundException(string message, Exception innerException) : base(message, innerException)
@@ -22,6 +26,12 @@ namespace Lykke.Service.PayInternal.Core.Exceptions
         {
         }
 
-        public string TransactionId { get; set; }
+        public BlockchainType Blockchain { get; set; }
+
+        public TransactionIdentityType IdentityType { get; set; }
+
+        public string Identity { get; set; }
+
+        public string WalletAddress { get; set; }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using System;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
 {
@@ -7,6 +9,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
         string Id { get; }
 
         string MerchantId { get; set; }
+
+        string ExternalOrderId { get; set; }
 
         string OrderId { get; set; }
         
@@ -26,16 +30,20 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
         
         string WalletAddress { get; set; }
 
+        [JsonConverter(typeof(StringEnumConverter))]
         PaymentRequestStatus Status { get; set; }
 
         decimal PaidAmount { get; set; }
         
         DateTime? PaidDate { get; set; }
-        
-        string Error { get; set; }
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        PaymentRequestProcessingError ProcessingError { get; set; }
 
         DateTime Timestamp { get; set; }
 
         bool StatusValidForRefund();
+
+        bool StatusValidForPastDueTransition();
     }
 }

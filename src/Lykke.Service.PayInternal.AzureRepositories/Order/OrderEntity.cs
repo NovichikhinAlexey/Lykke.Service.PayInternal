@@ -14,6 +14,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
         private DateTime _dueDate;
         private DateTime _createdDate;
         private decimal? _exchangeRate;
+        private DateTime _extendedDueDate;
 
         public OrderEntity()
         {
@@ -59,6 +60,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
                 MarkValueTypePropertyAsDirty(nameof(DueDate));
             }
         }
+
+        public DateTime ExtendedDueDate
+        {
+            get => _extendedDueDate;
+            set
+            {
+                _extendedDueDate = value;
+                MarkValueTypePropertyAsDirty(nameof(ExtendedDueDate));
+            }
+        }
         
         public DateTime CreatedDate
         {
@@ -90,6 +101,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Order
             DueDate = order.DueDate;
             CreatedDate = order.CreatedDate;
             ExchangeRate = order.ExchangeRate;
+            ExtendedDueDate = order.ExtendedDueDate;
         }
     }
 }

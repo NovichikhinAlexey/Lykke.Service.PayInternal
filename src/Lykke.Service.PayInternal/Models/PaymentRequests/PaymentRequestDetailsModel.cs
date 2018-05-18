@@ -6,6 +6,7 @@ using Newtonsoft.Json.Converters;
 
 namespace Lykke.Service.PayInternal.Models.PaymentRequests
 {
+    [Obsolete]
     public class PaymentRequestDetailsModel
     {
         public PaymentRequestDetailsModel()
@@ -41,8 +42,9 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         public decimal PaidAmount { get; set; }
         
         public DateTime? PaidDate { get; set; }
-        
-        public string Error { get; set; }
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        public PaymentRequestProcessingError ProcessingError { get; set; }
 
         public DateTime Timestamp { get; set; }
 

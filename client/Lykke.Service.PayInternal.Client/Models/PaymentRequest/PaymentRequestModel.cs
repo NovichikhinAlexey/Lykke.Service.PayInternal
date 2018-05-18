@@ -80,6 +80,6 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         /// <summary>
         /// Gets or sets the error occurred during processing payment request.
         /// </summary>
-        public string Error { get; set; }
+        public PaymentRequestProcessingError ProcessingError { get; set; }
     }
 }

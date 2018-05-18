@@ -1,15 +1,15 @@
-﻿using Common.Log;
-using Lykke.Service.PayInternal.Core.Domain.Order;
+﻿using System;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Services.Domain;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using JetBrains.Annotations;
-using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
+using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -18,106 +18,111 @@ namespace Lykke.Service.PayInternal.Services
     {
         private readonly IPaymentRequestTransactionRepository _transactionRepository;
         private readonly IPaymentRequestRepository _paymentRequestRepository;
-        // ReSharper disable once NotAccessedField.Local
-        private readonly IOrderRepository _orderRepository;
         private readonly int _transactionConfirmationCount;
-        // ReSharper disable once NotAccessedField.Local
-        private readonly ILog _log;
 
         public TransactionsService(
             IPaymentRequestTransactionRepository transactionRepository,
             IPaymentRequestRepository paymentRequestRepository,
-            IOrderRepository ordersRepository,
-            int transactionConfirmationCount,
-            ILog log)
+            int transactionConfirmationCount)
         {
             _transactionRepository = transactionRepository;
             _paymentRequestRepository = paymentRequestRepository;
-            _orderRepository = ordersRepository;
             _transactionConfirmationCount = transactionConfirmationCount;
-            _log = log;
         }
 
-        public async Task<IEnumerable<IPaymentRequestTransaction>> GetAsync(string walletAddress)
+        public Task<IReadOnlyList<IPaymentRequestTransaction>> GetByWalletAsync(string walletAddress)
         {
-            return await _transactionRepository.GetAsync(walletAddress);
+            return _transactionRepository.GetByWalletAsync(walletAddress);
         }
 
-        public async Task<IEnumerable<IPaymentRequestTransaction>> GetConfirmedAsync(string walletAddress)
+        public Task<IPaymentRequestTransaction> GetByIdAsync(BlockchainType blockchain, TransactionIdentityType identityType, string identity, string walletAddress)
         {
-            var transactions = await GetAsync(walletAddress);
-            return transactions?
-                .Where(t => t.Confirmations >= _transactionConfirmationCount);
+            return _transactionRepository.GetByIdAsync(blockchain, identityType, identity, walletAddress);
         }
 
-        public async Task<IEnumerable<IPaymentRequestTransaction>> GetAllMonitoredAsync()
+        public async Task<IEnumerable<IPaymentRequestTransaction>> GetByBcnIdentityAsync(BlockchainType blockchain, TransactionIdentityType identityType, string identity)
         {
-            var result = await _transactionRepository.GetNotExpiredAsync(_transactionConfirmationCount);
-
-            return result;
+            return await _transactionRepository.GetByBcnIdentityAsync(blockchain, identityType, identity);
         }
 
-        public async Task<IPaymentRequestTransaction> CreateTransaction(ICreateTransaction request)
+        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetConfirmedAsync(string walletAddress)
+        {
+            var transactions = await GetByWalletAsync(walletAddress);
+
+            return transactions.Where(t => t.Confirmations >= _transactionConfirmationCount).ToList();
+        }
+
+        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetNotExpiredAsync()
+        {
+            var transactions = await _transactionRepository.GetByDueDate(DateTime.UtcNow);
+
+            return transactions.Where(x => x.Confirmations < _transactionConfirmationCount).ToList();
+        }
+
+        public async Task<IPaymentRequestTransaction> CreateTransactionAsync(ICreateTransactionCommand request)
         {
             var paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
 
             if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(request.WalletAddress);
 
-            var transactionEntity = new PaymentRequestTransaction
+            IPaymentRequestTransaction existing =
+                await _transactionRepository.GetByIdAsync(request.Blockchain, request.IdentityType, request.Identity, request.WalletAddress);
+
+            if (existing != null)
             {
-                WalletAddress = request.WalletAddress,
-                TransactionId = request.TransactionId,
-                Amount = request.Amount,
-                AssetId = request.AssetId,
-                Confirmations = request.Confirmations,
-                BlockId = request.BlockId,
-                Blockchain = request.Blockchain,
-                FirstSeen = request.FirstSeen,
-                PaymentRequestId = paymentRequest.Id,
-                SourceWalletAddresses = request.SourceWalletAddresses,
-                TransactionType = request.Type,
-                DueDate = request.DueDate ?? paymentRequest.DueDate,
-                TransferId = request.TransferId
-            };
+                await UpdateAsync(Mapper.Map<UpdateTransactionCommand>(request));
+
+                return await _transactionRepository.GetByIdAsync(request.Blockchain, request.IdentityType,
+                    request.Identity, request.WalletAddress);
+            }
+
+            var transactionEntity =
+                Mapper.Map<PaymentRequestTransaction>(request, opts => opts.Items["PaymentRequest"] = paymentRequest);
 
             return await _transactionRepository.AddAsync(transactionEntity);
         }
 
-        public async Task Update(IUpdateTransaction request)
+        public async Task UpdateAsync(IUpdateTransactionCommand request)
         {
-            if (string.IsNullOrEmpty(request.WalletAddress))
+            var businessTransactions = new List<IPaymentRequestTransaction>();
+
+            if (!string.IsNullOrEmpty(request.WalletAddress))
             {
-                IEnumerable<IPaymentRequestTransaction> transactions =
-                    (await _transactionRepository.GetByTransactionAsync(request.TransactionId)).ToList();
+                IPaymentRequestTransaction tx = await _transactionRepository.GetByIdAsync(request.Blockchain,
+                    request.IdentityType, request.Identity, request.WalletAddress);
 
-                if (!transactions.Any())
-                    throw new TransactionNotFoundException(request.TransactionId);
+                if (tx == null)
+                    throw new TransactionNotFoundException(request.Blockchain, request.IdentityType, request.Identity, request.WalletAddress);
 
-                foreach (var bcnTransaction in transactions)
-                {
-                    bcnTransaction.BlockId = request.BlockId;
-                    bcnTransaction.FirstSeen = request.FirstSeen;
-                    bcnTransaction.Confirmations = request.Confirmations;
+                businessTransactions.Add(tx);
+            }
+            else
+            {
+                IReadOnlyList<IPaymentRequestTransaction> txs =
+                    await _transactionRepository.GetByBcnIdentityAsync(request.Blockchain, request.IdentityType, request.Identity);
 
-                    await _transactionRepository.UpdateAsync(bcnTransaction);
-                }
-
-                return;
+                businessTransactions.AddRange(txs);
             }
 
-            // payment transaction update
-            IPaymentRequestTransaction transaction =
-                await _transactionRepository.GetAsync(request.WalletAddress, request.TransactionId);
+            foreach (IPaymentRequestTransaction tx in businessTransactions)
+            {
+                tx.BlockId = request.BlockId;
+                tx.Confirmations = request.Confirmations;
+                tx.FirstSeen = request.FirstSeen;
 
-            if (transaction == null)
-                throw new TransactionNotFoundException(request.TransactionId);
+                if (request.IsPayment())
+                {
+                    tx.Amount = request.Amount;
+                }
 
-            transaction.Amount = (decimal)request.Amount;
-            transaction.BlockId = request.BlockId;
-            transaction.Confirmations = request.Confirmations;
+                if (tx.IdentityType != TransactionIdentityType.Hash)
+                {
+                    tx.TransactionId = request.Hash;
+                }
 
-            await _transactionRepository.UpdateAsync(transaction);
+                await _transactionRepository.UpdateAsync(tx);
+            }
         }
         public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetTransactionsByPaymentRequestAsync(string paymentRequestId)
         {

@@ -40,8 +40,9 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         public double PaidAmount { get; set; }
         
         public DateTime? PaidDate { get; set; }
-        
-        public string Error { get; set; }
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        public PaymentRequestProcessingError ProcessingError { get; set; }
 
         public DateTime Timestamp { get; set; }
 

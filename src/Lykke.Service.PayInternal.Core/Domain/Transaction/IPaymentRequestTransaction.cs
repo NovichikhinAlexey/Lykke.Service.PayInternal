@@ -7,6 +7,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
     {
         string Id { get; }
 
+        //todo: rename to hash
         string TransactionId { get; set; }
 
         string TransferId { get; set; }
@@ -19,7 +20,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 
         [CanBeNull] string BlockId { get; set; }
 
-        string Blockchain { get; set; }
+        BlockchainType Blockchain { get; set; }
 
         int Confirmations { get; set; }
 
@@ -34,6 +35,10 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         TransactionType TransactionType { get; set; }
 
         DateTime DueDate { get; set; }
+
+        TransactionIdentityType IdentityType { get; set; }
+
+        string Identity { get; set; }
 
         bool IsPayment();
 

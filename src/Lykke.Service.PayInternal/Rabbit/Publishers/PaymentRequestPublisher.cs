@@ -1,39 +1,32 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Autofac;
-using AutoMapper;
 using Common;
 using Common.Log;
 using Lykke.RabbitMqBroker.Publisher;
 using Lykke.RabbitMqBroker.Subscriber;
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
-using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
-using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
+using PaymentRequestRefund = Lykke.Service.PayInternal.Contract.PaymentRequest.PaymentRequestRefund;
 
 namespace Lykke.Service.PayInternal.Rabbit.Publishers
 {
     public class PaymentRequestPublisher : IPaymentRequestPublisher, IStartable, IStopable
     {
-        private readonly IOrderService _orderService;
-        private readonly ITransactionsService _transactionsService;
+        private readonly IPaymentRequestDetailsBuilder _paymentRequestDetailsBuilder;
         private readonly ILog _log;
         private readonly RabbitMqSettings _settings;
         private RabbitMqPublisher<PaymentRequestDetailsMessage> _publisher;
 
         public PaymentRequestPublisher(
-            IOrderService orderService,
-            ITransactionsService transactionsService,
-            ILog log,
-            RabbitMqSettings settings)
+            RabbitMqSettings settings, 
+            IPaymentRequestDetailsBuilder paymentRequestDetailsBuilder,
+            ILog log)
         {
-            _orderService = orderService;
-            _transactionsService = transactionsService;
-            _log = log;
             _settings = settings;
+            _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder;
+            _log = log;
         }
 
         public void Start()
@@ -61,23 +54,21 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
             _publisher?.Stop();
         }
 
-        public async Task PublishAsync(IPaymentRequest paymentRequest)
+        public async Task PublishAsync(IPaymentRequest paymentRequest, Core.Domain.PaymentRequests.PaymentRequestRefund refundInfo)
         {
-            IOrder order = await _orderService.GetAsync(paymentRequest.Id, paymentRequest.OrderId);
-
-            IReadOnlyList<IPaymentRequestTransaction> transactions =
-                (await _transactionsService.GetAsync(paymentRequest.WalletAddress)).ToList();
-
-            var message = Mapper.Map<PaymentRequestDetailsMessage>(paymentRequest);
-            message.Order = Mapper.Map<PaymentRequestOrder>(order);
-            message.Transactions = Mapper.Map<List<Contract.PaymentRequest.PaymentRequestTransaction>>(transactions);
+            PaymentRequestDetailsMessage message = await _paymentRequestDetailsBuilder.Build<
+                    PaymentRequestDetailsMessage, 
+                    PaymentRequestOrder, 
+                    PaymentRequestTransaction, 
+                    PaymentRequestRefund>(paymentRequest, refundInfo);
 
             await PublishAsync(message);
         }
         
         public async Task PublishAsync(PaymentRequestDetailsMessage message)
         {
-            await _log.WriteInfoAsync(nameof(PaymentRequestPublisher), nameof(PublishAsync), message.ToJson());
+            await _log.WriteInfoAsync(nameof(PaymentRequestPublisher), nameof(PublishAsync), $"message = {message.ToJson()}",
+                "Publishing payment request status update message");
       
             await _publisher.ProduceAsync(message);
         }

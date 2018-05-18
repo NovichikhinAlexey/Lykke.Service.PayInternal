@@ -41,7 +41,7 @@ namespace Lykke.Service.PayInternal.Services
             OnchainResponse response = await _bitcoinServiceClient.TransactionMultipleTransfer(
                 Guid.NewGuid(),
                 transfer.DestAddress, 
-                LykkeConstants.BitcoinAssetId, 
+                LykkeConstants.BitcoinAsset, 
                 transfer.FeeRate, 
                 transfer.FixedFee, 
                 sources);

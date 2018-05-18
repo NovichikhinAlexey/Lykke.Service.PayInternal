@@ -8,17 +8,14 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Serializers
 {
     public class ListSerializer<T> : IStorageValueSerializer
     {
-        public string Serialize(object value)
+        public string Serialize(object value, Type type)
         {
-            if (!(value is T[]))
-                throw new Exception($"Source is not an array of {typeof(T).Name}");
-
             var serialized = value.ToJson();
 
             return serialized;
         }
 
-        public object Deserialize(string serialized)
+        public object Deserialize(string serialized, Type type)
         {
             return JsonConvert.DeserializeObject<List<T>>(serialized);
         }

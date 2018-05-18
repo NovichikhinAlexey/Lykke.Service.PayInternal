@@ -8,11 +8,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
     [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
     public class MerchantEntity : AzureTableEntity, IMerchant
     {
-        private double _deltaSpread;
         private int _timeCacheRates;
-        private double _lpMarkupPercent;
-        private int _lpMarkupPips;
-        private double _markupFixedFee;
 
         public MerchantEntity()
         {
@@ -28,20 +24,12 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
         
         public string Name { get; set; }
 
+        public string DisplayName { get; set; }
+
         public string PublicKey { get; set; }
 
         public string ApiKey { get; set; }
 
-        public double DeltaSpread
-        {
-            get => _deltaSpread;
-            set
-            {
-                _deltaSpread = value;
-                MarkValueTypePropertyAsDirty(nameof(DeltaSpread));
-            }
-        }
-        
         public int TimeCacheRates
         {
             get => _timeCacheRates;
@@ -52,49 +40,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
             }
         }
         
-        public double LpMarkupPercent
-        {
-            get => _lpMarkupPercent;
-            set
-            {
-                _lpMarkupPercent = value;
-                MarkValueTypePropertyAsDirty(nameof(LpMarkupPercent));
-            }
-        }
-        
-        public int LpMarkupPips
-        {
-            get => _lpMarkupPips;
-            set
-            {
-                _lpMarkupPips = value;
-                MarkValueTypePropertyAsDirty(nameof(LpMarkupPips));
-            }
-        }
-        
-        public double MarkupFixedFee
-        {
-            get => _markupFixedFee;
-            set
-            {
-                _markupFixedFee = value;
-                MarkValueTypePropertyAsDirty(nameof(MarkupFixedFee));
-            }
-        }
-        
         public string LwId { get; set; }
-
-        internal void Map(IMerchant merchant)
-        {
-            ApiKey = merchant.ApiKey;
-            DeltaSpread = merchant.DeltaSpread;
-            LpMarkupPercent = merchant.LpMarkupPercent;
-            LpMarkupPips = merchant.LpMarkupPips;
-            MarkupFixedFee = merchant.MarkupFixedFee;
-            LwId = merchant.LwId;
-            Name = merchant.Name;
-            PublicKey = merchant.PublicKey;
-            TimeCacheRates = merchant.TimeCacheRates;
-        }
     }
 }

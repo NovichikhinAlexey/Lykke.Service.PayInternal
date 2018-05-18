@@ -7,7 +7,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
     {
         public string Id { get; set; }
 
-        public string Blockchain { get; set; }
+        public BlockchainType Blockchain { get; set; }
 
         public IEnumerable<TransferTransactionResult> Transactions { get; set; }
 

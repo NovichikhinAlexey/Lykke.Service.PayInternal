@@ -6,7 +6,7 @@ using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.MarketProfile.Client.Models;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
+using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
@@ -54,7 +54,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             const decimal fact = 9;
 
-            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId))
+            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAsset))
                 .ReturnsAsync(new Asset {Accuracy = BtcAccuracy});
 
             var fullFillmentStatus = await _service.CalculateBtcAmountFullfillmentAsync(plan, fact);
@@ -69,7 +69,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             const decimal fact = 11;
 
-            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId))
+            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAsset))
                 .ReturnsAsync(new Asset {Accuracy = BtcAccuracy});
 
             var fullFillmentStatus = await _service.CalculateBtcAmountFullfillmentAsync(plan, fact);
@@ -84,7 +84,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             const decimal fact = 10;
 
-            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId))
+            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAsset))
                 .ReturnsAsync(new Asset {Accuracy = BtcAccuracy});
 
             var fullFillmentStatus = await _service.CalculateBtcAmountFullfillmentAsync(plan, fact);
@@ -100,7 +100,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             const decimal fact = (decimal) 10.000022226554828009123654;
 
-            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId))
+            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAsset))
                 .ReturnsAsync(new Asset {Accuracy = BtcAccuracy});
 
             var fullFillmentStatus = await _service.CalculateBtcAmountFullfillmentAsync(plan, fact);
@@ -115,7 +115,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             const decimal fact = (decimal) 10.00002221;
 
-            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId))
+            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAsset))
                 .ReturnsAsync(new Asset {Accuracy = BtcAccuracy});
 
             var fullFillmentStatus = await _service.CalculateBtcAmountFullfillmentAsync(plan, fact);
@@ -130,7 +130,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             const decimal fact = (decimal) 10.00002225;
 
-            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId))
+            _assetsLocalCacheMock.Setup(o => o.GetAssetByIdAsync(LykkeConstants.BitcoinAsset))
                 .ReturnsAsync(new Asset {Accuracy = BtcAccuracy});
 
             var fullFillmentStatus = await _service.CalculateBtcAmountFullfillmentAsync(plan, fact);
@@ -170,12 +170,12 @@ namespace Lykke.Service.PayInternal.Services.Tests
                 AskPrice = 6838.57154
             };
 
-            IMerchantMarkup merchantMarkup = new MerchantMarkup
+            IMarkup merchantMarkup = new Markup
             {
-                LpPercent = 0,
-                LpPips = 0,
-                DeltaSpread = 1.4,
-                LpFixedFee = 0
+                Percent = 0,
+                Pips = 0,
+                DeltaSpread = 1.4m,
+                FixedFee = 0
             };
 
             IRequestMarkup requestMarkup = new RequestMarkup
@@ -202,10 +202,10 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             _logMock.Setup(o => o.WriteInfoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>())).Verifiable();
 
-            var rate = _service.CalculatePrice(assetPairRate, assetPair.Accuracy, BtcAccuracy, requestMarkup.Percent, requestMarkup.Pips,
-                PriceCalculationMethod.ByBid, merchantMarkup);
+            var rate = _service.CalculatePrice(assetPairRate.AskPrice, assetPairRate.BidPrice, assetPair.Accuracy,
+                BtcAccuracy, requestMarkup.Percent, requestMarkup.Pips, PriceCalculationMethod.ByBid, merchantMarkup);
 
-            var btcAmount = (chfAmount + (decimal) requestMarkup.FixedFee + (decimal) merchantMarkup.LpFixedFee) / rate;
+            var btcAmount = (chfAmount + (decimal) requestMarkup.FixedFee + merchantMarkup.FixedFee) / rate;
 
             Assert.IsTrue(Math.Abs(btcAmount - (decimal) 0.00374839) < BtcAccuracy.GetMinValue());
         }
@@ -236,18 +236,18 @@ namespace Lykke.Service.PayInternal.Services.Tests
         [TestMethod]
         public void GetSpread()
         {
-            Assert.AreEqual(_service.GetSpread(100d, 1d), 1d);
-            Assert.AreEqual(_service.GetSpread(100d, 100d), 100d);
-            Assert.AreEqual(_service.GetSpread(100d, 120d), 120d);
-            Assert.AreEqual(_service.GetSpread(0d, It.IsAny<double>()), 0d);
-            Assert.AreEqual(_service.GetSpread(It.IsAny<double>(), 0d), 0d);
+            Assert.AreEqual(_service.GetSpread(100d, 1m), 1d);
+            Assert.AreEqual(_service.GetSpread(100d, 100m), 100d);
+            Assert.AreEqual(_service.GetSpread(100d, 120m), 120d);
+            Assert.AreEqual(_service.GetSpread(0d, It.IsAny<decimal>()), 0d);
+            Assert.AreEqual(_service.GetSpread(It.IsAny<double>(), 0m), 0d);
         }
 
         [TestMethod]
         [ExpectedException(typeof(NegativeValueException))]
         public void GetSpread_PercentLessZero_Exception()
         {
-            _service.GetSpread(It.IsAny<double>(), -1d);
+            _service.GetSpread(It.IsAny<double>(), -1m);
         }
 
         [TestMethod]
@@ -271,14 +271,14 @@ namespace Lykke.Service.PayInternal.Services.Tests
         {
             const double originalValue = 100d;
 
-            const double merchantPercent = 1d;
+            const decimal merchantPercent = 1m;
 
             const double merchantPercentFromSettings = MerchantPercent;
 
             double fee = _service.GetMerchantFee(originalValue, merchantPercent);
 
             Assert.AreNotEqual(merchantPercent, merchantPercentFromSettings);
-            Assert.AreEqual(fee, originalValue * merchantPercent / 100);
+            Assert.AreEqual(fee, originalValue * (double) merchantPercent / 100);
         }
 
         [TestMethod]
@@ -286,7 +286,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
         {
             const double originalValue = 100d;
 
-            const double merchantPercent = -1d;
+            const decimal merchantPercent = -1m;
 
             const double merchantPercentFromSettings = MerchantPercent;
 
@@ -301,7 +301,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
         {
             const double originalValue = 100d;
 
-            const double merchantPercent = 0d;
+            const decimal merchantPercent = 0m;
 
             const double merchantPercentFromSettings = MerchantPercent;
 

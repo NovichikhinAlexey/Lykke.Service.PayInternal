@@ -1,14 +1,19 @@
 ﻿using AutoMapper;
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
+using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Domain.Transfer;
+using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.Assets;
+using Lykke.Service.PayInternal.Models.Markups;
 using Lykke.Service.PayInternal.Models.Orders;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
+using Lykke.Service.PayInternal.Models.Transfers;
 using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Mapping
@@ -18,16 +23,25 @@ namespace Lykke.Service.PayInternal.Mapping
         public AutoMapperProfile()
         {
             CreateMap<IMerchant, MerchantModel>(MemberList.Source);
+
             CreateMap<CreateMerchantRequest, Merchant>(MemberList.Destination)
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.PublicKey, opt => opt.Ignore());
-            
+
             CreateMap<UpdateMerchantRequest, Merchant>(MemberList.Destination)
                 .ForMember(dest => dest.PublicKey, opt => opt.Ignore());
-            
+
             CreateMap<IOrder, OrderModel>(MemberList.Source);
 
             CreateMap<IAssetAvailabilityByMerchant, AssetAvailabilityByMerchantResponse>();
+
+            CreateMap<BtcTransferSourceInfo, AddressAmount>(MemberList.Destination);
+
+            CreateMap<BtcFreeTransferRequest, BtcTransfer>(MemberList.Destination)
+                .ForMember(dest => dest.FeeRate, opt => opt.MapFrom(x => 0))
+                .ForMember(dest => dest.FixedFee, opt => opt.MapFrom(x => 0));
+
+            CreateMap<IMarkup, MarkupResponse>(MemberList.Destination);
 
             PaymentRequestApiModels();
             PaymentRequestMessages();
@@ -35,7 +49,10 @@ namespace Lykke.Service.PayInternal.Mapping
 
         private void PaymentRequestApiModels()
         {
-            CreateMap<IPaymentRequest, PaymentRequestModel>(MemberList.Source);
+            CreateMap<IPaymentRequest, PaymentRequestModel>(MemberList.Source)
+                .ForSourceMember(src => src.OrderId, opt => opt.Ignore())
+                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.ExternalOrderId))
+                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<PaymentRequestBcnWalletAddressValueResolver>());
 
             CreateMap<CreatePaymentRequestModel, PaymentRequest>(MemberList.Destination)
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -43,10 +60,15 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.Status, opt => opt.Ignore())
                 .ForMember(dest => dest.PaidAmount, opt => opt.Ignore())
                 .ForMember(dest => dest.PaidDate, opt => opt.Ignore())
-                .ForMember(dest => dest.Error, opt => opt.Ignore())
-                .ForMember(dest => dest.Timestamp, opt => opt.Ignore());
+                .ForMember(dest => dest.ProcessingError, opt => opt.Ignore())
+                .ForMember(dest => dest.Timestamp, opt => opt.Ignore())
+                .ForMember(dest => dest.OrderId, opt => opt.Ignore())
+                .ForMember(dest => dest.ExternalOrderId, opt => opt.MapFrom(src => src.OrderId));
 
-            CreateMap<IPaymentRequest, PaymentRequestDetailsModel>(MemberList.Source);
+            CreateMap<IPaymentRequest, PaymentRequestDetailsModel>(MemberList.Source)
+                .ForSourceMember(src => src.OrderId, opt => opt.Ignore())
+                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.ExternalOrderId))
+                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<PaymentRequestBcnWalletAddressValueResolver>());
 
             CreateMap<IOrder, PaymentRequestOrderModel>(MemberList.Source)
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())
@@ -63,25 +85,37 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.DueDate, opt => opt.Ignore())
                 .ForSourceMember(src => src.TransferId, opt => opt.Ignore())
                 .ForSourceMember(src => src.CreatedOn, opt => opt.Ignore())
+                .ForSourceMember(src => src.IdentityType, opt => opt.Ignore())
+                .ForSourceMember(src => src.Identity, opt => opt.Ignore())
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId))
                 .ForMember(dest => dest.Url, opt => opt.ResolveUsing<PaymentTxUrlValueResolver>())
                 .ForMember(dest => dest.RefundUrl, opt => opt.Ignore());
+
+            CreateMap<IPaymentRequestTransaction, PayTransactionStateResponse>(MemberList.Destination)
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.ResolveUsing<PaymentTxBcnWalletAddressValueResolver>());
+
+            CreateMap<IWalletState, WalletStateResponse>(MemberList.Destination);
 
             CreateMap<RefundTransactionResult, RefundTransactionReponseModel>();
 
             CreateMap<RefundResult, RefundResponseModel>(MemberList.Source)
                 .ForSourceMember(src => src.PaymentRequestWalletAddress, opt => opt.Ignore());
 
-            CreateMap<PaymentRequestRefundTransaction, PaymentRequestRefundTransactionModel>(MemberList.Source)
+            CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefundTransaction, PaymentRequestRefundTransactionModel
+                >(MemberList.Source)
                 .ForMember(dest => dest.Url, opt => opt.ResolveUsing<RefundTxUrlValueResolver>());
 
-            CreateMap<PaymentRequestRefund, PaymentRequestRefundModel>(MemberList.Source);
+            CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefund, PaymentRequestRefundModel>(MemberList.Source);
         }
 
         private void PaymentRequestMessages()
         {
             CreateMap<IPaymentRequest, PaymentRequestDetailsMessage>(MemberList.Source)
-                .ForSourceMember(dest => dest.OrderId, opt => opt.Ignore());
+                .ForMember(dest => dest.Order, opt => opt.Ignore())
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.ResolveUsing<PaymentRequestBcnWalletAddressValueResolver>())
+                .ForSourceMember(src => src.ExternalOrderId, opt => opt.Ignore());
 
             CreateMap<IOrder, PaymentRequestOrder>(MemberList.Source)
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())
@@ -99,7 +133,16 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.DueDate, opt => opt.Ignore())
                 .ForSourceMember(src => src.TransferId, opt => opt.Ignore())
                 .ForSourceMember(src => src.CreatedOn, opt => opt.Ignore())
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId));            
+                .ForSourceMember(src => src.IdentityType, opt => opt.Ignore())
+                .ForSourceMember(src => src.Identity, opt => opt.Ignore())
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId))
+                .ForMember(dest => dest.Url, opt => opt.ResolveUsing<PaymentTxUrlValueResolver>());
+
+            CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefundTransaction,
+                    Contract.PaymentRequest.PaymentRequestRefundTransaction>(MemberList.Destination)
+                .ForMember(dest => dest.Url, opt => opt.ResolveUsing<RefundTxUrlValueResolver>());
+
+            CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefund, Contract.PaymentRequest.PaymentRequestRefund>();
         }
     }
 }

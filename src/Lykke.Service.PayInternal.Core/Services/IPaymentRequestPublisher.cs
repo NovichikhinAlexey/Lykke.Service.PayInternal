@@ -5,6 +5,6 @@ namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface IPaymentRequestPublisher
     {
-        Task PublishAsync(IPaymentRequest paymentRequest);
+        Task PublishAsync(IPaymentRequest paymentRequest, PaymentRequestRefund refundInfo);
     }
 }

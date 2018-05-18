@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
+using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -15,22 +17,22 @@ namespace Lykke.Service.PayInternal.Services
     {
         private readonly int _transactionConfirmationCount;
         private readonly IPaymentRequestRepository _paymentRequestRepository;
-        private readonly IPaymentRequestTransactionRepository _transactionRepository;
+        private readonly ITransactionsService _transactionsService;
         private readonly IOrderService _orderService;
         private readonly ICalculationService _calculationService;
 
         public PaymentRequestStatusResolver(
             int transactionConfirmationCount,
             IPaymentRequestRepository paymentRequestRepository,
-            IPaymentRequestTransactionRepository transactionRepository,
             IOrderService orderService,
-            ICalculationService calculationService)
+            ICalculationService calculationService, 
+            ITransactionsService transactionsService)
         {
             _transactionConfirmationCount = transactionConfirmationCount;
             _paymentRequestRepository = paymentRequestRepository;
-            _transactionRepository = transactionRepository;
             _orderService = orderService;
             _calculationService = calculationService;
+            _transactionsService = transactionsService;
         }
 
         public async Task<PaymentRequestStatusInfo> GetStatus(string walletAddress)
@@ -39,9 +41,9 @@ namespace Lykke.Service.PayInternal.Services
 
             if(paymentRequest == null)
                 throw new PaymentRequestNotFoundException(walletAddress);
-            
+
             IReadOnlyList<IPaymentRequestTransaction> txs =
-                await _transactionRepository.GetAsync(paymentRequest.WalletAddress);
+                await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress);
 
             PaymentRequestStatusInfo paymentStatusInfo;
 
@@ -61,7 +63,8 @@ namespace Lykke.Service.PayInternal.Services
             return paymentStatusInfo;
         }
 
-        private async Task<PaymentRequestStatusInfo> GetStatusForSettlement(IPaymentRequest paymentRequest)
+        [SuppressMessage("ReSharper", "UnusedParameter.Local")]
+        private Task<PaymentRequestStatusInfo> GetStatusForSettlement(IPaymentRequest paymentRequest)
         {
             throw new TransactionTypeNotSupportedException();
         }
@@ -69,23 +72,25 @@ namespace Lykke.Service.PayInternal.Services
         private async Task<PaymentRequestStatusInfo> GetStatusForRefund(IPaymentRequest paymentRequest)
         {
             IReadOnlyList<IPaymentRequestTransaction> txs =
-                (await _transactionRepository.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsRefund()).ToList();
+                (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress)).Where(x => x.IsRefund()).ToList();
 
             if (txs.All(x => x.Confirmed(_transactionConfirmationCount)))
                 return PaymentRequestStatusInfo.Refunded();
 
             return txs.Any(x => !x.Confirmed(_transactionConfirmationCount) && x.Expired())
-                ? PaymentRequestStatusInfo.Error("REFUND NOT CONFIRMED")
+                ? PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.RefundNotConfirmed)
                 : PaymentRequestStatusInfo.RefundInProgress();
         }
 
         private async Task<PaymentRequestStatusInfo> GetStatusForPayment(IPaymentRequest paymentRequest)
         {
             IReadOnlyList<IPaymentRequestTransaction> txs =
-                (await _transactionRepository.GetAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
+                (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress)).Where(x => x.IsPayment()).ToList();
 
             if (!txs.Any())
-                return PaymentRequestStatusInfo.New();
+                return (paymentRequest.DueDate < DateTime.UtcNow)
+                    ? PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.PaymentExpired)
+                    : PaymentRequestStatusInfo.New();
 
             decimal btcPaid;
 
@@ -93,24 +98,28 @@ namespace Lykke.Service.PayInternal.Services
 
             switch (assetId)
             {
-                case LykkeConstants.BitcoinAssetId:
-                    btcPaid = txs.GetTotal();
-                    break;
-                case LykkeConstants.SatoshiAssetId:
+                case LykkeConstants.SatoshiAsset:
                     btcPaid = txs.GetTotal().SatoshiToBtc();
                     break;
                 default:
-                    throw new UnexpectedAssetException(assetId);
+                    btcPaid = txs.GetTotal();
+                    break;
             }
+
+            bool allConfirmed = txs.All(x => x.Confirmed(_transactionConfirmationCount));
 
             var paidDate = txs.GetLatestDate();
 
-            var actualOrder = await _orderService.GetAsync(paymentRequest.Id, paidDate);
+            if (paidDate > paymentRequest.DueDate)
+            {
+                if (allConfirmed)
+                    return PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.LatePaid, btcPaid, paidDate);
 
-            if (actualOrder == null)
-                return PaymentRequestStatusInfo.Error("EXPIRED", btcPaid, paidDate);
+                return paymentRequest.GetCurrentStatusInfo();
+            }
 
-            bool allConfirmed = txs.All(x => x.Confirmed(_transactionConfirmationCount));
+            IOrder actualOrder = await _orderService.GetActualAsync(paymentRequest.Id, paidDate) ??
+                                 await _orderService.GetLatestOrCreateAsync(paymentRequest);
 
             if (!allConfirmed)
                 return PaymentRequestStatusInfo.InProcess();
@@ -122,11 +131,11 @@ namespace Lykke.Service.PayInternal.Services
             switch (fulfillment)
             {
                 case AmountFullFillmentStatus.Below:
-                    return PaymentRequestStatusInfo.Error("AMOUNT BELOW", btcPaid, paidDate);
+                    return PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.PaymentAmountBelow, btcPaid, paidDate);
                 case AmountFullFillmentStatus.Exact:
                     return PaymentRequestStatusInfo.Confirmed(btcPaid, paidDate);
                 case AmountFullFillmentStatus.Above:
-                    return PaymentRequestStatusInfo.Error("AMOUNT ABOVE", btcPaid, paidDate);
+                    return PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.PaymentAmountAbove, btcPaid, paidDate);
                 default: throw new Exception("Unexpected amount fullfillment status");
             }
         }

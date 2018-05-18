@@ -1,4 +1,5 @@
-﻿using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
+﻿using System.Collections.Generic;
+using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Core.Settings.SlackNotifications;
 using Lykke.SettingsReader.Attributes;
 
@@ -12,6 +13,8 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public AssetsServiceClientSettings AssetsServiceClient { get; set; }
         public MarketProfileServiceClientSettings MarketProfileServiceClient { get; set; }
         public NinjaServiceClientSettings NinjaServiceClient { get; set; }
+        public EthereumServiceClientSettings EthereumServiceClient { get; set; }
+        public AssetsMapSettings AssetsMap { get; set; }
     }
 
     public class BitcoinCoreSettings
@@ -34,6 +37,18 @@ namespace Lykke.Service.PayInternal.Core.Settings
 
     public class NinjaServiceClientSettings
     {
+        [HttpCheck("/")]
         public string ServiceUrl { get; set; }
+    }
+
+    public class EthereumServiceClientSettings
+    {
+        [HttpCheck("api/isalive")]
+        public string ServiceUrl { get; set; }
+    }
+
+    public class AssetsMapSettings
+    {
+        public IDictionary<string, string> Values { get; set; }
     }
 }

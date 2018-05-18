@@ -4,12 +4,15 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common;
 using Common.Log;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Assets;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -23,19 +26,22 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly IAssetsAvailabilityService _assetsAvailabilityService;
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IMerchantService _merchantService;
+        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
 
         public AssetsController(
             IAssetsAvailabilityService assetsAvailabilityService,
             IAssetsLocalCache assetsLocalCache,
             IMerchantService merchantService,
-            ILog log)
+            ILog log, 
+            ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _assetsAvailabilityService = assetsAvailabilityService ??
                                          throw new ArgumentNullException(nameof(assetsAvailabilityService));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
             _log = log ?? throw new ArgumentNullException(nameof(log));
+            _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
         }
 
         /// <summary>
@@ -73,22 +79,34 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("SetAssetsSettings")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> SetGeneralAssetsSettings([FromBody] UpdateAssetAvailabilityRequest request)
         {
-            Asset asset = await _assetsLocalCache.GetAssetByIdAsync(request.AssetId);
-
-            if (asset == null)
-                return NotFound(ErrorResponse.Create($"Asset {request.AssetId} not found"));
-
             try
             {
-                await _assetsAvailabilityService.SetGeneralAsync(request.AssetId, request.AvailabilityType, request.Value);
+                string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(request.AssetId);
+
+                Asset asset = await _assetsLocalCache.GetAssetByIdAsync(lykkeAssetId);
+
+                if (asset == null)
+                    return NotFound(ErrorResponse.Create($"Asset {request.AssetId} not found"));
+
+                await _assetsAvailabilityService.SetGeneralAsync(request.AssetId, request.AvailabilityType,
+                    request.Value);
 
                 return NoContent();
+            }
+            catch (AssetUnknownException assetEx)
+            {
+                await _log.WriteErrorAsync(nameof(AssetsController), nameof(SetGeneralAssetsSettings),
+                    new {assetEx.Asset}.ToJson(), assetEx);
+
+                return NotFound(ErrorResponse.Create($"Asset {assetEx.Asset} can't be resolved"));
             }
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(AssetsController), nameof(SetGeneralAssetsSettings), ex);
+
                 throw;
             }
         }
@@ -133,6 +151,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("SetAssetsPersonalSettings")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> SetAssetsPersonalSettings([FromBody] UpdateAssetAvailabilityByMerchantRequest request)
         {
             IMerchant merchant = await _merchantService.GetAsync(request.MerchantId);

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
 namespace Lykke.Service.PayInternal.Core.Domain.Transfer
 {
@@ -15,5 +16,11 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
         public IEnumerable<string> Sources { get; set; }
 
         public IEnumerable<string> Destinations { get; set; }
+
+        public TransactionIdentityType IdentityType { get; set; }
+
+        public string Identity { get; set; }
+
+        public bool HasError => !string.IsNullOrEmpty(Error);
     }
 }
