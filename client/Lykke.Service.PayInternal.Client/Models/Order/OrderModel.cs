@@ -56,5 +56,10 @@ namespace Lykke.Service.PayInternal.Client.Models.Order
         /// Gets or sets the order echange rate
         /// </summary>
         public decimal ExchangeRate { get; set; }
+
+        /// <summary>
+        /// Gts or sets lykke wallet operation id
+        /// </summary>
+        public string LwOperationId { get; set; }
     }
 }
