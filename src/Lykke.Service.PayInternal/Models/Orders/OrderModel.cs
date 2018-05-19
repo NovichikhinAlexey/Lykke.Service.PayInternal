@@ -14,5 +14,6 @@ namespace Lykke.Service.PayInternal.Models.Orders
         public DateTime ExtendedDueDate { get; set; }
         public DateTime CreatedDate { get; set; }
         public decimal? ExchangeRate { get; set; }
+        public string LwOperationId { get; set; }
     }
 }

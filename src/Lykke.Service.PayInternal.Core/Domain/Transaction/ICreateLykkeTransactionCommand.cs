@@ -12,8 +12,6 @@
 
         int Confirmations { get; set; }
 
-        BlockchainType Blockchain { get; set; }
-
         TransactionType Type { get; set; }
 
         TransactionIdentityType IdentityType { get; set; }

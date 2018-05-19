@@ -74,7 +74,8 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())
                 .ForSourceMember(src => src.PaymentRequestId, opt => opt.Ignore())
                 .ForSourceMember(src => src.AssetPairId, opt => opt.Ignore())
-                .ForSourceMember(src => src.SettlementAmount, opt => opt.Ignore());
+                .ForSourceMember(src => src.SettlementAmount, opt => opt.Ignore())
+                .ForSourceMember(src => src.LwOperationId, opt => opt.Ignore());
 
             CreateMap<IPaymentRequestTransaction, PaymentRequestTransactionModel>(MemberList.Source)
                 .ForSourceMember(src => src.Id, opt => opt.Ignore())
@@ -121,7 +122,8 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())
                 .ForSourceMember(src => src.PaymentRequestId, opt => opt.Ignore())
                 .ForSourceMember(src => src.AssetPairId, opt => opt.Ignore())
-                .ForSourceMember(src => src.SettlementAmount, opt => opt.Ignore());
+                .ForSourceMember(src => src.SettlementAmount, opt => opt.Ignore())
+                .ForSourceMember(src => src.LwOperationId, opt => opt.Ignore());
 
             CreateMap<IPaymentRequestTransaction, Contract.PaymentRequest.PaymentRequestTransaction>(MemberList.Source)
                 .ForSourceMember(src => src.Id, opt => opt.Ignore())
