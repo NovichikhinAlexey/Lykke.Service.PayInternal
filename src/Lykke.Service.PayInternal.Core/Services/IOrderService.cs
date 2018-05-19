@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Lykke.Service.PayInternal.Core.Domain.Order;
+using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 
 namespace Lykke.Service.PayInternal.Core.Services
@@ -12,5 +12,7 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task<IOrder> GetActualAsync(string paymentRequestId, DateTime date);
         
         Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest, bool force = false);
+
+        Task<IOrder> GetByLykkeOperationAsync(string operationId);
     }
 }

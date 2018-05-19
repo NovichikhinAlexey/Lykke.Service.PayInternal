@@ -123,6 +123,10 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<LykkeAssetsResolver>()
                 .As<ILykkeAssetsResolver>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.AssetsMap));
+
+            builder.RegisterType<LykkeOffchainApiClient>()
+                .Keyed<IBlockchainApiClient>(BlockchainType.Lykke)
+                .SingleInstance();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)

@@ -7,12 +7,13 @@ using Common;
 using Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
-using Lykke.Service.PayInternal.Core.Domain.Order;
+using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Services.Domain;
+using Order = Lykke.Service.PayInternal.Services.Domain.Order;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -49,7 +50,7 @@ namespace Lykke.Service.PayInternal.Services
             if (string.IsNullOrEmpty(paymentRequestId) || string.IsNullOrEmpty(orderId))
                 return null;
 
-            return await _orderRepository.GetAsync(paymentRequestId, orderId);
+            return await _orderRepository.GetByPaymentRequestAsync(paymentRequestId, orderId);
         }
 
         public async Task<IOrder> GetActualAsync(string paymentRequestId, DateTime date)
@@ -57,7 +58,7 @@ namespace Lykke.Service.PayInternal.Services
             if (string.IsNullOrEmpty(paymentRequestId))
                 return null;
 
-            IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequestId);
+            IReadOnlyList<IOrder> orders = await _orderRepository.GetByPaymentRequestAsync(paymentRequestId);
 
             return orders
                 .Where(o => date < o.ExtendedDueDate)
@@ -67,7 +68,7 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest, bool force = false)
         {
-            IReadOnlyList<IOrder> orders = await _orderRepository.GetAsync(paymentRequest.Id);
+            IReadOnlyList<IOrder> orders = await _orderRepository.GetByPaymentRequestAsync(paymentRequest.Id);
 
             IOrder latestOrder = orders.OrderByDescending(x => x.ExtendedDueDate).FirstOrDefault();
 
@@ -154,6 +155,11 @@ namespace Lykke.Service.PayInternal.Services
                 "Order created.");
 
             return createdOrder;
+        }
+
+        public Task<IOrder> GetByLykkeOperationAsync(string operationId)
+        {
+            return _orderRepository.GetByLykkeOperationAsync(operationId);
         }
     }
 }

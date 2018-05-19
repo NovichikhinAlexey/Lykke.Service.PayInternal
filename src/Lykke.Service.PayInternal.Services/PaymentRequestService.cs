@@ -7,7 +7,7 @@ using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
-using Lykke.Service.PayInternal.Core.Domain.Order;
+using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;

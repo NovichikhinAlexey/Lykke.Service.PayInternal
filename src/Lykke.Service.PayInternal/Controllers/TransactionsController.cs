@@ -37,6 +37,51 @@ namespace Lykke.Service.PayInternal.Controllers
             _transactionsManager = transactionsManager;
         }
 
+        [HttpPost]
+        [Route("payment/lykke")]
+        [SwaggerOperation(nameof(CreateLykkePaymentTransacton))]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
+        public async Task<IActionResult> CreateLykkePaymentTransacton([FromBody] CreateLykkeTransactionRequest request)
+        {
+            try
+            {
+                var command = Mapper.Map<CreateLykkeTransactionCommand>(request,
+                    opts => opts.Items["TransactionType"] = TransactionType.Payment);
+
+                await _transactionsManager.CreateLykkeTransactionAsync(command);
+
+                await _log.WriteInfoAsync(nameof(TransactionsController), nameof(CreateLykkePaymentTransacton),
+                    command.ToJson(), "Create new lykke transaction command");
+
+                return Ok();
+            }
+            catch (LykkeOperationOrderNotFoundException operationEx)
+            {
+                _log.WriteError(nameof(CreateLykkePaymentTransacton), new {operationEx.OperationId}, operationEx);
+
+                return BadRequest(ErrorResponse.Create(operationEx.Message));
+            }
+            catch (PaymentRequestNotFoundException ex)
+            {
+                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreateLykkePaymentTransacton), new
+                {
+                    ex.MerchantId,
+                    ex.WalletAddress,
+                    ex.PaymentRequestId
+                }.ToJson(), ex);
+
+                return BadRequest(ErrorResponse.Create(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreateLykkePaymentTransacton), ex);
+
+                throw;
+            }
+        }
+
         /// <summary>
         /// Creates payment transaction
         /// </summary>

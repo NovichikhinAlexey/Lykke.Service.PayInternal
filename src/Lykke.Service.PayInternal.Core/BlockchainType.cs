@@ -1,11 +1,28 @@
 ﻿namespace Lykke.Service.PayInternal.Core
 {
+    /// <summary>
+    /// Blockchain type
+    /// </summary>
     public enum BlockchainType
     {
+        /// <summary>
+        /// Not a blockchain
+        /// </summary>
         None = 0,
 
+        /// <summary>
+        /// Bitcoin blockchain
+        /// </summary>
         Bitcoin,
 
-        Ethereum
+        /// <summary>
+        /// Ethereum blockchain
+        /// </summary>
+        Ethereum,
+
+        /// <summary>
+        /// Lykke offchain
+        /// </summary>
+        Lykke
     }
 }
