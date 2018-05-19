@@ -213,12 +213,6 @@ namespace Lykke.Service.PayInternal.Client
         /// <returns></returns>
         Task SetPersonalAvailableAssetsAsync(UpdateAssetAvailabilityByMerchantRequest request);
 
-        /// <summary>
-        /// Return payment transactions
-        /// </summary>
-        /// <param name="paymentRequestId"></param>
-        /// <returns></returns>
-        Task<IReadOnlyList<string>> GetTransactionsSourceWalletsAsync(string paymentRequestId);
         /// Cancels payment request
         /// </summary>
         /// <param name="merchantId">Merchant id</param>
