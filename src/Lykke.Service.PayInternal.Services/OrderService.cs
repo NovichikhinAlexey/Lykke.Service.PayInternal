@@ -156,5 +156,10 @@ namespace Lykke.Service.PayInternal.Services
 
             return createdOrder;
         }
+
+        public Task<IOrder> GetByLykkeOperationAsync(string operationId)
+        {
+            return _orderRepository.GetByLykkeOperationAsync(operationId);
+        }
     }
 }

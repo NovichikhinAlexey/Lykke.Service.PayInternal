@@ -14,6 +14,9 @@ namespace Lykke.Service.PayInternal.Client.Api
         [Post("/api/transactions/payment")]
         Task CreatePaymentTransactionAsync([Body] CreateTransactionRequest request);
 
+        [Post("/api/transactions/payment/lykke")]
+        Task CreateLykkePaymentTransactionAsync([Body] CreateLykkeTransactionRequest request);
+
         [Put("/api/transactions")]
         Task UpdateTransactionAsync([Body] UpdateTransactionRequest request);
 

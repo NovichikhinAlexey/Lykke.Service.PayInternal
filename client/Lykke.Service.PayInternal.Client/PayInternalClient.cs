@@ -67,6 +67,11 @@ namespace Lykke.Service.PayInternal.Client
             await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.CreatePaymentTransactionAsync(request));
         }
 
+        public async Task CreateLykkePaymentTransactionAsync(CreateLykkeTransactionRequest request)
+        {
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.CreateLykkePaymentTransactionAsync(request));
+        }
+
         public async Task UpdateTransactionAsync(UpdateTransactionRequest request)
         {
             await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.UpdateTransactionAsync(request));

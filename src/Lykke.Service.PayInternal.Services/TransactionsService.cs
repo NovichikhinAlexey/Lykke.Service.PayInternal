@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Services.Domain;
 
@@ -18,16 +19,19 @@ namespace Lykke.Service.PayInternal.Services
     {
         private readonly IPaymentRequestTransactionRepository _transactionRepository;
         private readonly IPaymentRequestRepository _paymentRequestRepository;
+        private readonly IOrderService _orderService;
         private readonly int _transactionConfirmationCount;
 
         public TransactionsService(
-            IPaymentRequestTransactionRepository transactionRepository,
-            IPaymentRequestRepository paymentRequestRepository,
-            int transactionConfirmationCount)
+            [NotNull] IPaymentRequestTransactionRepository transactionRepository,
+            [NotNull] IPaymentRequestRepository paymentRequestRepository,
+            int transactionConfirmationCount,
+            [NotNull] IOrderService orderService)
         {
-            _transactionRepository = transactionRepository;
-            _paymentRequestRepository = paymentRequestRepository;
+            _transactionRepository = transactionRepository ?? throw new ArgumentNullException(nameof(transactionRepository));
+            _paymentRequestRepository = paymentRequestRepository ?? throw new ArgumentNullException(nameof(paymentRequestRepository));
             _transactionConfirmationCount = transactionConfirmationCount;
+            _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
         }
 
         public Task<IReadOnlyList<IPaymentRequestTransaction>> GetByWalletAsync(string walletAddress)
@@ -61,7 +65,7 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IPaymentRequestTransaction> CreateTransactionAsync(ICreateTransactionCommand request)
         {
-            var paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
+            IPaymentRequest paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
 
             if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(request.WalletAddress);
@@ -81,6 +85,38 @@ namespace Lykke.Service.PayInternal.Services
                 Mapper.Map<PaymentRequestTransaction>(request, opts => opts.Items["PaymentRequest"] = paymentRequest);
 
             return await _transactionRepository.AddAsync(transactionEntity);
+        }
+
+        public async Task<IPaymentRequestTransaction> CreateLykkeTransactionAsync(ICreateLykkeTransactionCommand request)
+        {
+            IOrder order = await _orderService.GetByLykkeOperationAsync(request.OperationId);
+
+            if (order == null)
+                throw new LykkeOperationOrderNotFoundException(request.OperationId);
+
+            IPaymentRequest paymentRequest =
+                await _paymentRequestRepository.GetAsync(order.MerchantId, order.PaymentRequestId);
+
+            if (paymentRequest == null)
+                throw new PaymentRequestNotFoundException(order.MerchantId, order.PaymentRequestId);
+
+            var tx = new PaymentRequestTransaction
+            {
+                Blockchain = BlockchainType.Lykke,
+                Amount = request.Amount,
+                AssetId = request.AssetId,
+                IdentityType = request.IdentityType,
+                Identity = request.Identity,
+                Confirmations = request.Confirmations,
+                CreatedOn = DateTime.UtcNow,
+                SourceWalletAddresses = request.SourceWalletAddresses,
+                TransactionType = request.Type,
+                PaymentRequestId = paymentRequest.Id,
+                WalletAddress = paymentRequest.WalletAddress,
+                DueDate = paymentRequest.DueDate,
+            };
+
+            return await _transactionRepository.AddAsync(tx);
         }
 
         public async Task UpdateAsync(IUpdateTransactionCommand request)

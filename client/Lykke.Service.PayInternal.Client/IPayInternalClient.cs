@@ -30,6 +30,13 @@ namespace Lykke.Service.PayInternal.Client
         Task CreatePaymentTransactionAsync(CreateTransactionRequest request);
 
         /// <summary>
+        /// Creates lykke transaction of payment type
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task CreateLykkePaymentTransactionAsync(CreateLykkeTransactionRequest request);
+
+        /// <summary>
         /// Updates transaction
         /// </summary>
         /// <param name="request"></param>

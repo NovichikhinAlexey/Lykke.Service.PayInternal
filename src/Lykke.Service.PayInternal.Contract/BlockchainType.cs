@@ -18,6 +18,11 @@
         /// <summary>
         /// Ethereum blockchain
         /// </summary>
-        Ethereum
+        Ethereum,
+
+        /// <summary>
+        /// Lykke offchain
+        /// </summary>
+        Lykke
     }
 }

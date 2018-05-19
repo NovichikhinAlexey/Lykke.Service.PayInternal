@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using AzureStorage.Tables.Templates;
 using Lykke.Service.EthereumCore.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -28,6 +27,11 @@ namespace Lykke.Service.PayInternal.Services
                     opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
                         dest.Type = (TransactionType) resContext.Items["TransactionType"]))
                 .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<VirtualAddressResolver>());
+
+            CreateMap<ICreateLykkeTransactionRequest, CreateLykkeTransactionCommand>(MemberList.Destination)
+                .ForMember(dest => dest.Type,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.Type = (TransactionType) resContext.Items["TransactionType"]));
 
             CreateMap<IUpdateTransactionRequest, UpdateTransactionCommand>(MemberList.Destination)
                 .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<VirtualAddressResolver>());

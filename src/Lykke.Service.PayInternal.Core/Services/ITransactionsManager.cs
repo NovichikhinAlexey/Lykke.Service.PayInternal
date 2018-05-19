@@ -7,6 +7,8 @@ namespace Lykke.Service.PayInternal.Core.Services
     {
         Task<IPaymentRequestTransaction> CreateTransactionAsync(ICreateTransactionCommand command);
 
+        Task<IPaymentRequestTransaction> CreateLykkeTransactionAsync(ICreateLykkeTransactionCommand command);
+
         Task UpdateTransactionAsync(IUpdateTransactionCommand command);
     }
 }

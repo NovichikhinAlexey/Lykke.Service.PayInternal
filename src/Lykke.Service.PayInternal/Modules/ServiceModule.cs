@@ -123,6 +123,10 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<MarkupService>()
                 .As<IMarkupService>();
+
+            builder.RegisterType<LykkeOffchainApiClient>()
+                .Keyed<IBlockchainApiClient>(BlockchainType.Lykke)
+                .SingleInstance();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)

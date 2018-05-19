@@ -22,7 +22,16 @@ namespace Lykke.Service.PayInternal.Services
         {
             IPaymentRequestTransaction transaction = await _transactionsService.CreateTransactionAsync(command);
 
-            await _paymentRequestService.UpdateStatusAsync(command.WalletAddress);
+            await _paymentRequestService.UpdateStatusAsync(transaction.WalletAddress);
+
+            return transaction;
+        }
+
+        public async Task<IPaymentRequestTransaction> CreateLykkeTransactionAsync(ICreateLykkeTransactionCommand command)
+        {
+            IPaymentRequestTransaction transaction = await _transactionsService.CreateLykkeTransactionAsync(command);
+
+            await _paymentRequestService.UpdateStatusAsync(transaction.WalletAddress);
 
             return transaction;
         }
