@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using AzureStorage.Tables.Templates;
 using Lykke.Service.EthereumCore.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;

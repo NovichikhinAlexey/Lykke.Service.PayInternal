@@ -131,13 +131,13 @@ namespace Lykke.Service.PayInternal.Services
                 }
 
                 if (transferResult.Transactions.All(x => x.HasError))
-                    throw new OperationFailedException(transferResult.Transactions.Select(x => x.Error).ToJson());
+                    throw new RefundOperationFailedException{TransferErrors = transferResult.Transactions.Select(x => x.Error)};
 
                 IEnumerable<TransferTransactionResult> errorTransactions =
                     transferResult.Transactions.Where(x => x.HasError).ToList();
 
                 if (errorTransactions.Any())
-                    throw new OperationPartiallyFailedException(errorTransactions.Select(x => x.Error).ToJson());
+                    throw new RefundOperationPartiallyFailedException(errorTransactions.Select(x => x.Error));
             }
             catch (Exception)
             {

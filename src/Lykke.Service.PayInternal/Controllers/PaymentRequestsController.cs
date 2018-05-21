@@ -233,6 +233,10 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<RefundResponseModel>(refundResult));
             }
+            catch (RefundOperationFailedException refundFailedEx)
+            {
+                await _log.WriteErrorAsync(nameof(RefundAsync), new {errors = refundFailedEx.TransferErrors}.ToJson(), refundFailedEx);
+            }
             catch (AssetUnknownException assetEx)
             {
                 await _log.WriteErrorAsync(nameof(RefundAsync), new {assetEx.Asset}.ToJson(), assetEx);
