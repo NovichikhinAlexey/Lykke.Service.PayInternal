@@ -12,7 +12,6 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public ExpirationPeriodsSettings ExpirationPeriods { get; set; }
         public LpMarkupSettings LpMarkup { get; set; }
         public int TransactionConfirmationCount { get; set; }
-        public BlockchainExplorerSettings LykkeBlockchainExplorer { get; set; }
         public AssetsAvailabilitySettings AssetsAvailability { get; set; }
         public BlockchainSettings Blockchain { get; set; }
         public JobPeriods JobPeriods { get; set; }
@@ -28,6 +27,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     {
         public string TransactionUrl { get; set; }
     }
+
     public class AssetsAvailabilitySettings
     {
         public string PaymentAssets { get; set; }
@@ -51,7 +51,6 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     {
         public BlockchainWalletAllocationSettings WalletAllocationPolicy { get; set; }
         public BitcoinSettings Bitcoin { get; set; }
-
         public EthereumBlockchainSettings Ethereum { get; set; }
     }
 
@@ -75,6 +74,8 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class BitcoinSettings
     {
         public string Network { get; set; }
+        public BlockchainExplorerSettings BlockchainExplorer { get; set; }
+
     }
 
     public class JobPeriods
@@ -85,5 +86,6 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class EthereumBlockchainSettings
     {
         public string ApiKey { get; set; }
+        public BlockchainExplorerSettings BlockchainExplorer { get; set; }
     }
 }

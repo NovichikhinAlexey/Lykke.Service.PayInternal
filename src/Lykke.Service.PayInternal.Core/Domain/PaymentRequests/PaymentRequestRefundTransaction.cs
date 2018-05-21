@@ -11,5 +11,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
         public DateTime Timestamp { get; set; }
 
         public int NumberOfConfirmations { get; set; }
+
+        public BlockchainType Blockchain { get; set; }
     }
 }

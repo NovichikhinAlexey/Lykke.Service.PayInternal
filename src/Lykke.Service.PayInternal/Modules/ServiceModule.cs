@@ -123,6 +123,10 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<MarkupService>()
                 .As<IMarkupService>();
+
+            builder.RegisterType<BcnExplorerResolver>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain))
+                .As<IBcnExplorerResolver>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
@@ -190,12 +194,10 @@ namespace Lykke.Service.PayInternal.Modules
         {
             builder.RegisterType<PaymentTxUrlValueResolver>()
                 .AsSelf()
-                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LykkeBlockchainExplorer))
                 .SingleInstance();
 
             builder.RegisterType<RefundTxUrlValueResolver>()
                 .AsSelf()
-                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LykkeBlockchainExplorer))
                 .SingleInstance();
 
             builder.RegisterType<PaymentRequestBcnWalletAddressValueResolver>()

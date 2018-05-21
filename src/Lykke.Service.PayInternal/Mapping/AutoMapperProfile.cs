@@ -102,9 +102,10 @@ namespace Lykke.Service.PayInternal.Mapping
             CreateMap<RefundResult, RefundResponseModel>(MemberList.Source)
                 .ForSourceMember(src => src.PaymentRequestWalletAddress, opt => opt.Ignore());
 
-            CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefundTransaction, PaymentRequestRefundTransactionModel
-                >(MemberList.Source)
-                .ForMember(dest => dest.Url, opt => opt.ResolveUsing<RefundTxUrlValueResolver>());
+            CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefundTransaction, PaymentRequestRefundTransactionModel>(MemberList.Source)
+                .ForMember(dest => dest.Url, opt => opt.ResolveUsing<RefundTxUrlValueResolver>())
+                // todo: add the field and allow mapping
+                .ForSourceMember(src => src.Blockchain, opt => opt.Ignore());
 
             CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefund, PaymentRequestRefundModel>(MemberList.Source);
         }
@@ -138,9 +139,10 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId))
                 .ForMember(dest => dest.Url, opt => opt.ResolveUsing<PaymentTxUrlValueResolver>());
 
-            CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefundTransaction,
-                    Contract.PaymentRequest.PaymentRequestRefundTransaction>(MemberList.Destination)
-                .ForMember(dest => dest.Url, opt => opt.ResolveUsing<RefundTxUrlValueResolver>());
+            CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefundTransaction, Contract.PaymentRequest.PaymentRequestRefundTransaction>(MemberList.Destination)
+                .ForMember(dest => dest.Url, opt => opt.ResolveUsing<RefundTxUrlValueResolver>())
+                // todo: add the field and allow mapping
+                .ForSourceMember(src => src.Blockchain, opt => opt.Ignore());
 
             CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefund, Contract.PaymentRequest.PaymentRequestRefund>();
         }
