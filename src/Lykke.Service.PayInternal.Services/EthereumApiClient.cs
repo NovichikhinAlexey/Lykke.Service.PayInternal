@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common;
 using Common.Log;
+using JetBrains.Annotations;
+using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.EthereumCore.Client.Models;
@@ -21,20 +24,24 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IEthereumCoreAPI _ethereumServiceClient;
         private readonly EthereumBlockchainSettings _ethereumSettings;
         private readonly IAssetsLocalCache _assetsLocalCache;
+        private readonly IAssetsService _assetsService;
         private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
 
         public EthereumApiClient(
-            IEthereumCoreAPI ethereumServiceClient, 
-            EthereumBlockchainSettings ethereumSettings, 
-            ILog log, 
-            IAssetsLocalCache assetsLocalCache, ILykkeAssetsResolver lykkeAssetsResolver)
+            [NotNull] IEthereumCoreAPI ethereumServiceClient,
+            [NotNull] EthereumBlockchainSettings ethereumSettings,
+            [NotNull] ILog log,
+            [NotNull] IAssetsLocalCache assetsLocalCache,
+            [NotNull] ILykkeAssetsResolver lykkeAssetsResolver,
+            [NotNull] IAssetsService assetsService)
         {
             _ethereumServiceClient = ethereumServiceClient ?? throw new ArgumentNullException(nameof(ethereumServiceClient));
             _ethereumSettings = ethereumSettings ?? throw new ArgumentNullException(nameof(ethereumSettings));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
-            _log = log?.CreateComponentScope(nameof(EthereumApiClient)) ?? throw new ArgumentNullException(nameof(log));
+            _assetsService = assetsService ?? throw new ArgumentNullException(nameof(assetsLocalCache));
+            _log = log.CreateComponentScope(nameof(EthereumApiClient)) ?? throw new ArgumentNullException(nameof(log));
         }
 
         public async Task<BlockchainTransferResult> TransferAsync(BlockchainTransferCommand transfer)
@@ -48,10 +55,15 @@ namespace Lykke.Service.PayInternal.Services
             if (asset.Type != AssetType.Erc20Token || !asset.IsTradable)
                 throw new AssetNotSupportedException(asset.Name);
 
+            ListOfErc20Token tokenSpecification =
+                await _assetsService.Erc20TokenGetBySpecificationAsync(new Erc20TokenSpecification {Ids = new[] {asset.Id}});
+
+            string tokenAddress = tokenSpecification?.Items.SingleOrDefault(x => x.AssetId == asset.Id)?.Address;
+
             foreach (TransferAmount transferAmount in transfer.Amounts)
             {
                 var transferRequest = Mapper.Map<TransferFromDepositRequest>(transferAmount,
-                    opts => opts.Items["TokenAddress"] = asset.AssetAddress);
+                    opts => opts.Items["TokenAddress"] = tokenAddress);
 
                 object response = await _ethereumServiceClient.ApiLykkePayErc20depositsTransferPostAsync(
                     _ethereumSettings.ApiKey, transferRequest);
