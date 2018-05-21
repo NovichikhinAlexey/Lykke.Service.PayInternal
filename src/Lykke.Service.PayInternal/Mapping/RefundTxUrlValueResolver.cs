@@ -1,27 +1,24 @@
 ﻿using System;
 using AutoMapper;
-using Common;
+using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
-using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
+using Lykke.Service.PayInternal.Core.Services;
 
 namespace Lykke.Service.PayInternal.Mapping
 {
     public class RefundTxUrlValueResolver : IValueResolver<PaymentRequestRefundTransaction, object, string>
     {
-        private readonly BlockchainExplorerSettings _blockchainExplorerSettings;
+        private readonly IBcnExplorerResolver _bcnExplorerResolver;
 
-        public RefundTxUrlValueResolver(BlockchainExplorerSettings blockchainExplorerSettings)
+        public RefundTxUrlValueResolver([NotNull] IBcnExplorerResolver bcnExplorerResolver)
         {
-            _blockchainExplorerSettings = blockchainExplorerSettings ??
-                                          throw new ArgumentNullException(nameof(blockchainExplorerSettings));
+            _bcnExplorerResolver = bcnExplorerResolver ?? throw new ArgumentNullException(nameof(bcnExplorerResolver));
         }
 
         public string Resolve(PaymentRequestRefundTransaction source, object destination, string destMember,
             ResolutionContext context)
         {
-            var uri = new Uri(new Uri(_blockchainExplorerSettings.TransactionUrl.AddLastSymbolIfNotExists('/')), source.Hash);
-
-            return uri.ToString();
+            return _bcnExplorerResolver.GetExplorerUrl(source.Blockchain, source.Hash);
         }
     }
 }
