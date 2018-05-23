@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using AzureStorage;
+using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 
@@ -12,33 +14,40 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
     {
         private readonly INoSQLTableStorage<AssetAvailabilityEntity> _tableStorage;
 
-        public AssetGeneralAvailabilityRepository(INoSQLTableStorage<AssetAvailabilityEntity> tableStorage)
+        public AssetGeneralAvailabilityRepository([NotNull] INoSQLTableStorage<AssetAvailabilityEntity> tableStorage)
         {
             _tableStorage = tableStorage ?? throw new ArgumentNullException(nameof(tableStorage));
         }
 
-        public async Task<IReadOnlyList<IAssetAvailability>> GetAsync(AssetAvailabilityType availability)
+        public async Task<IReadOnlyList<IAssetAvailability>> GetByTypeAsync(AssetAvailabilityType availabilityType)
         {
             IList<AssetAvailabilityEntity> result = await _tableStorage.GetDataAsync(a =>
             {
-                switch (availability)
+                switch (availabilityType)
                 {
                     case AssetAvailabilityType.Payment:
                         return a.PaymentAvailable;
                     case AssetAvailabilityType.Settlement:
                         return a.SettlementAvailable;
                     default:
-                        throw new Exception($"Unexpected asset availability type {availability.ToString()}");
+                        throw new Exception($"Unexpected asset availability type {availabilityType.ToString()}");
                 }
             });
 
-            return result.ToList();
+            return Mapper.Map<IList<AssetAvailability>>(result).ToList();
         }
 
-        public async Task<IAssetAvailability> SetAsync(string assetId, AssetAvailabilityType availability, bool value)
+        public async Task<IReadOnlyList<IAssetAvailability>> GetAsync()
         {
-            string partitionKey = AssetAvailabilityEntity.ByAsset.GeneratePartitionKey(assetId);
-            string rowKey = AssetAvailabilityEntity.ByAsset.GenerateRowKey(assetId);
+            IList<AssetAvailabilityEntity> result = await _tableStorage.GetDataAsync();
+
+            return Mapper.Map<IList<AssetAvailability>>(result).ToList();
+        }
+
+        public async Task<IAssetAvailability> SetAsync(IAssetAvailability availability)
+        {
+            string partitionKey = AssetAvailabilityEntity.ByAsset.GeneratePartitionKey(availability.AssetId);
+            string rowKey = AssetAvailabilityEntity.ByAsset.GenerateRowKey(availability.AssetId);
 
             AssetAvailabilityEntity exItem = await _tableStorage.GetDataAsync(partitionKey, rowKey);
 
@@ -46,34 +55,21 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
             {
                 AssetAvailabilityEntity merged = await _tableStorage.MergeAsync(partitionKey, rowKey, item =>
                 {
-                    switch (availability)
-                    {
-                        case AssetAvailabilityType.Payment:
-                            item.PaymentAvailable = value;
-                            break;
-                        case AssetAvailabilityType.Settlement:
-                            item.SettlementAvailable = value;
-                            break;
-                        default:
-                            throw new Exception($"Unexpected asset availability type {availability.ToString()}");
-                    }
+                    item.PaymentAvailable = availability.PaymentAvailable;
+                    item.SettlementAvailable = availability.SettlementAvailable;
+                    item.Network = availability.Network;
 
                     return item;
                 });
 
-                return merged;
+                return Mapper.Map<AssetAvailability>(merged);
             }
 
-            var newItem = AssetAvailabilityEntity.ByAsset.Create(new AssetAvailability
-            {
-                AssetId = assetId,
-                PaymentAvailable = availability == AssetAvailabilityType.Payment && value,
-                SettlementAvailable = availability == AssetAvailabilityType.Settlement && value
-            });
+            var newItem = AssetAvailabilityEntity.ByAsset.Create(availability);
 
             await _tableStorage.InsertAsync(newItem);
 
-            return newItem;
+            return Mapper.Map<AssetAvailability>(newItem);
         }
     }
 }

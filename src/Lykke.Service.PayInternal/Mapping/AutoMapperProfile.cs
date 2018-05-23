@@ -43,6 +43,12 @@ namespace Lykke.Service.PayInternal.Mapping
 
             CreateMap<IMarkup, MarkupResponse>(MemberList.Destination);
 
+            CreateMap<IAssetAvailability, AssetGeneralSettingsResponseModel>(MemberList.Destination)
+                .ForMember(dest => dest.AssetDisplayId, opt => opt.MapFrom(src => src.AssetId));
+
+            CreateMap<UpdateAssetGeneralSettingsRequest, AssetAvailability>(MemberList.Destination)
+                .ForMember(dest => dest.AssetId, opt => opt.MapFrom(src => src.AssetDisplayId));
+
             PaymentRequestApiModels();
             PaymentRequestMessages();
         }

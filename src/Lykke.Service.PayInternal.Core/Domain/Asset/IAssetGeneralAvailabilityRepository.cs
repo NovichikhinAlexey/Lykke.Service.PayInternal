@@ -5,8 +5,10 @@ namespace Lykke.Service.PayInternal.Core.Domain.Asset
 {
     public interface IAssetGeneralAvailabilityRepository
     {
-        Task<IReadOnlyList<IAssetAvailability>> GetAsync(AssetAvailabilityType availability);
+        Task<IReadOnlyList<IAssetAvailability>> GetByTypeAsync(AssetAvailabilityType availabilityType);
 
-        Task<IAssetAvailability> SetAsync(string assetId, AssetAvailabilityType availability, bool value);
+        Task<IReadOnlyList<IAssetAvailability>> GetAsync();
+
+        Task<IAssetAvailability> SetAsync(IAssetAvailability availability);
     }
 }

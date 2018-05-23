@@ -179,11 +179,9 @@ namespace Lykke.Service.PayInternal.Client
         Task<AvailableAssetsResponse> GetAvailablePaymentAssetsAsync(string merchantId, string settlementAssetId);
 
         /// <summary>
-        /// Returns general asset availability settings by type
+        /// Returns asset general settings
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        Task<AvailableAssetsResponse> GetGeneralAvailableAssetsAsync(AssetAvailabilityType type);
+        Task<IEnumerable<AssetGeneralSettingsResponse>> GetAssetGeneralSettingsAsync();
 
         /// <summary>
         /// Returns personal asset availability settings
@@ -193,11 +191,11 @@ namespace Lykke.Service.PayInternal.Client
         Task<AvailableAssetsByMerchantResponse> GetPersonalAvailableAssetsAsync(string merchantId);
 
         /// <summary>
-        /// Updates general asset availability settings
+        ///  Updates asset general settings
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        Task SetGeneralAvailableAssetsAsync(UpdateAssetAvailabilityRequest request);
+        Task SetAssetGeneralSettingsAsync(UpdateAssetGeneralSettingsRequest request);
 
         /// <summary>
         /// Updates personal asset availability settings

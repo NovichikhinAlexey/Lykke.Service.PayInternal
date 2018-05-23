@@ -78,15 +78,19 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IReadOnlyList<IAssetAvailability>> GetGeneralByTypeAsync(AssetAvailabilityType type)
         {
-            return await _assetGeneralAvailabilityRepository.GetAsync(type);
+            return await _assetGeneralAvailabilityRepository.GetByTypeAsync(type);
         }
 
-        public async Task<IAssetAvailability> SetGeneralAsync(string assetId, AssetAvailabilityType type, bool value)
+        public async Task<IReadOnlyList<IAssetAvailability>> GetGeneralAsync()
         {
-            return await _assetGeneralAvailabilityRepository.SetAsync(assetId, type, value);
+            return await _assetGeneralAvailabilityRepository.GetAsync();
         }
 
-        //todo: move to private
+        public async Task<IAssetAvailability> SetGeneralAsync(IAssetAvailability availability)
+        {
+            return await _assetGeneralAvailabilityRepository.SetAsync(availability);
+        }
+
         public async Task<IReadOnlyList<string>> ResolveAsync(string merchantId, AssetAvailabilityType type)
         {
             IAssetAvailabilityByMerchant personal = await _assetPersonalAvailabilityRepository.GetAsync(merchantId);
@@ -106,7 +110,7 @@ namespace Lykke.Service.PayInternal.Services
             }
 
             IEnumerable<string> generalAllowed =
-                (await _assetGeneralAvailabilityRepository.GetAsync(type)).Select(x => x.AssetId);
+                (await _assetGeneralAvailabilityRepository.GetByTypeAsync(type)).Select(x => x.AssetId);
 
             IEnumerable<string> resolved = allowedAssets.Split(AssetsSeparator).Where(x => generalAllowed.Contains(x));
 

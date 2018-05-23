@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common;
 using Common.Log;
 using Lykke.Service.Assets.Client.Models;
-using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -45,67 +43,65 @@ namespace Lykke.Service.PayInternal.Controllers
         }
 
         /// <summary>
-        /// Returns general asset availability settings by type
+        /// Returns general asset settings
         /// </summary>
-        /// <param name="type"></param>
         /// <returns></returns>
         [HttpGet]
         [Route("settings/general")]
-        [SwaggerOperation("GetAssetsSettings")]
-        [ProducesResponseType(typeof(AvailableAssetsResponseModel), (int) HttpStatusCode.OK)]
-        public async Task<IActionResult> GetGeneralAssetsSettings([FromQuery] AssetAvailabilityType type)
+        [SwaggerOperation(nameof(GetAssetGeneralSettings))]
+        [ProducesResponseType(typeof(IEnumerable<AssetGeneralSettingsResponseModel>), (int) HttpStatusCode.OK)]
+        public async Task<IActionResult> GetAssetGeneralSettings()
         {
             try
             {
-                IReadOnlyList<IAssetAvailability> assets = await _assetsAvailabilityService.GetGeneralByTypeAsync(type);
+                IReadOnlyList<IAssetAvailability> assets = await _assetsAvailabilityService.GetGeneralAsync();
 
-                return Ok(new AvailableAssetsResponseModel {Assets = assets.Select(x => x.AssetId).ToList()});
+                return Ok(Mapper.Map<IReadOnlyList<AssetGeneralSettingsResponseModel>>(assets));
             }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(AssetsController), nameof(GetGeneralAssetsSettings), ex);
+                await _log.WriteErrorAsync(nameof(AssetsController), nameof(GetAssetGeneralSettings), ex);
 
                 throw;
             }
         }
 
         /// <summary>
-        /// Updates general asset availability settings
+        /// Updates general asset settings
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost]
         [Route("settings/general")]
-        [SwaggerOperation("SetAssetsSettings")]
-        [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
-        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [SwaggerOperation(nameof(SetAssetGeneralSettings))]
+        [ProducesResponseType(typeof(void), (int)HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ValidateModel]
-        public async Task<IActionResult> SetGeneralAssetsSettings([FromBody] UpdateAssetAvailabilityRequest request)
+        public async Task<IActionResult> SetAssetGeneralSettings([FromBody] UpdateAssetGeneralSettingsRequest request)
         {
             try
             {
-                string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(request.AssetId);
+                string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(request.AssetDisplayId);
 
                 Asset asset = await _assetsLocalCache.GetAssetByIdAsync(lykkeAssetId);
 
                 if (asset == null)
-                    return NotFound(ErrorResponse.Create($"Asset {request.AssetId} not found"));
+                    return NotFound(ErrorResponse.Create($"Asset {request.AssetDisplayId} not found"));
 
-                await _assetsAvailabilityService.SetGeneralAsync(request.AssetId, request.AvailabilityType,
-                    request.Value);
+                await _assetsAvailabilityService.SetGeneralAsync(Mapper.Map<AssetAvailability>(request));
 
                 return NoContent();
             }
             catch (AssetUnknownException assetEx)
             {
-                await _log.WriteErrorAsync(nameof(AssetsController), nameof(SetGeneralAssetsSettings),
-                    new {assetEx.Asset}.ToJson(), assetEx);
+                await _log.WriteErrorAsync(nameof(AssetsController), nameof(SetAssetGeneralSettings),
+                    new { assetEx.Asset }.ToJson(), assetEx);
 
                 return NotFound(ErrorResponse.Create($"Asset {assetEx.Asset} can't be resolved"));
             }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(AssetsController), nameof(SetGeneralAssetsSettings), ex);
+                await _log.WriteErrorAsync(nameof(AssetsController), nameof(SetAssetGeneralSettings), ex);
 
                 throw;
             }
