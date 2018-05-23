@@ -20,7 +20,7 @@ namespace Lykke.Service.PayInternal.Core.Settings
 
     public class BitcoinCoreSettings
     {
-        [HttpCheck("api/isalive")]
+        //[HttpCheck("api/isalive")]
         public string BitcoinCoreApiUrl { get; set; }
     }
 

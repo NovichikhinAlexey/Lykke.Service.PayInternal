@@ -8,6 +8,7 @@ using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
+using Lykke.Service.PayInternal.Client.Models.Supervisor;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -279,5 +280,25 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request">Markup values</param>
         /// <returns></returns>
         Task SetMarkupForMerchantAsync(string merchantId, string assetPairId, UpdateMarkupRequest request);
+        /// <summary>
+        /// Return list of supervising merchants for employee
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <param name="employeeId"></param>
+        /// <returns></returns>
+        Task GetSupervisingMerchantsAsync(string merchantId, string employeeId);
+        /// <summary>
+        /// Delete all supervising merchants from employee
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <param name="employeeId"></param>
+        /// <returns></returns>
+        Task DeleteSupervisingAsync(string merchantId, string employeeId);
+        /// <summary>
+        /// Add supervising merchants for employee
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        Task SetSupervisingMerchantsAsync(CreateSupervisingEmployeeRequest request);
     }
 }
