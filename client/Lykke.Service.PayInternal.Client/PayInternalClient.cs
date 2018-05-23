@@ -10,6 +10,7 @@ using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
+using Lykke.Service.PayInternal.Client.Models.Supervisor;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Microsoft.Extensions.PlatformAbstractions;
@@ -26,6 +27,7 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IPaymentRequestsApi _paymentRequestsApi;
         private readonly IAssetsApi _assetsApi;
         private readonly IMarkupsApi _markupsApi;
+        private readonly ISupervisorApi _supervisorApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -54,6 +56,7 @@ namespace Lykke.Service.PayInternal.Client
             _paymentRequestsApi = RestService.For<IPaymentRequestsApi>(_httpClient);
             _assetsApi = RestService.For<IAssetsApi>(_httpClient);
             _markupsApi = RestService.For<IMarkupsApi>(_httpClient);
+            _supervisorApi = RestService.For<ISupervisorApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
@@ -249,6 +252,21 @@ namespace Lykke.Service.PayInternal.Client
         public void Dispose()
         {
             _httpClient?.Dispose();
+        }
+
+        public async Task GetSupervisingMerchantsAsync(string merchantId, string employeeId)
+        {
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorApi.GetSupervisingMerchantsAsync(merchantId, employeeId));
+        }
+
+        public async Task DeleteSupervisingAsync(string merchantId, string employeeId)
+        {
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorApi.DeleteSupervisingMerchantsAsync(merchantId, employeeId));
+        }
+
+        public async Task SetSupervisingMerchantsAsync(CreateSupervisingEmployeeRequest request)
+        {
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorApi.SetSupervisingMerchantsAsync(request));
         }
     }
 }
