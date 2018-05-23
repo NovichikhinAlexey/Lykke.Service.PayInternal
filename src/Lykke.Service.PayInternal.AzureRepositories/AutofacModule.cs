@@ -85,12 +85,12 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                 AzureTableStorage<OrderEntity>.Create(_ordersConnectionString, ordersTableName, _log),
                 AzureTableStorage<AzureIndex>.Create(_ordersConnectionString, ordersTableName, _log)));
 
-            builder.RegisterInstance<IAssetGeneralAvailabilityRepository>(new AssetGeneralAvailabilityRepository(
-                AzureTableStorage<AssetAvailabilityEntity>.Create(_paymentRequestsConnectionString,
+            builder.RegisterInstance<IAssetGeneralSettingsRepository>(new AssetGeneralSettingsRepository(
+                AzureTableStorage<AssetGeneralSettingsEntity>.Create(_paymentRequestsConnectionString,
                     assetsAvailabilityTableName, _log)));
 
-            builder.RegisterInstance<IAssetPersonalAvailabilityRepository>(new AssetPersonalAvailabilityRepository(
-                AzureTableStorage<AssetAvailabilityByMerchantEntity>.Create(_paymentRequestsConnectionString,
+            builder.RegisterInstance<IAssetMerchantSettingsRepository>(new AssetMerchantSettingsRepository(
+                AzureTableStorage<AssetMerchantSettingsEntity>.Create(_paymentRequestsConnectionString,
                     assetsAvailabilityByMerchantTableName, _log)));
 
             builder.RegisterInstance<ITransferRepository>(new TransferRepository(

@@ -27,21 +27,21 @@ namespace Lykke.Service.PayInternal.Controllers
     {
         private readonly IPaymentRequestService _paymentRequestService;
         private readonly IRefundService _refundService;
-        private readonly IAssetsAvailabilityService _assetsAvailabilityService;
+        private readonly IAssetSettingsService _assetSettingsService;
         private readonly IPaymentRequestDetailsBuilder _paymentRequestDetailsBuilder;
         private readonly ILog _log;
 
         public PaymentRequestsController(
             IPaymentRequestService paymentRequestService,
             IRefundService refundService,
-            IAssetsAvailabilityService assetsAvailabilityService,
+            IAssetSettingsService assetSettingsService,
             ILog log, 
             IPaymentRequestDetailsBuilder paymentRequestDetailsBuilder,
             ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _paymentRequestService = paymentRequestService;
             _refundService = refundService;
-            _assetsAvailabilityService = assetsAvailabilityService;
+            _assetSettingsService = assetSettingsService;
             _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder;
             _log = log.CreateComponentScope(nameof(PaymentRequestsController));
         }
@@ -182,13 +182,13 @@ namespace Lykke.Service.PayInternal.Controllers
             try
             {
                 IReadOnlyList<string> settlementAssets =
-                    await _assetsAvailabilityService.ResolveSettlementAsync(model.MerchantId);
+                    await _assetSettingsService.ResolveSettlementAsync(model.MerchantId);
 
                 if (!settlementAssets.Contains(model.SettlementAssetId))
                     return BadRequest(ErrorResponse.Create("Settlement asset is not available"));
 
                 IReadOnlyList<string> paymentAssets =
-                    await _assetsAvailabilityService.ResolvePaymentAsync(model.MerchantId, model.SettlementAssetId);
+                    await _assetSettingsService.ResolvePaymentAsync(model.MerchantId, model.SettlementAssetId);
 
                 if (!paymentAssets.Contains(model.PaymentAssetId))
                     return BadRequest(ErrorResponse.Create("Payment asset is not available"));
