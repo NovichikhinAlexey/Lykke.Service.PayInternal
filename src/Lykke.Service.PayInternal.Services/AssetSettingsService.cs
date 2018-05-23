@@ -10,25 +10,21 @@ using Lykke.Service.PayInternal.Core.Services;
 
 namespace Lykke.Service.PayInternal.Services
 {
-    public class AssetsAvailabilityService : IAssetsAvailabilityService
+    public class AssetSettingsService : IAssetSettingsService
     {
-        private readonly IAssetGeneralAvailabilityRepository _assetGeneralAvailabilityRepository;
-        private readonly IAssetPersonalAvailabilityRepository _assetPersonalAvailabilityRepository;
+        private readonly IAssetGeneralSettingsRepository _assetGeneralSettingsRepository;
+        private readonly IAssetMerchantSettingsRepository _assetMerchantSettingsRepository;
         private readonly IMarkupService _markupService;
 
         private const char AssetsSeparator = ';';
 
-        public AssetsAvailabilityService(
-            IAssetGeneralAvailabilityRepository assetGeneralAvailabilityRepository,
-            IAssetPersonalAvailabilityRepository assetPersonalAvailabilityRepository,
+        public AssetSettingsService(
+            IAssetGeneralSettingsRepository assetGeneralAvailabilityRepository,
+            IAssetMerchantSettingsRepository assetPersonalAvailabilityRepository,
             IMarkupService markupService)
         {
-            _assetGeneralAvailabilityRepository = assetGeneralAvailabilityRepository ??
-                                                  throw new ArgumentNullException(
-                                                      nameof(assetGeneralAvailabilityRepository));
-            _assetPersonalAvailabilityRepository = assetPersonalAvailabilityRepository ??
-                                                   throw new ArgumentNullException(
-                                                       nameof(assetPersonalAvailabilityRepository));
+            _assetGeneralSettingsRepository = assetGeneralAvailabilityRepository ?? throw new ArgumentNullException(nameof(assetGeneralAvailabilityRepository));
+            _assetMerchantSettingsRepository = assetPersonalAvailabilityRepository ?? throw new ArgumentNullException(nameof(assetPersonalAvailabilityRepository));
             _markupService = markupService ?? throw new ArgumentNullException(nameof(markupService));
         }
 
@@ -65,40 +61,40 @@ namespace Lykke.Service.PayInternal.Services
         {
             string assetIdAdjusted = assetId == LykkeConstants.SatoshiAsset ? LykkeConstants.BitcoinAsset : assetId;
 
-            IAssetAvailability assetAvailability = await _assetGeneralAvailabilityRepository.GetAsync(assetIdAdjusted);
+            IAssetGeneralSettings assetAvailability = await _assetGeneralSettingsRepository.GetAsync(assetIdAdjusted);
 
             return assetAvailability?.Network ?? throw new Exception($"Blockchain network is not defined for asset [{assetId}]");
         }
 
-        public async Task<IAssetAvailabilityByMerchant> GetPersonalAsync(string merchantId)
+        public async Task<IAssetMerchantSettings> GetByMerchantAsync(string merchantId)
         {
-            return await _assetPersonalAvailabilityRepository.GetAsync(merchantId);
+            return await _assetMerchantSettingsRepository.GetAsync(merchantId);
         }
 
-        public async Task<IAssetAvailabilityByMerchant> SetPersonalAsync(string merchantId, string paymentAssets,
+        public async Task<IAssetMerchantSettings> SetByMerchantAsync(string merchantId, string paymentAssets,
             string settlementAssets)
         {
-            return await _assetPersonalAvailabilityRepository.SetAsync(paymentAssets, settlementAssets, merchantId);
+            return await _assetMerchantSettingsRepository.SetAsync(paymentAssets, settlementAssets, merchantId);
         }
 
-        public async Task<IReadOnlyList<IAssetAvailability>> GetGeneralByTypeAsync(AssetAvailabilityType type)
+        public async Task<IReadOnlyList<IAssetGeneralSettings>> GetGeneralAsync(AssetAvailabilityType type)
         {
-            return await _assetGeneralAvailabilityRepository.GetByTypeAsync(type);
+            return await _assetGeneralSettingsRepository.GetAsync(type);
         }
 
-        public async Task<IReadOnlyList<IAssetAvailability>> GetGeneralAsync()
+        public async Task<IReadOnlyList<IAssetGeneralSettings>> GetGeneralAsync()
         {
-            return await _assetGeneralAvailabilityRepository.GetAsync();
+            return await _assetGeneralSettingsRepository.GetAsync();
         }
 
-        public async Task<IAssetAvailability> SetGeneralAsync(IAssetAvailability availability)
+        public async Task<IAssetGeneralSettings> SetGeneralAsync(IAssetGeneralSettings availability)
         {
-            return await _assetGeneralAvailabilityRepository.SetAsync(availability);
+            return await _assetGeneralSettingsRepository.SetAsync(availability);
         }
 
         public async Task<IReadOnlyList<string>> ResolveAsync(string merchantId, AssetAvailabilityType type)
         {
-            IAssetAvailabilityByMerchant personalSettings = await _assetPersonalAvailabilityRepository.GetAsync(merchantId);
+            IAssetMerchantSettings personalSettings = await _assetMerchantSettingsRepository.GetAsync(merchantId);
 
             string personalAllowed;
 
@@ -114,7 +110,7 @@ namespace Lykke.Service.PayInternal.Services
                     throw new Exception("Unexpected asset availability type");
             }
 
-            IEnumerable<string> generalAllowed = (await _assetGeneralAvailabilityRepository.GetByTypeAsync(type)).Select(x => x.AssetId);
+            IEnumerable<string> generalAllowed = (await _assetGeneralSettingsRepository.GetAsync(type)).Select(x => x.AssetId);
 
             if (string.IsNullOrEmpty(personalAllowed))
                 return generalAllowed.ToList();

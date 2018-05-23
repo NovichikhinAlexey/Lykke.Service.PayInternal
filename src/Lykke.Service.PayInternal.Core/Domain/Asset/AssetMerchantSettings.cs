@@ -1,6 +1,6 @@
-﻿namespace Lykke.Service.PayInternal.Models.Assets
+﻿namespace Lykke.Service.PayInternal.Core.Domain.Asset
 {
-    public class AssetAvailabilityByMerchantResponse
+    public class AssetMerchantSettings : IAssetMerchantSettings
     {
         public string MerchantId { get; set; }
 

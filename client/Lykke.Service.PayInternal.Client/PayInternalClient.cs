@@ -176,9 +176,9 @@ namespace Lykke.Service.PayInternal.Client
             return await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetAssetGeneralSettingsAsync());
         }
 
-        public Task<AvailableAssetsByMerchantResponse> GetPersonalAvailableAssetsAsync(string merchantId)
+        public Task<AssetMerchantSettingsResponse> GetAssetMerchantSettingsAsync(string merchantId)
         {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetPersonalAvailableAssetsAsync(merchantId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetAssetMerchantSettingsAsync(merchantId));
         }
 
         public async Task SetAssetGeneralSettingsAsync(UpdateAssetGeneralSettingsRequest request)
@@ -186,9 +186,9 @@ namespace Lykke.Service.PayInternal.Client
             await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetAssetGeneralSettingsAsync(request));
         }
 
-        public async Task SetPersonalAvailableAssetsAsync(UpdateAssetAvailabilityByMerchantRequest request)
+        public async Task SetAssetMerchantSettingsAsync(UpdateAssetMerchantSettingsRequest settingsRequest)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetPersonalAvailableAssetsAsync(request));
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetAssetMerchantSettingsAsync(settingsRequest));
         }
 
         public async Task CancelAsync(string merchantId, string paymentRequestId)

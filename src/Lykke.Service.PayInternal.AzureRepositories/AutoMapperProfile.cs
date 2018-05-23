@@ -47,9 +47,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories
 
             CreateMap<MarkupEntity, Core.Domain.Markup.Markup>(MemberList.Destination);
 
-            CreateMap<IAssetAvailability, AssetAvailabilityEntity>(MemberList.Source);
+            CreateMap<IAssetGeneralSettings, AssetGeneralSettingsEntity>(MemberList.Source);
 
-            CreateMap<AssetAvailabilityEntity, AssetAvailability>(MemberList.Destination);
+            CreateMap<AssetGeneralSettingsEntity, AssetGeneralSettings>(MemberList.Destination);
         }
     }
 }

@@ -5,25 +5,25 @@ using Lykke.Service.PayInternal.Core.Domain.Asset;
 
 namespace Lykke.Service.PayInternal.Core.Services
 {
-    public interface IAssetsAvailabilityService
+    public interface IAssetSettingsService
     {
-        #region general settings
+        #region general
 
-        Task<IReadOnlyList<IAssetAvailability>> GetGeneralByTypeAsync(AssetAvailabilityType type);
+        Task<IReadOnlyList<IAssetGeneralSettings>> GetGeneralAsync();
 
-        Task<IReadOnlyList<IAssetAvailability>> GetGeneralAsync();
+        Task<IReadOnlyList<IAssetGeneralSettings>> GetGeneralAsync(AssetAvailabilityType type);
 
-        Task<IAssetAvailability> SetGeneralAsync(IAssetAvailability availability);
+        Task<IAssetGeneralSettings> SetGeneralAsync(IAssetGeneralSettings availability);
 
         Task<BlockchainType> GetNetworkAsync(string assetId);
 
         #endregion
 
-        #region personal settings
+        #region merchant
 
-        Task<IAssetAvailabilityByMerchant> GetPersonalAsync(string merchantId);
+        Task<IAssetMerchantSettings> GetByMerchantAsync(string merchantId);
 
-        Task<IAssetAvailabilityByMerchant> SetPersonalAsync(string merchantId, string paymentAssets, string settlementAssets);
+        Task<IAssetMerchantSettings> SetByMerchantAsync(string merchantId, string paymentAssets, string settlementAssets);
 
         #endregion
 

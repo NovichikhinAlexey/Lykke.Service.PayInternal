@@ -18,21 +18,21 @@ namespace Lykke.Service.PayInternal.Services
     {
         private readonly IBlockchainClientProvider _blockchainClientProvider;
         private readonly ITransferRepository _transferRepository;
-        private readonly IAssetsAvailabilityService _assetsAvailabilityService;
+        private readonly IAssetSettingsService _assetSettingsService;
 
         public TransferService(
             [NotNull] ITransferRepository transferRepository,
             [NotNull] IBlockchainClientProvider blockchainClientProvider,
-            [NotNull] IAssetsAvailabilityService assetsAvailabilityService)
+            [NotNull] IAssetSettingsService assetSettingsService)
         {
             _transferRepository = transferRepository ?? throw new ArgumentNullException(nameof(transferRepository));
             _blockchainClientProvider = blockchainClientProvider ?? throw new ArgumentNullException(nameof(blockchainClientProvider));
-            _assetsAvailabilityService = assetsAvailabilityService ?? throw new ArgumentNullException(nameof(assetsAvailabilityService));
+            _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
         }
 
         public async Task<TransferResult> ExecuteAsync(TransferCommand transferCommand)
         {
-            BlockchainType blockchainType = await _assetsAvailabilityService.GetNetworkAsync(transferCommand.AssetId);
+            BlockchainType blockchainType = await _assetSettingsService.GetNetworkAsync(transferCommand.AssetId);
 
             IBlockchainApiClient blockchainClient = _blockchainClientProvider.Get(blockchainType);
 

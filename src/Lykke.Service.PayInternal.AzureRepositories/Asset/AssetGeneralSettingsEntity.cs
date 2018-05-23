@@ -8,7 +8,7 @@ using Lykke.Service.PayInternal.Core.Domain.Asset;
 namespace Lykke.Service.PayInternal.AzureRepositories.Asset
 {
     [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
-    public class AssetAvailabilityEntity : AzureTableEntity
+    public class AssetGeneralSettingsEntity : AzureTableEntity
     {
         private bool _paymentAvailable;
         private bool _settlementAvailable;
@@ -61,9 +61,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
                 return assetId;
             }
 
-            public static AssetAvailabilityEntity Create(IAssetAvailability src)
+            public static AssetGeneralSettingsEntity Create(IAssetGeneralSettings src)
             {
-                var entity = new AssetAvailabilityEntity
+                var entity = new AssetGeneralSettingsEntity
                 {
                     PartitionKey = GeneratePartitionKey(src.AssetId),
                     RowKey = GenerateRowKey(src.AssetId),

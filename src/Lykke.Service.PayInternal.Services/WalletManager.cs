@@ -24,7 +24,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IWalletEventsPublisher _walletEventsPublisher;
         private readonly ITransactionsService _transactionsService;
         private readonly IBlockchainClientProvider _blockchainClientProvider;
-        private readonly IAssetsAvailabilityService _assetsAvailabilityService;
+        private readonly IAssetSettingsService _assetSettingsService;
         private readonly ILog _log;
 
         private const int BatchPieceSize = 15;
@@ -36,7 +36,7 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IWalletEventsPublisher walletEventsPublisher,
             [NotNull] IBlockchainClientProvider blockchainClientProvider,
             [NotNull] ITransactionsService transactionsService,
-            [NotNull] IAssetsAvailabilityService assetsAvailabilityService,
+            [NotNull] IAssetSettingsService assetSettingsService,
             [NotNull] ILog log)
         {
             _virtualWalletService = virtualWalletService ?? throw new ArgumentNullException(nameof(virtualWalletService));
@@ -45,7 +45,7 @@ namespace Lykke.Service.PayInternal.Services
             _walletEventsPublisher = walletEventsPublisher ?? throw new ArgumentNullException(nameof(walletEventsPublisher));
             _blockchainClientProvider = blockchainClientProvider ?? throw new ArgumentNullException(nameof(blockchainClientProvider));
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
-            _assetsAvailabilityService = assetsAvailabilityService ?? throw new ArgumentNullException(nameof(assetsAvailabilityService));
+            _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
             _log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
@@ -71,7 +71,7 @@ namespace Lykke.Service.PayInternal.Services
             if (virtualWallet == null)
                 throw new WalletNotFoundException(walletId);
 
-            BlockchainType blockchainType = await _assetsAvailabilityService.GetNetworkAsync(assetId);
+            BlockchainType blockchainType = await _assetSettingsService.GetNetworkAsync(assetId);
 
             IBlockchainApiClient blockchainClient = _blockchainClientProvider.Get(blockchainType);
 
@@ -127,7 +127,7 @@ namespace Lykke.Service.PayInternal.Services
             if (virtualWallet == null)
                 throw new WalletNotFoundException(walletId);
 
-            BlockchainType blockchainType = await _assetsAvailabilityService.GetNetworkAsync(assetId);
+            BlockchainType blockchainType = await _assetSettingsService.GetNetworkAsync(assetId);
 
             if (virtualWallet.BlockchainWallets.Any(x => x.Blockchain == blockchainType))
                 return virtualWallet;

@@ -13,10 +13,10 @@ namespace Lykke.Service.PayInternal.Client.Api
         [Post("/api/assets/settings/general")]
         Task SetAssetGeneralSettingsAsync([Body] UpdateAssetGeneralSettingsRequest request);
 
-        [Get("/api/assets/settings/personal")]
-        Task<AvailableAssetsByMerchantResponse> GetPersonalAvailableAssetsAsync([Query] string merchantId);
+        [Get("/api/assets/settings/merchant")]
+        Task<AssetMerchantSettingsResponse> GetAssetMerchantSettingsAsync([Query] string merchantId);
 
-        [Post("/api/assets/settings/personal")]
-        Task SetPersonalAvailableAssetsAsync([Body] UpdateAssetAvailabilityByMerchantRequest request);
+        [Post("/api/assets/settings/merchant")]
+        Task SetAssetMerchantSettingsAsync([Body] UpdateAssetMerchantSettingsRequest settingsRequest);
     }
 }
