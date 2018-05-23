@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
+using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
@@ -23,26 +24,29 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IWalletEventsPublisher _walletEventsPublisher;
         private readonly ITransactionsService _transactionsService;
         private readonly IBlockchainClientProvider _blockchainClientProvider;
+        private readonly IAssetsAvailabilityService _assetsAvailabilityService;
         private readonly ILog _log;
 
         private const int BatchPieceSize = 15;
 
         public WalletManager(
-            IVirtualWalletService virtualWalletService,
-            IList<BlockchainWalletAllocationPolicy> walletAllocationSettings,
-            IBcnWalletUsageService bcnWalletUsageService,
-            IWalletEventsPublisher walletEventsPublisher,
-            IBlockchainClientProvider blockchainClientProvider, 
-            ITransactionsService transactionsService, 
-            ILog log)
+            [NotNull] IVirtualWalletService virtualWalletService,
+            [NotNull] IList<BlockchainWalletAllocationPolicy> walletAllocationSettings,
+            [NotNull] IBcnWalletUsageService bcnWalletUsageService,
+            [NotNull] IWalletEventsPublisher walletEventsPublisher,
+            [NotNull] IBlockchainClientProvider blockchainClientProvider,
+            [NotNull] ITransactionsService transactionsService,
+            [NotNull] IAssetsAvailabilityService assetsAvailabilityService,
+            [NotNull] ILog log)
         {
-            _virtualWalletService = virtualWalletService;
-            _walletAllocationSettings = walletAllocationSettings;
-            _bcnWalletUsageService = bcnWalletUsageService;
-            _walletEventsPublisher = walletEventsPublisher;
-            _blockchainClientProvider = blockchainClientProvider;
-            _transactionsService = transactionsService;
-            _log = log;
+            _virtualWalletService = virtualWalletService ?? throw new ArgumentNullException(nameof(virtualWalletService));
+            _walletAllocationSettings = walletAllocationSettings ?? throw new ArgumentNullException(nameof(walletAllocationSettings));
+            _bcnWalletUsageService = bcnWalletUsageService ?? throw new ArgumentNullException(nameof(bcnWalletUsageService));
+            _walletEventsPublisher = walletEventsPublisher ?? throw new ArgumentNullException(nameof(walletEventsPublisher));
+            _blockchainClientProvider = blockchainClientProvider ?? throw new ArgumentNullException(nameof(blockchainClientProvider));
+            _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
+            _assetsAvailabilityService = assetsAvailabilityService ?? throw new ArgumentNullException(nameof(assetsAvailabilityService));
+            _log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
         public async Task<IVirtualWallet> CreateAsync(string merchantId, DateTime dueDate, string assetId = null)
@@ -67,7 +71,7 @@ namespace Lykke.Service.PayInternal.Services
             if (virtualWallet == null)
                 throw new WalletNotFoundException(walletId);
 
-            BlockchainType blockchainType = assetId.GetBlockchainType();
+            BlockchainType blockchainType = await _assetsAvailabilityService.GetNetworkAsync(assetId);
 
             IBlockchainApiClient blockchainClient = _blockchainClientProvider.Get(blockchainType);
 
@@ -123,7 +127,7 @@ namespace Lykke.Service.PayInternal.Services
             if (virtualWallet == null)
                 throw new WalletNotFoundException(walletId);
 
-            BlockchainType blockchainType = assetId.GetBlockchainType();
+            BlockchainType blockchainType = await _assetsAvailabilityService.GetNetworkAsync(assetId);
 
             if (virtualWallet.BlockchainWallets.Any(x => x.Blockchain == blockchainType))
                 return virtualWallet;

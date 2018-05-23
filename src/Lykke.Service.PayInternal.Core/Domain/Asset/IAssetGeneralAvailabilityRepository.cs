@@ -9,6 +9,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Asset
 
         Task<IReadOnlyList<IAssetAvailability>> GetAsync();
 
+        Task<IAssetAvailability> GetAsync(string assetId);
+
         Task<IAssetAvailability> SetAsync(IAssetAvailability availability);
     }
 }

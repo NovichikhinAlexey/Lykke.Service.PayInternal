@@ -15,6 +15,8 @@ namespace Lykke.Service.PayInternal.Core.Services
 
         Task<IAssetAvailability> SetGeneralAsync(IAssetAvailability availability);
 
+        Task<BlockchainType> GetNetworkAsync(string assetId);
+
         #endregion
 
         #region personal settings

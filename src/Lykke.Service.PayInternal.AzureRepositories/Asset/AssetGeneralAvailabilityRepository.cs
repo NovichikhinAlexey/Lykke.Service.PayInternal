@@ -44,6 +44,15 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
             return Mapper.Map<IList<AssetAvailability>>(result).ToList();
         }
 
+        public async Task<IAssetAvailability> GetAsync(string assetId)
+        {
+            AssetAvailabilityEntity entity = await _tableStorage.GetDataAsync(
+                AssetAvailabilityEntity.ByAsset.GeneratePartitionKey(assetId),
+                AssetAvailabilityEntity.ByAsset.GenerateRowKey(assetId));
+
+            return Mapper.Map<AssetAvailability>(entity);
+        }
+
         public async Task<IAssetAvailability> SetAsync(IAssetAvailability availability)
         {
             string partitionKey = AssetAvailabilityEntity.ByAsset.GeneratePartitionKey(availability.AssetId);

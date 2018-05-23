@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -58,6 +59,15 @@ namespace Lykke.Service.PayInternal.Services
             }
 
             return result;
+        }
+
+        public async Task<BlockchainType> GetNetworkAsync(string assetId)
+        {
+            string assetIdAdjusted = assetId == LykkeConstants.SatoshiAsset ? LykkeConstants.BitcoinAsset : assetId;
+
+            IAssetAvailability assetAvailability = await _assetGeneralAvailabilityRepository.GetAsync(assetIdAdjusted);
+
+            return assetAvailability?.Network ?? throw new Exception($"Blockchain network is not defined for asset [{assetId}]");
         }
 
         public async Task<IAssetAvailabilityByMerchant> GetPersonalAsync(string merchantId)
