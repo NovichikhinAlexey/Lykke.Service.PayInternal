@@ -6,7 +6,6 @@ using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -14,7 +13,6 @@ namespace Lykke.Service.PayInternal.Services
     {
         private readonly IAssetGeneralAvailabilityRepository _assetGeneralAvailabilityRepository;
         private readonly IAssetPersonalAvailabilityRepository _assetPersonalAvailabilityRepository;
-        private readonly AssetsAvailabilitySettings _assetsAvailabilitySettings;
         private readonly IMarkupService _markupService;
 
         private const char AssetsSeparator = ';';
@@ -22,7 +20,6 @@ namespace Lykke.Service.PayInternal.Services
         public AssetsAvailabilityService(
             IAssetGeneralAvailabilityRepository assetGeneralAvailabilityRepository,
             IAssetPersonalAvailabilityRepository assetPersonalAvailabilityRepository,
-            AssetsAvailabilitySettings assetsAvailabilitySettings,
             IMarkupService markupService)
         {
             _assetGeneralAvailabilityRepository = assetGeneralAvailabilityRepository ??
@@ -31,8 +28,6 @@ namespace Lykke.Service.PayInternal.Services
             _assetPersonalAvailabilityRepository = assetPersonalAvailabilityRepository ??
                                                    throw new ArgumentNullException(
                                                        nameof(assetPersonalAvailabilityRepository));
-            _assetsAvailabilitySettings = assetsAvailabilitySettings ??
-                                          throw new ArgumentNullException(nameof(assetsAvailabilitySettings));
             _markupService = markupService ?? throw new ArgumentNullException(nameof(markupService));
         }
 
@@ -93,26 +88,29 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IReadOnlyList<string>> ResolveAsync(string merchantId, AssetAvailabilityType type)
         {
-            IAssetAvailabilityByMerchant personal = await _assetPersonalAvailabilityRepository.GetAsync(merchantId);
+            IAssetAvailabilityByMerchant personalSettings = await _assetPersonalAvailabilityRepository.GetAsync(merchantId);
 
-            string allowedAssets;
+            string personalAllowed;
 
             switch (type)
             {
                 case AssetAvailabilityType.Payment:
-                    allowedAssets = personal?.PaymentAssets ?? _assetsAvailabilitySettings.PaymentAssets;
+                    personalAllowed = personalSettings?.PaymentAssets;
                     break;
                 case AssetAvailabilityType.Settlement:
-                    allowedAssets = personal?.SettlementAssets ?? _assetsAvailabilitySettings.SettlementAssets;
+                    personalAllowed = personalSettings?.SettlementAssets;
                     break;
                 default:
                     throw new Exception("Unexpected asset availability type");
             }
 
-            IEnumerable<string> generalAllowed =
-                (await _assetGeneralAvailabilityRepository.GetByTypeAsync(type)).Select(x => x.AssetId);
+            IEnumerable<string> generalAllowed = (await _assetGeneralAvailabilityRepository.GetByTypeAsync(type)).Select(x => x.AssetId);
 
-            IEnumerable<string> resolved = allowedAssets.Split(AssetsSeparator).Where(x => generalAllowed.Contains(x));
+            if (string.IsNullOrEmpty(personalAllowed))
+                return generalAllowed.ToList();
+
+            IEnumerable<string> resolved =
+                personalAllowed.Split(AssetsSeparator).Where(x => generalAllowed.Contains(x));
 
             return resolved.ToList();
         }

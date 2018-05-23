@@ -78,7 +78,6 @@ namespace Lykke.Service.PayInternal.Modules
                 .SingleInstance();
 
             builder.RegisterType<AssetsAvailabilityService>()
-                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.AssetsAvailability))
                 .As<IAssetsAvailabilityService>();
 
             builder.RegisterType<CalculationService>()
