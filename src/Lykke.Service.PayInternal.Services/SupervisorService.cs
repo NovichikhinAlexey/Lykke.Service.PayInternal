@@ -55,6 +55,7 @@ namespace Lykke.Service.PayInternal.Services
                 merchantGroup.Merchants = supervisor.SupervisorMerchants;
                 var group = await _merchantGroupService.SetAsync(merchantGroup);
                 supervisorentity.MerchantGroups = group.Id;
+                supervisor.MerchantGroups = group.Id;
                 await _supervisorRepository.UpdateAsync(supervisor);
             }
             else
@@ -64,6 +65,7 @@ namespace Lykke.Service.PayInternal.Services
                 merchantgroups.AddRange(modelgroups);
                 merchantgroups = merchantgroups.Distinct().ToList();
                 supervisorentity.MerchantGroups = String.Join(";", merchantgroups.ToArray());
+                supervisor.MerchantGroups = String.Join(";", merchantgroups.ToArray());
                 await _supervisorRepository.UpdateAsync(supervisor);
             }
             return supervisorentity;
