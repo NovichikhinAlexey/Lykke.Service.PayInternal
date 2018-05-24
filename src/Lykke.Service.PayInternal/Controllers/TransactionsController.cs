@@ -46,9 +46,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> CreateLykkePaymentTransacton([FromBody] CreateLykkeTransactionRequest request)
         {
-            await _log.WriteInfoAsync(nameof(TransactionsController), nameof(CreateLykkePaymentTransacton),
-                request.ToJson(), "Entering CreateLykkePaymentTransacton");
-
             try
             {
                 var command = Mapper.Map<CreateLykkeTransactionCommand>(request,
