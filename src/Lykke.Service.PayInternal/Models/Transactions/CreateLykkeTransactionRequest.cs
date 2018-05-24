@@ -8,7 +8,6 @@ namespace Lykke.Service.PayInternal.Models.Transactions
         [Required]
         public string OperationId { get; set; }
 
-        [Required]
         public string[] SourceWalletAddresses { get; set; }
 
         [Required]
