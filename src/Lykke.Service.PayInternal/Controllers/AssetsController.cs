@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Runtime;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common;
 using Common.Log;
 using Lykke.Service.Assets.Client.Models;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -31,11 +33,11 @@ namespace Lykke.Service.PayInternal.Controllers
             IAssetSettingsService assetSettingsService,
             IAssetsLocalCache assetsLocalCache,
             IMerchantService merchantService,
-            ILog log, 
+            ILog log,
             ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _assetSettingsService = assetSettingsService ??
-                                         throw new ArgumentNullException(nameof(assetSettingsService));
+                                    throw new ArgumentNullException(nameof(assetSettingsService));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
             _log = log ?? throw new ArgumentNullException(nameof(log));
@@ -74,8 +76,8 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [Route("settings/general")]
         [SwaggerOperation(nameof(SetAssetGeneralSettings))]
-        [ProducesResponseType(typeof(void), (int)HttpStatusCode.NoContent)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ValidateModel]
         public async Task<IActionResult> SetAssetGeneralSettings([FromBody] UpdateAssetGeneralSettingsRequest request)
         {
@@ -95,7 +97,7 @@ namespace Lykke.Service.PayInternal.Controllers
             catch (AssetUnknownException assetEx)
             {
                 await _log.WriteErrorAsync(nameof(AssetsController), nameof(SetAssetGeneralSettings),
-                    new { assetEx.Asset }.ToJson(), assetEx);
+                    new {assetEx.Asset}.ToJson(), assetEx);
 
                 return NotFound(ErrorResponse.Create($"Asset {assetEx.Asset} can't be resolved"));
             }
@@ -148,7 +150,8 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ValidateModel]
-        public async Task<IActionResult> SetAssetMerchantSettings([FromBody] UpdateAssetMerchantSettingsRequest settingsRequest)
+        public async Task<IActionResult> SetAssetMerchantSettings(
+            [FromBody] UpdateAssetMerchantSettingsRequest settingsRequest)
         {
             IMerchant merchant = await _merchantService.GetAsync(settingsRequest.MerchantId);
 
@@ -157,7 +160,8 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                await _assetSettingsService.SetByMerchantAsync(settingsRequest.MerchantId, settingsRequest.PaymentAssets,
+                await _assetSettingsService.SetByMerchantAsync(settingsRequest.MerchantId,
+                    settingsRequest.PaymentAssets,
                     settingsRequest.SettlementAssets);
 
                 return NoContent();

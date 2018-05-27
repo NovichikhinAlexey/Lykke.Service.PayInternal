@@ -24,11 +24,13 @@ namespace Lykke.Service.PayInternal.Models.Transactions
         public string BlockId { get; set; }
 
         [Required]
+        [EnumDataType(typeof(BlockchainType), ErrorMessage = "Invalid value, possible values are: None, Bitcoin, Ethereum")]
         public BlockchainType Blockchain { get; set; }
 
         public DateTime? FirstSeen { get; set; }
 
         [Required]
+        [EnumDataType(typeof(TransactionIdentityType), ErrorMessage = "Invalid value, possible values are: None, Hash, Specific")]
         public TransactionIdentityType IdentityType { get; set; }
 
         [Required]

@@ -11,6 +11,7 @@ namespace Lykke.Service.PayInternal.Models.Transactions
 
         public string WalletAddress { get; set; }
 
+        [EnumDataType(typeof(BlockchainType), ErrorMessage = "Invalid value, possible values are: None, Bitcoin, Ethereum")]
         public BlockchainType Blockchain { get; set; }
 
         [Required]
@@ -24,6 +25,7 @@ namespace Lykke.Service.PayInternal.Models.Transactions
         public DateTime? FirstSeen { get; set; }
 
         [Required]
+        [EnumDataType(typeof(TransactionIdentityType), ErrorMessage = "Invalid value, possible values are: None, Hash, Specific")]
         public TransactionIdentityType IdentityType { get; set; }
 
         [Required]
