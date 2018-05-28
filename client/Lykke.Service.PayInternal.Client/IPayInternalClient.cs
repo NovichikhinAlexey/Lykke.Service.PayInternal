@@ -8,6 +8,7 @@ using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
+using Lykke.Service.PayInternal.Client.Models.File;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -273,5 +274,32 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request">Markup values</param>
         /// <returns></returns>
         Task SetMarkupForMerchantAsync(string merchantId, string assetPairId, UpdateMarkupRequest request);
+        /// <summary>
+        /// Returns a collection of merchant files.
+        /// </summary>
+        /// <param name="merchantId">The merchant id.</param>
+        /// <returns>The collection of file info.</returns>
+        Task<IEnumerable<FileInfoModel>> GetFilesAsync(string merchantId);
+        /// <summary>
+        /// Returns file content.
+        /// </summary>
+        /// <param name="merchantId">The merchant id.</param>
+        /// <param name="fileId">The file id.</param>
+        Task<byte[]> GetFileAsync(string merchantId, string fileId);
+        /// <summary>
+        /// Saves file.
+        /// </summary>
+        /// <param name="merchantId">The merchant id.</param>
+        /// <param name="content">The file content.</param>
+        /// <param name="fileName">The file name with extension.</param>
+        /// <param name="contentType">The file mime type.</param>
+        Task UploadFileAsync(string merchantId, byte[] content, string fileName, string contentType);
+
+        /// <summary>
+        /// Deletes file.
+        /// </summary>
+        /// <param name="merchantId">The merchant id.</param>
+        /// <param name="fileId">The file id.</param>
+        Task DeleteFileAsync(string merchantId, string fileId);
     }
 }

@@ -10,6 +10,8 @@ using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
+using Lykke.Service.PayInternal.AzureRepositories.File;
+using Lykke.Service.PayInternal.Core.Domain.File;
 
 namespace Lykke.Service.PayInternal.AzureRepositories
 {
@@ -44,6 +46,12 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             CreateMap<IMarkup, MarkupEntity>(MemberList.Source);
 
             CreateMap<MarkupEntity, Core.Domain.Markup.Markup>(MemberList.Destination);
+
+            CreateMap<FileInfoEntity, FileInfo>(MemberList.Destination)
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.RowKey));
+
+            CreateMap<FileInfo, FileInfoEntity>(MemberList.Source)
+                .ForSourceMember(src => src.Id, opt => opt.Ignore());
         }
     }
 }
