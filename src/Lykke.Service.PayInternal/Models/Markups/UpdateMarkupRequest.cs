@@ -20,6 +20,7 @@ namespace Lykke.Service.PayInternal.Models.Markups
 
         public string PriceAssetPairId { get; set; }
 
+        [EnumDataType(typeof(PriceMethod), ErrorMessage = "Invalid value, possible values are: None, Direct, Reverse")]
         public PriceMethod PriceMethod { get; set; }
     }
 }

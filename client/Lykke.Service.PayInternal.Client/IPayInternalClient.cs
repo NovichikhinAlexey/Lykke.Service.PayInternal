@@ -179,32 +179,30 @@ namespace Lykke.Service.PayInternal.Client
         Task<AvailableAssetsResponse> GetAvailablePaymentAssetsAsync(string merchantId, string settlementAssetId);
 
         /// <summary>
-        /// Returns general asset availability settings by type
+        /// Returns asset general settings
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        Task<AvailableAssetsResponse> GetGeneralAvailableAssetsAsync(AssetAvailabilityType type);
+        Task<IEnumerable<AssetGeneralSettingsResponse>> GetAssetGeneralSettingsAsync();
 
         /// <summary>
-        /// Returns personal asset availability settings
+        /// Returns merchant asset settings
         /// </summary>
         /// <param name="merchantId"></param>
         /// <returns></returns>
-        Task<AvailableAssetsByMerchantResponse> GetPersonalAvailableAssetsAsync(string merchantId);
+        Task<AssetMerchantSettingsResponse> GetAssetMerchantSettingsAsync(string merchantId);
 
         /// <summary>
-        /// Updates general asset availability settings
+        ///  Updates asset general settings
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        Task SetGeneralAvailableAssetsAsync(UpdateAssetAvailabilityRequest request);
+        Task SetAssetGeneralSettingsAsync(UpdateAssetGeneralSettingsRequest request);
 
         /// <summary>
-        /// Updates personal asset availability settings
+        /// Updates merchant asset settings
         /// </summary>
-        /// <param name="request"></param>
+        /// <param name="settingsRequest"></param>
         /// <returns></returns>
-        Task SetPersonalAvailableAssetsAsync(UpdateAssetAvailabilityByMerchantRequest request);
+        Task SetAssetMerchantSettingsAsync(UpdateAssetMerchantSettingsRequest settingsRequest);
 
         /// <summary>
         /// Cancels payment request

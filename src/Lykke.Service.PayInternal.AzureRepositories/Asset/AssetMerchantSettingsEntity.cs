@@ -6,11 +6,11 @@ using Lykke.Service.PayInternal.Core.Domain.Asset;
 namespace Lykke.Service.PayInternal.AzureRepositories.Asset
 {
     [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
-    public class AssetAvailabilityByMerchantEntity : AzureTableEntity, IAssetAvailabilityByMerchant
+    public class AssetMerchantSettingsEntity : AzureTableEntity, IAssetMerchantSettings
     {
-        public static AssetAvailabilityByMerchantEntity Create(IAssetAvailabilityByMerchant src)
+        public static AssetMerchantSettingsEntity Create(IAssetMerchantSettings src)
         {
-            return new AssetAvailabilityByMerchantEntity
+            return new AssetMerchantSettingsEntity
             {
                 PartitionKey = GeneratePartitionKey(src.MerchantId),
                 RowKey = GenerateRowKey(src.MerchantId),

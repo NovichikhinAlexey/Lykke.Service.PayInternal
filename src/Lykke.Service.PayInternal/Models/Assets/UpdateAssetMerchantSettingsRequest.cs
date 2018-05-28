@@ -2,7 +2,7 @@
 
 namespace Lykke.Service.PayInternal.Models.Assets
 {
-    public class UpdateAssetAvailabilityByMerchantRequest
+    public class UpdateAssetMerchantSettingsRequest
     {
         [Required]
         public string PaymentAssets { get; set; }

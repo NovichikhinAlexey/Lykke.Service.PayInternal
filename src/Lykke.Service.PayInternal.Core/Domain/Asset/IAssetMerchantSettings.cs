@@ -1,6 +1,6 @@
 ﻿namespace Lykke.Service.PayInternal.Core.Domain.Asset
 {
-    public interface IAssetAvailabilityByMerchant
+    public interface IAssetMerchantSettings
     {
         string MerchantId { get; set; }
 
