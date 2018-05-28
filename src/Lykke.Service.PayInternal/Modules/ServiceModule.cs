@@ -151,7 +151,7 @@ namespace Lykke.Service.PayInternal.Modules
 
                 return new CachedDataDictionary<string, Asset>
                 (
-                    async () => (await assetsService.AssetGetAllAsync()).ToDictionary(itm => itm.Id)
+                    async () => (await assetsService.AssetGetAllAsync(true)).ToDictionary(itm => itm.Id)
                 );
             }).SingleInstance();
 
