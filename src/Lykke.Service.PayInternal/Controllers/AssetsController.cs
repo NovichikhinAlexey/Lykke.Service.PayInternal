@@ -121,6 +121,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetAssetMerchantSettings([FromQuery] string merchantId)
         {
+            if (string.IsNullOrEmpty(merchantId))
+                return BadRequest(ErrorResponse.Create("Merchant id is invalid"));
+
             IMerchant merchant = await _merchantService.GetAsync(merchantId);
 
             if (merchant == null)

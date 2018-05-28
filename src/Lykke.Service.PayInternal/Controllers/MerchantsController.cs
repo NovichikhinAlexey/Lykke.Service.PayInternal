@@ -382,6 +382,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         public async Task<IActionResult> ResolvePaymentAssets(string merchantId, [FromQuery] string settlementAssetId)
         {
+            if (string.IsNullOrEmpty(settlementAssetId))
+                return BadRequest(ErrorResponse.Create("Settlement asset id is invalid"));
+
             IMerchant merchant = await _merchantService.GetAsync(merchantId);
 
             if (merchant == null)
