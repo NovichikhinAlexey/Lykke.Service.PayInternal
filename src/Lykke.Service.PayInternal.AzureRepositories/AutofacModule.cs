@@ -23,6 +23,11 @@ using Lykke.Service.PayInternal.Core.Domain.MerchantGroup;
 using Lykke.Service.PayInternal.AzureRepositories.MerchantGroup;
 using Lykke.Service.PayInternal.Core.Domain.Supervisor;
 using Lykke.Service.PayInternal.AzureRepositories.Supervisor;
+using Lykke.Service.PayInternal.Core.Domain.File;
+using Lykke.Service.PayInternal.AzureRepositories.File;
+using AzureStorage;
+using Microsoft.WindowsAzure.Storage.Table;
+using AzureStorage.Blob;
 
 namespace Lykke.Service.PayInternal.AzureRepositories
 {
@@ -62,6 +67,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             const string virtualWalletsTableName = "VirtualWallets";
             const string merchantTransactionsTableName = "MerchantWalletTransactions";
             const string markupsTableName = "Markups";
+            const string merchantFilesTableName = "MerchantFiles";
 
             builder.RegisterInstance<IMerchantRepository>(new MerchantRepository(
                 AzureTableStorage<MerchantEntity>.Create(_merchantsConnectionString,
@@ -119,6 +125,13 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             builder.RegisterInstance<IMarkupRepository>(new MarkupRepository(
                 AzureTableStorage<MarkupEntity>.Create(_merchantsConnectionString, markupsTableName, _log),
                 AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, markupsTableName, _log)));
+
+            builder.RegisterInstance<IFileRepository>(
+                new FileRepository(AzureBlobStorage.Create(_merchantsConnectionString)));
+
+            builder.RegisterInstance<IFileInfoRepository>(
+                new FileInfoRepository(AzureTableStorage<FileInfoEntity>.Create(_merchantsConnectionString,
+                    merchantFilesTableName, _log)));
         }
     }
 }

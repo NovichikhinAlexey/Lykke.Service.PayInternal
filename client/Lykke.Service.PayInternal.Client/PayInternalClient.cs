@@ -15,6 +15,7 @@ using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
+using Lykke.Service.PayInternal.Client.Models.File;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -28,6 +29,7 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IAssetsApi _assetsApi;
         private readonly IMarkupsApi _markupsApi;
         private readonly ISupervisorApi _supervisorApi;
+        private readonly IFilesApi _filesApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -57,6 +59,7 @@ namespace Lykke.Service.PayInternal.Client
             _assetsApi = RestService.For<IAssetsApi>(_httpClient);
             _markupsApi = RestService.For<IMarkupsApi>(_httpClient);
             _supervisorApi = RestService.For<ISupervisorApi>(_httpClient);
+            _filesApi = RestService.For<IFilesApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
@@ -247,6 +250,30 @@ namespace Lykke.Service.PayInternal.Client
         public async Task SetTransactionExpiredAsync(TransactionExpiredRequest request)
         {
             await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.SetTransactionExpiredAsync(request));
+        }
+
+        public async Task<IEnumerable<FileInfoModel>> GetFilesAsync(string merchantId)
+        {
+            return await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.GetAllAsync(merchantId));
+        }
+
+        public async Task<byte[]> GetFileAsync(string merchantId, string fileId)
+        {
+            HttpResponseMessage response = await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.GetAsync(merchantId, fileId));
+
+            return await response.Content.ReadAsByteArrayAsync();
+        }
+
+        public async Task UploadFileAsync(string merchantId, byte[] content, string fileName, string contentType)
+        {
+            var streamPart = new StreamPart(new MemoryStream(content), fileName, contentType);
+
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.UploadAsync(merchantId, streamPart));
+        }
+
+        public async Task DeleteFileAsync(string merchantId, string fileId)
+        {
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.DeleteAsync(merchantId, fileId));
         }
 
         public void Dispose()

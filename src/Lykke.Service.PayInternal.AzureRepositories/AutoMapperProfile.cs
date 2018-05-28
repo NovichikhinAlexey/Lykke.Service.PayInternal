@@ -18,6 +18,8 @@ using Lykke.Service.PayInternal.Core.Domain.Supervisor;
 using Lykke.Service.PayInternal.AzureRepositories.Supervisor;
 using Lykke.Service.PayInternal.Core.Domain.MerchantGroup;
 using Lykke.Service.PayInternal.AzureRepositories.MerchantGroup;
+using Lykke.Service.PayInternal.AzureRepositories.File;
+using Lykke.Service.PayInternal.Core.Domain.File;
 
 namespace Lykke.Service.PayInternal.AzureRepositories
 {
@@ -68,6 +70,12 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             CreateMap<IAssetGeneralSettings, AssetGeneralSettingsEntity>(MemberList.Source);
 
             CreateMap<AssetGeneralSettingsEntity, AssetGeneralSettings>(MemberList.Destination);
+
+            CreateMap<FileInfoEntity, FileInfo>(MemberList.Destination)
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.RowKey));
+
+            CreateMap<FileInfo, FileInfoEntity>(MemberList.Source)
+                .ForSourceMember(src => src.Id, opt => opt.Ignore());
         }
     }
 }
