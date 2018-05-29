@@ -40,7 +40,7 @@ namespace Lykke.Service.PayInternal.Mapping
 
             CreateMap<IOrder, OrderModel>(MemberList.Source);
 
-            CreateMap<IAssetAvailabilityByMerchant, AssetAvailabilityByMerchantResponse>();
+            CreateMap<IAssetMerchantSettings, AssetMerchantSettingsResponse>();
 
             CreateMap<BtcTransferSourceInfo, AddressAmount>(MemberList.Destination);
 
@@ -49,6 +49,12 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.FixedFee, opt => opt.MapFrom(x => 0));
 
             CreateMap<IMarkup, MarkupResponse>(MemberList.Destination);
+
+            CreateMap<IAssetGeneralSettings, AssetGeneralSettingsResponseModel>(MemberList.Destination)
+                .ForMember(dest => dest.AssetDisplayId, opt => opt.MapFrom(src => src.AssetId));
+
+            CreateMap<UpdateAssetGeneralSettingsRequest, AssetGeneralSettings>(MemberList.Destination)
+                .ForMember(dest => dest.AssetId, opt => opt.MapFrom(src => src.AssetDisplayId));
 
             PaymentRequestApiModels();
             PaymentRequestMessages();

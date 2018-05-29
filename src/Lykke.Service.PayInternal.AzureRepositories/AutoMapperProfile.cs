@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Lykke.Service.PayInternal.AzureRepositories.Asset;
 using Lykke.Service.PayInternal.AzureRepositories.Markup;
 using Lykke.Service.PayInternal.AzureRepositories.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.PaymentRequest;
@@ -6,6 +7,7 @@ using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.AzureRepositories.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
+using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -55,6 +57,10 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             CreateMap<IMerchantGroup, MerchantGroupEntity>(MemberList.Source)
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.Timestamp, opt => opt.Ignore());
+                
+            CreateMap<IAssetGeneralSettings, AssetGeneralSettingsEntity>(MemberList.Source);
+
+            CreateMap<AssetGeneralSettingsEntity, AssetGeneralSettings>(MemberList.Destination);
         }
     }
 }

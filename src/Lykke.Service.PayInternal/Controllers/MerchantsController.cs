@@ -28,7 +28,7 @@ namespace Lykke.Service.PayInternal.Controllers
     [Route("api")]
     public class MerchantsController : Controller
     {
-        private readonly IAssetsAvailabilityService _assetsAvailabilityService;
+        private readonly IAssetSettingsService _assetSettingsService;
         private readonly IMerchantService _merchantService;
         private readonly IMarkupService _markupService;
         private readonly IAssetsLocalCache _assetsLocalCache;
@@ -37,14 +37,14 @@ namespace Lykke.Service.PayInternal.Controllers
 
         public MerchantsController(
             IMerchantService merchantService,
-            IAssetsAvailabilityService assetsAvailabilityService,
+            IAssetSettingsService assetSettingsService,
             ILog log, 
             IMarkupService markupService,
             IAssetsLocalCache assetsLocalCache, 
             ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _merchantService = merchantService;
-            _assetsAvailabilityService = assetsAvailabilityService;
+            _assetSettingsService = assetSettingsService;
             _log = log;
             _markupService = markupService;
             _assetsLocalCache = assetsLocalCache;
@@ -273,7 +273,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                IReadOnlyList<string> resolvedAssets = await _assetsAvailabilityService.ResolveAsync(merchantId, type);
+                IReadOnlyList<string> resolvedAssets = await _assetSettingsService.ResolveAsync(merchantId, type);
 
                 return Ok(new AvailableAssetsResponseModel {Assets = resolvedAssets});
             }
@@ -354,7 +354,7 @@ namespace Lykke.Service.PayInternal.Controllers
             try
             {
                 IReadOnlyList<string> assets =
-                    await _assetsAvailabilityService.ResolveSettlementAsync(merchantId);
+                    await _assetSettingsService.ResolveSettlementAsync(merchantId);
 
                 return Ok(new AvailableAssetsResponseModel {Assets = assets});
             }
@@ -382,6 +382,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         public async Task<IActionResult> ResolvePaymentAssets(string merchantId, [FromQuery] string settlementAssetId)
         {
+            if (string.IsNullOrEmpty(settlementAssetId))
+                return BadRequest(ErrorResponse.Create("Settlement asset id is invalid"));
+
             IMerchant merchant = await _merchantService.GetAsync(merchantId);
 
             if (merchant == null)
@@ -397,7 +400,7 @@ namespace Lykke.Service.PayInternal.Controllers
             try
             {
                 IReadOnlyList<string> assets =
-                    await _assetsAvailabilityService.ResolvePaymentAsync(merchantId, settlementAssetId);
+                    await _assetSettingsService.ResolvePaymentAsync(merchantId, settlementAssetId);
 
                 return Ok(new AvailableAssetsResponseModel {Assets = assets});
             }

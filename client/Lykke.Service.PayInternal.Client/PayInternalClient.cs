@@ -174,24 +174,24 @@ namespace Lykke.Service.PayInternal.Client
                 _merchantsApi.GetAvailablePaymentAssetsAsync(merchantId, settlementAssetId));
         }
 
-        public Task<AvailableAssetsResponse> GetGeneralAvailableAssetsAsync(AssetAvailabilityType type)
+        public async Task<IEnumerable<AssetGeneralSettingsResponse>> GetAssetGeneralSettingsAsync()
         {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetGeneralAvailableAssetsAsync(type));
+            return await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetAssetGeneralSettingsAsync());
         }
 
-        public Task<AvailableAssetsByMerchantResponse> GetPersonalAvailableAssetsAsync(string merchantId)
+        public Task<AssetMerchantSettingsResponse> GetAssetMerchantSettingsAsync(string merchantId)
         {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetPersonalAvailableAssetsAsync(merchantId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetAssetMerchantSettingsAsync(merchantId));
         }
 
-        public async Task SetGeneralAvailableAssetsAsync(UpdateAssetAvailabilityRequest request)
+        public async Task SetAssetGeneralSettingsAsync(UpdateAssetGeneralSettingsRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetGeneralAvailableAssetsAsync(request));
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetAssetGeneralSettingsAsync(request));
         }
 
-        public async Task SetPersonalAvailableAssetsAsync(UpdateAssetAvailabilityByMerchantRequest request)
+        public async Task SetAssetMerchantSettingsAsync(UpdateAssetMerchantSettingsRequest settingsRequest)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetPersonalAvailableAssetsAsync(request));
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetAssetMerchantSettingsAsync(settingsRequest));
         }
 
         public async Task CancelAsync(string merchantId, string paymentRequestId)
