@@ -21,13 +21,13 @@ namespace Lykke.Service.PayInternal.Services
             _log = log;
         }
 
-        public async Task<IMerchantGroup> GetAsync(string ownerMerchantId, string groupId)
+        public Task<IMerchantGroup> GetAsync(string ownerId, string groupId)
         {
-            return await _merchantGroupRepository.GetAsync(ownerMerchantId, groupId);
+            return _merchantGroupRepository.GetAsync(ownerId, groupId);
         }
-        public async Task<IMerchantGroup> SetAsync(IMerchantGroup merchantGroup)
+        public Task<IMerchantGroup> SetAsync(IMerchantGroup merchantGroup)
         {
-            return await _merchantGroupRepository.InsertAsync(merchantGroup);
+            return _merchantGroupRepository.InsertAsync(merchantGroup);
         }
     }
 }

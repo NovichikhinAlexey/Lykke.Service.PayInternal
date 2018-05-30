@@ -32,31 +32,17 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Supervisor
         public async Task<ISupervisor> InsertAsync(ISupervisor supervisor)
         {
             var entity = new SupervisorEntity(SupervisorEntity.IndexByEmployee.GeneratePartitionKey(supervisor.MerchantId), SupervisorEntity.IndexByEmployee.GenerateRowKey(supervisor.EmployeeId));
-            try
-            {
-                Mapper.Map(supervisor, entity);
-                await _storage.InsertAsync(entity);
-            }
-            catch (StorageException ex)
-            {
-                throw;
-            }
+            Mapper.Map(supervisor, entity);
+            await _storage.InsertAsync(entity);
 
             return entity;
         }
         public async Task<ISupervisor> UpdateAsync(ISupervisor supervisor)
         {
             var entity = new SupervisorEntity(SupervisorEntity.IndexByEmployee.GeneratePartitionKey(supervisor.MerchantId), SupervisorEntity.IndexByEmployee.GenerateRowKey(supervisor.EmployeeId));
-            try
-            {
-                entity.ETag = "*";
-                Mapper.Map(supervisor, entity);
-                await _storage.MergeAsync(entity.PartitionKey, entity.Id, e => entity);
-            }
-            catch (StorageException ex)
-            {
-                throw;
-            }
+            entity.ETag = "*";
+            Mapper.Map(supervisor, entity);
+            await _storage.MergeAsync(entity.PartitionKey, entity.Id, e => entity);
 
             return entity;
         }
