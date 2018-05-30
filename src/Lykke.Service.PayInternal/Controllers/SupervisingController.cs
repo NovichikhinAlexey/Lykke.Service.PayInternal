@@ -40,24 +40,18 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("{merchantId}/{employeeId}")]
         [SwaggerOperation("GetMerchants")]
         [ProducesResponseType(typeof(AvailableMerchantsResponseModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ValidateModel]
         public async Task<IActionResult> GetMerchants(string merchantId, string employeeId)
         {
-            try
-            {
-                var supervisor = await _supervisorService.GetAsync(merchantId, employeeId);
-                if (supervisor == null)
-                    return NotFound(ErrorResponse.Create("Couldn't find supervisor"));
-                var list = new List<string>();
-                if (supervisor.SupervisorMerchants != null)
-                    supervisor.SupervisorMerchants.Split(';').ToList();
-                return Ok(new AvailableMerchantsResponseModel { Merchants = list });
-            }
-            catch (Exception ex)
-            {
-                await _log.WriteErrorAsync(nameof(SupervisingController), nameof(GetMerchants), ex);
-                throw;
-            }
+            var supervisor = await _supervisorService.GetAsync(merchantId, employeeId);
+            if (supervisor == null)
+                return NotFound(ErrorResponse.Create("Couldn't find supervisor"));
+            var list = new List<string>();
+            if (supervisor.SupervisorMerchants != null)
+                supervisor.SupervisorMerchants.Split(';').ToList();
+            return Ok(new AvailableMerchantsResponseModel { Merchants = list });
         }
         /// <summary>
         /// Creates employee supervisor
