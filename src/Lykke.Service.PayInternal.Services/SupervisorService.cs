@@ -25,18 +25,14 @@ namespace Lykke.Service.PayInternal.Services
             _supervisorRepository = supervisorRepository;
             _log = log;
         }
-        public async Task<ISupervisor> GetAsync(string merchantId, string employeeId)
+        public async Task<ISupervisor> GetAsync(string employeeId)
         {
-            var supervisor = await _supervisorRepository.GetAsync(merchantId, employeeId);
+            var supervisor = await _supervisorRepository.GetAsync(employeeId);
             if (supervisor != null)
             {
-                var groups = supervisor.MerchantGroups.Split(Delimiter).ToList();
                 var allmerchants = new List<string>();
-                foreach (var group in groups)
-                {
-                    var merchantgroup = await _merchantGroupService.GetAsync(merchantId, group);
-                    allmerchants.AddRange(merchantgroup.Merchants.Split(Delimiter).ToList());
-                }
+                var merchantgroup = await _merchantGroupService.GetAsync(supervisor.MerchantId);
+                allmerchants.AddRange(merchantgroup.Merchants.Split(Delimiter).ToList());
                 allmerchants = allmerchants.Distinct().ToList();
                 supervisor.SupervisorMerchants = String.Join(Delimiter, allmerchants.ToArray());
                 return supervisor;
@@ -46,7 +42,7 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<ISupervisor> SetAsync(ISupervisor supervisor)
         {
-            var supervisorentity = await _supervisorRepository.GetAsync(supervisor.MerchantId, supervisor.EmployeeId);
+            var supervisorentity = await _supervisorRepository.GetAsync(supervisor.EmployeeId);
             if (supervisorentity == null)
             {
                 supervisorentity = await _supervisorRepository.InsertAsync(supervisor);
@@ -71,9 +67,9 @@ namespace Lykke.Service.PayInternal.Services
             }
             return supervisorentity;
         }
-        public async Task DeleteAsync(string merchantId, string employeeId)
+        public async Task DeleteAsync(string employeeId)
         {
-            await _supervisorRepository.DeleteAsync(merchantId, employeeId);
+            await _supervisorRepository.DeleteAsync(employeeId);
         }
     }
 }

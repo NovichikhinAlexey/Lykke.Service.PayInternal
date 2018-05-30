@@ -275,17 +275,15 @@ namespace Lykke.Service.PayInternal.Client
         /// <summary>
         /// Return list of supervising merchants for employee
         /// </summary>
-        /// <param name="merchantId"></param>
         /// <param name="employeeId"></param>
         /// <returns></returns>
-        Task<SupervisingMerchantsResponse> GetSupervisingMerchantsAsync(string merchantId, string employeeId);
+        Task<SupervisingMerchantsResponse> GetSupervisingMerchantsAsync(string employeeId);
         /// <summary>
         /// Delete all supervising merchants from employee
         /// </summary>
-        /// <param name="merchantId"></param>
         /// <param name="employeeId"></param>
         /// <returns></returns>
-        Task DeleteSupervisingAsync(string merchantId, string employeeId);
+        Task DeleteSupervisingAsync(string employeeId);
         /// <summary>
         /// Add supervising merchants for employee
         /// </summary>

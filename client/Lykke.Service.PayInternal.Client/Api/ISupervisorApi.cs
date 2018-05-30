@@ -9,11 +9,11 @@ namespace Lykke.Service.PayInternal.Client.Api
 {
     public interface ISupervisorApi
     {
-        [Get("/api/supervising/{merchantId}/{employeeId}")]
-        Task<SupervisingMerchantsResponse> GetSupervisingMerchantsAsync(string merchantId, string employeeId);
+        [Get("/api/supervising/{employeeId}")]
+        Task<SupervisingMerchantsResponse> GetSupervisingMerchantsAsync(string employeeId);
 
-        [Delete("/api/supervising/{merchantId}/{employeeId}")]
-        Task DeleteSupervisingMerchantsAsync(string merchantId, string employeeId);
+        [Delete("/api/supervising/{employeeId}")]
+        Task DeleteSupervisingMerchantsAsync(string employeeId);
 
         [Post("/api/supervising")]
         Task SetSupervisingMerchantsAsync([Body] CreateSupervisingEmployeeRequest request);

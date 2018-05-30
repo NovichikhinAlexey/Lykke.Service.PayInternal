@@ -40,12 +40,15 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Supervisor
             {
                 return employeeId;
             }
-
+            public static string GenerateRowKey()
+            {
+                return "EmployeeIdIndex";
+            }
             public static AzureIndex Create(SupervisorEntity entity)
             {
                 return AzureIndex.Create(
-                    GeneratePartitionKey(entity.MerchantId),
-                    GenerateRowKey(entity.EmployeeId), entity);
+                    GeneratePartitionKey(entity.EmployeeId),
+                    GenerateRowKey(), entity);
             }
         }
     }

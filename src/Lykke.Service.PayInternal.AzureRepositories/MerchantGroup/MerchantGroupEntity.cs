@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AzureStorage.Tables.Templates.Index;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
@@ -29,27 +30,34 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
             PartitionKey = partitionKey;
             RowKey = rowKey;
         }
+        public static string GenerateRowKey()
+        {
+            return Guid.NewGuid().ToString();
+        }
+        public static string GeneratePartitionKey(string ownerId)
+        {
+            return ownerId;
+        }
         public static class ByOwner
         {
-            public static string GeneratePartitionKey(string merchantId)
+            public static string GeneratePartitionKey(string groupId)
             {
-                return merchantId;
+                return groupId;
             }
 
-            public static string GenerateRowKey(string id = null)
+            public static string GenerateRowKey(string ownerId)
             {
-                return id ?? Guid.NewGuid().ToString();
+                return ownerId;
             }
-
-            public static MerchantGroupEntity Create(IMerchantGroup merchantGroup)
+            public static string GenerateRowKey()
             {
-                var entity = new MerchantGroupEntity
-                {
-                    PartitionKey = GeneratePartitionKey(merchantGroup.OwnerId),
-                    RowKey = GenerateRowKey()
-                };
-
-                return Mapper.Map(merchantGroup, entity);
+                return "GroupIdIndex";
+            }
+            public static AzureIndex Create(MerchantGroupEntity entity)
+            {
+                return AzureIndex.Create(
+                    GeneratePartitionKey(entity.OwnerId),
+                    GenerateRowKey(), entity);
             }
         }
     }

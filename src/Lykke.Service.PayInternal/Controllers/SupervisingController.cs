@@ -33,24 +33,23 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <summary>
         /// Returns list of merchants for Employee supervising
         /// </summary>
-        /// <param name="merchantId"></param>
         /// <param name="employeeId"></param>
         /// <returns></returns>
         [HttpGet]
-        [Route("{merchantId}/{employeeId}")]
+        [Route("{employeeId}")]
         [SwaggerOperation("GetMerchants")]
         [ProducesResponseType(typeof(AvailableMerchantsResponseModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ValidateModel]
-        public async Task<IActionResult> GetMerchants(string merchantId, string employeeId)
+        public async Task<IActionResult> GetMerchants(string employeeId)
         {
-            var supervisor = await _supervisorService.GetAsync(merchantId, employeeId);
+            var supervisor = await _supervisorService.GetAsync(employeeId);
             if (supervisor == null)
                 return NotFound(ErrorResponse.Create("Couldn't find supervisor"));
             var list = new List<string>();
             if (supervisor.SupervisorMerchants != null)
-                supervisor.SupervisorMerchants.Split(';').ToList();
+                list = supervisor.SupervisorMerchants.Split(';').ToList();
             return Ok(new AvailableMerchantsResponseModel { Merchants = list });
         }
         /// <summary>
@@ -83,29 +82,18 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <summary>
         /// Deletes employee supervising.
         /// </summary>
-        /// <param name="merchantId">The merchant id.</param>
         /// <param name="employeeId">The employee id.</param>
         /// <response code="204">successfully deleted.</response>
         [HttpDelete]
-        [Route("{merchantId}/{employeeId}")]
+        [Route("{employeeId}")]
         [SwaggerOperation("SupervisingDelete")]
         [ProducesResponseType((int)HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ValidateModel]
-        public async Task<IActionResult> DeleteAsync(string merchantId, string employeeId)
+        public async Task<IActionResult> DeleteAsync(string employeeId)
         {
-            try
-            {
-                await _supervisorService.DeleteAsync(merchantId, employeeId);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                await _log.WriteErrorAsync(nameof(SupervisingController), nameof(DeleteAsync),
-                    new { merchantId, employeeId }.ToJson(), ex);
-
-                throw;
-            }
+            await _supervisorService.DeleteAsync(employeeId);
+            return NoContent();
         }
     }
 }

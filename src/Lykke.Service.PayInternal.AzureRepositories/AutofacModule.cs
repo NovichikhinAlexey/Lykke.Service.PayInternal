@@ -68,12 +68,12 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                     merchantsTableName, _log)));
 
             builder.RegisterInstance<IMerchantGroupRepository>(new MerchantGroupRepository(
-                AzureTableStorage<MerchantGroupEntity>.Create(_merchantsConnectionString,
-                    merchantGroupsTableName, _log)));
+                AzureTableStorage<MerchantGroupEntity>.Create(_merchantsConnectionString, merchantGroupsTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantGroupsTableName, _log)));
 
             builder.RegisterInstance<ISupervisorRepository>(new SupervisorRepository(
-                AzureTableStorage<SupervisorEntity>.Create(_merchantsConnectionString,
-                    supervisorTableName, _log)));
+                AzureTableStorage<SupervisorEntity>.Create(_merchantsConnectionString, supervisorTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, supervisorTableName, _log)));
 
             builder.RegisterInstance<IPaymentRequestRepository>(new PaymentRequestRepository(
                 AzureTableStorage<PaymentRequestEntity>.Create(_paymentRequestsConnectionString,

@@ -8,8 +8,8 @@ namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface ISupervisorService
     {
-        Task<ISupervisor> GetAsync(string merchantId, string employeeId);
+        Task<ISupervisor> GetAsync(string employeeId);
         Task<ISupervisor> SetAsync(ISupervisor supervisor);
-        Task DeleteAsync(string merchantId, string employeeId);
+        Task DeleteAsync(string employeeId);
     }
 }

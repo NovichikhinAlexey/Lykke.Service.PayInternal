@@ -21,9 +21,9 @@ namespace Lykke.Service.PayInternal.Services
             _log = log;
         }
 
-        public Task<IMerchantGroup> GetAsync(string ownerId, string groupId)
+        public Task<IMerchantGroup> GetAsync(string ownerId)
         {
-            return _merchantGroupRepository.GetAsync(ownerId, groupId);
+            return _merchantGroupRepository.GetAsync(ownerId);
         }
         public Task<IMerchantGroup> SetAsync(IMerchantGroup merchantGroup)
         {

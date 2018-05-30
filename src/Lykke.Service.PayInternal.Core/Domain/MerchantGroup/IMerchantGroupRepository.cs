@@ -7,7 +7,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.MerchantGroup
 {
     public interface IMerchantGroupRepository
     {
-        Task<IMerchantGroup> GetAsync(string ownerMerchantId, string groupId);
+        Task<IMerchantGroup> GetAsync(string groupId);
         Task<IMerchantGroup> InsertAsync(IMerchantGroup merchantGroup);
     }
 }
