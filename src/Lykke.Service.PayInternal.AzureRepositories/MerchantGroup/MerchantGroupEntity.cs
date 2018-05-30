@@ -16,11 +16,11 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
 
         public string DisplayName { get; set; }
 
-        public string OwnerMerchantId { get; set; }
+        public string OwnerId { get; set; }
 
         public string Merchants { get; set; }
 
-        public AppointmentType Appointment { get; set; }
+        public GroupType Type { get; set; }
         public MerchantGroupEntity()
         {
         }
@@ -45,7 +45,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
             {
                 var entity = new MerchantGroupEntity
                 {
-                    PartitionKey = GeneratePartitionKey(merchantGroup.OwnerMerchantId),
+                    PartitionKey = GeneratePartitionKey(merchantGroup.OwnerId),
                     RowKey = GenerateRowKey()
                 };
 

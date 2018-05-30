@@ -10,10 +10,10 @@ namespace Lykke.Service.PayInternal.Core.Domain.MerchantGroup
 
         public string DisplayName { get; set; }
 
-        public string OwnerMerchantId { get; set; }
+        public string OwnerId { get; set; }
 
         public string Merchants { get; set; }
 
-        public AppointmentType Appointment { get; set; }
+        public GroupType Type { get; set; }
     }
 }

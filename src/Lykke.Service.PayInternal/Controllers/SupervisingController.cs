@@ -5,6 +5,7 @@ using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Supervisor;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Supervising;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -39,17 +40,17 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("{merchantId}/{employeeId}")]
         [SwaggerOperation("GetMerchants")]
         [ProducesResponseType(typeof(AvailableMerchantsResponseModel), (int)HttpStatusCode.OK)]
+        [ValidateModel]
         public async Task<IActionResult> GetMerchants(string merchantId, string employeeId)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(new ErrorResponse().AddErrors(ModelState));
-
             try
             {
                 var supervisor = await _supervisorService.GetAsync(merchantId, employeeId);
                 if (supervisor == null)
                     return NotFound(ErrorResponse.Create("Couldn't find supervisor"));
-                var list = supervisor.SupervisorMerchants.Split(';').ToList();
+                var list = new List<string>();
+                if (supervisor.SupervisorMerchants != null)
+                    supervisor.SupervisorMerchants.Split(';').ToList();
                 return Ok(new AvailableMerchantsResponseModel { Merchants = list });
             }
             catch (Exception ex)
@@ -69,11 +70,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("EmployeeSupervisorCreate")]
         [ProducesResponseType(typeof(SupervisingModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ValidateModel]
         public async Task<IActionResult> CreateAsync([FromBody] CreateSupervisingEmployeeRequest request)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(new ErrorResponse().AddErrors(ModelState));
-
             try
             {
                 var model = Mapper.Map<Supervisor>(request);
@@ -98,11 +97,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("SupervisingDelete")]
         [ProducesResponseType((int)HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> DeleteAsync(string merchantId, string employeeId)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(new ErrorResponse().AddErrors(ModelState));
-
             try
             {
                 await _supervisorService.DeleteAsync(merchantId, employeeId);

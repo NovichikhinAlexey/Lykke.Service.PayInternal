@@ -18,22 +18,15 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
         {
             _storage = storage;
         }
-        public async Task<IMerchantGroup> GetAsync(string ownerMerchantId, string groupId)
+        public async Task<IMerchantGroup> GetAsync(string ownerId, string groupId)
         {
-            return await _storage.GetDataAsync(MerchantGroupEntity.ByOwner.GeneratePartitionKey(ownerMerchantId), groupId);
+            return await _storage.GetDataAsync(MerchantGroupEntity.ByOwner.GeneratePartitionKey(ownerId), MerchantGroupEntity.ByOwner.GenerateRowKey(groupId));
         }
         public async Task<IMerchantGroup> InsertAsync(IMerchantGroup merchantGroup)
         {
-            var entity = new MerchantGroupEntity(MerchantGroupEntity.ByOwner.GeneratePartitionKey(merchantGroup.OwnerMerchantId), MerchantGroupEntity.ByOwner.GenerateRowKey());
-            try
-            {
-                Mapper.Map(merchantGroup, entity);
-                await _storage.InsertAsync(entity);
-            }
-            catch (StorageException ex)
-            {
-                throw;
-            }
+            var entity = new MerchantGroupEntity(MerchantGroupEntity.ByOwner.GeneratePartitionKey(merchantGroup.OwnerId), MerchantGroupEntity.ByOwner.GenerateRowKey());
+            Mapper.Map(merchantGroup, entity);
+            await _storage.InsertAsync(entity);
 
             return entity;
         }

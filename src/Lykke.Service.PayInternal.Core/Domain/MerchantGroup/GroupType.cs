@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Lykke.Service.PayInternal.Core.Domain.MerchantGroup
 {
-    public enum AppointmentType
+    public enum GroupType
     {
         [JsonConverter(typeof(StringEnumConverter))]
         Supervisor

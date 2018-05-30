@@ -35,8 +35,6 @@ namespace Lykke.Service.PayInternal.Mapping
 
             CreateMap<CreateSupervisingEmployeeRequest, Supervisor>(MemberList.Destination)
                 .ForMember(dest => dest.Id, opt => opt.Ignore());
-                //.ForMember(dest => dest.MerchantGroups, opt => opt.Ignore())
-                //.ForMember(dest => dest.SupervisorMerchants, opt => opt.Ignore());
 
             CreateMap<IOrder, OrderModel>(MemberList.Source);
 
