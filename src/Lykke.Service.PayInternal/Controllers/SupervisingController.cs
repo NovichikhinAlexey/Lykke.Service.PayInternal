@@ -48,7 +48,7 @@ namespace Lykke.Service.PayInternal.Controllers
             if (supervisor == null)
                 return NotFound(ErrorResponse.Create("Couldn't find supervisor"));
             var list = new List<string>();
-            if (supervisor.SupervisorMerchants != null)
+            if (!string.IsNullOrEmpty(supervisor.SupervisorMerchants))
                 list = supervisor.SupervisorMerchants.Split(';').ToList();
             return Ok(new AvailableMerchantsResponseModel { Merchants = list });
         }
@@ -78,7 +78,6 @@ namespace Lykke.Service.PayInternal.Controllers
                 throw;
             }
         }
-
         /// <summary>
         /// Deletes employee supervising.
         /// </summary>

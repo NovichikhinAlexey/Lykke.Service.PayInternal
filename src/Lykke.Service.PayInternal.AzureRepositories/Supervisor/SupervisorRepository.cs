@@ -36,23 +36,24 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Supervisor
 
         public async Task<ISupervisor> InsertAsync(ISupervisor supervisor)
         {
-            var entity = new SupervisorEntity(SupervisorEntity.IndexByEmployee.GeneratePartitionKey(supervisor.MerchantId),
-                SupervisorEntity.IndexByEmployee.GenerateRowKey(supervisor.EmployeeId));
+            var entity = new SupervisorEntity(supervisor.MerchantId, supervisor.EmployeeId);
             Mapper.Map(supervisor, entity);
             await _storage.InsertAsync(entity);
             var index = SupervisorEntity.IndexByEmployee.Create(entity);
             await _employeeIndexStorage.InsertAsync(index);
-            
-            return entity;
+            return Mapper.Map(entity, supervisor);
         }
-        public async Task<ISupervisor> UpdateAsync(ISupervisor supervisor)
+        public async Task UpdateAsync(ISupervisor supervisor)
         {
-            var entity = new SupervisorEntity(SupervisorEntity.IndexByEmployee.GeneratePartitionKey(supervisor.MerchantId), SupervisorEntity.IndexByEmployee.GenerateRowKey(supervisor.EmployeeId));
-            entity.ETag = "*";
-            Mapper.Map(supervisor, entity);
-            await _storage.MergeAsync(entity.PartitionKey, entity.Id, e => entity);
 
-            return entity;
+            await _storage.MergeAsync(
+                SupervisorEntity.IndexByEmployee.GeneratePartitionKey(supervisor.MerchantId),
+                SupervisorEntity.IndexByEmployee.GenerateRowKey(supervisor.EmployeeId),
+                entity =>
+                {
+                    entity.MerchantGroups = supervisor.MerchantGroups;
+                    return entity;
+                });
         }
         public async Task DeleteAsync(string employeeId)
         {
@@ -60,7 +61,10 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Supervisor
                 SupervisorEntity.IndexByEmployee.GeneratePartitionKey(employeeId),
                 SupervisorEntity.IndexByEmployee.GenerateRowKey());
 
-            await _storage.DeleteAsync(index);
+            await _employeeIndexStorage.DeleteAsync(index);
+            
+            var entity = await _storage.GetDataAsync(index);
+            await _storage.DeleteAsync(entity);
         }
     }
 }

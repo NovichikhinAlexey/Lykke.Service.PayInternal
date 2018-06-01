@@ -9,7 +9,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Supervisor
     {
         Task<ISupervisor> GetAsync(string employeeId);
         Task<ISupervisor> InsertAsync(ISupervisor supervisor);
-        Task<ISupervisor> UpdateAsync(ISupervisor supervisor);
+        Task UpdateAsync(ISupervisor supervisor);
         Task DeleteAsync(string employeeId);
     }
 }

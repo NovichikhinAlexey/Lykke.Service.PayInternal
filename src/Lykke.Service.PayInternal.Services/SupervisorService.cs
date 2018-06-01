@@ -31,8 +31,12 @@ namespace Lykke.Service.PayInternal.Services
             if (supervisor != null)
             {
                 var allmerchants = new List<string>();
-                var merchantgroup = await _merchantGroupService.GetAsync(supervisor.MerchantId);
-                allmerchants.AddRange(merchantgroup.Merchants.Split(Delimiter).ToList());
+                var list = supervisor.MerchantGroups.Split(';').ToList();
+                foreach (var item in list)
+                {
+                    var merchantgroup = await _merchantGroupService.GetAsync(item);
+                    allmerchants.AddRange(merchantgroup.Merchants.Split(Delimiter).ToList());
+                }
                 allmerchants = allmerchants.Distinct().ToList();
                 supervisor.SupervisorMerchants = String.Join(Delimiter, allmerchants.ToArray());
                 return supervisor;
@@ -47,7 +51,7 @@ namespace Lykke.Service.PayInternal.Services
             {
                 supervisorentity = await _supervisorRepository.InsertAsync(supervisor);
                 var merchantGroup = new MerchantGroup();
-                merchantGroup.Type = GroupType.Supervisor;
+                merchantGroup.MerchantGroupType = MerchantGroupType.Supervisor;
                 merchantGroup.OwnerId = supervisor.MerchantId;
                 merchantGroup.Merchants = supervisor.SupervisorMerchants;
                 var group = await _merchantGroupService.SetAsync(merchantGroup);

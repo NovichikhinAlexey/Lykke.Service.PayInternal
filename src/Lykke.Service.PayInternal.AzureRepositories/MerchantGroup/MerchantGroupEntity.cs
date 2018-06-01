@@ -21,7 +21,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
 
         public string Merchants { get; set; }
 
-        public GroupType Type { get; set; }
+        public MerchantGroupType MerchantGroupType { get; set; }
         public MerchantGroupEntity()
         {
         }
@@ -38,17 +38,13 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
         {
             return ownerId;
         }
-        public static class ByOwner
+        public static class IndexByGroup
         {
             public static string GeneratePartitionKey(string groupId)
             {
                 return groupId;
             }
 
-            public static string GenerateRowKey(string ownerId)
-            {
-                return ownerId;
-            }
             public static string GenerateRowKey()
             {
                 return "GroupIdIndex";
@@ -56,7 +52,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
             public static AzureIndex Create(MerchantGroupEntity entity)
             {
                 return AzureIndex.Create(
-                    GeneratePartitionKey(entity.OwnerId),
+                    GeneratePartitionKey(entity.Id),
                     GenerateRowKey(), entity);
             }
         }

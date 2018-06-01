@@ -249,19 +249,19 @@ namespace Lykke.Service.PayInternal.Client
             _httpClient?.Dispose();
         }
 
-        public async Task<SupervisingMerchantsResponse> GetSupervisingMerchantsAsync(string employeeId)
+        public async Task<SupervisingMerchantsResponse> GetSupervisingAsync(string employeeId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorApi.GetSupervisingMerchantsAsync(employeeId));
+            return await _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorApi.GetSupervisingAsync(employeeId));
         }
 
         public async Task DeleteSupervisingAsync(string employeeId)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorApi.DeleteSupervisingMerchantsAsync(employeeId));
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorApi.DeleteSupervisingAsync(employeeId));
         }
 
-        public async Task SetSupervisingMerchantsAsync(CreateSupervisingEmployeeRequest request)
+        public async Task SetSupervisingAsync(CreateSupervisingEmployeeRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorApi.SetSupervisingMerchantsAsync(request));
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorApi.SetSupervisingAsync(request));
         }
     }
 }

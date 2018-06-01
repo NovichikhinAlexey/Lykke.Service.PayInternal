@@ -14,6 +14,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.MerchantGroup
 
         public string Merchants { get; set; }
 
-        public GroupType Type { get; set; }
+        public MerchantGroupType MerchantGroupType { get; set; }
     }
 }

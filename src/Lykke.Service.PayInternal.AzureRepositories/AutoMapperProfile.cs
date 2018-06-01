@@ -54,6 +54,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             CreateMap<ISupervisor, SupervisorEntity>(MemberList.Source)
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.Timestamp, opt => opt.Ignore());
+
             CreateMap<IMerchantGroup, MerchantGroupEntity>(MemberList.Source)
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.Timestamp, opt => opt.Ignore());

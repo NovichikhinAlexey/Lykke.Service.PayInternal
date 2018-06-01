@@ -10,6 +10,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.MerchantGroup
         string DisplayName { get; }
         string OwnerId { get; }
         string Merchants { get; }
-        GroupType Type { get; }
+        MerchantGroupType MerchantGroupType { get; }
     }
 }

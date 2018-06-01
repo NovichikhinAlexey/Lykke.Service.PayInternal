@@ -12,7 +12,7 @@ using System.Text;
 namespace Lykke.Service.PayInternal.AzureRepositories.Supervisor
 {
     [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
-    public class SupervisorEntity : AzureTableEntity, ISupervisor
+    public class SupervisorEntity : AzureTableEntity
     {
         public string Id => RowKey;
         public string MerchantId { get; set; }

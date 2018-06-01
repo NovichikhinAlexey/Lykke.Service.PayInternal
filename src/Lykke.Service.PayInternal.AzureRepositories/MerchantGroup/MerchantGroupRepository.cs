@@ -23,11 +23,11 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
             _storage = storage;
             _groupIndexStorage = groupIndexStorage;
         }
-        public async Task<IMerchantGroup> GetAsync(string ownerId)
+        public async Task<IMerchantGroup> GetAsync(string groupId)
         {
             AzureIndex index = await _groupIndexStorage.GetDataAsync(
-                MerchantGroupEntity.ByOwner.GeneratePartitionKey(ownerId),
-                MerchantGroupEntity.ByOwner.GenerateRowKey());
+                MerchantGroupEntity.IndexByGroup.GeneratePartitionKey(groupId),
+                MerchantGroupEntity.IndexByGroup.GenerateRowKey());
 
             if (index == null)
                 return null;
@@ -40,7 +40,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
                 MerchantGroupEntity.GenerateRowKey());
             Mapper.Map(merchantGroup, entity);
             await _storage.InsertAsync(entity);
-            var index = MerchantGroupEntity.ByOwner.Create(entity);
+            var index = MerchantGroupEntity.IndexByGroup.Create(entity);
             await _groupIndexStorage.InsertAsync(index);
 
             return entity;
