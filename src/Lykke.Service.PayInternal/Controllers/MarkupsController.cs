@@ -86,7 +86,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 _log.WriteError(nameof(GetDefault), new {ex.Variable, ex.Value}, ex);
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return NotFound(ErrorResponse.Create("Asset pair not found"));
             }
             catch (Exception ex)
             {
@@ -129,7 +129,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 _log.WriteError(nameof(SetDefault), new { ex.Variable, ex.Value }, ex);
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return NotFound(ErrorResponse.Create("Asset pair not found"));
             }
             catch (Exception ex)
             {
@@ -151,16 +151,16 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetAllForMerchant(string merchantId)
         {
-            string unescapedMerchantId = Uri.UnescapeDataString(merchantId);
+            merchantId = Uri.UnescapeDataString(merchantId);
 
             try
             {
-                IMerchant merchant = await _merchantService.GetAsync(unescapedMerchantId);
+                IMerchant merchant = await _merchantService.GetAsync(merchantId);
 
                 if (merchant == null)
                     return NotFound(ErrorResponse.Create("Merchant not found"));
 
-                IReadOnlyList<IMarkup> markups = await _markupService.GetForMerchantAsync(unescapedMerchantId);
+                IReadOnlyList<IMarkup> markups = await _markupService.GetForMerchantAsync(merchantId);
 
                 return Ok(Mapper.Map<IEnumerable<MarkupResponse>>(markups));
             }
@@ -168,7 +168,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 _log.WriteError(nameof(GetAllForMerchant), new { ex.Variable, ex.Value }, ex);
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return NotFound(ErrorResponse.Create("Merchant not found"));
             }
             catch (Exception ex)
             {
@@ -191,17 +191,17 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetForMerchant(string merchantId, string assetPairId)
         {
-            string unescapedMerchantId = Uri.UnescapeDataString(merchantId);
-            string unescapedAssetPairId = Uri.UnescapeDataString(assetPairId);
+            merchantId = Uri.UnescapeDataString(merchantId);
+            assetPairId = Uri.UnescapeDataString(assetPairId);
 
             try
             {
-                IMerchant merchant = await _merchantService.GetAsync(unescapedMerchantId);
+                IMerchant merchant = await _merchantService.GetAsync(merchantId);
 
                 if (merchant == null)
                     return NotFound(ErrorResponse.Create("Merchant not found"));
 
-                IMarkup markup = await _markupService.GetForMerchantAsync(unescapedMerchantId, unescapedAssetPairId);
+                IMarkup markup = await _markupService.GetForMerchantAsync(merchantId, assetPairId);
 
                 if (markup == null) return NotFound(ErrorResponse.Create("Markup has not been set"));
 
@@ -211,7 +211,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 _log.WriteError(nameof(GetForMerchant), new { ex.Variable, ex.Value }, ex);
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return NotFound(ErrorResponse.Create("Merchant or asset pair not found"));
             }
             catch (Exception ex)
             {
@@ -237,12 +237,12 @@ namespace Lykke.Service.PayInternal.Controllers
         public async Task<IActionResult> SetForMerchant(string merchantId, string assetPairId,
             [FromBody] UpdateMarkupRequest request)
         {
-            string unescapedMerchantId = Uri.UnescapeDataString(merchantId);
-            string unescapedAssetPairId = Uri.UnescapeDataString(assetPairId);
+            merchantId = Uri.UnescapeDataString(merchantId);
+            assetPairId = Uri.UnescapeDataString(assetPairId);
 
             try
             {
-                IMerchant merchant = await _merchantService.GetAsync(unescapedMerchantId);
+                IMerchant merchant = await _merchantService.GetAsync(merchantId);
 
                 if (merchant == null)
                     return NotFound(ErrorResponse.Create("Merchant not found"));
@@ -256,8 +256,8 @@ namespace Lykke.Service.PayInternal.Controllers
                 }
 
                 await _markupService.SetForMerchantAsync(
-                    unescapedAssetPairId, 
-                    unescapedMerchantId,
+                    assetPairId, 
+                    merchantId,
                     request.PriceAssetPairId, 
                     request.PriceMethod,
                     request);
@@ -268,7 +268,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 _log.WriteError(nameof(SetForMerchant), new { ex.Variable, ex.Value }, ex);
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return NotFound(ErrorResponse.Create("Merchant or asset pair not found"));
             }
             catch (Exception ex)
             {

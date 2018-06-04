@@ -100,7 +100,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     ex.Value
                 }, ex);
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return NotFound(ErrorResponse.Create("Asset not found"));
             }
             catch (AssetUnknownException assetEx)
             {
@@ -126,7 +126,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("GetAssetsPersonalSettings")]
         [ProducesResponseType(typeof(AssetMerchantSettingsResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
-        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         public async Task<IActionResult> GetAssetMerchantSettings([FromQuery] string merchantId)
         {
             if (string.IsNullOrEmpty(merchantId))
@@ -137,7 +136,7 @@ namespace Lykke.Service.PayInternal.Controllers
                 IMerchant merchant = await _merchantService.GetAsync(merchantId);
 
                 if (merchant == null)
-                    return NotFound(ErrorResponse.Create("Couldn't find merchant"));
+                    return NotFound(ErrorResponse.Create("Merchant not found"));
 
                 IAssetMerchantSettings personal = await _assetSettingsService.GetByMerchantAsync(merchantId);
 
@@ -151,7 +150,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     ex.Value
                 }, ex);
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return NotFound(ErrorResponse.Create("Asset not found"));
             }
             catch (Exception ex)
             {
@@ -171,7 +170,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("SetAssetsPersonalSettings")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
-        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ValidateModel]
         public async Task<IActionResult> SetAssetMerchantSettings(
             [FromBody] UpdateAssetMerchantSettingsRequest settingsRequest)
@@ -181,7 +179,7 @@ namespace Lykke.Service.PayInternal.Controllers
                 IMerchant merchant = await _merchantService.GetAsync(settingsRequest.MerchantId);
 
                 if (merchant == null)
-                    return NotFound(ErrorResponse.Create("Couldn't find merchant"));
+                    return NotFound(ErrorResponse.Create("Merchant not found"));
 
                 await _assetSettingsService.SetByMerchantAsync(settingsRequest.MerchantId,
                     settingsRequest.PaymentAssets,
@@ -197,7 +195,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     ex.Value
                 }, ex);
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return NotFound(ErrorResponse.Create("Merchant not found"));
             }
             catch (Exception ex)
             {
