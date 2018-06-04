@@ -4,9 +4,11 @@ using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common.Log;
+using JetBrains.Annotations;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Markups;
@@ -25,15 +27,15 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly ILog _log;
 
         public MarkupsController(
-            IMarkupService markupService,
-            ILog log,
-            IMerchantService merchantService,
-            IAssetsLocalCache assetsLocalCache)
+            [NotNull] IMarkupService markupService,
+            [NotNull] ILog log,
+            [NotNull] IMerchantService merchantService,
+            [NotNull] IAssetsLocalCache assetsLocalCache)
         {
-            _markupService = markupService;
-            _log = log;
-            _merchantService = merchantService;
-            _assetsLocalCache = assetsLocalCache;
+            _markupService = markupService ?? throw new ArgumentNullException(nameof(markupService));
+            _log = log.CreateComponentScope(nameof(MarkupsController)) ?? throw new ArgumentNullException(nameof(log));
+            _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
+            _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
         }
 
         /// <summary>
@@ -54,7 +56,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(MarkupsController), nameof(GetDefaults), ex);
+                _log.WriteError(nameof(GetDefaults), ex);
 
                 throw;
             }
@@ -74,15 +76,21 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                IMarkup markup = await _markupService.GetDefaultAsync(assetPairId);
+                IMarkup markup = await _markupService.GetDefaultAsync(Uri.UnescapeDataString(assetPairId));
 
                 if (markup == null) return NotFound(ErrorResponse.Create("Default markup has not been set"));
 
                 return Ok(Mapper.Map<MarkupResponse>(markup));
             }
+            catch (InvalidRowKeyValueException ex)
+            {
+                _log.WriteError(nameof(GetDefault), new {ex.Variable, ex.Value}, ex);
+
+                return BadRequest(ErrorResponse.Create(ex.Message));
+            }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(MarkupsController), nameof(GetDefault), ex);
+                _log.WriteError(nameof(GetDefault), ex);
 
                 throw;
             }
@@ -112,14 +120,20 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                await _markupService.SetDefaultAsync(assetPairId, request.PriceAssetPairId, request.PriceMethod,
-                    request);
+                await _markupService.SetDefaultAsync(Uri.UnescapeDataString(assetPairId), request.PriceAssetPairId,
+                    request.PriceMethod, request);
 
                 return Ok();
             }
+            catch (InvalidRowKeyValueException ex)
+            {
+                _log.WriteError(nameof(SetDefault), new { ex.Variable, ex.Value }, ex);
+
+                return BadRequest(ErrorResponse.Create(ex.Message));
+            }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(MarkupsController), nameof(SetDefault), ex);
+                _log.WriteError(nameof(SetDefault), ex);
 
                 throw;
             }
@@ -137,20 +151,28 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetAllForMerchant(string merchantId)
         {
-            IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Merchant not found"));
+            string unescapedMerchantId = Uri.UnescapeDataString(merchantId);
 
             try
             {
-                IReadOnlyList<IMarkup> markups = await _markupService.GetForMerchantAsync(merchantId);
+                IMerchant merchant = await _merchantService.GetAsync(unescapedMerchantId);
+
+                if (merchant == null)
+                    return NotFound(ErrorResponse.Create("Merchant not found"));
+
+                IReadOnlyList<IMarkup> markups = await _markupService.GetForMerchantAsync(unescapedMerchantId);
 
                 return Ok(Mapper.Map<IEnumerable<MarkupResponse>>(markups));
             }
+            catch (InvalidRowKeyValueException ex)
+            {
+                _log.WriteError(nameof(GetAllForMerchant), new { ex.Variable, ex.Value }, ex);
+
+                return BadRequest(ErrorResponse.Create(ex.Message));
+            }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(MarkupsController), nameof(GetAllForMerchant), ex);
+                _log.WriteError(nameof(GetAllForMerchant), ex);
 
                 throw;
             }
@@ -169,22 +191,31 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetForMerchant(string merchantId, string assetPairId)
         {
-            IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Merchant not found"));
+            string unescapedMerchantId = Uri.UnescapeDataString(merchantId);
+            string unescapedAssetPairId = Uri.UnescapeDataString(assetPairId);
 
             try
             {
-                IMarkup markup = await _markupService.GetForMerchantAsync(merchantId, assetPairId);
+                IMerchant merchant = await _merchantService.GetAsync(unescapedMerchantId);
+
+                if (merchant == null)
+                    return NotFound(ErrorResponse.Create("Merchant not found"));
+
+                IMarkup markup = await _markupService.GetForMerchantAsync(unescapedMerchantId, unescapedAssetPairId);
 
                 if (markup == null) return NotFound(ErrorResponse.Create("Markup has not been set"));
 
                 return Ok(Mapper.Map<MarkupResponse>(markup));
             }
+            catch (InvalidRowKeyValueException ex)
+            {
+                _log.WriteError(nameof(GetForMerchant), new { ex.Variable, ex.Value }, ex);
+
+                return BadRequest(ErrorResponse.Create(ex.Message));
+            }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(MarkupsController), nameof(GetForMerchant), ex);
+                _log.WriteError(nameof(GetForMerchant), ex);
 
                 throw;
             }
@@ -206,28 +237,42 @@ namespace Lykke.Service.PayInternal.Controllers
         public async Task<IActionResult> SetForMerchant(string merchantId, string assetPairId,
             [FromBody] UpdateMarkupRequest request)
         {
-            IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Merchant not found"));
-
-            if (!string.IsNullOrEmpty(request.PriceAssetPairId))
-            {
-                AssetPair priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(request.PriceAssetPairId);
-
-                if (priceAssetPair == null)
-                    return NotFound(ErrorResponse.Create("Price asset pair doesn't exist"));
-            }
+            string unescapedMerchantId = Uri.UnescapeDataString(merchantId);
+            string unescapedAssetPairId = Uri.UnescapeDataString(assetPairId);
 
             try
             {
-                await _markupService.SetForMerchantAsync(assetPairId, merchantId, request.PriceAssetPairId, request.PriceMethod, request);
+                IMerchant merchant = await _merchantService.GetAsync(unescapedMerchantId);
+
+                if (merchant == null)
+                    return NotFound(ErrorResponse.Create("Merchant not found"));
+
+                if (!string.IsNullOrEmpty(request.PriceAssetPairId))
+                {
+                    AssetPair priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(request.PriceAssetPairId);
+
+                    if (priceAssetPair == null)
+                        return NotFound(ErrorResponse.Create("Price asset pair doesn't exist"));
+                }
+
+                await _markupService.SetForMerchantAsync(
+                    unescapedAssetPairId, 
+                    unescapedMerchantId,
+                    request.PriceAssetPairId, 
+                    request.PriceMethod,
+                    request);
 
                 return Ok();
             }
+            catch (InvalidRowKeyValueException ex)
+            {
+                _log.WriteError(nameof(SetForMerchant), new { ex.Variable, ex.Value }, ex);
+
+                return BadRequest(ErrorResponse.Create(ex.Message));
+            }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(MarkupsController), nameof(SetForMerchant), ex);
+                _log.WriteError(nameof(SetForMerchant), ex);
 
                 throw;
             }

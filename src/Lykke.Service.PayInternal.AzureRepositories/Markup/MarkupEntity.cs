@@ -1,11 +1,13 @@
 ﻿using System;
 using AutoMapper;
 using AzureStorage.Tables.Templates.Index;
+using Common;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
+using Lykke.Service.PayInternal.Core.Exceptions;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Markup
 {
@@ -100,11 +102,17 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Markup
         {
             public static string GeneratePartitionKey(string assetPairId)
             {
+                if (!assetPairId.IsValidPartitionOrRowKey())
+                    throw new InvalidRowKeyValueException(nameof(assetPairId), assetPairId);
+
                 return assetPairId;
             }
 
             public static string GenerateRowKey(MarkupIdentityType identityType, string identity)
             {
+                if (!identity.IsValidPartitionOrRowKey())
+                    throw new InvalidRowKeyValueException(nameof(identity), identity);
+
                 return identityType == MarkupIdentityType.None
                     ? $"{identityType.ToString()}"
                     : $"{identityType.ToString()}_{identity}";
@@ -126,6 +134,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Markup
         {
             public static string GeneratePartitionKey(MarkupIdentityType identityType, string identity)
             {
+                if (!identity.IsValidPartitionOrRowKey())
+                    throw new InvalidRowKeyValueException(nameof(identity), identity);
+
                 return identityType == MarkupIdentityType.None
                     ? $"{identityType.ToString()}"
                     : $"{identityType.ToString()}_{identity}";
@@ -133,6 +144,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Markup
 
             public static string GenerateRowKey(string assetPairId)
             {
+                if (!assetPairId.IsValidPartitionOrRowKey())
+                    throw new InvalidRowKeyValueException(nameof(assetPairId), assetPairId);
+
                 return assetPairId;
             }
 
