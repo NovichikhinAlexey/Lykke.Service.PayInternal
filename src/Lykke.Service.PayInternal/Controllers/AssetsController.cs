@@ -150,7 +150,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     ex.Value
                 }, ex);
 
-                return NotFound(ErrorResponse.Create("Asset not found"));
+                return NotFound(ErrorResponse.Create("Merchant not found"));
             }
             catch (Exception ex)
             {
