@@ -45,10 +45,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Supervisor
         }
         public async Task UpdateAsync(ISupervisor supervisor)
         {
-
-            await _storage.MergeAsync(
-                SupervisorEntity.IndexByEmployee.GeneratePartitionKey(supervisor.MerchantId),
-                SupervisorEntity.IndexByEmployee.GenerateRowKey(supervisor.EmployeeId),
+            await _storage.MergeAsync(supervisor.MerchantId, supervisor.EmployeeId,
                 entity =>
                 {
                     entity.MerchantGroups = supervisor.MerchantGroups;
@@ -62,9 +59,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Supervisor
                 SupervisorEntity.IndexByEmployee.GenerateRowKey());
 
             await _employeeIndexStorage.DeleteAsync(index);
-            
-            var entity = await _storage.GetDataAsync(index);
-            await _storage.DeleteAsync(entity);
+            await _storage.DeleteAsync(index.PrimaryPartitionKey, index.PrimaryRowKey);
         }
     }
 }
