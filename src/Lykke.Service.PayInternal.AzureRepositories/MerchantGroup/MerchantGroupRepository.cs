@@ -1,49 +1,52 @@
 ﻿using AutoMapper;
 using AzureStorage;
 using AzureStorage.Tables.Templates.Index;
-using Lykke.Service.PayInternal.Core.Domain.MerchantGroup;
-using Microsoft.WindowsAzure.Storage;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
+using Lykke.Service.PayInternal.Core.Domain.Groups;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
 {
     public class MerchantGroupRepository : IMerchantGroupRepository
     {
         private readonly INoSQLTableStorage<MerchantGroupEntity> _storage;
+
         private readonly INoSQLTableStorage<AzureIndex> _groupIndexStorage;
+
         public MerchantGroupRepository(
-            INoSQLTableStorage<MerchantGroupEntity> storage,
-            INoSQLTableStorage<AzureIndex> groupIndexStorage
-            )
+            [NotNull] INoSQLTableStorage<MerchantGroupEntity> storage,
+            [NotNull] INoSQLTableStorage<AzureIndex> groupIndexStorage)
         {
-            _storage = storage;
-            _groupIndexStorage = groupIndexStorage;
+            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
+            _groupIndexStorage = groupIndexStorage ?? throw new ArgumentNullException(nameof(groupIndexStorage));
         }
-        public async Task<IMerchantGroup> GetAsync(string groupId)
+
+        public async Task<IMerchantGroup> GetAsync(string id)
         {
             AzureIndex index = await _groupIndexStorage.GetDataAsync(
-                MerchantGroupEntity.IndexByGroup.GeneratePartitionKey(groupId),
-                MerchantGroupEntity.IndexByGroup.GenerateRowKey());
+                MerchantGroupEntity.IndexById.GeneratePartitionKey(id),
+                MerchantGroupEntity.IndexById.GenerateRowKey());
 
             if (index == null)
                 return null;
 
-            return await _storage.GetDataAsync(index);
-        }
-        public async Task<IMerchantGroup> InsertAsync(IMerchantGroup merchantGroup)
-        {
-            var entity = new MerchantGroupEntity(MerchantGroupEntity.GeneratePartitionKey(merchantGroup.OwnerId),
-                MerchantGroupEntity.GenerateRowKey());
-            Mapper.Map(merchantGroup, entity);
-            await _storage.InsertAsync(entity);
-            var index = MerchantGroupEntity.IndexByGroup.Create(entity);
-            await _groupIndexStorage.InsertAsync(index);
+            MerchantGroupEntity entity = await _storage.GetDataAsync(index);
 
-            return entity;
+            return Mapper.Map<Core.Domain.Groups.MerchantGroup>(entity);
+        }
+
+        public async Task<IMerchantGroup> CreateAsync(IMerchantGroup src)
+        {
+            MerchantGroupEntity entity = MerchantGroupEntity.ByOwner.Create(src);
+
+            await _storage.InsertThrowConflict(entity);
+
+            AzureIndex index = MerchantGroupEntity.IndexById.Create(entity);
+
+            await _groupIndexStorage.InsertThrowConflict(index);
+
+            return Mapper.Map<Core.Domain.Groups.MerchantGroup>(entity);
         }
     }
 }

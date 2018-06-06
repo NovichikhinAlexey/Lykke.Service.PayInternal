@@ -19,10 +19,10 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.SettingsReader;
-using Lykke.Service.PayInternal.Core.Domain.MerchantGroup;
 using Lykke.Service.PayInternal.AzureRepositories.MerchantGroup;
-using Lykke.Service.PayInternal.Core.Domain.Supervisor;
-using Lykke.Service.PayInternal.AzureRepositories.Supervisor;
+using Lykke.Service.PayInternal.AzureRepositories.SupervisorMembership;
+using Lykke.Service.PayInternal.Core.Domain.Groups;
+using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 
 namespace Lykke.Service.PayInternal.AzureRepositories
 {
@@ -71,8 +71,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                 AzureTableStorage<MerchantGroupEntity>.Create(_merchantsConnectionString, merchantGroupsTableName, _log),
                 AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantGroupsTableName, _log)));
 
-            builder.RegisterInstance<ISupervisorRepository>(new SupervisorRepository(
-                AzureTableStorage<SupervisorEntity>.Create(_merchantsConnectionString, supervisorTableName, _log),
+            builder.RegisterInstance<ISupervisorMembershipRepository>(new SupervisorMembershipRepository(
+                AzureTableStorage<SupervisorMembershipEntity>.Create(_merchantsConnectionString, supervisorTableName, _log),
                 AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, supervisorTableName, _log)));
 
             builder.RegisterInstance<IPaymentRequestRepository>(new PaymentRequestRepository(

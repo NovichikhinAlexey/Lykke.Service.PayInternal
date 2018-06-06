@@ -1,18 +1,18 @@
-﻿using AutoMapper;
-using AzureStorage.Tables.Templates.Index;
+﻿using AzureStorage.Tables.Templates.Index;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
-using Lykke.Service.PayInternal.Core.Domain.MerchantGroup;
 using System;
-using System.Collections.Generic;
-using System.Text;
+using AutoMapper;
+using Lykke.Service.PayInternal.Core.Domain.Groups;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
 {
     [ValueTypeMergingStrategy(ValueTypeMergingStrategy.UpdateIfDirty)]
-    public class MerchantGroupEntity : AzureTableEntity, IMerchantGroup
+    public class MerchantGroupEntity : AzureTableEntity
     {
+        private MerchantGroupUse _merchantGroupUse;
+
         public string Id => RowKey;
 
         public string DisplayName { get; set; }
@@ -21,34 +21,52 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
 
         public string Merchants { get; set; }
 
-        public MerchantGroupType MerchantGroupType { get; set; }
-        public MerchantGroupEntity()
+        public MerchantGroupUse MerchantGroupUse
         {
-        }
-        public MerchantGroupEntity(string partitionKey, string rowKey)
-        {
-            PartitionKey = partitionKey;
-            RowKey = rowKey;
-        }
-        public static string GenerateRowKey()
-        {
-            return Guid.NewGuid().ToString();
-        }
-        public static string GeneratePartitionKey(string ownerId)
-        {
-            return ownerId;
-        }
-        public static class IndexByGroup
-        {
-            public static string GeneratePartitionKey(string groupId)
+            get => _merchantGroupUse;
+            set
             {
-                return groupId;
+                _merchantGroupUse = value;
+                MarkValueTypePropertyAsDirty(nameof(MerchantGroupUse));
+            }
+        }
+
+        public static class ByOwner
+        {
+            public static string GeneratePartitionKey(string ownerId)
+            {
+                return ownerId;
+            }
+
+            public static string GenerateRowKey(string id = null)
+            {
+                return id ?? Guid.NewGuid().ToString("D");
+            }
+
+            public static MerchantGroupEntity Create(IMerchantGroup src)
+            {
+                var entity = new MerchantGroupEntity
+                {
+                    PartitionKey = GeneratePartitionKey(src.OwnerId),
+                    RowKey = GenerateRowKey()
+                };
+
+                return Mapper.Map(src, entity);
+            }
+        }
+
+        public static class IndexById
+        {
+            public static string GeneratePartitionKey(string id)
+            {
+                return id;
             }
 
             public static string GenerateRowKey()
             {
-                return "GroupIdIndex";
+                return "IdIndex";
             }
+
             public static AzureIndex Create(MerchantGroupEntity entity)
             {
                 return AzureIndex.Create(

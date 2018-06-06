@@ -5,7 +5,7 @@ using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
-using Lykke.Service.PayInternal.Core.Domain.Supervisor;
+using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
@@ -14,7 +14,7 @@ using Lykke.Service.PayInternal.Models.Assets;
 using Lykke.Service.PayInternal.Models.Markups;
 using Lykke.Service.PayInternal.Models.Orders;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
-using Lykke.Service.PayInternal.Models.Supervising;
+using Lykke.Service.PayInternal.Models.SupervisorMembership;
 using Lykke.Service.PayInternal.Models.Transfers;
 using Lykke.Service.PayInternal.Services.Domain;
 
@@ -33,8 +33,11 @@ namespace Lykke.Service.PayInternal.Mapping
             CreateMap<UpdateMerchantRequest, Merchant>(MemberList.Destination)
                 .ForMember(dest => dest.PublicKey, opt => opt.Ignore());
 
-            CreateMap<CreateSupervisingEmployeeRequest, Supervisor>(MemberList.Destination)
-                .ForMember(dest => dest.Id, opt => opt.Ignore());
+            CreateMap<AddSupervisorMembershipModel, SupervisorMembership>(MemberList.Destination);
+
+            CreateMap<UpdateSupervisorMembershipModel, SupervisorMembership>(MemberList.Destination);
+
+            CreateMap<AddSupervisorMembershipMerchantsModel, MerchantsSupervisorMembership>(MemberList.Destination);
 
             CreateMap<IOrder, OrderModel>(MemberList.Source);
 
@@ -53,6 +56,10 @@ namespace Lykke.Service.PayInternal.Mapping
 
             CreateMap<UpdateAssetGeneralSettingsRequest, AssetGeneralSettings>(MemberList.Destination)
                 .ForMember(dest => dest.AssetId, opt => opt.MapFrom(src => src.AssetDisplayId));
+
+            CreateMap<ISupervisorMembership, SupervisorMembershipResponse>(MemberList.Destination);
+
+            CreateMap<IMerchantsSupervisorMembership, MerchantsSupervisorMembershipResponse>(MemberList.Destination);
 
             PaymentRequestApiModels();
             PaymentRequestMessages();

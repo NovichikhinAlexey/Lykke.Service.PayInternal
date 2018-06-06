@@ -1,9 +1,8 @@
 ﻿using System.Threading.Tasks;
-using Lykke.Service.PayInternal.Core.Domain.Groups;
 
-namespace Lykke.Service.PayInternal.Core.Services
+namespace Lykke.Service.PayInternal.Core.Domain.Groups
 {
-    public interface IMerchantGroupService
+    public interface IMerchantGroupRepository
     {
         Task<IMerchantGroup> CreateAsync(IMerchantGroup src);
         Task<IMerchantGroup> GetAsync(string id);

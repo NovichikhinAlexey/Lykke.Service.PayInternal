@@ -6,9 +6,9 @@ using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
+using Lykke.Service.PayInternal.Client.Models.SupervisorMembership;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
-using Lykke.Service.PayInternal.Client.Models.Supervisor;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -272,23 +272,47 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request">Markup values</param>
         /// <returns></returns>
         Task SetMarkupForMerchantAsync(string merchantId, string assetPairId, UpdateMarkupRequest request);
+
         /// <summary>
-        /// Return list of supervising merchants for employee
+        /// Creates supervisor membership
         /// </summary>
-        /// <param name="employeeId"></param>
-        /// <returns></returns>
-        Task<SupervisingMerchantsResponse> GetSupervisingAsync(string employeeId);
+        /// <param name="request">Supervisor membership creation details</param>
+        /// <returns>Supervisor membership details</returns>
+        Task<SupervisorMembershipResponse> AddSupervisorMembershipAsync(AddSupervisorMembershipRequest request);
+
         /// <summary>
-        /// Delete all supervising merchants from employee
+        /// Returns supervisor membership details for employee
         /// </summary>
-        /// <param name="employeeId"></param>
-        /// <returns></returns>
-        Task DeleteSupervisingAsync(string employeeId);
+        /// <param name="employeeId">Employee id</param>
+        /// <returns>Supervisor membership details</returns>
+        Task<SupervisorMembershipResponse> GetSupervisorMembershipAsync(string employeeId);
+
         /// <summary>
-        /// Add supervising merchants for employee
+        /// Updates supervisor membership
         /// </summary>
-        /// <param name="request"></param>
+        /// <param name="request">Supervisor membership update details</param>
         /// <returns></returns>
-        Task SetSupervisingAsync(CreateSupervisingEmployeeRequest request);
+        Task UpdateSupervisorMembershipAsync(UpdateSupervisorMembershipRequest request);
+
+        /// <summary>
+        /// Removes supervisor membership for employee
+        /// </summary>
+        /// <param name="employeeId">Employee id</param>
+        /// <returns></returns>
+        Task RemoveSupervisorMembershipAsync(string employeeId);
+
+        /// <summary>
+        /// Creates supervisor membership
+        /// </summary>
+        /// <param name="request">Supervisor membership creation details</param>
+        /// <returns>Supervisor membership details</returns>
+        Task<MerchantsSupervisorMembershipResponse> AddSupervisorMembershipForMerchantsAsync(AddSupervisorMembershipMerchantsRequest request);
+
+        /// <summary>
+        /// Returns supervisor membership details for employee
+        /// </summary>
+        /// <param name="employeeId">Employee id</param>
+        /// <returns>Supervisor membership details</returns>
+        Task<MerchantsSupervisorMembershipResponse> GetSupervisorMembershipWithMerchantsAsync(string employeeId);
     }
 }

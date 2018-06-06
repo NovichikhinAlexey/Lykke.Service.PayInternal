@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Lykke.Service.PayInternal.Core.Domain.MerchantGroup
+﻿namespace Lykke.Service.PayInternal.Core.Domain.Groups
 {
     public class MerchantGroup : IMerchantGroup
     {
@@ -14,6 +10,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.MerchantGroup
 
         public string Merchants { get; set; }
 
-        public MerchantGroupType MerchantGroupType { get; set; }
+        public MerchantGroupUse MerchantGroupUse { get; set; }
     }
 }

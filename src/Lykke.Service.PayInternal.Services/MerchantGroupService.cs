@@ -1,10 +1,10 @@
 ﻿using Common.Log;
-using Lykke.Service.PayInternal.Core.Domain.MerchantGroup;
 using Lykke.Service.PayInternal.Core.Services;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
+using Lykke.Service.PayInternal.Core.Domain.Groups;
+using Lykke.Service.PayInternal.Core.Exceptions;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -14,20 +14,30 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ILog _log;
 
         public MerchantGroupService(
-            IMerchantGroupRepository merchantGroupRepository,
-            ILog log)
+            [NotNull] IMerchantGroupRepository merchantGroupRepository,
+            [NotNull] ILog log)
         {
-            _merchantGroupRepository = merchantGroupRepository;
-            _log = log;
+            _merchantGroupRepository = merchantGroupRepository ?? throw new ArgumentNullException(nameof(merchantGroupRepository)); 
+            _log = log.CreateComponentScope(nameof(MerchantGroupService)) ?? throw new ArgumentNullException(nameof(log));
         }
 
-        public Task<IMerchantGroup> GetAsync(string groupId)
+        public Task<IMerchantGroup> GetAsync(string id)
         {
-            return _merchantGroupRepository.GetAsync(groupId);
+            return _merchantGroupRepository.GetAsync(id);
         }
-        public Task<IMerchantGroup> SetAsync(IMerchantGroup merchantGroup)
+
+        public Task<IMerchantGroup> CreateAsync(IMerchantGroup src)
         {
-            return _merchantGroupRepository.InsertAsync(merchantGroup);
+            try
+            {
+                return _merchantGroupRepository.CreateAsync(src);
+            }
+            catch (DuplicateKeyException ex)
+            {
+                _log.WriteError(nameof(CreateAsync), src, ex);
+
+                throw new MerchantGroupAlreadyExistsException(src.DisplayName);
+            }
         }
     }
 }
