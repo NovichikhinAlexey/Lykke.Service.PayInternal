@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System;
+using AutoMapper;
 using Lykke.Service.PayInternal.AzureRepositories.Asset;
 using Lykke.Service.PayInternal.AzureRepositories.Markup;
 using Lykke.Service.PayInternal.AzureRepositories.Merchant;
@@ -14,12 +15,12 @@ using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
-using Lykke.Service.PayInternal.Core.Domain.Supervisor;
-using Lykke.Service.PayInternal.AzureRepositories.Supervisor;
-using Lykke.Service.PayInternal.Core.Domain.MerchantGroup;
 using Lykke.Service.PayInternal.AzureRepositories.MerchantGroup;
 using Lykke.Service.PayInternal.AzureRepositories.File;
 using Lykke.Service.PayInternal.Core.Domain.File;
+using Lykke.Service.PayInternal.AzureRepositories.SupervisorMembership;
+using Lykke.Service.PayInternal.Core.Domain.Groups;
+using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 
 namespace Lykke.Service.PayInternal.AzureRepositories
 {
@@ -55,13 +56,19 @@ namespace Lykke.Service.PayInternal.AzureRepositories
 
             CreateMap<MarkupEntity, Core.Domain.Markup.Markup>(MemberList.Destination);
 
-            CreateMap<ISupervisor, SupervisorEntity>(MemberList.Source)
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.Timestamp, opt => opt.Ignore());
-            CreateMap<IMerchantGroup, MerchantGroupEntity>(MemberList.Source)
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.Timestamp, opt => opt.Ignore());
+            CreateMap<ISupervisorMembership, SupervisorMembershipEntity>(MemberList.Source)
+                .ForMember(dest => dest.MerchantGroups,
+                    opt => opt.MapFrom(src => string.Join(Constants.Separator, src.MerchantGroups)));
 
+            CreateMap<SupervisorMembershipEntity, Core.Domain.SupervisorMembership.SupervisorMembership
+            >(MemberList.Destination).ForMember(dest => dest.MerchantGroups,
+                opt => opt.MapFrom(src => src.MerchantGroups.Split(Constants.Separator, StringSplitOptions.None)));
+
+            CreateMap<IMerchantGroup, MerchantGroupEntity>(MemberList.Source)
+                .ForMember(dest => dest.Id, opt => opt.Ignore());
+
+            CreateMap<MerchantGroupEntity, Core.Domain.Groups.MerchantGroup>(MemberList.Destination);
+                
             CreateMap<IOrder, OrderEntity>(MemberList.Source)
                 .ForMember(dest => dest.Id, opt => opt.Ignore());
 

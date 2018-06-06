@@ -10,7 +10,7 @@ using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
-using Lykke.Service.PayInternal.Client.Models.Supervisor;
+using Lykke.Service.PayInternal.Client.Models.SupervisorMembership;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Microsoft.Extensions.PlatformAbstractions;
@@ -28,7 +28,7 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IPaymentRequestsApi _paymentRequestsApi;
         private readonly IAssetsApi _assetsApi;
         private readonly IMarkupsApi _markupsApi;
-        private readonly ISupervisorApi _supervisorApi;
+        private readonly ISupervisorMembershipApi _supervisorMembershipApi;
         private readonly IFilesApi _filesApi;
         private readonly ApiRunner _runner;
 
@@ -58,7 +58,7 @@ namespace Lykke.Service.PayInternal.Client
             _paymentRequestsApi = RestService.For<IPaymentRequestsApi>(_httpClient);
             _assetsApi = RestService.For<IAssetsApi>(_httpClient);
             _markupsApi = RestService.For<IMarkupsApi>(_httpClient);
-            _supervisorApi = RestService.For<ISupervisorApi>(_httpClient);
+            _supervisorMembershipApi = RestService.For<ISupervisorMembershipApi>(_httpClient);
             _filesApi = RestService.For<IFilesApi>(_httpClient);
             _runner = new ApiRunner();
         }
@@ -68,19 +68,19 @@ namespace Lykke.Service.PayInternal.Client
             return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.GetNotExpiredWalletsAsync());
         }
 
-        public async Task CreatePaymentTransactionAsync(CreateTransactionRequest request)
+        public Task CreatePaymentTransactionAsync(CreateTransactionRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.CreatePaymentTransactionAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.CreatePaymentTransactionAsync(request));
         }
 
-        public async Task CreateLykkePaymentTransactionAsync(CreateLykkeTransactionRequest request)
+        public Task CreateLykkePaymentTransactionAsync(CreateLykkeTransactionRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.CreateLykkePaymentTransactionAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.CreateLykkePaymentTransactionAsync(request));
         }
 
-        public async Task UpdateTransactionAsync(UpdateTransactionRequest request)
+        public Task UpdateTransactionAsync(UpdateTransactionRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.UpdateTransactionAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.UpdateTransactionAsync(request));
         }
 
         public Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync()
@@ -98,21 +98,21 @@ namespace Lykke.Service.PayInternal.Client
             return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.CreateAsync(request));
         }
 
-        public async Task UpdateMerchantAsync(UpdateMerchantRequest request)
+        public Task UpdateMerchantAsync(UpdateMerchantRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.UpdateAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.UpdateAsync(request));
         }
 
-        public async Task SetMerchantPublicKeyAsync(string merchantId, byte[] content)
+        public Task SetMerchantPublicKeyAsync(string merchantId, byte[] content)
         {
             var streamPart = new StreamPart(new MemoryStream(content), "public.key");
 
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.SetPublicKeyAsync(merchantId, streamPart));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.SetPublicKeyAsync(merchantId, streamPart));
         }
 
-        public async Task DeleteMerchantAsync(string merchantId)
+        public Task DeleteMerchantAsync(string merchantId)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.DeleteAsync(merchantId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.DeleteAsync(merchantId));
         }
         
         public Task<OrderModel> GetOrderAsync(string merchantId, string paymentRequestId)
@@ -165,9 +165,9 @@ namespace Lykke.Service.PayInternal.Client
             return _runner.RunAsync(() => _paymentRequestsApi.RefundAsync(request), ExceptionFactories.CreateRefundException);
         }
 
-        public async Task<AvailableAssetsResponse> ResolveAvailableAssetsAsync(string merchantId, AssetAvailabilityType type)
+        public Task<AvailableAssetsResponse> ResolveAvailableAssetsAsync(string merchantId, AssetAvailabilityType type)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetAvailableAssetsAsync(merchantId, type));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetAvailableAssetsAsync(merchantId, type));
         }
 
         public Task<AvailableAssetsResponse> GetAvailableSettlementAssetsAsync(string merchantId)
@@ -182,9 +182,9 @@ namespace Lykke.Service.PayInternal.Client
                 _merchantsApi.GetAvailablePaymentAssetsAsync(merchantId, settlementAssetId));
         }
 
-        public async Task<IEnumerable<AssetGeneralSettingsResponse>> GetAssetGeneralSettingsAsync()
+        public Task<IEnumerable<AssetGeneralSettingsResponse>> GetAssetGeneralSettingsAsync()
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetAssetGeneralSettingsAsync());
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetAssetGeneralSettingsAsync());
         }
 
         public Task<AssetMerchantSettingsResponse> GetAssetMerchantSettingsAsync(string merchantId)
@@ -192,24 +192,24 @@ namespace Lykke.Service.PayInternal.Client
             return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetAssetMerchantSettingsAsync(merchantId));
         }
 
-        public async Task SetAssetGeneralSettingsAsync(UpdateAssetGeneralSettingsRequest request)
+        public Task SetAssetGeneralSettingsAsync(UpdateAssetGeneralSettingsRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetAssetGeneralSettingsAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetAssetGeneralSettingsAsync(request));
         }
 
-        public async Task SetAssetMerchantSettingsAsync(UpdateAssetMerchantSettingsRequest settingsRequest)
+        public Task SetAssetMerchantSettingsAsync(UpdateAssetMerchantSettingsRequest settingsRequest)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetAssetMerchantSettingsAsync(settingsRequest));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetAssetMerchantSettingsAsync(settingsRequest));
         }
 
-        public async Task CancelAsync(string merchantId, string paymentRequestId)
+        public Task CancelAsync(string merchantId, string paymentRequestId)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.CancelAsync(merchantId, paymentRequestId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.CancelAsync(merchantId, paymentRequestId));
         }
 
-        public async Task SetWalletExpiredAsync(BlockchainWalletExpiredRequest request)
+        public Task SetWalletExpiredAsync(BlockchainWalletExpiredRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.SetWalletExpiredAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.SetWalletExpiredAsync(request));
         }
 
         public Task<MarkupResponse> ResolveMarkupByMerchantAsync(string merchantId, string assetPairId)
@@ -227,9 +227,9 @@ namespace Lykke.Service.PayInternal.Client
             return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.GetDefaultAsync(assetPairId));
         }
 
-        public async Task SetDefaultMarkupAsync(string assetPairId, UpdateMarkupRequest request)
+        public Task SetDefaultMarkupAsync(string assetPairId, UpdateMarkupRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.SetDefaultAsync(assetPairId, request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.SetDefaultAsync(assetPairId, request));
         }
 
         public Task<IReadOnlyList<MarkupResponse>> GetMarkupsForMerchantAsync(string merchantId)
@@ -242,14 +242,14 @@ namespace Lykke.Service.PayInternal.Client
             return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.GetForMerchantAsync(merchantId, assetPairId));
         }
 
-        public async Task SetMarkupForMerchantAsync(string merchantId, string assetPairId, UpdateMarkupRequest request)
+        public Task SetMarkupForMerchantAsync(string merchantId, string assetPairId, UpdateMarkupRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.SetForMerchantAsync(merchantId, assetPairId, request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.SetForMerchantAsync(merchantId, assetPairId, request));
         }
 
-        public async Task SetTransactionExpiredAsync(TransactionExpiredRequest request)
+        public Task<SupervisorMembershipResponse> AddSupervisorMembershipAsync(AddSupervisorMembershipRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.SetTransactionExpiredAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorMembershipApi.AddAsync(request));
         }
 
         public async Task<IEnumerable<FileInfoModel>> GetFilesAsync(string merchantId)
@@ -276,24 +276,41 @@ namespace Lykke.Service.PayInternal.Client
             await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.DeleteAsync(merchantId, fileId));
         }
 
+        public Task<SupervisorMembershipResponse> GetSupervisorMembershipAsync(string employeeId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorMembershipApi.GetAsync(employeeId));
+        }
+
+        public Task UpdateSupervisorMembershipAsync(UpdateSupervisorMembershipRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorMembershipApi.UpdateAsync(request));
+        }
+
+        public Task RemoveSupervisorMembershipAsync(string employeeId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorMembershipApi.RemoveAsync(employeeId));
+        }
+
+        public Task<MerchantsSupervisorMembershipResponse> AddSupervisorMembershipForMerchantsAsync(AddSupervisorMembershipMerchantsRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(
+                () => _supervisorMembershipApi.AddForMerchantsAsync(request));
+        }
+
+        public Task<MerchantsSupervisorMembershipResponse> GetSupervisorMembershipWithMerchantsAsync(string employeeId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _supervisorMembershipApi.GetWithMerchantsAsync(employeeId));
+        }
+
+        public Task SetTransactionExpiredAsync(TransactionExpiredRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.SetTransactionExpiredAsync(request));
+        }
+
         public void Dispose()
         {
             _httpClient?.Dispose();
-        }
-
-        public async Task<SupervisingMerchantsResponse> GetSupervisingMerchantsAsync(string merchantId, string employeeId)
-        {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorApi.GetSupervisingMerchantsAsync(merchantId, employeeId));
-        }
-
-        public async Task DeleteSupervisingAsync(string merchantId, string employeeId)
-        {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorApi.DeleteSupervisingMerchantsAsync(merchantId, employeeId));
-        }
-
-        public async Task SetSupervisingMerchantsAsync(CreateSupervisingEmployeeRequest request)
-        {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorApi.SetSupervisingMerchantsAsync(request));
         }
     }
 }

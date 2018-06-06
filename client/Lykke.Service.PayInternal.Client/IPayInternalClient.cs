@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.Asset;
+using Lykke.Service.PayInternal.Client.Models.File;
 using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
+using Lykke.Service.PayInternal.Client.Models.SupervisorMembership;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
-using Lykke.Service.PayInternal.Client.Models.File;
-using Lykke.Service.PayInternal.Client.Models.Supervisor;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -213,6 +213,7 @@ namespace Lykke.Service.PayInternal.Client
         /// <returns></returns>
         Task SetAssetMerchantSettingsAsync(UpdateAssetMerchantSettingsRequest settingsRequest);
 
+        /// <summary>
         /// Cancels payment request
         /// </summary>
         /// <param name="merchantId">Merchant id</param>
@@ -279,38 +280,63 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request">Markup values</param>
         /// <returns></returns>
         Task SetMarkupForMerchantAsync(string merchantId, string assetPairId, UpdateMarkupRequest request);
+
         /// <summary>
-        /// Return list of supervising merchants for employee
+        /// Creates supervisor membership
         /// </summary>
-        /// <param name="merchantId"></param>
-        /// <param name="employeeId"></param>
-        /// <returns></returns>
-        Task<SupervisingMerchantsResponse> GetSupervisingMerchantsAsync(string merchantId, string employeeId);
+        /// <param name="request">Supervisor membership creation details</param>
+        /// <returns>Supervisor membership details</returns>
+        Task<SupervisorMembershipResponse> AddSupervisorMembershipAsync(AddSupervisorMembershipRequest request);
+
         /// <summary>
-        /// Delete all supervising merchants from employee
+        /// Returns supervisor membership details for employee
         /// </summary>
-        /// <param name="merchantId"></param>
-        /// <param name="employeeId"></param>
-        /// <returns></returns>
-        Task DeleteSupervisingAsync(string merchantId, string employeeId);
+        /// <param name="employeeId">Employee id</param>
+        /// <returns>Supervisor membership details</returns>
+        Task<SupervisorMembershipResponse> GetSupervisorMembershipAsync(string employeeId);
+
         /// <summary>
-        /// Add supervising merchants for employee
+        /// Updates supervisor membership
         /// </summary>
-        /// <param name="request"></param>
+        /// <param name="request">Supervisor membership update details</param>
         /// <returns></returns>
-        Task SetSupervisingMerchantsAsync(CreateSupervisingEmployeeRequest request);
+        Task UpdateSupervisorMembershipAsync(UpdateSupervisorMembershipRequest request);
+
+        /// <summary>
+        /// Removes supervisor membership for employee
+        /// </summary>
+        /// <param name="employeeId">Employee id</param>
+        /// <returns></returns>
+        Task RemoveSupervisorMembershipAsync(string employeeId);
+
+        /// <summary>
+        /// Creates supervisor membership
+        /// </summary>
+        /// <param name="request">Supervisor membership creation details</param>
+        /// <returns>Supervisor membership details</returns>
+        Task<MerchantsSupervisorMembershipResponse> AddSupervisorMembershipForMerchantsAsync(AddSupervisorMembershipMerchantsRequest request);
+
+        /// <summary>
+        /// Returns supervisor membership details for employee
+        /// </summary>
+        /// <param name="employeeId">Employee id</param>
+        /// <returns>Supervisor membership details</returns>
+        Task<MerchantsSupervisorMembershipResponse> GetSupervisorMembershipWithMerchantsAsync(string employeeId);
+
         /// <summary>
         /// Returns a collection of merchant files.
         /// </summary>
         /// <param name="merchantId">The merchant id.</param>
         /// <returns>The collection of file info.</returns>
         Task<IEnumerable<FileInfoModel>> GetFilesAsync(string merchantId);
+
         /// <summary>
         /// Returns file content.
         /// </summary>
         /// <param name="merchantId">The merchant id.</param>
         /// <param name="fileId">The file id.</param>
         Task<byte[]> GetFileAsync(string merchantId, string fileId);
+
         /// <summary>
         /// Saves file.
         /// </summary>
