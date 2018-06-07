@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
+using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Services;
@@ -17,18 +18,21 @@ namespace Lykke.Service.PayInternal.Services
     {
         private readonly IBlockchainClientProvider _blockchainClientProvider;
         private readonly ITransferRepository _transferRepository;
+        private readonly IAssetSettingsService _assetSettingsService;
 
         public TransferService(
-            ITransferRepository transferRepository, 
-            IBlockchainClientProvider blockchainClientProvider)
+            [NotNull] ITransferRepository transferRepository,
+            [NotNull] IBlockchainClientProvider blockchainClientProvider,
+            [NotNull] IAssetSettingsService assetSettingsService)
         {
             _transferRepository = transferRepository ?? throw new ArgumentNullException(nameof(transferRepository));
             _blockchainClientProvider = blockchainClientProvider ?? throw new ArgumentNullException(nameof(blockchainClientProvider));
+            _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
         }
 
         public async Task<TransferResult> ExecuteAsync(TransferCommand transferCommand)
         {
-            BlockchainType blockchainType = transferCommand.AssetId.GetBlockchainType();
+            BlockchainType blockchainType = await _assetSettingsService.GetNetworkAsync(transferCommand.AssetId);
 
             IBlockchainApiClient blockchainClient = _blockchainClientProvider.Get(blockchainType);
 

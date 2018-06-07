@@ -77,9 +77,8 @@ namespace Lykke.Service.PayInternal.Modules
                 .As<IShutdownManager>()
                 .SingleInstance();
 
-            builder.RegisterType<AssetsAvailabilityService>()
-                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.AssetsAvailability))
-                .As<IAssetsAvailabilityService>();
+            builder.RegisterType<AssetSettingsService>()
+                .As<IAssetSettingsService>();
 
             builder.RegisterType<CalculationService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LpMarkup))
@@ -155,7 +154,7 @@ namespace Lykke.Service.PayInternal.Modules
 
                 return new CachedDataDictionary<string, Asset>
                 (
-                    async () => (await assetsService.AssetGetAllAsync()).ToDictionary(itm => itm.Id)
+                    async () => (await assetsService.AssetGetAllAsync(true)).ToDictionary(itm => itm.Id)
                 );
             }).SingleInstance();
 
