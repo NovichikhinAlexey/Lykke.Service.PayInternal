@@ -4,7 +4,9 @@ using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
 using System;
 using AutoMapper;
+using Common;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
+using Lykke.Service.PayInternal.Core.Exceptions;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
 {
@@ -35,11 +37,20 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
         {
             public static string GeneratePartitionKey(string ownerId)
             {
+                if(!ownerId.IsValidPartitionOrRowKey())
+                    throw new InvalidRowKeyValueException(nameof(ownerId), ownerId);
+
                 return ownerId;
             }
 
             public static string GenerateRowKey(string id = null)
             {
+                if (!string.IsNullOrEmpty(id))
+                {
+                    if (!id.IsValidPartitionOrRowKey())
+                        throw new InvalidRowKeyValueException(nameof(id), id);
+                }
+
                 return id ?? Guid.NewGuid().ToString("D");
             }
 
@@ -59,6 +70,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
         {
             public static string GeneratePartitionKey(string id)
             {
+                if (!id.IsValidPartitionOrRowKey())
+                    throw new InvalidRowKeyValueException(nameof(id), id);
+
                 return id;
             }
 

@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
 using AzureStorage.Tables.Templates.Index;
+using Common;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
 using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
+using Lykke.Service.PayInternal.Core.Exceptions;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.SupervisorMembership
 {
@@ -42,6 +44,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.SupervisorMembership
         {
             public static string GeneratePartitionKey(string employeeId)
             {
+                if (!employeeId.IsValidPartitionOrRowKey())
+                    throw new InvalidRowKeyValueException(nameof(employeeId), employeeId);
+
                 return employeeId;
             }
 
