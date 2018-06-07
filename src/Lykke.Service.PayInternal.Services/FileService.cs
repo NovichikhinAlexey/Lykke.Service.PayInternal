@@ -17,9 +17,9 @@ namespace Lykke.Service.PayInternal.Services
             _fileRepository = fileRepository;
             _fileInfoRepository = fileInfoRepository;
         }
-        public async Task<IEnumerable<FileInfo>> GetInfoAsync(string invoiceId)
+        public async Task<IEnumerable<FileInfo>> GetInfoAsync(string fileId)
         {
-            return await _fileInfoRepository.GetAsync(invoiceId);
+            return await _fileInfoRepository.GetAsync(fileId);
         }
         public async Task<FileInfo> GetInfoAsync(string merchantId, string fileId)
         {
@@ -39,6 +39,7 @@ namespace Lykke.Service.PayInternal.Services
         public async Task DeleteAsync(string merchantId, string fileId)
         {
             await _fileRepository.DeleteAsync(fileId);
+            await _fileInfoRepository.DeleteAsync(merchantId, fileId);
         }
     }
 }
