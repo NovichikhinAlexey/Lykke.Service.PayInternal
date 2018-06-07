@@ -105,7 +105,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <param name="fileId">The file id.</param>
         /// <response code="200">File successfully deleted.</response>
         [HttpDelete]
-        [Route("files/{merchantId}")]
+        [Route("files/{merchantId}/{fileId}")]
         [SwaggerOperation("FileDelete")]
         [ProducesResponseType((int)HttpStatusCode.NoContent)]
         public async Task<IActionResult> DeleteAsync(string merchantId, string fileId)
