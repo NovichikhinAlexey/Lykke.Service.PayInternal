@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using Common;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
 using Lykke.AzureStorage.Tables.Entity.ValueTypesMerging;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
+using Lykke.Service.PayInternal.Core.Exceptions;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.Asset
 {
@@ -53,11 +55,17 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
         {
             public static string GeneratePartitionKey(string assetId)
             {
+                if (!assetId.IsValidPartitionOrRowKey())
+                    throw new InvalidRowKeyValueException(nameof(assetId), assetId);
+
                 return assetId;
             }
 
             public static string GenerateRowKey(string assetId)
             {
+                if (!assetId.IsValidPartitionOrRowKey())
+                    throw new InvalidRowKeyValueException(nameof(assetId), assetId);
+
                 return assetId;
             }
 

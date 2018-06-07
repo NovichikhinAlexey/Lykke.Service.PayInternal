@@ -52,7 +52,7 @@ namespace Lykke.Service.PayInternal.Services
 
             Asset asset = await _assetsLocalCache.GetAssetByIdAsync(lykkeAssetId);
 
-            if (asset.Type != AssetType.Erc20Token || !asset.IsTradable)
+            if (asset.Type != AssetType.Erc20Token)
                 throw new AssetNotSupportedException(asset.Name);
 
             ListOfErc20Token tokenSpecification =

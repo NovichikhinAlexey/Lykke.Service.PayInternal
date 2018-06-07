@@ -88,10 +88,18 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Merchant
                 .ToBase64String(SHA1.Create().ComputeHash(merchantName.ToUtf8Bytes()))
                 .Replace('/', '_');
 
+            if (!hash.IsValidPartitionOrRowKey())
+                throw new InvalidRowKeyValueException(nameof(hash), hash);
+
             return new string(hash.Take(PartitionKeyLength).ToArray());
         }
 
         private static string GetRowKey(string merchantName)
-            => merchantName;
+        {
+            if (!merchantName.IsValidPartitionOrRowKey())
+                throw new InvalidRowKeyValueException(nameof(merchantName), merchantName);
+
+            return merchantName;
+        }
     }
 }
