@@ -88,12 +88,22 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("merchantGroups/{employeeId}")]
         [SwaggerOperation("GetMembership")]
         [ProducesResponseType(typeof(SupervisorMembershipResponse), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> Get(string employeeId)
         {
-            ISupervisorMembership membership =
-                await _supervisorMembershipService.GetAsync(Uri.UnescapeDataString(employeeId));
+            try
+            {
+                ISupervisorMembership membership =
+                    await _supervisorMembershipService.GetAsync(Uri.UnescapeDataString(employeeId));
 
-            return Ok(Mapper.Map<SupervisorMembershipResponse>(membership));
+                return Ok(Mapper.Map<SupervisorMembershipResponse>(membership));
+            }
+            catch (InvalidRowKeyValueException ex)
+            {
+                _log.WriteError(nameof(Get), new { ex.Variable, ex.Value }, ex);
+
+                return NotFound(ErrorResponse.Create("Employee not found"));
+            }
         }
 
         /// <summary>
@@ -148,11 +158,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> Remove(string employeeId)
         {
-            employeeId = Uri.UnescapeDataString(employeeId);
-
             try
             {
-                await _supervisorMembershipService.RemoveAsync(employeeId);
+                await _supervisorMembershipService.RemoveAsync(Uri.UnescapeDataString(employeeId));
 
                 return NoContent();
             }
@@ -161,6 +169,12 @@ namespace Lykke.Service.PayInternal.Controllers
                 _log.WriteError(nameof(Remove), new { ex.EmployeeId }, ex);
 
                 return NotFound(ErrorResponse.Create(ex.Message));
+            }
+            catch (InvalidRowKeyValueException ex)
+            {
+                _log.WriteError(nameof(Remove), new { ex.Variable, ex.Value }, ex);
+
+                return NotFound(ErrorResponse.Create("Employee not found"));
             }
         }
 
@@ -217,10 +231,19 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(MerchantsSupervisorMembershipResponse), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> GetWithMerchants(string employeeId)
         {
-            IMerchantsSupervisorMembership membership =
-                await _supervisorMembershipService.GetWithMerchantsAsync(Uri.UnescapeDataString(employeeId));
+            try
+            {
+                IMerchantsSupervisorMembership membership =
+                    await _supervisorMembershipService.GetWithMerchantsAsync(Uri.UnescapeDataString(employeeId));
 
-            return Ok(Mapper.Map<MerchantsSupervisorMembershipResponse>(membership));
+                return Ok(Mapper.Map<MerchantsSupervisorMembershipResponse>(membership));
+            }
+            catch (InvalidRowKeyValueException ex)
+            {
+                _log.WriteError(nameof(GetWithMerchants), new { ex.Variable, ex.Value }, ex);
+
+                return NotFound(ErrorResponse.Create("Employee not found"));
+            }
         }
     }
 }

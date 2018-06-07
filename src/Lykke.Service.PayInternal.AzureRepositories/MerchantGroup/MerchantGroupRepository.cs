@@ -5,6 +5,7 @@ using System;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
+using Lykke.Service.PayInternal.Core.Exceptions;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
 {
@@ -47,6 +48,20 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
             await _groupIndexStorage.InsertThrowConflict(index);
 
             return Mapper.Map<Core.Domain.Groups.MerchantGroup>(entity);
+        }
+
+        public async Task DeleteAsync(string id)
+        {
+            AzureIndex index = await _groupIndexStorage.GetDataAsync(
+                MerchantGroupEntity.IndexById.GeneratePartitionKey(id),
+                MerchantGroupEntity.IndexById.GenerateRowKey());
+
+            if (index == null)
+                throw new KeyNotFoundException();
+
+            await _groupIndexStorage.DeleteAsync(index);
+
+            await _storage.DeleteAsync(index.PrimaryPartitionKey, index.PrimaryRowKey);
         }
     }
 }

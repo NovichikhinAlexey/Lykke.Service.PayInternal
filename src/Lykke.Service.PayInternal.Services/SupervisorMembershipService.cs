@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.AzureRepositories;
@@ -31,12 +32,7 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IMerchantsSupervisorMembership> AddAsync(IMerchantsSupervisorMembership src)
         {
-            IMerchantGroup merchantGroup = await _merchantGroupService.CreateAsync(new MerchantGroup
-            {
-                Merchants = string.Join(Constants.Separator, src.Merchants),
-                MerchantGroupUse = MerchantGroupUse.Supervising,
-                OwnerId = src.MerchantId
-            });
+            IMerchantGroup merchantGroup = await _merchantGroupService.CreateAsync(Mapper.Map<MerchantGroup>(src));
 
             try
             {
@@ -58,6 +54,9 @@ namespace Lykke.Service.PayInternal.Services
             catch (DuplicateKeyException ex)
             {
                 _log.WriteError(nameof(AddAsync), src, ex);
+
+                if (merchantGroup != null)
+                    await _merchantGroupService.DeleteAsync(merchantGroup.Id);
 
                 throw new SupervisorMembershipAlreadyExistsException(src.EmployeeId);
             }
@@ -95,11 +94,11 @@ namespace Lykke.Service.PayInternal.Services
             return null;
         }
 
-        public Task UpdateAsync(ISupervisorMembership src)
+        public async Task UpdateAsync(ISupervisorMembership src)
         {
             try
             {
-                return _supervisorMembershipRepository.UpdateAsync(src);
+                await _supervisorMembershipRepository.UpdateAsync(src);
             }
             catch (KeyNotFoundException ex)
             {
@@ -109,11 +108,11 @@ namespace Lykke.Service.PayInternal.Services
             }
         }
 
-        public Task<ISupervisorMembership> AddAsync(ISupervisorMembership src)
+        public async Task<ISupervisorMembership> AddAsync(ISupervisorMembership src)
         {
             try
             {
-                return _supervisorMembershipRepository.AddAsync(src);
+                return await _supervisorMembershipRepository.AddAsync(src);
             }
             catch (DuplicateKeyException ex)
             {

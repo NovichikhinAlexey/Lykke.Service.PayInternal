@@ -26,6 +26,20 @@ namespace Lykke.Service.PayInternal.Services
             return _merchantGroupRepository.GetAsync(id);
         }
 
+        public async Task DeleteAsync(string id)
+        {
+            try
+            {
+                await _merchantGroupRepository.DeleteAsync(id);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                _log.WriteError(nameof(DeleteAsync), new { merchantGroupId = id }, ex);
+
+                throw new MerchantGroupNotFoundException(id);
+            }
+        }
+
         public Task<IMerchantGroup> CreateAsync(IMerchantGroup src)
         {
             try
