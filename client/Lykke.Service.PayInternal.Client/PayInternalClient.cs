@@ -16,6 +16,7 @@ using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
 using Lykke.Service.PayInternal.Client.Models.File;
+using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -252,30 +253,6 @@ namespace Lykke.Service.PayInternal.Client
             return _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorMembershipApi.AddAsync(request));
         }
 
-        public async Task<IEnumerable<FileInfoModel>> GetFilesAsync(string merchantId)
-        {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.GetAllAsync(merchantId));
-        }
-
-        public async Task<byte[]> GetFileAsync(string merchantId, string fileId)
-        {
-            HttpResponseMessage response = await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.GetAsync(merchantId, fileId));
-
-            return await response.Content.ReadAsByteArrayAsync();
-        }
-
-        public async Task UploadFileAsync(string merchantId, byte[] content, string fileName, string contentType)
-        {
-            var streamPart = new StreamPart(new MemoryStream(content), fileName, contentType);
-
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.UploadAsync(merchantId, streamPart));
-        }
-
-        public async Task DeleteFileAsync(string merchantId, string fileId)
-        {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.DeleteAsync(merchantId, fileId));
-        }
-
         public Task<SupervisorMembershipResponse> GetSupervisorMembershipAsync(string employeeId)
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorMembershipApi.GetAsync(employeeId));
@@ -306,6 +283,50 @@ namespace Lykke.Service.PayInternal.Client
         public Task SetTransactionExpiredAsync(TransactionExpiredRequest request)
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.SetTransactionExpiredAsync(request));
+        }
+
+        public async Task<IEnumerable<FileInfoModel>> GetFilesAsync(string merchantId)
+        {
+            return await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.GetAllAsync(merchantId));
+        }
+
+        public async Task<byte[]> GetFileAsync(string merchantId, string fileId)
+        {
+            byte[] response = await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.GetAsync(merchantId, fileId));
+
+            return response;
+        }
+
+        public async Task UploadFileAsync(string merchantId, byte[] content, string fileName, string contentType)
+        {
+            var streamPart = new StreamPart(new MemoryStream(content), fileName, contentType);
+
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.UploadAsync(merchantId, streamPart));
+        }
+
+        public async Task DeleteFileAsync(string merchantId, string fileId)
+        {
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.DeleteAsync(merchantId, fileId));
+        }
+
+        public Task<MerchantGroupResponse> AddMerchantGroupAsync(AddMerchantGroupRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.AddGroupAsync(request));
+        }
+
+        public Task<MerchantGroupResponse> GetMerchantGroupAsync(string id)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetGroupAsync(id));
+        }
+
+        public Task UpdateMerchantGroupAsync(UpdateMerchantGroupRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.UpdateGroupAsync(request));
+        }
+
+        public Task DeleteMerchantGroupAsync(string id)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.DeleteGroupAsync(id));
         }
 
         public void Dispose()

@@ -11,7 +11,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
 {
     public class MerchantGroupRepository : IMerchantGroupRepository
     {
-        private readonly INoSQLTableStorage<MerchantGroupEntity> _storage;
+        private readonly INoSQLTableStorage<MerchantGroupEntity> _tableStorage;
 
         private readonly INoSQLTableStorage<AzureIndex> _groupIndexStorage;
 
@@ -19,7 +19,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
             [NotNull] INoSQLTableStorage<MerchantGroupEntity> storage,
             [NotNull] INoSQLTableStorage<AzureIndex> groupIndexStorage)
         {
-            _storage = storage ?? throw new ArgumentNullException(nameof(storage));
+            _tableStorage = storage ?? throw new ArgumentNullException(nameof(storage));
             _groupIndexStorage = groupIndexStorage ?? throw new ArgumentNullException(nameof(groupIndexStorage));
         }
 
@@ -32,16 +32,45 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
             if (index == null)
                 return null;
 
-            MerchantGroupEntity entity = await _storage.GetDataAsync(index);
+            MerchantGroupEntity entity = await _tableStorage.GetDataAsync(index);
 
             return Mapper.Map<Core.Domain.Groups.MerchantGroup>(entity);
+        }
+
+        public async Task UpdateAsync(IMerchantGroup src)
+        {
+            AzureIndex index = await _groupIndexStorage.GetDataAsync(
+                MerchantGroupEntity.IndexById.GeneratePartitionKey(src.Id),
+                MerchantGroupEntity.IndexById.GenerateRowKey());
+
+            if (index == null)
+                throw new KeyNotFoundException();
+
+            MerchantGroupEntity updatedEntity = await _tableStorage.MergeAsync(
+                MerchantGroupEntity.ByOwner.GeneratePartitionKey(index.PrimaryPartitionKey),
+                MerchantGroupEntity.ByOwner.GenerateRowKey(index.PrimaryRowKey),
+                entity =>
+                {
+                    if (!string.IsNullOrEmpty(src.DisplayName))
+                        entity.DisplayName = src.DisplayName;
+
+                    if (!string.IsNullOrEmpty(src.Merchants))
+                        entity.Merchants = src.Merchants;
+
+                    entity.MerchantGroupUse = src.MerchantGroupUse;
+
+                    return entity;
+                });
+
+            if (updatedEntity == null)
+                throw new KeyNotFoundException();
         }
 
         public async Task<IMerchantGroup> CreateAsync(IMerchantGroup src)
         {
             MerchantGroupEntity entity = MerchantGroupEntity.ByOwner.Create(src);
 
-            await _storage.InsertThrowConflict(entity);
+            await _tableStorage.InsertThrowConflict(entity);
 
             AzureIndex index = MerchantGroupEntity.IndexById.Create(entity);
 
@@ -61,7 +90,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
 
             await _groupIndexStorage.DeleteAsync(index);
 
-            await _storage.DeleteAsync(index.PrimaryPartitionKey, index.PrimaryRowKey);
+            await _tableStorage.DeleteAsync(index.PrimaryPartitionKey, index.PrimaryRowKey);
         }
     }
 }

@@ -8,6 +8,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Groups
 
         Task<IMerchantGroup> GetAsync(string id);
 
+        Task UpdateAsync(IMerchantGroup src);
+
         Task DeleteAsync(string id);
     }
 }

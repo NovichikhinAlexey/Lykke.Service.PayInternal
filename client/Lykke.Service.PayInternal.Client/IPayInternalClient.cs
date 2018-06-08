@@ -10,6 +10,7 @@ using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
 using Lykke.Service.PayInternal.Client.Models.SupervisorMembership;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
+using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -352,5 +353,33 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="merchantId">The merchant id.</param>
         /// <param name="fileId">The file id.</param>
         Task DeleteFileAsync(string merchantId, string fileId);
+
+        /// <summary>
+        /// Creates merchant group
+        /// </summary>
+        /// <param name="request">Merchant group creation details></param>
+        /// <returns>Merchant group details</returns>
+        Task<MerchantGroupResponse> AddMerchantGroupAsync(AddMerchantGroupRequest request);
+
+        /// <summary>
+        /// Returns merchant group details
+        /// </summary>
+        /// <param name="id">Merchant group id</param>
+        /// <returns>Merchant group details</returns>
+        Task<MerchantGroupResponse> GetMerchantGroupAsync(string id);
+
+        /// <summary>
+        /// Updates merchant group
+        /// </summary>
+        /// <param name="request">Merchant group update details</param>
+        /// <returns></returns>
+        Task UpdateMerchantGroupAsync(UpdateMerchantGroupRequest request);
+
+        /// <summary>
+        /// Deletes merchant group
+        /// </summary>
+        /// <param name="id">Merchant group id</param>
+        /// <returns></returns>
+        Task DeleteMerchantGroupAsync(string id);
     }
 }

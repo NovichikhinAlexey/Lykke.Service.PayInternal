@@ -12,7 +12,7 @@ namespace Lykke.Service.PayInternal.Client.Api
         Task<IReadOnlyList<FileInfoModel>> GetAllAsync(string merchantId);
 
         [Get("/api/files/{merchantId}/{fileId}")]
-        Task<HttpResponseMessage> GetAsync(string merchantId, string fileId);
+        Task<byte[]> GetAsync(string merchantId, string fileId);
 
         [Multipart]
         [Post("/api/files/{merchantId}")]

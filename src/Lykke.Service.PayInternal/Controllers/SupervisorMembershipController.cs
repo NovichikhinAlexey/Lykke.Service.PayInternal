@@ -84,6 +84,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// </summary>
         /// <param name="employeeId">Employee id</param>
         /// <response code="200">Supervisor membership details</response>
+        /// <response code="404">Supervisor membership not found</response>
         [HttpGet]
         [Route("merchantGroups/{employeeId}")]
         [SwaggerOperation("GetMembership")]
@@ -182,7 +183,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// Creates supervisor membership
         /// </summary>
         /// <returns>Supervisor membership details</returns>
-        /// /// <response code="200">Membership details</response>
+        /// <response code="200">Membership details</response>
         /// <response code="400">Invalid model.</response>
         /// <response code="404">Merchant not found</response>
         [HttpPost]

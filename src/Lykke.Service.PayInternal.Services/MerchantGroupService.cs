@@ -21,9 +21,37 @@ namespace Lykke.Service.PayInternal.Services
             _log = log.CreateComponentScope(nameof(MerchantGroupService)) ?? throw new ArgumentNullException(nameof(log));
         }
 
+        public Task<IMerchantGroup> CreateAsync(IMerchantGroup src)
+        {
+            try
+            {
+                return _merchantGroupRepository.CreateAsync(src);
+            }
+            catch (DuplicateKeyException ex)
+            {
+                _log.WriteError(nameof(CreateAsync), src, ex);
+
+                throw new MerchantGroupAlreadyExistsException(src.DisplayName);
+            }
+        }
+
         public Task<IMerchantGroup> GetAsync(string id)
         {
             return _merchantGroupRepository.GetAsync(id);
+        }
+
+        public async Task UpdateAsync(IMerchantGroup src)
+        {
+            try
+            {
+                await _merchantGroupRepository.UpdateAsync(src);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                _log.WriteError(nameof(UpdateAsync), src, ex);
+
+                throw new MerchantGroupNotFoundException(src.Id);
+            }
         }
 
         public async Task DeleteAsync(string id)
@@ -37,20 +65,6 @@ namespace Lykke.Service.PayInternal.Services
                 _log.WriteError(nameof(DeleteAsync), new { merchantGroupId = id }, ex);
 
                 throw new MerchantGroupNotFoundException(id);
-            }
-        }
-
-        public Task<IMerchantGroup> CreateAsync(IMerchantGroup src)
-        {
-            try
-            {
-                return _merchantGroupRepository.CreateAsync(src);
-            }
-            catch (DuplicateKeyException ex)
-            {
-                _log.WriteError(nameof(CreateAsync), src, ex);
-
-                throw new MerchantGroupAlreadyExistsException(src.DisplayName);
             }
         }
     }
