@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
-using Common;
 using Common.Log;
+using JetBrains.Annotations;
 using Lykke.Service.Assets.Client.Models;
-using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -23,89 +21,96 @@ namespace Lykke.Service.PayInternal.Controllers
     [Route("api/assets")]
     public class AssetsController : Controller
     {
-        private readonly IAssetsAvailabilityService _assetsAvailabilityService;
+        private readonly IAssetSettingsService _assetSettingsService;
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IMerchantService _merchantService;
         private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
 
         public AssetsController(
-            IAssetsAvailabilityService assetsAvailabilityService,
-            IAssetsLocalCache assetsLocalCache,
-            IMerchantService merchantService,
-            ILog log, 
-            ILykkeAssetsResolver lykkeAssetsResolver)
+            [NotNull] IAssetSettingsService assetSettingsService,
+            [NotNull] IAssetsLocalCache assetsLocalCache,
+            [NotNull] IMerchantService merchantService,
+            [NotNull] ILog log,
+            [NotNull] ILykkeAssetsResolver lykkeAssetsResolver)
         {
-            _assetsAvailabilityService = assetsAvailabilityService ??
-                                         throw new ArgumentNullException(nameof(assetsAvailabilityService));
+            _assetSettingsService =
+                assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _log = log.CreateComponentScope(nameof(AssetsController)) ?? throw new ArgumentNullException(nameof(log));
             _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
         }
 
         /// <summary>
-        /// Returns general asset availability settings by type
+        /// Returns general asset settings
         /// </summary>
-        /// <param name="type"></param>
         /// <returns></returns>
         [HttpGet]
         [Route("settings/general")]
-        [SwaggerOperation("GetAssetsSettings")]
-        [ProducesResponseType(typeof(AvailableAssetsResponseModel), (int) HttpStatusCode.OK)]
-        public async Task<IActionResult> GetGeneralAssetsSettings([FromQuery] AssetAvailabilityType type)
+        [SwaggerOperation(nameof(GetAssetGeneralSettings))]
+        [ProducesResponseType(typeof(IEnumerable<AssetGeneralSettingsResponseModel>), (int) HttpStatusCode.OK)]
+        public async Task<IActionResult> GetAssetGeneralSettings()
         {
             try
             {
-                IReadOnlyList<IAssetAvailability> assets = await _assetsAvailabilityService.GetGeneralByTypeAsync(type);
+                IReadOnlyList<IAssetGeneralSettings> assets = await _assetSettingsService.GetGeneralAsync();
 
-                return Ok(new AvailableAssetsResponseModel {Assets = assets.Select(x => x.AssetId).ToList()});
+                return Ok(Mapper.Map<IReadOnlyList<AssetGeneralSettingsResponseModel>>(assets));
             }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(AssetsController), nameof(GetGeneralAssetsSettings), ex);
+                _log.WriteError(nameof(GetAssetGeneralSettings), ex);
 
                 throw;
             }
         }
 
         /// <summary>
-        /// Updates general asset availability settings
+        /// Updates general asset settings
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost]
         [Route("settings/general")]
-        [SwaggerOperation("SetAssetsSettings")]
+        [SwaggerOperation(nameof(SetAssetGeneralSettings))]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ValidateModel]
-        public async Task<IActionResult> SetGeneralAssetsSettings([FromBody] UpdateAssetAvailabilityRequest request)
+        public async Task<IActionResult> SetAssetGeneralSettings([FromBody] UpdateAssetGeneralSettingsRequest request)
         {
             try
             {
-                string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(request.AssetId);
+                string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(request.AssetDisplayId);
 
                 Asset asset = await _assetsLocalCache.GetAssetByIdAsync(lykkeAssetId);
 
                 if (asset == null)
-                    return NotFound(ErrorResponse.Create($"Asset {request.AssetId} not found"));
+                    return NotFound(ErrorResponse.Create($"Asset {request.AssetDisplayId} not found"));
 
-                await _assetsAvailabilityService.SetGeneralAsync(request.AssetId, request.AvailabilityType,
-                    request.Value);
+                await _assetSettingsService.SetGeneralAsync(Mapper.Map<AssetGeneralSettings>(request));
 
                 return NoContent();
             }
+            catch (InvalidRowKeyValueException ex)
+            {
+                _log.WriteError(nameof(SetAssetGeneralSettings), new
+                {
+                    ex.Variable,
+                    ex.Value
+                }, ex);
+
+                return NotFound(ErrorResponse.Create("Asset not found"));
+            }
             catch (AssetUnknownException assetEx)
             {
-                await _log.WriteErrorAsync(nameof(AssetsController), nameof(SetGeneralAssetsSettings),
-                    new {assetEx.Asset}.ToJson(), assetEx);
+                _log.WriteError(nameof(SetAssetGeneralSettings), new {assetEx.Asset}, assetEx);
 
                 return NotFound(ErrorResponse.Create($"Asset {assetEx.Asset} can't be resolved"));
             }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(AssetsController), nameof(SetGeneralAssetsSettings), ex);
+                _log.WriteError(nameof(SetAssetGeneralSettings), ex);
 
                 throw;
             }
@@ -117,26 +122,40 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <param name="merchantId"></param>
         /// <returns></returns>
         [HttpGet]
-        [Route("settings/personal")]
+        [Route("settings/merchant")]
         [SwaggerOperation("GetAssetsPersonalSettings")]
-        [ProducesResponseType(typeof(AssetAvailabilityByMerchantResponse), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(AssetMerchantSettingsResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
-        public async Task<IActionResult> GetAssetsPersonalSettings([FromQuery] string merchantId)
+        public async Task<IActionResult> GetAssetMerchantSettings([FromQuery] string merchantId)
         {
-            IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Couldn't find merchant"));
+            if (string.IsNullOrEmpty(merchantId))
+                return BadRequest(ErrorResponse.Create("Merchant id is invalid"));
 
             try
             {
-                IAssetAvailabilityByMerchant personal = await _assetsAvailabilityService.GetPersonalAsync(merchantId);
+                IMerchant merchant = await _merchantService.GetAsync(merchantId);
 
-                return Ok(Mapper.Map<AssetAvailabilityByMerchantResponse>(personal));
+                if (merchant == null)
+                    return NotFound(ErrorResponse.Create("Merchant not found"));
+
+                IAssetMerchantSettings personal = await _assetSettingsService.GetByMerchantAsync(merchantId);
+
+                return Ok(Mapper.Map<AssetMerchantSettingsResponse>(personal));
+            }
+            catch (InvalidRowKeyValueException ex)
+            {
+                _log.WriteError(nameof(GetAssetMerchantSettings), new
+                {
+                    ex.Variable,
+                    ex.Value
+                }, ex);
+
+                return NotFound(ErrorResponse.Create("Merchant not found"));
             }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(AssetsController), nameof(GetAssetsPersonalSettings), ex);
+                _log.WriteError(nameof(GetAssetMerchantSettings), ex);
+
                 throw;
             }
         }
@@ -144,31 +163,44 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <summary>
         /// Updates personal asset availability settings
         /// </summary>
-        /// <param name="request"></param>
+        /// <param name="settingsRequest"></param>
         /// <returns></returns>
         [HttpPost]
-        [Route("settings/personal")]
+        [Route("settings/merchant")]
         [SwaggerOperation("SetAssetsPersonalSettings")]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ValidateModel]
-        public async Task<IActionResult> SetAssetsPersonalSettings([FromBody] UpdateAssetAvailabilityByMerchantRequest request)
+        public async Task<IActionResult> SetAssetMerchantSettings(
+            [FromBody] UpdateAssetMerchantSettingsRequest settingsRequest)
         {
-            IMerchant merchant = await _merchantService.GetAsync(request.MerchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Couldn't find merchant"));
-
             try
             {
-                await _assetsAvailabilityService.SetPersonalAsync(request.MerchantId, request.PaymentAssets,
-                    request.SettlementAssets);
+                IMerchant merchant = await _merchantService.GetAsync(settingsRequest.MerchantId);
+
+                if (merchant == null)
+                    return NotFound(ErrorResponse.Create("Merchant not found"));
+
+                await _assetSettingsService.SetByMerchantAsync(settingsRequest.MerchantId,
+                    settingsRequest.PaymentAssets,
+                    settingsRequest.SettlementAssets);
 
                 return NoContent();
             }
+            catch (InvalidRowKeyValueException ex)
+            {
+                _log.WriteError(nameof(SetAssetMerchantSettings), new
+                {
+                    ex.Variable,
+                    ex.Value
+                }, ex);
+
+                return NotFound(ErrorResponse.Create("Merchant not found"));
+            }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(AssetsController), nameof(SetAssetsPersonalSettings), ex);
+                _log.WriteError(nameof(SetAssetMerchantSettings), ex);
+
                 throw;
             }
         }

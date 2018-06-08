@@ -12,7 +12,6 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public ExpirationPeriodsSettings ExpirationPeriods { get; set; }
         public LpMarkupSettings LpMarkup { get; set; }
         public int TransactionConfirmationCount { get; set; }
-        public AssetsAvailabilitySettings AssetsAvailability { get; set; }
         public BlockchainSettings Blockchain { get; set; }
         public JobPeriods JobPeriods { get; set; }
     }
@@ -26,12 +25,6 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class BlockchainExplorerSettings
     {
         public string TransactionUrl { get; set; }
-    }
-
-    public class AssetsAvailabilitySettings
-    {
-        public string PaymentAssets { get; set; }
-        public string SettlementAssets { get; set; }
     }
 
     public class ExpirationPeriodsSettings
