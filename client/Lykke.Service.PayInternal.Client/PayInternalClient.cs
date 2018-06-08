@@ -251,9 +251,9 @@ namespace Lykke.Service.PayInternal.Client
 
         public async Task<byte[]> GetFileAsync(string merchantId, string fileId)
         {
-            HttpResponseMessage response = await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.GetAsync(merchantId, fileId));
+            byte[] response = await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.GetAsync(merchantId, fileId));
 
-            return await response.Content.ReadAsByteArrayAsync();
+            return response;
         }
 
         public async Task UploadFileAsync(string merchantId, byte[] content, string fileName, string contentType)
