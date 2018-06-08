@@ -132,6 +132,9 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<BcnExplorerResolver>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain))
                 .As<IBcnExplorerResolver>();
+
+            builder.RegisterType<FileService>()
+                .As<IFileService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
