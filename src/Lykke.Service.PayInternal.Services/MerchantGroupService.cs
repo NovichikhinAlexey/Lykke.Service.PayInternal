@@ -1,10 +1,14 @@
 ﻿using Common.Log;
 using Lykke.Service.PayInternal.Core.Services;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Exceptions;
+using KeyNotFoundException = Lykke.Service.PayInternal.Core.Exceptions.KeyNotFoundException;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -17,8 +21,10 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IMerchantGroupRepository merchantGroupRepository,
             [NotNull] ILog log)
         {
-            _merchantGroupRepository = merchantGroupRepository ?? throw new ArgumentNullException(nameof(merchantGroupRepository)); 
-            _log = log.CreateComponentScope(nameof(MerchantGroupService)) ?? throw new ArgumentNullException(nameof(log));
+            _merchantGroupRepository = merchantGroupRepository ??
+                                       throw new ArgumentNullException(nameof(merchantGroupRepository));
+            _log = log.CreateComponentScope(nameof(MerchantGroupService)) ??
+                   throw new ArgumentNullException(nameof(log));
         }
 
         public Task<IMerchantGroup> CreateAsync(IMerchantGroup src)
@@ -62,10 +68,22 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException ex)
             {
-                _log.WriteError(nameof(DeleteAsync), new { merchantGroupId = id }, ex);
+                _log.WriteError(nameof(DeleteAsync), new {merchantGroupId = id}, ex);
 
                 throw new MerchantGroupNotFoundException(id);
             }
+        }
+
+        public async Task<IReadOnlyList<string>> GetMerchantsByUsageAsync(string merchantId,
+            MerchantGroupUse merchantGroupUse)
+        {
+            IReadOnlyList<IMerchantGroup> groups = await _merchantGroupRepository.GetByOwnerAsync(merchantId);
+
+            return groups
+                .Where(x => x.MerchantGroupUse == merchantGroupUse)
+                .SelectMany(x => x.Merchants?.Split(Constants.Separator))
+                .Distinct()
+                .ToList();
         }
     }
 }

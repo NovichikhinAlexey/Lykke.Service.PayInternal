@@ -2,10 +2,11 @@
 using AzureStorage;
 using AzureStorage.Tables.Templates.Index;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
-using Lykke.Service.PayInternal.Core.Exceptions;
+using KeyNotFoundException = Lykke.Service.PayInternal.Core.Exceptions.KeyNotFoundException;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
 {
@@ -91,6 +92,14 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
             await _groupIndexStorage.DeleteAsync(index);
 
             await _tableStorage.DeleteAsync(index.PrimaryPartitionKey, index.PrimaryRowKey);
+        }
+
+        public async Task<IReadOnlyList<IMerchantGroup>> GetByOwnerAsync(string ownerId)
+        {
+            IEnumerable<MerchantGroupEntity> groups =
+                await _tableStorage.GetDataAsync(MerchantGroupEntity.ByOwner.GeneratePartitionKey(ownerId));
+
+            return Mapper.Map<IReadOnlyList<Core.Domain.Groups.MerchantGroup>>(groups);
         }
     }
 }
