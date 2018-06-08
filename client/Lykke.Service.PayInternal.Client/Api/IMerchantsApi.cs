@@ -59,6 +59,9 @@ namespace Lykke.Service.PayInternal.Client.Api
         [Delete("/api/merchantGroups/{id}")]
         Task DeleteGroupAsync(string id);
 
+        [Post("/api/merchantGroups/merchants/byUsage")]
+        Task<MerchantsByUsageResponse> GetMerchantsByUsageAsync([Body] GetMerchantsByUsageRequest request);
+
         #endregion
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -6,10 +7,11 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
+using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Filters;
-using Lykke.Service.PayInternal.Models.MerchantGtoups;
+using Lykke.Service.PayInternal.Models.MerchantGroups;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -169,6 +171,31 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return NotFound(ErrorResponse.Create("Merchant group not found"));
             }
+        }
+
+        /// <summary>
+        /// Returns list of merchants participating in groups by usage for particular owner (merchant provided)
+        /// </summary>
+        /// <param name="request">Get Merchants by usage request details</param>
+        /// <response code="200">List of merchants</response>
+        /// <response code="404">Merchant not found</response>
+        [HttpPost]
+        [Route("merchants/byUsage")]
+        [SwaggerOperation(nameof(GetMerchantsByUsage))]
+        [ProducesResponseType(typeof(MerchantsByUsageResponse), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
+        public async Task<IActionResult> GetMerchantsByUsage([FromBody] GetMerchantsByUsageModel request)
+        {
+            IMerchant merchant = await _merchantService.GetAsync(request.MerchantId);
+
+            if (merchant == null)
+                return NotFound(ErrorResponse.Create("Merchant not found"));
+
+            IReadOnlyList<string> merchants =
+                await _merchantGroupService.GetMerchantsByUsageAsync(request.MerchantId, request.MerchantGroupUse);
+
+            return Ok(new MerchantsByUsageResponse {Merchants = merchants});
         }
     }
 }

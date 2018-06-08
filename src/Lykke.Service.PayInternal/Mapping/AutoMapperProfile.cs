@@ -15,7 +15,7 @@ using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.Assets;
 using Lykke.Service.PayInternal.Models.Markups;
-using Lykke.Service.PayInternal.Models.MerchantGtoups;
+using Lykke.Service.PayInternal.Models.MerchantGroups;
 using Lykke.Service.PayInternal.Models.Orders;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Lykke.Service.PayInternal.Models.SupervisorMembership;

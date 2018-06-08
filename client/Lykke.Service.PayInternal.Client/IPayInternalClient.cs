@@ -374,5 +374,12 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="id">Merchant group id</param>
         /// <returns></returns>
         Task DeleteMerchantGroupAsync(string id);
+
+        /// <summary>
+        /// Returns list of merchants participating in groups by usage for particular owner (merchant provided)
+        /// </summary>
+        /// <param name="request">Get Merchants by usage request details</param>
+        /// <returns>List of merchants</returns>
+        Task<MerchantsByUsageResponse> GetMerchantsByUsageAsync(GetMerchantsByUsageRequest request);
     }
 }

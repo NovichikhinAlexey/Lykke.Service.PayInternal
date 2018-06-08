@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Validation;
 
-namespace Lykke.Service.PayInternal.Models.MerchantGtoups
+namespace Lykke.Service.PayInternal.Models.MerchantGroups
 {
     /// <summary>
     /// Merchant group update details

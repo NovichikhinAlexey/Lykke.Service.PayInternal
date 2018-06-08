@@ -1,36 +1,40 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
+using Lykke.Service.PayInternal.Validation;
 
-namespace Lykke.Service.PayInternal.Models.MerchantGtoups
+namespace Lykke.Service.PayInternal.Models.MerchantGroups
 {
     /// <summary>
-    /// Merchant group details
+    /// New merchant gtoup details
     /// </summary>
-    public class MerchantGroupResponse
+    public class AddMerchantGroupModel
     {
-        /// <summary>
-        /// Gets or sets group id
-        /// </summary>
-        public string Id { get; set; }
-
         /// <summary>
         /// Gets or sets display name
         /// </summary>
         public string DisplayName { get; set; }
 
         /// <summary>
-        /// Gets or sets owner id
+        /// Gets or sets group owner
         /// </summary>
+        [Required]
+        [RowKey]
         public string OwnerId { get; set; }
 
         /// <summary>
         /// Gets or sets list of merchants
         /// </summary>
+        [Required]
+        [RowKey]
+        [NotEmptyCollection]
         public IEnumerable<string> Merchants { get; set; }
 
         /// <summary>
         /// Gets or sets merchant group use
         /// </summary>
+        [Required]
+        [EnumDataType(typeof(MerchantGroupUse), ErrorMessage = "Invalid value, possible values are: Supervising, Billing")]
         public MerchantGroupUse MerchantGroupUse { get; set; }
     }
 }
