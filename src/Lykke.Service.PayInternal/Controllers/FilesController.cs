@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
-    [Route("api")]
+    [Route("api/files")]
     public class FilesController : Controller
     {
         private readonly IFileService _fileService;
@@ -57,7 +57,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
             byte[] content = await _fileService.GetFileAsync(fileId);
 
-            return File(new System.IO.MemoryStream(content), fileInfo.Type, fileInfo.Name);
+            return Ok(File(new System.IO.MemoryStream(content), fileInfo.Type, fileInfo.Name));
         }
 
         /// <summary>
