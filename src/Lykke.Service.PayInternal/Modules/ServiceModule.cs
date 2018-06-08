@@ -80,6 +80,12 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<AssetSettingsService>()
                 .As<IAssetSettingsService>();
 
+            builder.RegisterType<SupervisorMembershipService>()
+                .As<ISupervisorMembershipService>();
+
+            builder.RegisterType<MerchantGroupService>()
+                .As<IMerchantGroupService>();
+
             builder.RegisterType<CalculationService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LpMarkup))
                 .As<ICalculationService>()
