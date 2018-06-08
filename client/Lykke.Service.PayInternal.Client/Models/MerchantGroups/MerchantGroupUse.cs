@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace Lykke.Service.PayInternal.Core.Domain.Groups
+namespace Lykke.Service.PayInternal.Client.Models.MerchantGroups
 {
     /// <summary>
     /// The purpose of merchant group
