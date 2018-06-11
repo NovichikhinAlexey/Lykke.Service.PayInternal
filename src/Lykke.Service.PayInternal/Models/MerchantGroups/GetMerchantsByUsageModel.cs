@@ -21,6 +21,6 @@ namespace Lykke.Service.PayInternal.Models.MerchantGroups
         /// </summary>
         [Required]
         [EnumDataType(typeof(MerchantGroupUse), ErrorMessage = "Invalid value, possible values are: Supervising, Billing")]
-        public MerchantGroupUse MerchantGroupUse { get; set; }
+        public MerchantGroupUse? MerchantGroupUse { get; set; }
     }
 }
