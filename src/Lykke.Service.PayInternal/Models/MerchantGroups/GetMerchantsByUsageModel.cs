@@ -13,7 +13,7 @@ namespace Lykke.Service.PayInternal.Models.MerchantGroups
         /// Gets or sets merchant id
         /// </summary>
         [Required]
-        [RowKey]
+        [RowKey(ErrorMessage = "Invalid characters used or value is empty")]
         public string MerchantId { get; set; }
 
         /// <summary>

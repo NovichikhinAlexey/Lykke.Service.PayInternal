@@ -52,7 +52,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantGroup
                 MerchantGroupEntity.ByOwner.GenerateRowKey(index.PrimaryRowKey),
                 entity =>
                 {
-                    if (!string.IsNullOrEmpty(src.DisplayName))
+                    if (src.DisplayName != null)
                         entity.DisplayName = src.DisplayName;
 
                     if (!string.IsNullOrEmpty(src.Merchants))
