@@ -27,7 +27,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <returns>The collection of file info.</returns>
         /// <response code="200">The collection of file info.</response>
         [HttpGet]
-        [Route("files/{merchantId}")]
+        [Route("{merchantId}")]
         [SwaggerOperation("FileGetAll")]
         [ProducesResponseType(typeof(IEnumerable<FileInfoModel>), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> GetAllAsync(string merchantId)
@@ -45,9 +45,9 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="200">The file stream.</response>
         /// <response code="404">File info not found.</response>
         [HttpGet]
-        [Route("files/{merchantId}/{fileId}")]
+        [Route("{merchantId}/{fileId}")]
         [SwaggerOperation("FileGetContent")]
-        [ProducesResponseType(typeof(FileStreamResult), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(byte[]), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> GetContentAsync(string merchantId, string fileId)
         {
             FileInfo fileInfo = await _fileService.GetInfoAsync(merchantId, fileId);
@@ -57,7 +57,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
             byte[] content = await _fileService.GetFileAsync(fileId);
 
-            return Ok(File(new System.IO.MemoryStream(content), fileInfo.Type, fileInfo.Name));
+            return Ok(content);
         }
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="204">File successfuly uploaded.</response>
         /// <response code="400">Invalid file.</response>
         [HttpPost]
-        [Route("files/{merchantId}")]
+        [Route("{merchantId}")]
         [SwaggerOperation("FileUpload")]
         [ProducesResponseType((int)HttpStatusCode.NoContent)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
@@ -105,7 +105,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <param name="fileId">The file id.</param>
         /// <response code="200">File successfully deleted.</response>
         [HttpDelete]
-        [Route("files/{merchantId}/{fileId}")]
+        [Route("{merchantId}/{fileId}")]
         [SwaggerOperation("FileDelete")]
         [ProducesResponseType((int)HttpStatusCode.NoContent)]
         public async Task<IActionResult> DeleteAsync(string merchantId, string fileId)
