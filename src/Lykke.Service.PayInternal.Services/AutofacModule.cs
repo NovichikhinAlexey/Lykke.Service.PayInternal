@@ -60,8 +60,12 @@ namespace Lykke.Service.PayInternal.Services
 
             builder.RegisterType<PaymentRequestDetailsBuilder>()
                 .As<IPaymentRequestDetailsBuilder>();
+
             builder.RegisterType<FileService>()
                 .As<IFileService>();
+
+            builder.RegisterType<MerchantWalletService>()
+                .As<IMerchantWalletService>();
         }
     }
 }

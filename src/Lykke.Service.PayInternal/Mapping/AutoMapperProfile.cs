@@ -7,6 +7,7 @@ using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
+using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -16,6 +17,7 @@ using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.Assets;
 using Lykke.Service.PayInternal.Models.Markups;
 using Lykke.Service.PayInternal.Models.MerchantGroups;
+using Lykke.Service.PayInternal.Models.MerchantWallets;
 using Lykke.Service.PayInternal.Models.Orders;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Lykke.Service.PayInternal.Models.SupervisorMembership;
@@ -76,7 +78,12 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.Merchants, opt => opt.MapFrom(src => string.Join(Constants.Separator, src.Merchants)))
                 .ForMember(dest => dest.OwnerId, opt => opt.Ignore());
 
+            CreateMap<CreateMerchantWalletModel, CreateMerchantWalletCommand>(MemberList.Source);
+
+            CreateMap<IMerchantWallet, MerchantWalletResponse>(MemberList.Source);
+
             PaymentRequestApiModels();
+
             PaymentRequestMessages();
         }
 

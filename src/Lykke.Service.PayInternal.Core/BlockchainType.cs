@@ -1,8 +1,12 @@
-﻿namespace Lykke.Service.PayInternal.Core
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
+namespace Lykke.Service.PayInternal.Core
 {
     /// <summary>
     /// Blockchain type
     /// </summary>
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum BlockchainType
     {
         /// <summary>

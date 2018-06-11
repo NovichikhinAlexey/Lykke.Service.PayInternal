@@ -97,6 +97,13 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return BadRequest(ErrorResponse.Create(assetEx.Message));
             }
+            catch (AssetNetworkNotDefinedException networkEx)
+            {
+                await _log.WriteErrorAsync(nameof(OrdersController), nameof(ChechoutAsync),
+                    new {networkEx.AssetId}.ToJson(), networkEx);
+
+                return BadRequest(ErrorResponse.Create(networkEx.Message));
+            }
             catch (MarkupNotFoundException markupEx)
             {
                 await _log.WriteErrorAsync(nameof(OrdersController), nameof(ChechoutAsync),

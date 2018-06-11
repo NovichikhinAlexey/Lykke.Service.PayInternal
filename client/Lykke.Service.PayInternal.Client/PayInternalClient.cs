@@ -17,6 +17,7 @@ using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
 using Lykke.Service.PayInternal.Client.Models.File;
 using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
+using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -31,6 +32,7 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IMarkupsApi _markupsApi;
         private readonly ISupervisorMembershipApi _supervisorMembershipApi;
         private readonly IFilesApi _filesApi;
+        private readonly IMerchantWalletsApi _merchantWalletsApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -61,6 +63,7 @@ namespace Lykke.Service.PayInternal.Client
             _markupsApi = RestService.For<IMarkupsApi>(_httpClient);
             _supervisorMembershipApi = RestService.For<ISupervisorMembershipApi>(_httpClient);
             _filesApi = RestService.For<IFilesApi>(_httpClient);
+            _merchantWalletsApi = RestService.For<IMerchantWalletsApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
@@ -332,6 +335,32 @@ namespace Lykke.Service.PayInternal.Client
         public Task<MerchantsByUsageResponse> GetMerchantsByUsageAsync(GetMerchantsByUsageRequest request)
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetMerchantsByUsageAsync(request));
+        }
+
+        public Task<MerchantWalletResponse> CreateMerchantWalletAsync(CreateMerchantWalletRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.CreateAsync(request));
+        }
+
+        public Task DeleteMerchantWalletAsync(string merchantWalletId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.DeleteAsync(merchantWalletId));
+        }
+
+        public Task SetMerchantWalletDefaultAssetsAsync(UpdateMerchantWalletDefaultAssetsRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.SetDefaultAssetsAsync(request));
+        }
+
+        public Task<IEnumerable<MerchantWalletResponse>> GetMerchantWalletsAsync(string merchantId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.GetByMerchantAsync(merchantId));
+        }
+
+        public Task<MerchantWalletResponse> GetDefaultMerchantWalletAsync(string merchantId, string assetId, PaymentDirection paymentDirection)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _merchantWalletsApi.GetDefaultAsync(merchantId, assetId, paymentDirection));
         }
 
         public void Dispose()
