@@ -10,6 +10,7 @@ using Lykke.Service.PayInternal.Client.Models.SupervisorMembership;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Lykke.Service.PayInternal.Client.Models.File;
+using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -345,5 +346,42 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="merchantId">The merchant id.</param>
         /// <param name="fileId">The file id.</param>
         Task DeleteFileAsync(string merchantId, string fileId);
+
+        /// <summary>
+        /// Creates new merchant wallet
+        /// </summary>
+        /// <param name="request">>Merchant wallet creation details</param>
+        /// <returns></returns>
+        Task<MerchantWalletResponse> CreateMerchantWalletAsync(CreateMerchantWalletRequest request);
+
+        /// <summary>
+        /// Deletes merchant wallet
+        /// </summary>
+        /// <param name="merchantWalletId">Merchant wallet id</param>
+        /// <returns></returns>
+        Task DeleteMerchantWalletAsync(string merchantWalletId);
+
+        /// <summary>
+        /// Updates default assets for merchant wallet
+        /// </summary>
+        /// <param name="request">Merchant wallet default assets update details</param>
+        /// <returns></returns>
+        Task SetMerchantWalletDefaultAssetsAsync(UpdateMerchantWalletDefaultAssetsRequest request);
+
+        /// <summary>
+        /// Returns list of merchant wallets
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <returns></returns>
+        Task<IEnumerable<MerchantWalletResponse>> GetMerchantWalletsAsync(string merchantId);
+
+        /// <summary>
+        /// Returns default merchant wallet for given asset and payment direction
+        /// </summary>
+        /// <param name="merchantId">Merchant Id</param>
+        /// <param name="assetId">Asset id</param>
+        /// <param name="paymentDirection">Payment direction</param>
+        /// <returns></returns>
+        Task<MerchantWalletResponse> GetDefaultMerchantWalletAsync(string merchantId, string assetId, PaymentDirection paymentDirection);
     }
 }

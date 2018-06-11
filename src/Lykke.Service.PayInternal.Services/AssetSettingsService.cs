@@ -63,7 +63,7 @@ namespace Lykke.Service.PayInternal.Services
 
             IAssetGeneralSettings assetAvailability = await _assetGeneralSettingsRepository.GetAsync(assetIdAdjusted);
 
-            return assetAvailability?.Network ?? throw new Exception($"Blockchain network is not defined for asset [{assetId}]");
+            return assetAvailability?.Network ?? throw new AssetNetworkNotDefinedException(assetId);
         }
 
         public async Task<IAssetMerchantSettings> GetByMerchantAsync(string merchantId)

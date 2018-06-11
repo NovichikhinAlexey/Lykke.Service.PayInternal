@@ -205,6 +205,13 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return BadRequest(ErrorResponse.Create($"Asset {assetEx.Asset} can't be resolved"));
             }
+            catch (AssetNetworkNotDefinedException networkEx)
+            {
+                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(CreateAsync),
+                    new {networkEx.AssetId}.ToJson(), networkEx);
+
+                return BadRequest(ErrorResponse.Create(networkEx.Message));
+            }
             catch (Exception ex)
             {
                 await _log.WriteErrorAsync(nameof(CreateAsync), model.ToJson(), ex);
@@ -235,11 +242,16 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (RefundOperationFailedException refundFailedEx)
             {
-                await _log.WriteErrorAsync(nameof(RefundAsync), new {errors = refundFailedEx.TransferErrors}.ToJson(), refundFailedEx);
+                await _log.WriteErrorAsync(nameof(RefundAsync), new {errors = refundFailedEx.TransferErrors}.ToJson(),
+                    refundFailedEx);
             }
             catch (AssetUnknownException assetEx)
             {
                 await _log.WriteErrorAsync(nameof(RefundAsync), new {assetEx.Asset}.ToJson(), assetEx);
+            }
+            catch (AssetNetworkNotDefinedException networkEx)
+            {
+                await _log.WriteErrorAsync(nameof(RefundAsync), new {networkEx.AssetId}.ToJson(), networkEx);
             }
             catch (Exception ex)
             {
