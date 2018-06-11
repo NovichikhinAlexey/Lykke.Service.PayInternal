@@ -19,15 +19,15 @@ namespace Lykke.Service.PayInternal.Models.MerchantGroups
         /// Gets or sets group owner
         /// </summary>
         [Required]
-        [RowKey]
+        [RowKey(ErrorMessage = "Invalid characters used or value is empty")]
         public string OwnerId { get; set; }
 
         /// <summary>
         /// Gets or sets list of merchants
         /// </summary>
         [Required]
-        [RowKey]
-        [NotEmptyCollection]
+        [RowKey(ErrorMessage = "Invalid characters used or value is empty")]
+        [NotEmptyCollection(ErrorMessage = "The collection contains no elements")]
         public IEnumerable<string> Merchants { get; set; }
 
         /// <summary>
