@@ -433,5 +433,12 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="paymentDirection">Payment direction</param>
         /// <returns></returns>
         Task<MerchantWalletResponse> GetDefaultMerchantWalletAsync(string merchantId, string assetId, PaymentDirection paymentDirection);
+
+        /// <summary>
+        /// Returns balances for all merchant's wallets
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <returns></returns>
+        Task<IEnumerable<MerchantWalletBalanceResponse>> GetMerchantWalletBalancesAsync(string merchantId);
     }
 }

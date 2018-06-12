@@ -2,6 +2,7 @@
 using AutoMapper;
 using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
@@ -81,6 +82,10 @@ namespace Lykke.Service.PayInternal.Mapping
             CreateMap<CreateMerchantWalletModel, CreateMerchantWalletCommand>(MemberList.Source);
 
             CreateMap<IMerchantWallet, MerchantWalletResponse>(MemberList.Source);
+
+            CreateMap<MerchantWalletBalanceLine, MerchantWalletBalanceResponse>(MemberList.Destination)
+                .ForMember(dest => dest.MerchantWalletId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.AssetDisplayId, opt => opt.MapFrom(src => src.AssetId));
 
             PaymentRequestApiModels();
 

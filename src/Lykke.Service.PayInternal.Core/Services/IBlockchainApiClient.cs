@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 
 namespace Lykke.Service.PayInternal.Core.Services
@@ -10,5 +12,7 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task<string> CreateAddressAsync();
 
         Task<bool> ValidateAddressAsync(string address);
+
+        Task<IReadOnlyList<BlockchainBalanceResult>> GetBalanceAsync(string address);
     }
 }

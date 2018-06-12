@@ -21,5 +21,8 @@ namespace Lykke.Service.PayInternal.Client.Api
 
         [Get("/api/merchantWallets/{merchantId}/default")]
         Task<MerchantWalletResponse> GetDefaultAsync(string merchantId, [Query] string assetId, [Query] PaymentDirection paymentDirection);
+
+        [Get("/api/merchantWallets/balances/{merchantId}")]
+        Task<IEnumerable<MerchantWalletBalanceResponse>> GetBalancesAsync(string merchantId);
     }
 }

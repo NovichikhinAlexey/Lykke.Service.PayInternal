@@ -6,6 +6,7 @@ using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -26,10 +27,14 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IBlockchainClientProvider blockchainClientProvider,
             [NotNull] ILog log)
         {
-            _merchantWalletRespository = merchantWalletRespository ?? throw new ArgumentNullException(nameof(merchantWalletRespository));
-            _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
-            _blockchainClientProvider = blockchainClientProvider ?? throw new ArgumentNullException(nameof(blockchainClientProvider));
-            _log = log.CreateComponentScope(nameof(MerchantWalletService)) ?? throw new ArgumentNullException(nameof(log));
+            _merchantWalletRespository = merchantWalletRespository ??
+                                         throw new ArgumentNullException(nameof(merchantWalletRespository));
+            _assetSettingsService =
+                assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
+            _blockchainClientProvider = blockchainClientProvider ??
+                                        throw new ArgumentNullException(nameof(blockchainClientProvider));
+            _log = log.CreateComponentScope(nameof(MerchantWalletService)) ??
+                   throw new ArgumentNullException(nameof(log));
         }
 
         public async Task<IMerchantWallet> CreateAsync(CreateMerchantWalletCommand cmd)
@@ -84,10 +89,10 @@ namespace Lykke.Service.PayInternal.Services
         }
 
         public async Task SetDefaultAssetsAsync(
-            string merchantId, 
+            string merchantId,
             BlockchainType network,
             string walletAddress,
-            IEnumerable<string> incomingPaymentDefaults = null, 
+            IEnumerable<string> incomingPaymentDefaults = null,
             IEnumerable<string> outgoingPaymentDefaults = null)
         {
             try
@@ -114,12 +119,14 @@ namespace Lykke.Service.PayInternal.Services
             }
         }
 
-        public async Task<IMerchantWallet> GetDefaultAsync(string merchantId, string assetId, PaymentDirection paymentDirection)
+        public async Task<IMerchantWallet> GetDefaultAsync(string merchantId, string assetId,
+            PaymentDirection paymentDirection)
         {
             BlockchainType network = await _assetSettingsService.GetNetworkAsync(assetId);
 
             IReadOnlyList<IMerchantWallet> merchantWallets =
-                (await _merchantWalletRespository.GetByMerchantAsync(merchantId)).Where(x => x.Network == network).ToList();
+                (await _merchantWalletRespository.GetByMerchantAsync(merchantId)).Where(x => x.Network == network)
+                .ToList();
 
             IReadOnlyList<IMerchantWallet> assetDefaultWallets = merchantWallets
                 .Where(w => w.GetDefaultAssets(paymentDirection).Contains(assetId))
@@ -149,14 +156,28 @@ namespace Lykke.Service.PayInternal.Services
             return _merchantWalletRespository.GetByMerchantAsync(merchantId);
         }
 
-        public async Task<IReadOnlyList<IMerchantWalletBalance>> GetBalancesAsync()
+        public async Task<IReadOnlyList<MerchantWalletBalanceLine>> GetBalancesAsync(string merchantId)
         {
-            throw new System.NotImplementedException();
-        }
+            var balances = new List<MerchantWalletBalanceLine>();
 
-        public async Task<IMerchantWalletBalance> GetBalanceAsync(string merchantId, BlockchainType network, string walletAddress)
-        {
-            throw new System.NotImplementedException();
+            IReadOnlyList<IMerchantWallet> wallets = await _merchantWalletRespository.GetByMerchantAsync(merchantId);
+
+            foreach (IMerchantWallet merchantWallet in wallets)
+            {
+                IBlockchainApiClient blockchainClient = _blockchainClientProvider.Get(merchantWallet.Network);
+
+                IReadOnlyList<BlockchainBalanceResult> walletBalance =
+                    await blockchainClient.GetBalanceAsync(merchantWallet.WalletAddress);
+
+                balances.AddRange(walletBalance.Select(x => new MerchantWalletBalanceLine
+                {
+                    Id = merchantWallet.Id,
+                    AssetId = x.AssetId,
+                    Balance = x.Balance
+                }));
+            }
+
+            return balances;
         }
     }
 }

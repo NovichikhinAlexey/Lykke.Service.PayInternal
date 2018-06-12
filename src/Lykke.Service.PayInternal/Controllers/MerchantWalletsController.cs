@@ -7,6 +7,7 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -213,13 +214,13 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             merchantId = Uri.UnescapeDataString(merchantId);
 
-            IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Merchant not found"));
-
             try
             {
+                IMerchant merchant = await _merchantService.GetAsync(merchantId);
+
+                if (merchant == null)
+                    return NotFound(ErrorResponse.Create("Merchant not found"));
+
                 IReadOnlyList<IMerchantWallet> wallets = await _merchantWalletService.GetByMerchantAsync(merchantId);
 
                 return Ok(Mapper.Map<IEnumerable<MerchantWalletResponse>>(wallets));
@@ -256,13 +257,13 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             merchantId = Uri.UnescapeDataString(merchantId);
 
-            IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Merchant not found"));
-
             try
             {
+                IMerchant merchant = await _merchantService.GetAsync(merchantId);
+
+                if (merchant == null)
+                    return NotFound(ErrorResponse.Create("Merchant not found"));
+
                 string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(assetId);
 
                 if (await _assetsLocalCache.GetAssetByIdAsync(lykkeAssetId) == null)
@@ -272,6 +273,16 @@ namespace Lykke.Service.PayInternal.Controllers
                     await _merchantWalletService.GetDefaultAsync(merchantId, assetId, paymentDirection);
 
                 return Ok(Mapper.Map<MerchantWalletResponse>(wallet));
+            }
+            catch (InvalidRowKeyValueException e)
+            {
+                _log.WriteError(nameof(GetDefault), new
+                {
+                    e.Variable,
+                    e.Value
+                }, e);
+
+                return NotFound(ErrorResponse.Create("Merchant not found"));
             }
             catch (AssetUnknownException e)
             {
@@ -304,6 +315,51 @@ namespace Lykke.Service.PayInternal.Controllers
                     e.AssetId,
                     e.PaymentDirection
                 }, e);
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+        }
+
+        /// <summary>
+        /// Returns balances for all merchant's wallets
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <response code="200">List of balances</response>
+        /// <response code="404">Merchant or Blockchain client implementation not found</response>
+        [HttpGet]
+        [Route("balances/{merchantId}")]
+        [SwaggerOperation("GetMerchantWalletBalances")]
+        [ProducesResponseType(typeof(IEnumerable<MerchantWalletBalanceResponse>), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetBalances(string merchantId)
+        {
+            merchantId = Uri.UnescapeDataString(merchantId);
+
+            try
+            {
+                IMerchant merchant = await _merchantService.GetAsync(merchantId);
+
+                if (merchant == null)
+                    return NotFound(ErrorResponse.Create("Merchant not found"));
+
+                IReadOnlyList<MerchantWalletBalanceLine> balances =
+                    await _merchantWalletService.GetBalancesAsync(merchantId);
+
+                return Ok(Mapper.Map<IEnumerable<MerchantWalletBalanceResponse>>(balances));
+            }
+            catch (InvalidRowKeyValueException e)
+            {
+                _log.WriteError(nameof(GetBalances), new
+                {
+                    e.Variable,
+                    e.Value
+                }, e);
+
+                return NotFound(ErrorResponse.Create("Merchant not found"));
+            }
+            catch (InvalidOperationException e)
+            {
+                _log.WriteError(nameof(GetBalances), new {merchantId}, e);
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
