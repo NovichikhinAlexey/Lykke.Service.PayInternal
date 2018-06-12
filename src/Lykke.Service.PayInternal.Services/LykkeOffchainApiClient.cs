@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Services;
 
@@ -17,6 +19,11 @@ namespace Lykke.Service.PayInternal.Services
         }
 
         public async Task<bool> ValidateAddressAsync(string address)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public async Task<IReadOnlyList<BlockchainBalanceResult>> GetBalanceAsync(string address)
         {
             throw new System.NotImplementedException();
         }
