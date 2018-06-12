@@ -85,5 +85,10 @@ namespace Lykke.Service.PayInternal.Services
                 .Distinct()
                 .ToList();
         }
+
+        public Task<IReadOnlyList<IMerchantGroup>> GetByOwnerAsync(string ownerId)
+        {
+            return _merchantGroupRepository.GetByOwnerAsync(ownerId);
+        }
     }
 }

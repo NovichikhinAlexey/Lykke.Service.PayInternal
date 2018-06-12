@@ -329,6 +329,11 @@ namespace Lykke.Service.PayInternal.Client
             return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetMerchantsByUsageAsync(request));
         }
 
+        public Task<IEnumerable<MerchantGroupResponse>> GetMerchantGroupsByOwnerAsync(string ownerId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetGroupsByOwnerAsync(ownerId));
+        }
+
         public void Dispose()
         {
             _httpClient?.Dispose();

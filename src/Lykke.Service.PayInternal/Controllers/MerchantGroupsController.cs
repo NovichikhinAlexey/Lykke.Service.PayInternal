@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
@@ -200,6 +201,29 @@ namespace Lykke.Service.PayInternal.Controllers
                 await _merchantGroupService.GetMerchantsByUsageAsync(request.MerchantId, request.MerchantGroupUse.Value);
 
             return Ok(new MerchantsByUsageResponse {Merchants = merchants});
+        }
+
+        /// <summary>
+        /// Returns list of groups where the given id is an owner
+        /// </summary>
+        /// <param name="ownerId">Owner id</param>
+        /// <response code="200">List of groups</response>
+        /// <response code="404">Owner not found</response>
+        [HttpGet]
+        [Route("byOwner/{ownerId}")]
+        [SwaggerOperation("GetMerchantGroupsByOwner")]
+        [ProducesResponseType(typeof(IEnumerable<MerchantGroupResponse>), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetByOwner(string ownerId)
+        {
+            ownerId = Uri.UnescapeDataString(ownerId);
+
+            if (!ownerId.IsValidPartitionOrRowKey())
+                return NotFound(ErrorResponse.Create("Owner not found"));
+
+            IReadOnlyList<IMerchantGroup> groups = await _merchantGroupService.GetByOwnerAsync(ownerId);
+
+            return Ok(Mapper.Map<IEnumerable<MerchantGroupResponse>>(groups));
         }
     }
 }

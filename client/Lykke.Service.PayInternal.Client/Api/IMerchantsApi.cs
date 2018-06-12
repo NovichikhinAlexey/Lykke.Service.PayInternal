@@ -62,6 +62,9 @@ namespace Lykke.Service.PayInternal.Client.Api
         [Post("/api/merchantGroups/merchants/byUsage")]
         Task<MerchantsByUsageResponse> GetMerchantsByUsageAsync([Body] GetMerchantsByUsageRequest request);
 
+        [Get("/api/merchantGroups/byOwner/{ownerId}")]
+        Task<IEnumerable<MerchantGroupResponse>> GetGroupsByOwnerAsync(string ownerId);
+
         #endregion
     }
 }

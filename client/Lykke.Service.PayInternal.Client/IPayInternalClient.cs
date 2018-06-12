@@ -381,5 +381,12 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request">Get Merchants by usage request details</param>
         /// <returns>List of merchants</returns>
         Task<MerchantsByUsageResponse> GetMerchantsByUsageAsync(GetMerchantsByUsageRequest request);
+
+        /// <summary>
+        /// Returns list of groups where given id is an owner
+        /// </summary>
+        /// <param name="ownerId">Owner id</param>
+        /// <returns></returns>
+        Task<IEnumerable<MerchantGroupResponse>> GetMerchantGroupsByOwnerAsync(string ownerId);
     }
 }
