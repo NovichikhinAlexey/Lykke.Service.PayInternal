@@ -4,6 +4,7 @@ using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
+using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
@@ -15,6 +16,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
+using Lykke.Service.PayInternal.Models.AssetRates;
 using Lykke.Service.PayInternal.Models.Assets;
 using Lykke.Service.PayInternal.Models.Markups;
 using Lykke.Service.PayInternal.Models.MerchantGroups;
@@ -86,6 +88,11 @@ namespace Lykke.Service.PayInternal.Mapping
             CreateMap<MerchantWalletBalanceLine, MerchantWalletBalanceResponse>(MemberList.Destination)
                 .ForMember(dest => dest.MerchantWalletId, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.AssetDisplayId, opt => opt.MapFrom(src => src.AssetId));
+
+            CreateMap<AddAssetRateModel, AddAssetPairRateCommand>(MemberList.Destination);
+
+            CreateMap<IAssetPairRate, AssetRateResponse>(MemberList.Destination)
+                .ForMember(dest => dest.Timestamp, opt => opt.MapFrom(src => src.CreatedOn));
 
             PaymentRequestApiModels();
 

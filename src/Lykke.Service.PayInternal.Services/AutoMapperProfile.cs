@@ -1,6 +1,8 @@
-﻿using AutoMapper;
+﻿using System;
+using AutoMapper;
 using Lykke.Service.EthereumCore.Client.Models;
 using Lykke.Service.PayInternal.AzureRepositories;
+using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
@@ -76,6 +78,9 @@ namespace Lykke.Service.PayInternal.Services
                 .ForMember(dest => dest.MerchantGroupUse, opt => opt.UseValue(MerchantGroupUse.Supervising))
                 .ForMember(dest => dest.Merchants, opt => opt.MapFrom(src => string.Join(Constants.Separator, src.Merchants)))
                 .ForMember(dest => dest.OwnerId, opt => opt.MapFrom(src => src.MerchantId));
+
+            CreateMap<AddAssetPairRateCommand, AssetPairRate>(MemberList.Destination)
+                .ForMember(dest => dest.CreatedOn, opt => opt.MapFrom(src => DateTime.UtcNow));
         }
     }
 }

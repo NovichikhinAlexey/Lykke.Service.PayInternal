@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.Asset;
+using Lykke.Service.PayInternal.Client.Models.AssetRates;
 using Lykke.Service.PayInternal.Client.Models.File;
 using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
@@ -440,5 +441,20 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="merchantId">Merchant id</param>
         /// <returns></returns>
         Task<IEnumerable<MerchantWalletBalanceResponse>> GetMerchantWalletBalancesAsync(string merchantId);
+
+        /// <summary>
+        /// Adds new rate for given asset pair
+        /// </summary>
+        /// <param name="request">New asset pair request details</param>
+        /// <returns></returns>
+        Task<AssetRateResponse> AddAssetPairRateAsync(AddAssetRateRequest request);
+
+        /// <summary>
+        /// Returns current rate for given asset pair
+        /// </summary>
+        /// <param name="baseAssetId">Base asset id</param>
+        /// <param name="quotingAssetId">Quoting asset id</param>
+        /// <returns></returns>
+        Task<AssetRateResponse> GetCurrentAssetPairRateAsync(string baseAssetId, string quotingAssetId);
     }
 }

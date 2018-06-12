@@ -1,6 +1,7 @@
 ﻿using System;
 using AutoMapper;
 using Lykke.Service.PayInternal.AzureRepositories.Asset;
+using Lykke.Service.PayInternal.AzureRepositories.AssetPair;
 using Lykke.Service.PayInternal.AzureRepositories.Markup;
 using Lykke.Service.PayInternal.AzureRepositories.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.Order;
@@ -21,6 +22,7 @@ using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 using Lykke.Service.PayInternal.AzureRepositories.File;
 using Lykke.Service.PayInternal.AzureRepositories.MerchantWallet;
+using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Domain.File;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
 
@@ -88,6 +90,10 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                 .ForMember(dest => dest.Id, opt => opt.Ignore());
 ;
             CreateMap<MerchantWalletEntity, Core.Domain.MerchantWallet.MerchantWallet>(MemberList.Destination);
+
+            CreateMap<IAssetPairRate, AssetPairRateEntity>(MemberList.Source);
+
+            CreateMap<AssetPairRateEntity, AssetPairRate>(MemberList.Destination);
         }
     }
 }
