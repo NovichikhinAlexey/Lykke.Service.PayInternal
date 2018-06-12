@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Lykke.Service.PayInternal.Core.Domain.Groups
 {
@@ -8,6 +9,10 @@ namespace Lykke.Service.PayInternal.Core.Domain.Groups
 
         Task<IMerchantGroup> GetAsync(string id);
 
+        Task UpdateAsync(IMerchantGroup src);
+
         Task DeleteAsync(string id);
+
+        Task<IReadOnlyList<IMerchantGroup>> GetByOwnerAsync(string ownerId);
     }
 }

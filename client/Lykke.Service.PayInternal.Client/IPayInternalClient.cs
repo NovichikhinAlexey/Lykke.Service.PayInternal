@@ -10,6 +10,7 @@ using Lykke.Service.PayInternal.Client.Models.SupervisorMembership;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Lykke.Service.PayInternal.Client.Models.File;
+using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -345,5 +346,47 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="merchantId">The merchant id.</param>
         /// <param name="fileId">The file id.</param>
         Task DeleteFileAsync(string merchantId, string fileId);
+
+        /// <summary>
+        /// Creates merchant group
+        /// </summary>
+        /// <param name="request">Merchant group creation details></param>
+        /// <returns>Merchant group details</returns>
+        Task<MerchantGroupResponse> AddMerchantGroupAsync(AddMerchantGroupRequest request);
+
+        /// <summary>
+        /// Returns merchant group details
+        /// </summary>
+        /// <param name="id">Merchant group id</param>
+        /// <returns>Merchant group details</returns>
+        Task<MerchantGroupResponse> GetMerchantGroupAsync(string id);
+
+        /// <summary>
+        /// Updates merchant group
+        /// </summary>
+        /// <param name="request">Merchant group update details</param>
+        /// <returns></returns>
+        Task UpdateMerchantGroupAsync(UpdateMerchantGroupRequest request);
+
+        /// <summary>
+        /// Deletes merchant group
+        /// </summary>
+        /// <param name="id">Merchant group id</param>
+        /// <returns></returns>
+        Task DeleteMerchantGroupAsync(string id);
+
+        /// <summary>
+        /// Returns list of merchants participating in groups by usage for particular owner (merchant provided)
+        /// </summary>
+        /// <param name="request">Get Merchants by usage request details</param>
+        /// <returns>List of merchants</returns>
+        Task<MerchantsByUsageResponse> GetMerchantsByUsageAsync(GetMerchantsByUsageRequest request);
+
+        /// <summary>
+        /// Returns list of groups where given id is an owner
+        /// </summary>
+        /// <param name="ownerId">Owner id</param>
+        /// <returns></returns>
+        Task<IEnumerable<MerchantGroupResponse>> GetMerchantGroupsByOwnerAsync(string ownerId);
     }
 }
