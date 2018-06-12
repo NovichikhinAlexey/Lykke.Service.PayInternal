@@ -26,7 +26,9 @@ using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 using Lykke.Service.PayInternal.Core.Domain.File;
 using Lykke.Service.PayInternal.AzureRepositories.File;
 using AzureStorage.Blob;
+using Lykke.Service.PayInternal.AzureRepositories.AssetPair;
 using Lykke.Service.PayInternal.AzureRepositories.MerchantWallet;
+using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
 
 namespace Lykke.Service.PayInternal.AzureRepositories
@@ -69,6 +71,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             const string markupsTableName = "Markups";
             const string merchantFilesTableName = "MerchantFiles";
             const string merchantWalletsTableName = "MerchantWallets";
+            const string assetPairRatesTableName = "AssetPairRates";
 
             builder.RegisterInstance<IMerchantRepository>(new MerchantRepository(
                 AzureTableStorage<MerchantEntity>.Create(_merchantsConnectionString,
@@ -137,6 +140,10 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             builder.RegisterInstance<IMerchantWalletRespository>(new MerchantWalletRepository(
                 AzureTableStorage<MerchantWalletEntity>.Create(_merchantsConnectionString, merchantWalletsTableName, _log),
                 AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantWalletsTableName, _log)));
+
+            builder.RegisterInstance<IAssetPairRateRepository>(new AssetPairRateRepository(
+                AzureTableStorage<AssetPairRateEntity>.Create(_merchantsConnectionString, assetPairRatesTableName,
+                    _log)));
         }
     }
 }

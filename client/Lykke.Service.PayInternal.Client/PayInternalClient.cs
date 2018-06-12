@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Api;
 using Lykke.Service.PayInternal.Client.Exceptions;
 using Lykke.Service.PayInternal.Client.Models.Asset;
+using Lykke.Service.PayInternal.Client.Models.AssetRates;
 using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
@@ -335,6 +336,17 @@ namespace Lykke.Service.PayInternal.Client
         public Task<IEnumerable<MerchantWalletBalanceResponse>> GetMerchantWalletBalancesAsync(string merchantId)
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.GetBalancesAsync(merchantId));
+        }
+
+        public Task<AssetRateResponse> AddAssetPairRateAsync(AddAssetRateRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.AddAssetPairRateAsync(request));
+        }
+
+        public Task<AssetRateResponse> GetCurrentAssetPairRateAsync(string baseAssetId, string quotingAssetId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _assetsApi.GetCurrentAssetPairRateAsync(baseAssetId, quotingAssetId));
         }
 
         public void Dispose()

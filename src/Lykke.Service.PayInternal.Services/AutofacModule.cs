@@ -66,6 +66,9 @@ namespace Lykke.Service.PayInternal.Services
 
             builder.RegisterType<MerchantWalletService>()
                 .As<IMerchantWalletService>();
+
+            builder.RegisterType<AssetRatesService>()
+                .As<IAssetRatesService>();
         }
     }
 }
