@@ -15,5 +15,7 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task DeleteAsync(string id);
 
         Task<IReadOnlyList<string>> GetMerchantsByUsageAsync(string merchantId, MerchantGroupUse merchantGroupUse);
+
+        Task<IReadOnlyList<IMerchantGroup>> GetByOwnerAsync(string ownerId);
     }
 }

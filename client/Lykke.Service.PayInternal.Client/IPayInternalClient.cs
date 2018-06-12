@@ -391,6 +391,13 @@ namespace Lykke.Service.PayInternal.Client
         Task<MerchantsByUsageResponse> GetMerchantsByUsageAsync(GetMerchantsByUsageRequest request);
 
         /// <summary>
+        /// Returns list of groups where given id is an owner
+        /// </summary>
+        /// <param name="ownerId">Owner id</param>
+        /// <returns></returns>
+        Task<IEnumerable<MerchantGroupResponse>> GetMerchantGroupsByOwnerAsync(string ownerId);
+
+        /// <summary>
         /// Creates new merchant wallet
         /// </summary>
         /// <param name="request">>Merchant wallet creation details</param>
