@@ -66,8 +66,8 @@ namespace Lykke.Service.PayInternal.Controllers
             if (merchant == null)
                 return NotFound(ErrorResponse.Create("Merchant not found"));
 
-            if (request.Network == BlockchainType.None)
-                return BadRequest(ErrorResponse.Create("The network is not supported"));
+            if (!request.Network.HasValue || request.Network == BlockchainType.None)
+                return BadRequest(ErrorResponse.Create("Invalid network value, possible values are: Bitcoin, Ethereum"));
 
             try
             {
@@ -153,6 +153,9 @@ namespace Lykke.Service.PayInternal.Controllers
             if (merchant == null)
                 return NotFound(ErrorResponse.Create("Merchant not found"));
 
+            if (!request.Network.HasValue || request.Network == BlockchainType.None)
+                return BadRequest(ErrorResponse.Create("Invalid network value, possible values are: Bitcoin, Ethereum"));
+
             var assetsToValidate = new List<string>();
 
             if (request.IncomingPaymentDefaults != null)
@@ -173,7 +176,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 await _merchantWalletService.SetDefaultAssetsAsync(
                     request.MerchantId,
-                    request.Network,
+                    request.Network.Value,
                     request.WalletAddress,
                     request.IncomingPaymentDefaults,
                     request.OutgoingPaymentDefaults);
@@ -253,8 +256,14 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         public async Task<IActionResult> GetDefault(string merchantId, [FromQuery] string assetId,
-            [FromQuery] PaymentDirection paymentDirection)
+            [FromQuery] PaymentDirection? paymentDirection)
         {
+            if (string.IsNullOrEmpty(assetId))
+                return BadRequest(ErrorResponse.Create("AssetId should not be empty"));
+
+            if (paymentDirection == null)
+                return BadRequest(ErrorResponse.Create("PaymentDirection should not be empty"));
+
             merchantId = Uri.UnescapeDataString(merchantId);
 
             try
@@ -270,7 +279,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     return NotFound(ErrorResponse.Create("Asset not found"));
 
                 IMerchantWallet wallet =
-                    await _merchantWalletService.GetDefaultAsync(merchantId, assetId, paymentDirection);
+                    await _merchantWalletService.GetDefaultAsync(merchantId, assetId, paymentDirection.Value);
 
                 return Ok(Mapper.Map<MerchantWalletResponse>(wallet));
             }

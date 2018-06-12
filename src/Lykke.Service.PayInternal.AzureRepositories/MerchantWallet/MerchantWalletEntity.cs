@@ -87,6 +87,9 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantWallet
         {
             public static string GeneratePartitionKey(string id)
             {
+                if (!id.IsValidPartitionOrRowKey())
+                    throw new InvalidRowKeyValueException(nameof(id), id);
+
                 return id;
             }
 

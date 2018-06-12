@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Validation;
 
@@ -21,8 +20,8 @@ namespace Lykke.Service.PayInternal.Models.MerchantWallets
         /// Gets or sets wallet network
         /// </summary>
         [Required]
-        [EnumDataType(typeof(BlockchainType), ErrorMessage = "Invalid value, possible values are: None, Bitcoin, Ethereum")]
-        public BlockchainType Network { get; set; }
+        [EnumDataType(typeof(BlockchainType), ErrorMessage = "Invalid value, possible values are: Bitcoin, Ethereum")]
+        public BlockchainType? Network { get; set; }
 
         /// <summary>
         /// Gets or sets display name
