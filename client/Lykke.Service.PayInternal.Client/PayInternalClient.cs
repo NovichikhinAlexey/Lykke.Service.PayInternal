@@ -332,6 +332,11 @@ namespace Lykke.Service.PayInternal.Client
                 _merchantWalletsApi.GetDefaultAsync(merchantId, assetId, paymentDirection));
         }
 
+        public Task<IEnumerable<MerchantWalletBalanceResponse>> GetMerchantWalletBalancesAsync(string merchantId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.GetBalancesAsync(merchantId));
+        }
+
         public void Dispose()
         {
             _httpClient?.Dispose();

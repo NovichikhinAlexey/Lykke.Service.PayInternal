@@ -19,6 +19,7 @@ using Lykke.Service.PayInternal.Services;
 using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
+using QBitNinja.Client;
 using DbSettings = Lykke.Service.PayInternal.Core.Settings.ServiceSettings.DbSettings;
 
 namespace Lykke.Service.PayInternal.Modules
@@ -150,6 +151,9 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterInstance<IEthereumCoreAPI>(
                 new EthereumCoreAPI(new Uri(_settings.CurrentValue.EthereumServiceClient.ServiceUrl)));
+
+            builder.RegisterInstance(new QBitNinjaClient(_settings.CurrentValue.NinjaServiceClient.ServiceUrl))
+                .AsSelf();
         }
 
         private void RegisterCaches(ContainerBuilder builder)

@@ -11,6 +11,7 @@ using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.EthereumCore.Client.Models;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -141,6 +142,19 @@ namespace Lykke.Service.PayInternal.Services
             }
 
             throw new UnrecognizedApiResponse(response?.GetType().FullName);
+        }
+
+        public async Task<IReadOnlyList<BlockchainBalanceResult>> GetBalanceAsync(string address)
+        {
+            //todo
+            return new List<BlockchainBalanceResult>
+            {
+                new BlockchainBalanceResult
+                {
+                    AssetId = LykkeConstants.Erc20PktAsset,
+                    Balance = 0
+                }
+            };
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
+using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
@@ -66,6 +67,10 @@ namespace Lykke.Service.PayInternal.Mapping
             CreateMap<CreateMerchantWalletModel, CreateMerchantWalletCommand>(MemberList.Source);
 
             CreateMap<IMerchantWallet, MerchantWalletResponse>(MemberList.Source);
+
+            CreateMap<MerchantWalletBalanceLine, MerchantWalletBalanceResponse>(MemberList.Destination)
+                .ForMember(dest => dest.MerchantWalletId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.AssetDisplayId, opt => opt.MapFrom(src => src.AssetId));
 
             PaymentRequestApiModels();
 
