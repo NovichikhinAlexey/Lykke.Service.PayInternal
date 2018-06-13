@@ -334,7 +334,8 @@ namespace Lykke.Service.PayInternal.Controllers
         /// </summary>
         /// <param name="merchantId">Merchant id</param>
         /// <response code="200">List of balances</response>
-        /// <response code="404">Merchant or Blockchain client implementation not found</response>
+        /// <response code="404">Merchant not found</response>
+        /// <response code="501">Blockchain client implementation not found</response>
         [HttpGet]
         [Route("balances/{merchantId}")]
         [SwaggerOperation("GetMerchantWalletBalances")]
@@ -370,7 +371,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 _log.WriteError(nameof(GetBalances), new {merchantId}, e);
 
-                return NotFound(ErrorResponse.Create(e.Message));
+                return StatusCode((int) HttpStatusCode.NotImplemented, ErrorResponse.Create(e.Message));
             }
         }
     }
