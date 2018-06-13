@@ -4,12 +4,10 @@ using Newtonsoft.Json.Converters;
 namespace Lykke.Service.PayInternal.Core
 {
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum BlockchainType
+    public enum PaymentDirection
     {
-        None = 0,
+        Incoming = 0,
 
-        Bitcoin,
-
-        Ethereum
+        Outgoing
     }
 }

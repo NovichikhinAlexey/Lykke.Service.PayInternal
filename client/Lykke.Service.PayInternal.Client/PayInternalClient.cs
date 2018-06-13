@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Api;
 using Lykke.Service.PayInternal.Client.Exceptions;
 using Lykke.Service.PayInternal.Client.Models.Asset;
+using Lykke.Service.PayInternal.Client.Models.AssetRates;
 using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
@@ -17,6 +18,7 @@ using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
 using Lykke.Service.PayInternal.Client.Models.File;
 using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
+using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -31,6 +33,7 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IMarkupsApi _markupsApi;
         private readonly ISupervisorMembershipApi _supervisorMembershipApi;
         private readonly IFilesApi _filesApi;
+        private readonly IMerchantWalletsApi _merchantWalletsApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -61,6 +64,7 @@ namespace Lykke.Service.PayInternal.Client
             _markupsApi = RestService.For<IMarkupsApi>(_httpClient);
             _supervisorMembershipApi = RestService.For<ISupervisorMembershipApi>(_httpClient);
             _filesApi = RestService.For<IFilesApi>(_httpClient);
+            _merchantWalletsApi = RestService.For<IMerchantWalletsApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
@@ -332,6 +336,48 @@ namespace Lykke.Service.PayInternal.Client
         public Task<IEnumerable<MerchantGroupResponse>> GetMerchantGroupsByOwnerAsync(string ownerId)
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetGroupsByOwnerAsync(ownerId));
+        }
+
+        public Task<MerchantWalletResponse> CreateMerchantWalletAsync(CreateMerchantWalletRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.CreateAsync(request));
+        }
+
+        public Task DeleteMerchantWalletAsync(string merchantWalletId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.DeleteAsync(merchantWalletId));
+        }
+
+        public Task SetMerchantWalletDefaultAssetsAsync(UpdateMerchantWalletDefaultAssetsRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.SetDefaultAssetsAsync(request));
+        }
+
+        public Task<IEnumerable<MerchantWalletResponse>> GetMerchantWalletsAsync(string merchantId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.GetByMerchantAsync(merchantId));
+        }
+
+        public Task<MerchantWalletResponse> GetDefaultMerchantWalletAsync(string merchantId, string assetId, PaymentDirection paymentDirection)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _merchantWalletsApi.GetDefaultAsync(merchantId, assetId, paymentDirection));
+        }
+
+        public Task<IEnumerable<MerchantWalletBalanceResponse>> GetMerchantWalletBalancesAsync(string merchantId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.GetBalancesAsync(merchantId));
+        }
+
+        public Task<AssetRateResponse> AddAssetPairRateAsync(AddAssetRateRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.AddAssetPairRateAsync(request));
+        }
+
+        public Task<AssetRateResponse> GetCurrentAssetPairRateAsync(string baseAssetId, string quotingAssetId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _assetsApi.GetCurrentAssetPairRateAsync(baseAssetId, quotingAssetId));
         }
 
         public void Dispose()

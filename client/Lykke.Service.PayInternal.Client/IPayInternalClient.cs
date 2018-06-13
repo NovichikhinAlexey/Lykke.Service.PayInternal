@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.Asset;
+using Lykke.Service.PayInternal.Client.Models.AssetRates;
 using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
@@ -11,6 +12,7 @@ using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Lykke.Service.PayInternal.Client.Models.File;
 using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
+using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -388,5 +390,64 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="ownerId">Owner id</param>
         /// <returns></returns>
         Task<IEnumerable<MerchantGroupResponse>> GetMerchantGroupsByOwnerAsync(string ownerId);
+
+        /// <summary>
+        /// Creates new merchant wallet
+        /// </summary>
+        /// <param name="request">>Merchant wallet creation details</param>
+        /// <returns></returns>
+        Task<MerchantWalletResponse> CreateMerchantWalletAsync(CreateMerchantWalletRequest request);
+
+        /// <summary>
+        /// Deletes merchant wallet
+        /// </summary>
+        /// <param name="merchantWalletId">Merchant wallet id</param>
+        /// <returns></returns>
+        Task DeleteMerchantWalletAsync(string merchantWalletId);
+
+        /// <summary>
+        /// Updates default assets for merchant wallet
+        /// </summary>
+        /// <param name="request">Merchant wallet default assets update details</param>
+        /// <returns></returns>
+        Task SetMerchantWalletDefaultAssetsAsync(UpdateMerchantWalletDefaultAssetsRequest request);
+
+        /// <summary>
+        /// Returns list of merchant wallets
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <returns></returns>
+        Task<IEnumerable<MerchantWalletResponse>> GetMerchantWalletsAsync(string merchantId);
+
+        /// <summary>
+        /// Returns default merchant wallet for given asset and payment direction
+        /// </summary>
+        /// <param name="merchantId">Merchant Id</param>
+        /// <param name="assetId">Asset id</param>
+        /// <param name="paymentDirection">Payment direction</param>
+        /// <returns></returns>
+        Task<MerchantWalletResponse> GetDefaultMerchantWalletAsync(string merchantId, string assetId, PaymentDirection paymentDirection);
+
+        /// <summary>
+        /// Returns balances for all merchant's wallets
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <returns></returns>
+        Task<IEnumerable<MerchantWalletBalanceResponse>> GetMerchantWalletBalancesAsync(string merchantId);
+
+        /// <summary>
+        /// Adds new rate for given asset pair
+        /// </summary>
+        /// <param name="request">New asset pair request details</param>
+        /// <returns></returns>
+        Task<AssetRateResponse> AddAssetPairRateAsync(AddAssetRateRequest request);
+
+        /// <summary>
+        /// Returns current rate for given asset pair
+        /// </summary>
+        /// <param name="baseAssetId">Base asset id</param>
+        /// <param name="quotingAssetId">Quoting asset id</param>
+        /// <returns></returns>
+        Task<AssetRateResponse> GetCurrentAssetPairRateAsync(string baseAssetId, string quotingAssetId);
     }
 }

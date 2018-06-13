@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.Asset;
+using Lykke.Service.PayInternal.Client.Models.AssetRates;
 using Refit;
 
 namespace Lykke.Service.PayInternal.Client.Api
@@ -18,5 +19,11 @@ namespace Lykke.Service.PayInternal.Client.Api
 
         [Post("/api/assets/settings/merchant")]
         Task SetAssetMerchantSettingsAsync([Body] UpdateAssetMerchantSettingsRequest settingsRequest);
+
+        [Post("/api/assetRates")]
+        Task<AssetRateResponse> AddAssetPairRateAsync([Body] AddAssetRateRequest request);
+
+        [Get("/api/assetRates/{baseAssetId}/{quotingAssetId}")]
+        Task<AssetRateResponse> GetCurrentAssetPairRateAsync(string baseAssetId, string quotingAssetId);
     }
 }
