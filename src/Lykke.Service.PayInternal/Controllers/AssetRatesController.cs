@@ -42,10 +42,12 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <param name="request">New asset pair rate request details</param>
         /// <response code="200">Asset pair rate details</response>
         /// <response code="404">Base or quoting asset not found</response>
+        /// <response code="501">The Asset pair rate storage not supported</response>
         [HttpPost]
         [SwaggerOperation("AddAsseetRate")]
         [ProducesResponseType(typeof(AssetRateResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotImplemented)]
         [ValidateModel]
         public async Task<IActionResult> Add([FromBody] AddAssetRateModel request)
         {
@@ -72,6 +74,16 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return NotFound(ErrorResponse.Create($"Asset not found [{e.Asset}]"));
             }
+            catch (AssetPairRateStorageNotSupportedException e)
+            {
+                _log.WriteError(nameof(Add), new
+                {
+                    e.BaseAssetId,
+                    e.QuotingAssetId
+                }, e);
+
+                return StatusCode((int) HttpStatusCode.NotImplemented, ErrorResponse.Create(e.Message));
+            }
         }
 
         /// <summary>
@@ -81,11 +93,13 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <param name="quotingAssetId">Quoting asset id</param>
         /// <response code="200">Asset pair rate details</response>
         /// <response code="404">Base asset, quoting asset or rate not found</response>
+        /// <response code="502">Something is wrong with market profile service</response>
         [HttpGet]
         [Route("{baseAssetId}/{quotingAssetId}")]
         [SwaggerOperation("GetCurrentAssetPairRate")]
         [ProducesResponseType(typeof(AssetRateResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadGateway)]
         public async Task<IActionResult> GetCurrent(string baseAssetId, string quotingAssetId)
         {
             try
@@ -113,6 +127,27 @@ namespace Lykke.Service.PayInternal.Controllers
                 _log.WriteError(nameof(GetCurrent), new {e.Asset}, e);
 
                 return NotFound(ErrorResponse.Create($"Asset not found [{e.Asset}]"));
+            }
+            catch (AssetPairUnknownException e)
+            {
+                _log.WriteError(nameof(GetCurrent), new
+                {
+                    e.BaseAssetId,
+                    e.QuotingAssetId
+                }, e);
+
+                return NotFound(
+                    ErrorResponse.Create($"Asset pair not found for [{e.BaseAssetId}, {e.QuotingAssetId}]"));
+            }
+            catch (UnrecognizedApiResponse e)
+            {
+                _log.WriteError(nameof(GetCurrent), new
+                {
+                    baseAssetId,
+                    quotingAssetId
+                }, e);
+
+                return StatusCode((int) HttpStatusCode.BadGateway, ErrorResponse.Create(e.Message));
             }
         }
     }

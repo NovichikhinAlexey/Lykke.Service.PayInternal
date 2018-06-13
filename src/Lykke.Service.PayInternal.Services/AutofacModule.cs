@@ -10,15 +10,18 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ExpirationPeriodsSettings _expirationPeriods;
         private readonly int _transactionConfirmationCount;
         private readonly IList<BlockchainWalletAllocationPolicy> _walletAllocationSettings;
+        private readonly IReadOnlyList<AssetPairSetting> _assetPairLocalStorageSettings;
 
         public AutofacModule(
             ExpirationPeriodsSettings expirationPeriods,
             int transactionConfirmationCount,
-            IList<BlockchainWalletAllocationPolicy> walletAllocationSettings)
+            IList<BlockchainWalletAllocationPolicy> walletAllocationSettings, 
+            IReadOnlyList<AssetPairSetting> assetPairLocalStorageSettings)
         {
             _expirationPeriods = expirationPeriods;
             _transactionConfirmationCount = transactionConfirmationCount;
             _walletAllocationSettings = walletAllocationSettings;
+            _assetPairLocalStorageSettings = assetPairLocalStorageSettings;
         }
         
         protected override void Load(ContainerBuilder builder)
@@ -68,6 +71,7 @@ namespace Lykke.Service.PayInternal.Services
                 .As<IMerchantWalletService>();
 
             builder.RegisterType<AssetRatesService>()
+                .WithParameter(TypedParameter.From(_assetPairLocalStorageSettings))
                 .As<IAssetRatesService>();
         }
     }
