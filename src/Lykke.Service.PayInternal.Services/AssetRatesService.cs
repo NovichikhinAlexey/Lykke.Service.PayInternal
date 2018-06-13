@@ -22,17 +22,20 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IReadOnlyList<AssetPairSetting> _assetPairLocalStorageSettings;
         private readonly ILykkeMarketProfile _marketProfileServiceClient;
         private readonly IAssetsLocalCache _assetsLocalCache;
+        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
 
         public AssetRatesService(
             [NotNull] IAssetPairRateRepository assetPairRateRepository, 
             [NotNull] IReadOnlyList<AssetPairSetting> assetPairLocalStorageSettings, 
             [NotNull] ILykkeMarketProfile marketProfileServiceClient, 
-            [NotNull] IAssetsLocalCache assetsLocalCache)
+            [NotNull] IAssetsLocalCache assetsLocalCache, 
+            [NotNull] ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _assetPairRateRepository = assetPairRateRepository ?? throw new ArgumentNullException(nameof(assetPairRateRepository));
             _assetPairLocalStorageSettings = assetPairLocalStorageSettings ?? throw new ArgumentNullException(nameof(assetPairLocalStorageSettings));
             _marketProfileServiceClient = marketProfileServiceClient ?? throw new ArgumentNullException(nameof(marketProfileServiceClient));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
+            _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
         }
 
         public Task<IAssetPairRate> AddAsync(AddAssetPairRateCommand cmd)
@@ -58,7 +61,11 @@ namespace Lykke.Service.PayInternal.Services
                     .FirstOrDefault();
             }
 
-            AssetPair assetPair = await _assetsLocalCache.GetAssetPairAsync(baseAssetId, quotingAssetId);
+            string lykkeBaseAssetId = await _lykkeAssetsResolver.GetLykkeId(baseAssetId);
+
+            string lykkeQuotingAssetId = await _lykkeAssetsResolver.GetLykkeId(quotingAssetId);
+
+            AssetPair assetPair = await _assetsLocalCache.GetAssetPairAsync(lykkeBaseAssetId, lykkeQuotingAssetId);
 
             if (assetPair == null)
                 throw new AssetPairUnknownException(baseAssetId, quotingAssetId);
