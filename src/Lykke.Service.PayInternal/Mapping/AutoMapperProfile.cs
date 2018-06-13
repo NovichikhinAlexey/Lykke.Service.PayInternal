@@ -1,7 +1,10 @@
-﻿using AutoMapper;
+﻿using System;
+using AutoMapper;
+using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
+using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
@@ -16,6 +19,7 @@ using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.AssetRates;
 using Lykke.Service.PayInternal.Models.Assets;
 using Lykke.Service.PayInternal.Models.Markups;
+using Lykke.Service.PayInternal.Models.MerchantGroups;
 using Lykke.Service.PayInternal.Models.MerchantWallets;
 using Lykke.Service.PayInternal.Models.Orders;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
@@ -65,6 +69,17 @@ namespace Lykke.Service.PayInternal.Mapping
             CreateMap<ISupervisorMembership, SupervisorMembershipResponse>(MemberList.Destination);
 
             CreateMap<IMerchantsSupervisorMembership, MerchantsSupervisorMembershipResponse>(MemberList.Destination);
+
+            CreateMap<AddMerchantGroupModel, MerchantGroup>(MemberList.Destination)
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.Merchants, opt => opt.MapFrom(src => string.Join(Constants.Separator, src.Merchants)));
+
+            CreateMap<IMerchantGroup, MerchantGroupResponse>(MemberList.Destination)
+                .ForMember(dest => dest.Merchants, opt => opt.MapFrom(src => src.Merchants.Split(Constants.Separator, StringSplitOptions.None)));
+
+            CreateMap<UpdateMerchantGroupModel, MerchantGroup>(MemberList.Destination)
+                .ForMember(dest => dest.Merchants, opt => opt.MapFrom(src => string.Join(Constants.Separator, src.Merchants)))
+                .ForMember(dest => dest.OwnerId, opt => opt.Ignore());
 
             CreateMap<CreateMerchantWalletModel, CreateMerchantWalletCommand>(MemberList.Source);
 

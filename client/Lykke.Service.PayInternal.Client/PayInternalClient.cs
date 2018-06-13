@@ -17,6 +17,7 @@ using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
 using Lykke.Service.PayInternal.Client.Models.File;
+using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
 using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
 
 namespace Lykke.Service.PayInternal.Client
@@ -305,6 +306,36 @@ namespace Lykke.Service.PayInternal.Client
         public async Task DeleteFileAsync(string merchantId, string fileId)
         {
             await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.DeleteAsync(merchantId, fileId));
+        }
+
+        public Task<MerchantGroupResponse> AddMerchantGroupAsync(AddMerchantGroupRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.AddGroupAsync(request));
+        }
+
+        public Task<MerchantGroupResponse> GetMerchantGroupAsync(string id)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetGroupAsync(id));
+        }
+
+        public Task UpdateMerchantGroupAsync(UpdateMerchantGroupRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.UpdateGroupAsync(request));
+        }
+
+        public Task DeleteMerchantGroupAsync(string id)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.DeleteGroupAsync(id));
+        }
+
+        public Task<MerchantsByUsageResponse> GetMerchantsByUsageAsync(GetMerchantsByUsageRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetMerchantsByUsageAsync(request));
+        }
+
+        public Task<IEnumerable<MerchantGroupResponse>> GetMerchantGroupsByOwnerAsync(string ownerId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetGroupsByOwnerAsync(ownerId));
         }
 
         public Task<MerchantWalletResponse> CreateMerchantWalletAsync(CreateMerchantWalletRequest request)
