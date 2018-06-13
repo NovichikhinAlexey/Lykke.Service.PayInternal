@@ -340,7 +340,8 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("balances/{merchantId}")]
         [SwaggerOperation("GetMerchantWalletBalances")]
         [ProducesResponseType(typeof(IEnumerable<MerchantWalletBalanceResponse>), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotImplemented)]
         public async Task<IActionResult> GetBalances(string merchantId)
         {
             merchantId = Uri.UnescapeDataString(merchantId);
