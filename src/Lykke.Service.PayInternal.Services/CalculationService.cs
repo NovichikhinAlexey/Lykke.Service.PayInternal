@@ -2,11 +2,11 @@
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
+using JetBrains.Annotations;
 using Lykke.Service.Assets.Client.Models;
-using Lykke.Service.MarketProfile.Client;
-using Lykke.Service.MarketProfile.Client.Models;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
+using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -16,22 +16,21 @@ namespace Lykke.Service.PayInternal.Services
 {
     public class CalculationService : ICalculationService
     {
-        private readonly ILykkeMarketProfile _marketProfileServiceClient;
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly LpMarkupSettings _lpMarkupSettings;
+        private readonly IAssetRatesService _assetRatesService;
         private readonly ILog _log;
 
         public CalculationService(
-            ILykkeMarketProfile marketProfileServiceClient,
-            IAssetsLocalCache assetsLocalCache,
-            LpMarkupSettings lpMarkupSettings,
-            ILog log)
+            [NotNull] IAssetsLocalCache assetsLocalCache,
+            [NotNull] LpMarkupSettings lpMarkupSettings,
+            [NotNull] IAssetRatesService assetRatesService,
+            [NotNull] ILog log)
         {
-            _marketProfileServiceClient = marketProfileServiceClient ??
-                                          throw new ArgumentNullException(nameof(marketProfileServiceClient));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _lpMarkupSettings = lpMarkupSettings ?? throw new ArgumentNullException(nameof(lpMarkupSettings));
             _log = log ?? throw new ArgumentNullException(nameof(log));
+            _assetRatesService = assetRatesService ?? throw new ArgumentNullException(nameof(assetRatesService));
         }
 
         public async Task<decimal> GetAmountAsync(string baseAssetId, string quotingAssetId, decimal amount, IRequestMarkup requestMarkup,
@@ -65,7 +64,7 @@ namespace Lykke.Service.PayInternal.Services
             int markupPips,
             IMarkup merchantMarkup)
         {
-            double askPrice, bidPrice;
+            decimal askPrice, bidPrice;
 
             AssetPair priceAssetPair = null, assetPair = null;
 
@@ -76,7 +75,8 @@ namespace Lykke.Service.PayInternal.Services
 
                 priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(merchantMarkup.PriceAssetPairId);
 
-                AssetPairModel assetPairRate = await InvokeMarketProfileServiceAsync(priceAssetPair.Id);
+                IAssetPairRate assetPairRate =
+                    await _assetRatesService.GetCurrentRate(priceAssetPair.BaseAssetId, priceAssetPair.QuotingAssetId);
 
                 await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetRateAsync),
                     new {PriceMethod = merchantMarkup.PriceMethod.ToString()}.ToJson(), "Price method");
@@ -104,20 +104,17 @@ namespace Lykke.Service.PayInternal.Services
             {
                 assetPair = await _assetsLocalCache.GetAssetPairAsync(baseAssetId, quotingAssetId);
 
-                if (assetPair != null)
+                try
                 {
-                    await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetRateAsync),
-                        new {AssetPairId = assetPair.Id}.ToJson(), "Asset pair will be used");
-
-                    AssetPairModel assetPairRate = await InvokeMarketProfileServiceAsync(assetPair.Id);
+                    IAssetPairRate assetPairRate = await _assetRatesService.GetCurrentRate(baseAssetId, quotingAssetId);
 
                     askPrice = assetPairRate.AskPrice;
 
                     bidPrice = assetPairRate.BidPrice;
                 }
-                else
+                catch (Exception)
                 {
-                    askPrice = bidPrice = 1D;
+                    askPrice = bidPrice = 1;
                 }
             }
 
@@ -128,8 +125,8 @@ namespace Lykke.Service.PayInternal.Services
 
             int pairAccuracy = priceAssetPair?.Accuracy ?? assetPair?.Accuracy ?? baseAsset.Accuracy;
 
-            return CalculatePrice(askPrice, bidPrice, pairAccuracy, baseAsset.Accuracy, markupPercent, markupPips,
-                PriceCalculationMethod.ByBid, merchantMarkup);
+            return CalculatePrice((double) askPrice, (double) bidPrice, pairAccuracy, baseAsset.Accuracy, markupPercent,
+                markupPips, PriceCalculationMethod.ByBid, merchantMarkup);
         }
 
         public async Task<AmountFullFillmentStatus> CalculateBtcAmountFullfillmentAsync(decimal plan, decimal fact)
@@ -284,23 +281,6 @@ namespace Lykke.Service.PayInternal.Services
             decimal ceiled = Math.Ceiling(rounded * mult) / mult;
 
             return ceiled < 0 ? 0 : ceiled;
-        }
-
-        private async Task<AssetPairModel> InvokeMarketProfileServiceAsync(string assetPairId)
-        {
-            object response = await _marketProfileServiceClient.ApiMarketProfileByPairCodeGetAsync(assetPairId);
-
-            if (response is ErrorModel error)
-            {
-                throw new Exception(error.Message);
-            }
-
-            if (response is AssetPairModel assetPairRate)
-            {
-                return assetPairRate;
-            }
-            
-            throw new Exception("Unknown MarketProfile API response");
         }
     }
 }

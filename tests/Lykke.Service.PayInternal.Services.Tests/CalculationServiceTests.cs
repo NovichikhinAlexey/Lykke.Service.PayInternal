@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Common.Log;
 using Lykke.Service.Assets.Client.Models;
-using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.MarketProfile.Client.Models;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
@@ -19,8 +18,8 @@ namespace Lykke.Service.PayInternal.Services.Tests
     [TestClass]
     public class CalculationServiceTests
     {
-        private Mock<ILykkeMarketProfile> _marketProfileServiceMock;
         private Mock<IAssetsLocalCache> _assetsLocalCacheMock;
+        private Mock<IAssetRatesService> _assetRatesService;
         private Mock<ILog> _logMock;
 
         private ICalculationService _service;
@@ -33,17 +32,17 @@ namespace Lykke.Service.PayInternal.Services.Tests
         public void TestInitialize()
         {
             _assetsLocalCacheMock = new Mock<IAssetsLocalCache>();
-            _marketProfileServiceMock = new Mock<ILykkeMarketProfile>();
+            _assetRatesService = new Mock<IAssetRatesService>();
             _logMock = new Mock<ILog>();
 
             _service = new CalculationService(
-                _marketProfileServiceMock.Object,
                 _assetsLocalCacheMock.Object,
                 new LpMarkupSettings
                 {
                     Percent = MerchantPercent,
                     Pips = MerchantPips
                 },
+                _assetRatesService.Object,
                 _logMock.Object);
         }
 
