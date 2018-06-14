@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net;
 using System.Threading.Tasks;
-using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
@@ -63,10 +62,22 @@ namespace Lykke.Service.PayInternal.Controllers
                 if (await _assetsLocalCache.GetAssetByIdAsync(lykkeQuotingAssetId) == null)
                     return NotFound(ErrorResponse.Create("Quoting asset not found"));
 
-                IAssetPairRate newRate =
-                    await _assetRatesService.AddAsync(Mapper.Map<AddAssetPairRateCommand>(request));
+                IAssetPairRate newRate = await _assetRatesService.AddAsync(new AddAssetPairRateCommand
+                {
+                    BaseAssetId = lykkeBaseAssetId,
+                    QuotingAssetId = lykkeQuotingAssetId,
+                    BidPrice = request.BidPrice,
+                    AskPrice = request.AskPrice
+                });
 
-                return Ok(Mapper.Map<AssetRateResponse>(newRate));
+                return Ok(new AssetRateResponse
+                {
+                    BaseAssetId = request.BaseAssetId,
+                    QuotingAssetId = request.QuotingAssetId,
+                    BidPrice = newRate.BidPrice,
+                    AskPrice = newRate.AskPrice,
+                    Timestamp = newRate.CreatedOn
+                });
             }
             catch (AssetUnknownException e)
             {
@@ -115,12 +126,19 @@ namespace Lykke.Service.PayInternal.Controllers
                 if (await _assetsLocalCache.GetAssetByIdAsync(lykkeQuotingAssetId) == null)
                     return NotFound(ErrorResponse.Create("Quoting asset not found"));
 
-                IAssetPairRate rate = await _assetRatesService.GetCurrentRate(baseAssetId, quotingAssetId);
+                IAssetPairRate rate = await _assetRatesService.GetCurrentRate(lykkeBaseAssetId, lykkeQuotingAssetId);
 
                 if (rate == null)
                     return NotFound(ErrorResponse.Create("Rate not found"));
 
-                return Ok(Mapper.Map<AssetRateResponse>(rate));
+                return Ok(new AssetRateResponse
+                {
+                    BaseAssetId = baseAssetId,
+                    QuotingAssetId = quotingAssetId,
+                    BidPrice = rate.BidPrice,
+                    AskPrice = rate.AskPrice,
+                    Timestamp = rate.CreatedOn
+                });
             }
             catch (AssetUnknownException e)
             {

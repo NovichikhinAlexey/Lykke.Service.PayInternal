@@ -22,35 +22,40 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IReadOnlyList<AssetPairSetting> _assetPairLocalStorageSettings;
         private readonly ILykkeMarketProfile _marketProfileServiceClient;
         private readonly IAssetsLocalCache _assetsLocalCache;
-        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
 
         public AssetRatesService(
             [NotNull] IAssetPairRateRepository assetPairRateRepository, 
             [NotNull] IReadOnlyList<AssetPairSetting> assetPairLocalStorageSettings, 
             [NotNull] ILykkeMarketProfile marketProfileServiceClient, 
-            [NotNull] IAssetsLocalCache assetsLocalCache, 
-            [NotNull] ILykkeAssetsResolver lykkeAssetsResolver)
+            [NotNull] IAssetsLocalCache assetsLocalCache)
         {
             _assetPairRateRepository = assetPairRateRepository ?? throw new ArgumentNullException(nameof(assetPairRateRepository));
             _assetPairLocalStorageSettings = assetPairLocalStorageSettings ?? throw new ArgumentNullException(nameof(assetPairLocalStorageSettings));
             _marketProfileServiceClient = marketProfileServiceClient ?? throw new ArgumentNullException(nameof(marketProfileServiceClient));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
-            _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
         }
 
-        public Task<IAssetPairRate> AddAsync(AddAssetPairRateCommand cmd)
+        public async Task<IAssetPairRate> AddAsync(AddAssetPairRateCommand cmd)
         {
-            if (!_assetPairLocalStorageSettings.HasAssetPair(cmd.BaseAssetId, cmd.QuotingAssetId))
-                throw new AssetPairRateStorageNotSupportedException(cmd.BaseAssetId, cmd.QuotingAssetId);
+            string baseAssetDisplayId = (await _assetsLocalCache.GetAssetByIdAsync(cmd.BaseAssetId)).DisplayId;
+
+            string quotingAssetDisplayId = (await _assetsLocalCache.GetAssetByIdAsync(cmd.QuotingAssetId)).DisplayId;
+
+            if (!_assetPairLocalStorageSettings.HasAssetPair(baseAssetDisplayId, quotingAssetDisplayId))
+                throw new AssetPairRateStorageNotSupportedException(baseAssetDisplayId, quotingAssetDisplayId);
 
             var newRate = Mapper.Map<AssetPairRate>(cmd);
 
-            return _assetPairRateRepository.AddAsync(newRate);
+            return await _assetPairRateRepository.AddAsync(newRate);
         }
 
         public async Task<IAssetPairRate> GetCurrentRate(string baseAssetId, string quotingAssetId)
         {
-            if (_assetPairLocalStorageSettings.HasAssetPair(baseAssetId, quotingAssetId))
+            string baseAssetDisplayId = (await _assetsLocalCache.GetAssetByIdAsync(baseAssetId)).DisplayId;
+
+            string quotingAssetDisplayId = (await _assetsLocalCache.GetAssetByIdAsync(quotingAssetId)).DisplayId;
+
+            if (_assetPairLocalStorageSettings.HasAssetPair(baseAssetDisplayId, quotingAssetDisplayId))
             {
                 IReadOnlyList<IAssetPairRate> allRates =
                     await _assetPairRateRepository.GetAsync(baseAssetId, quotingAssetId);
@@ -61,14 +66,10 @@ namespace Lykke.Service.PayInternal.Services
                     .FirstOrDefault();
             }
 
-            string lykkeBaseAssetId = await _lykkeAssetsResolver.GetLykkeId(baseAssetId);
-
-            string lykkeQuotingAssetId = await _lykkeAssetsResolver.GetLykkeId(quotingAssetId);
-
-            AssetPair assetPair = await _assetsLocalCache.GetAssetPairAsync(lykkeBaseAssetId, lykkeQuotingAssetId);
+            AssetPair assetPair = await _assetsLocalCache.GetAssetPairAsync(baseAssetId, quotingAssetId);
 
             if (assetPair == null)
-                throw new AssetPairUnknownException(baseAssetId, quotingAssetId);
+                throw new AssetPairUnknownException(baseAssetDisplayId, quotingAssetDisplayId);
 
             AssetPairModel assetPairRate = await InvokeMarketProfileServiceAsync(assetPair.Id);
 

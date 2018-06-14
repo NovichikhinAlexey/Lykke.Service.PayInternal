@@ -89,11 +89,6 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.MerchantWalletId, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.AssetDisplayId, opt => opt.MapFrom(src => src.AssetId));
 
-            CreateMap<AddAssetRateModel, AddAssetPairRateCommand>(MemberList.Destination);
-
-            CreateMap<IAssetPairRate, AssetRateResponse>(MemberList.Destination)
-                .ForMember(dest => dest.Timestamp, opt => opt.MapFrom(src => src.CreatedOn));
-
             CreateMap<PaymentModel, PaymentCommand>(MemberList.Destination);
 
             PaymentRequestApiModels();
