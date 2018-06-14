@@ -238,21 +238,18 @@ namespace Lykke.Service.PayInternal.Services
                 }
             });
 
-            if (transferResult.Transactions.All(x => x.HasError))
-                throw new PaymentOperationFailedException { TransferErrors = transferResult.Transactions.Select(x => x.Error) };
+            if (!transferResult.HasSuccess())
+                throw new PaymentOperationFailedException {TransferErrors = transferResult.GetErrors()};
 
-            IEnumerable<TransferTransactionResult> errorTransactions =
-                transferResult.Transactions.Where(x => x.HasError).ToList();
-
-            if (errorTransactions.Any())
-                throw new PaymentOperationPartiallyFailedException(errorTransactions.Select(x => x.Error));
+            if (transferResult.HasError())
+                throw new PaymentOperationPartiallyFailedException {TransferErrors = transferResult.GetErrors()};
 
             return new PaymentResult
             {
                 PaymentRequestId = paymentRequest.Id,
+                PaymentRequestWalletAddress = paymentRequest.WalletAddress,
                 AssetId = transferResult.Transactions.Unique(x => x.AssetId).Single(),
-                Amount = transferResult.Transactions.Where(x => string.IsNullOrEmpty(x.Error)).Sum(x => x.Amount),
-                PaymentRequestWalletAddress = paymentRequest.WalletAddress
+                Amount = transferResult.GetSuccedeedTxs().Sum(x => x.Amount)
             };
         }
     }

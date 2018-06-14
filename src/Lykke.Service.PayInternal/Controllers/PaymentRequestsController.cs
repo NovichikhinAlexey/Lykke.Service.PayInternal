@@ -331,9 +331,9 @@ namespace Lykke.Service.PayInternal.Controllers
         /// </summary>
         /// <param name="request">Payment request details</param>
         /// <response code="204">Payment executed successfully</response>
+        /// <response code="400">Payment failed</response>
         /// <response code="404">Payment request, merchant, default wallet or payment request wallet not found</response>
         /// <response code="501">Asset network support not implemented</response>
-        /// <response code="400">Payment failed</response>
         [HttpPost]
         [Route("paymentrequests")]
         [SwaggerOperation("Pay")]

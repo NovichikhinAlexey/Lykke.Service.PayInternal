@@ -1,7 +1,9 @@
 ﻿using System;
 using AutoMapper;
 using Lykke.Service.EthereumCore.Client.Models;
+using Lykke.Service.MarketProfile.Client.Models;
 using Lykke.Service.PayInternal.AzureRepositories;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
@@ -76,6 +78,16 @@ namespace Lykke.Service.PayInternal.Services
 
             CreateMap<AddAssetPairRateCommand, AssetPairRate>(MemberList.Destination)
                 .ForMember(dest => dest.CreatedOn, opt => opt.MapFrom(src => DateTime.UtcNow));
+
+            CreateMap<AssetPairModel, AssetPairRate>(MemberList.Destination)
+                .ForMember(dest => dest.CreatedOn,
+                    opt => opt.MapFrom(src => DateTimeUtils.Largest(src.AskPriceTimestamp, src.BidPriceTimestamp)))
+                .ForMember(dest => dest.BaseAssetId,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.BaseAssetId = (string) resContext.Items["BaseAssetId"]))
+                .ForMember(dest => dest.QuotingAssetId,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.QuotingAssetId = (string) resContext.Items["QuotingAssetId"]));
         }
     }
 }

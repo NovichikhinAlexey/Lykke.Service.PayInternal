@@ -71,8 +71,11 @@ namespace Lykke.Service.PayInternal.Services
                 .As<IMerchantWalletService>();
 
             builder.RegisterType<AssetRatesService>()
-                .WithParameter(TypedParameter.From(_assetPairLocalStorageSettings))
                 .As<IAssetRatesService>();
+
+            builder.RegisterType<AssetPairSettingsService>()
+                .WithParameter(TypedParameter.From(_assetPairLocalStorageSettings))
+                .As<IAssetPairSettingsService>();
         }
     }
 }
