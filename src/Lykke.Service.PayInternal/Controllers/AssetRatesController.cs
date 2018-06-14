@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Threading.Tasks;
+using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
@@ -62,22 +63,17 @@ namespace Lykke.Service.PayInternal.Controllers
                 if (await _assetsLocalCache.GetAssetByIdAsync(lykkeQuotingAssetId) == null)
                     return NotFound(ErrorResponse.Create("Quoting asset not found"));
 
-                IAssetPairRate newRate = await _assetRatesService.AddAsync(new AddAssetPairRateCommand
+                IAssetPairRate newRate = await _assetRatesService.AddAsync(Mapper.Map<AddAssetPairRateCommand>(request, opt =>
                 {
-                    BaseAssetId = lykkeBaseAssetId,
-                    QuotingAssetId = lykkeQuotingAssetId,
-                    BidPrice = request.BidPrice,
-                    AskPrice = request.AskPrice
-                });
+                    opt.Items["BaseAssetId"] = lykkeBaseAssetId;
+                    opt.Items["QuotingAssetId"] = lykkeQuotingAssetId;
+                }));
 
-                return Ok(new AssetRateResponse
+                return Ok(Mapper.Map<AssetRateResponse>(newRate, opt =>
                 {
-                    BaseAssetId = request.BaseAssetId,
-                    QuotingAssetId = request.QuotingAssetId,
-                    BidPrice = newRate.BidPrice,
-                    AskPrice = newRate.AskPrice,
-                    Timestamp = newRate.CreatedOn
-                });
+                    opt.Items["BaseAssetId"] = request.BaseAssetId;
+                    opt.Items["QuotingAssetId"] = request.QuotingAssetId;
+                }));
             }
             catch (AssetUnknownException e)
             {
@@ -131,14 +127,11 @@ namespace Lykke.Service.PayInternal.Controllers
                 if (rate == null)
                     return NotFound(ErrorResponse.Create("Rate not found"));
 
-                return Ok(new AssetRateResponse
+                return Ok(Mapper.Map<AssetRateResponse>(rate, opt =>
                 {
-                    BaseAssetId = baseAssetId,
-                    QuotingAssetId = quotingAssetId,
-                    BidPrice = rate.BidPrice,
-                    AskPrice = rate.AskPrice,
-                    Timestamp = rate.CreatedOn
-                });
+                    opt.Items["BaseAssetId"] = baseAssetId;
+                    opt.Items["QuotingAssetId"] = quotingAssetId;
+                }));
             }
             catch (AssetUnknownException e)
             {

@@ -91,6 +91,23 @@ namespace Lykke.Service.PayInternal.Mapping
 
             CreateMap<PaymentModel, PaymentCommand>(MemberList.Destination);
 
+            CreateMap<AddAssetRateModel, AddAssetPairRateCommand>(MemberList.Destination)
+                .ForMember(dest => dest.BaseAssetId,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.BaseAssetId = (string) resContext.Items["BaseAssetId"]))
+                .ForMember(dest => dest.QuotingAssetId,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.QuotingAssetId = (string) resContext.Items["QuotingAssetId"]));
+
+            CreateMap<IAssetPairRate, AssetRateResponse>()
+                .ForMember(dest => dest.Timestamp, opt => opt.MapFrom(src => src.CreatedOn))
+                .ForMember(dest => dest.BaseAssetId,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.BaseAssetId = (string) resContext.Items["BaseAssetId"]))
+                .ForMember(dest => dest.QuotingAssetId,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.QuotingAssetId = (string) resContext.Items["QuotingAssetId"]));
+
             PaymentRequestApiModels();
 
             PaymentRequestMessages();

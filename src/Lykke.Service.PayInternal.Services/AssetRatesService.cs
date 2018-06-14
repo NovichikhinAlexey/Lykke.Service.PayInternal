@@ -7,42 +7,35 @@ using JetBrains.Annotations;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.MarketProfile.Client.Models;
-using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Core.Settings;
-using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Services
 {
     public class AssetRatesService : IAssetRatesService
     {
         private readonly IAssetPairRateRepository _assetPairRateRepository;
-        private readonly IReadOnlyList<AssetPairSetting> _assetPairLocalStorageSettings;
         private readonly ILykkeMarketProfile _marketProfileServiceClient;
         private readonly IAssetsLocalCache _assetsLocalCache;
+        private readonly IAssetPairSettingsService _assetPairSettingsService;
 
         public AssetRatesService(
             [NotNull] IAssetPairRateRepository assetPairRateRepository, 
-            [NotNull] IReadOnlyList<AssetPairSetting> assetPairLocalStorageSettings, 
             [NotNull] ILykkeMarketProfile marketProfileServiceClient, 
-            [NotNull] IAssetsLocalCache assetsLocalCache)
+            [NotNull] IAssetsLocalCache assetsLocalCache, 
+            [NotNull] IAssetPairSettingsService assetPairSettingsService)
         {
             _assetPairRateRepository = assetPairRateRepository ?? throw new ArgumentNullException(nameof(assetPairRateRepository));
-            _assetPairLocalStorageSettings = assetPairLocalStorageSettings ?? throw new ArgumentNullException(nameof(assetPairLocalStorageSettings));
             _marketProfileServiceClient = marketProfileServiceClient ?? throw new ArgumentNullException(nameof(marketProfileServiceClient));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
+            _assetPairSettingsService = assetPairSettingsService ?? throw new ArgumentNullException(nameof(assetPairSettingsService));
         }
 
         public async Task<IAssetPairRate> AddAsync(AddAssetPairRateCommand cmd)
         {
-            string baseAssetDisplayId = (await _assetsLocalCache.GetAssetByIdAsync(cmd.BaseAssetId)).DisplayId;
-
-            string quotingAssetDisplayId = (await _assetsLocalCache.GetAssetByIdAsync(cmd.QuotingAssetId)).DisplayId;
-
-            if (!_assetPairLocalStorageSettings.HasAssetPair(baseAssetDisplayId, quotingAssetDisplayId))
-                throw new AssetPairRateStorageNotSupportedException(baseAssetDisplayId, quotingAssetDisplayId);
+            if (!await _assetPairSettingsService.Contains(cmd.BaseAssetId, cmd.QuotingAssetId))
+                throw new AssetPairRateStorageNotSupportedException(cmd.BaseAssetId, cmd.QuotingAssetId);
 
             var newRate = Mapper.Map<AssetPairRate>(cmd);
 
@@ -51,11 +44,7 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IAssetPairRate> GetCurrentRate(string baseAssetId, string quotingAssetId)
         {
-            string baseAssetDisplayId = (await _assetsLocalCache.GetAssetByIdAsync(baseAssetId)).DisplayId;
-
-            string quotingAssetDisplayId = (await _assetsLocalCache.GetAssetByIdAsync(quotingAssetId)).DisplayId;
-
-            if (_assetPairLocalStorageSettings.HasAssetPair(baseAssetDisplayId, quotingAssetDisplayId))
+            if (await _assetPairSettingsService.Contains(baseAssetId, quotingAssetId))
             {
                 IReadOnlyList<IAssetPairRate> allRates =
                     await _assetPairRateRepository.GetAsync(baseAssetId, quotingAssetId);
@@ -69,18 +58,15 @@ namespace Lykke.Service.PayInternal.Services
             AssetPair assetPair = await _assetsLocalCache.GetAssetPairAsync(baseAssetId, quotingAssetId);
 
             if (assetPair == null)
-                throw new AssetPairUnknownException(baseAssetDisplayId, quotingAssetDisplayId);
+                throw new AssetPairUnknownException(baseAssetId, quotingAssetId);
 
             AssetPairModel assetPairRate = await InvokeMarketProfileServiceAsync(assetPair.Id);
 
-            return new AssetPairRate
+            return Mapper.Map<AssetPairRate>(assetPairRate, opt =>
             {
-                BaseAssetId = baseAssetId,
-                QuotingAssetId = quotingAssetId,
-                AskPrice = (decimal) assetPairRate.AskPrice,
-                BidPrice = (decimal) assetPairRate.BidPrice,
-                CreatedOn = DateTimeUtils.Largest(assetPairRate.AskPriceTimestamp, assetPairRate.BidPriceTimestamp)
-            };
+                opt.Items["BaseAssetId"] = baseAssetId;
+                opt.Items["QuotingAssetId"] = quotingAssetId;
+            });
         }
 
         private async Task<AssetPairModel> InvokeMarketProfileServiceAsync(string assetPairId)

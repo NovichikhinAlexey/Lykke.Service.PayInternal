@@ -130,14 +130,11 @@ namespace Lykke.Service.PayInternal.Services
                     await _transactionPublisher.PublishAsync(refundTransaction);
                 }
 
-                if (transferResult.Transactions.All(x => x.HasError))
-                    throw new RefundOperationFailedException{TransferErrors = transferResult.Transactions.Select(x => x.Error)};
+                if (!transferResult.HasSuccess())
+                    throw new RefundOperationFailedException {TransferErrors = transferResult.GetErrors()};
 
-                IEnumerable<TransferTransactionResult> errorTransactions =
-                    transferResult.Transactions.Where(x => x.HasError).ToList();
-
-                if (errorTransactions.Any())
-                    throw new RefundOperationPartiallyFailedException(errorTransactions.Select(x => x.Error));
+                if (transferResult.HasError())
+                    throw new RefundOperationPartiallyFailedException {TransferErrors = transferResult.GetErrors()};
             }
             catch (Exception)
             {
@@ -164,9 +161,7 @@ namespace Lykke.Service.PayInternal.Services
 
             return new RefundResult
             {
-                Amount = transferResult.Transactions
-                    .Where(x => string.IsNullOrEmpty(x.Error))
-                    .Sum(x => x.Amount),
+                Amount = transferResult.GetSuccedeedTxs().Sum(x => x.Amount),
                 AssetId = assetIds.Single(),
                 PaymentRequestId = paymentRequest.Id,
                 PaymentRequestWalletAddress = paymentRequest.WalletAddress,
