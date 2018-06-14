@@ -23,5 +23,7 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task UpdateStatusAsync(string walletAddress, PaymentRequestStatusInfo statusInfo = null);
 
         Task HandleExpiredAsync();
+
+        Task<PaymentResult> PayAsync(PaymentCommand cmd);
     }
 }

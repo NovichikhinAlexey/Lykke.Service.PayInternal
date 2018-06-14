@@ -7,6 +7,7 @@ using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -29,28 +30,31 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IWalletManager _walletsManager;
         private readonly ITransactionsService _transactionsService;
         private readonly ExpirationPeriodsSettings _expirationPeriods;
+        private readonly IMerchantWalletService _merchantWalletService;
         private readonly ILog _log;
 
         public PaymentRequestService(
-            IPaymentRequestRepository paymentRequestRepository,
-            IOrderService orderService,
-            IPaymentRequestPublisher paymentRequestPublisher,
-            ITransferService transferService,
-            IPaymentRequestStatusResolver paymentRequestStatusResolver,
-            ILog log,
-            IWalletManager walletsManager,
-            ITransactionsService transactionsService,
-            ExpirationPeriodsSettings expirationPeriods)
+            [NotNull] IPaymentRequestRepository paymentRequestRepository,
+            [NotNull] IOrderService orderService,
+            [NotNull] IPaymentRequestPublisher paymentRequestPublisher,
+            [NotNull] ITransferService transferService,
+            [NotNull] IPaymentRequestStatusResolver paymentRequestStatusResolver,
+            [NotNull] ILog log,
+            [NotNull] IWalletManager walletsManager,
+            [NotNull] ITransactionsService transactionsService,
+            [NotNull] ExpirationPeriodsSettings expirationPeriods,
+            [NotNull] IMerchantWalletService merchantWalletService)
         {
-            _paymentRequestRepository = paymentRequestRepository;
-            _orderService = orderService;
-            _paymentRequestPublisher = paymentRequestPublisher;
-            _transferService = transferService;
-            _paymentRequestStatusResolver = paymentRequestStatusResolver;
-            _log = log;
-            _walletsManager = walletsManager;
-            _transactionsService = transactionsService;
-            _expirationPeriods = expirationPeriods;
+            _paymentRequestRepository = paymentRequestRepository ?? throw new ArgumentNullException(nameof(paymentRequestRepository));
+            _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
+            _paymentRequestPublisher = paymentRequestPublisher ?? throw new ArgumentNullException(nameof(paymentRequestPublisher));
+            _transferService = transferService ?? throw new ArgumentNullException(nameof(transferService));
+            _paymentRequestStatusResolver = paymentRequestStatusResolver ?? throw new ArgumentNullException(nameof(paymentRequestStatusResolver));
+            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _walletsManager = walletsManager ?? throw new ArgumentNullException(nameof(walletsManager));
+            _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
+            _expirationPeriods = expirationPeriods ?? throw new ArgumentNullException(nameof(expirationPeriods));
+            _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
         }
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -204,6 +208,52 @@ namespace Lykke.Service.PayInternal.Services
                 await _log.WriteInfoAsync(nameof(PaymentRequestService), nameof(HandleExpiredAsync),
                     $"Payment request with id {paymentRequest.Id} was moved to Past Due");
             }
+        }
+
+        public async Task<PaymentResult> PayAsync(PaymentCommand cmd)
+        {
+            IPaymentRequest paymentRequest = await _paymentRequestRepository.GetAsync(cmd.MerchantId, cmd.PaymentRequestId);
+
+            if (paymentRequest == null)
+                throw new PaymentRequestNotFoundException(cmd.MerchantId, cmd.PaymentRequestId);
+
+            IMerchantWallet merchantWallet = await _merchantWalletService.GetDefaultAsync(cmd.MerchantId,
+                paymentRequest.PaymentAssetId, PaymentDirection.Outgoing);
+
+            string destinationWalletAddress = await _walletsManager.ResolveBlockchainAddressAsync(
+                paymentRequest.WalletAddress,
+                paymentRequest.PaymentAssetId);
+
+            TransferResult transferResult = await _transferService.ExecuteAsync(new TransferCommand
+            {
+                AssetId = paymentRequest.PaymentAssetId,
+                Amounts = new List<TransferAmount>
+                {
+                    new TransferAmount
+                    {
+                        Amount = cmd.Amount,
+                        Destination = destinationWalletAddress,
+                        Source = merchantWallet.WalletAddress
+                    }
+                }
+            });
+
+            if (transferResult.Transactions.All(x => x.HasError))
+                throw new PaymentOperationFailedException { TransferErrors = transferResult.Transactions.Select(x => x.Error) };
+
+            IEnumerable<TransferTransactionResult> errorTransactions =
+                transferResult.Transactions.Where(x => x.HasError).ToList();
+
+            if (errorTransactions.Any())
+                throw new PaymentOperationPartiallyFailedException(errorTransactions.Select(x => x.Error));
+
+            return new PaymentResult
+            {
+                PaymentRequestId = paymentRequest.Id,
+                AssetId = transferResult.Transactions.Unique(x => x.AssetId).Single(),
+                Amount = transferResult.Transactions.Where(x => string.IsNullOrEmpty(x.Error)).Sum(x => x.Amount),
+                PaymentRequestWalletAddress = paymentRequest.WalletAddress
+            };
         }
     }
 }
