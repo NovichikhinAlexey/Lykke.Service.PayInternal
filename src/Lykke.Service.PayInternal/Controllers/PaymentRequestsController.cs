@@ -320,5 +320,82 @@ namespace Lykke.Service.PayInternal.Controllers
                 throw;
             }
         }
+
+        /// <summary>
+        /// Executes payment using default merchant's wallet
+        /// </summary>
+        /// <param name="request">Payment request details</param>
+        /// <response code="204">Payment executed successfully</response>
+        /// <response code="404">Payment request, default wallet or payment request wallet not found</response>
+        /// <response code="501">Asset network support not implemented</response>
+        /// <response code="400">Payment failed</response>
+        [HttpPost]
+        [Route("paymentrequests")]
+        [SwaggerOperation("Pay")]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotImplemented)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ValidateModel]
+        public async Task<IActionResult> Pay([FromBody] PaymentModel request)
+        {
+            try
+            {
+                await _paymentRequestService.PayAsync(Mapper.Map<PaymentCommand>(request));
+
+                return NoContent();
+            }
+            catch (PaymentRequestNotFoundException e)
+            {
+                _log.WriteError(nameof(Pay), new
+                {
+                    e.PaymentRequestId,
+                    e.MerchantId,
+                    e.WalletAddress
+                }, e);
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (AssetNetworkNotDefinedException e)
+            {
+                _log.WriteError(nameof(Pay), new {e.AssetId}, e);
+
+                return StatusCode((int) HttpStatusCode.NotImplemented, ErrorResponse.Create(e.Message));
+            }
+            catch (MultipleDefaultMerchantWalletsException e)
+            {
+                _log.WriteError(nameof(Pay), new
+                {
+                    e.MerchantId,
+                    e.AssetId,
+                    e.PaymentDirection
+                }, e);
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (DefaultMerchantWalletNotFoundException e)
+            {
+                _log.WriteError(nameof(Pay), new
+                {
+                    e.MerchantId,
+                    e.AssetId,
+                    e.PaymentDirection
+                }, e);
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (WalletNotFoundException e)
+            {
+                _log.WriteError(nameof(Pay), new {e.WalletAddress}, e);
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (PaymentOperationFailedException e)
+            {
+                _log.WriteError(nameof(Pay), new {errors = e.TransferErrors}, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+        }
     }
 }
