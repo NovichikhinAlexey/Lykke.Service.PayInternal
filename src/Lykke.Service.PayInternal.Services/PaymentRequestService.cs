@@ -217,7 +217,7 @@ namespace Lykke.Service.PayInternal.Services
             if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(cmd.MerchantId, cmd.PaymentRequestId);
 
-            IMerchantWallet merchantWallet = await _merchantWalletService.GetDefaultAsync(cmd.MerchantId,
+            IMerchantWallet paymentWallet = await _merchantWalletService.GetDefaultAsync(cmd.PayerMerchantId,
                 paymentRequest.PaymentAssetId, PaymentDirection.Outgoing);
 
             string destinationWalletAddress = await _walletsManager.ResolveBlockchainAddressAsync(
@@ -233,7 +233,7 @@ namespace Lykke.Service.PayInternal.Services
                     {
                         Amount = cmd.Amount,
                         Destination = destinationWalletAddress,
-                        Source = merchantWallet.WalletAddress
+                        Source = paymentWallet.WalletAddress
                     }
                 }
             });
