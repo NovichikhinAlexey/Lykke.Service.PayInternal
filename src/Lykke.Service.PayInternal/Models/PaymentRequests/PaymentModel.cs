@@ -16,6 +16,13 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         public string MerchantId { get; set; }
 
         /// <summary>
+        /// Gets or sets payer merchant id
+        /// </summary>
+        [Required]
+        [RowKey]
+        public string PayerMerchantId { get; set; }
+
+        /// <summary>
         /// Gets or sets payment request id
         /// </summary>
         [Required]

@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
+using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Models;
 using ErrorResponse = Lykke.Common.Api.Contract.Responses.ErrorResponse;
@@ -29,20 +31,23 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly IRefundService _refundService;
         private readonly IAssetSettingsService _assetSettingsService;
         private readonly IPaymentRequestDetailsBuilder _paymentRequestDetailsBuilder;
+        private readonly IMerchantService _merchantService;
         private readonly ILog _log;
 
         public PaymentRequestsController(
-            IPaymentRequestService paymentRequestService,
-            IRefundService refundService,
-            IAssetSettingsService assetSettingsService,
-            ILog log, 
-            IPaymentRequestDetailsBuilder paymentRequestDetailsBuilder)
+            [NotNull] IPaymentRequestService paymentRequestService,
+            [NotNull] IRefundService refundService,
+            [NotNull] IAssetSettingsService assetSettingsService,
+            [NotNull] ILog log,
+            [NotNull] IPaymentRequestDetailsBuilder paymentRequestDetailsBuilder,
+            [NotNull] IMerchantService merchantService)
         {
-            _paymentRequestService = paymentRequestService;
-            _refundService = refundService;
-            _assetSettingsService = assetSettingsService;
-            _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder;
-            _log = log.CreateComponentScope(nameof(PaymentRequestsController));
+            _paymentRequestService = paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
+            _refundService = refundService ?? throw new ArgumentNullException(nameof(refundService));
+            _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
+            _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder ?? throw new ArgumentNullException(nameof(paymentRequestDetailsBuilder));
+            _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
+            _log = log.CreateComponentScope(nameof(PaymentRequestsController)) ?? throw new ArgumentNullException(nameof(log));
         }
 
         /// <summary>
@@ -326,7 +331,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// </summary>
         /// <param name="request">Payment request details</param>
         /// <response code="204">Payment executed successfully</response>
-        /// <response code="404">Payment request, default wallet or payment request wallet not found</response>
+        /// <response code="404">Payment request, merchant, default wallet or payment request wallet not found</response>
         /// <response code="501">Asset network support not implemented</response>
         /// <response code="400">Payment failed</response>
         [HttpPost]
@@ -339,6 +344,16 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> Pay([FromBody] PaymentModel request)
         {
+            IMerchant merchant = await _merchantService.GetAsync(request.MerchantId);
+
+            if (merchant == null)
+                return NotFound(ErrorResponse.Create("Merchant not found"));
+
+            IMerchant payer = await _merchantService.GetAsync(request.PayerMerchantId);
+
+            if (payer == null)
+                return NotFound(ErrorResponse.Create("Payer merchant not found"));
+
             try
             {
                 await _paymentRequestService.PayAsync(Mapper.Map<PaymentCommand>(request));
