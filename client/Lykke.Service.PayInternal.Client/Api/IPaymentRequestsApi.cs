@@ -30,5 +30,8 @@ namespace Lykke.Service.PayInternal.Client.Api
 
         [Delete("/api/merchants/{merchantId}/paymentrequests/{paymentRequestId}")]
         Task CancelAsync(string merchantId, string paymentRequestId);
+
+        [Post("/api/paymentrequests")]
+        Task PayAsync([Body] PaymentRequest request);
     }
 }

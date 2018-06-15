@@ -449,5 +449,12 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="quotingAssetId">Quoting asset id</param>
         /// <returns></returns>
         Task<AssetRateResponse> GetCurrentAssetPairRateAsync(string baseAssetId, string quotingAssetId);
+
+        /// <summary>
+        /// Executes payment using default payer merchant's wallet
+        /// </summary>
+        /// <param name="request">Payment details</param>
+        /// <returns></returns>
+        Task PayAsync(PaymentRequest request);
     }
 }

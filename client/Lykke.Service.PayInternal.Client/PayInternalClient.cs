@@ -380,6 +380,11 @@ namespace Lykke.Service.PayInternal.Client
                 _assetsApi.GetCurrentAssetPairRateAsync(baseAssetId, quotingAssetId));
         }
 
+        public Task PayAsync(PaymentRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.PayAsync(request));
+        }
+
         public void Dispose()
         {
             _httpClient?.Dispose();

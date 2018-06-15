@@ -327,9 +327,9 @@ namespace Lykke.Service.PayInternal.Controllers
         }
 
         /// <summary>
-        /// Executes payment using default merchant's wallet
+        /// Executes payment using default payer merchant's wallet
         /// </summary>
-        /// <param name="request">Payment request details</param>
+        /// <param name="request">Payment details</param>
         /// <response code="204">Payment executed successfully</response>
         /// <response code="400">Payment failed</response>
         /// <response code="404">Payment request, merchant, default wallet or payment request wallet not found</response>
