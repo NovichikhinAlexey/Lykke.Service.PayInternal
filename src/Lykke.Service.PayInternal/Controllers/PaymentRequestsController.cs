@@ -333,7 +333,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <param name="request">Payment details</param>
         /// <response code="204">Payment executed successfully</response>
         /// <response code="400">Payment failed</response>
-        /// <response code="404">Payment request, merchant, default wallet or payment request wallet not found</response>
+        /// <response code="404">Payment request, merchant, default wallet, payment request wallet not found or couldn't get payment request lock</response>
         /// <response code="501">Asset network support not implemented</response>
         [HttpPost]
         [Route("paymentrequests")]
@@ -409,6 +409,12 @@ namespace Lykke.Service.PayInternal.Controllers
             catch (PaymentOperationFailedException e)
             {
                 _log.WriteError(nameof(Pay), new {errors = e.TransferErrors}, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (DistributedLockAcquireException e)
+            {
+                _log.WriteError(nameof(Pay), new {e.Key}, e);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }

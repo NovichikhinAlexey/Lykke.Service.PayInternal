@@ -15,6 +15,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public BlockchainSettings Blockchain { get; set; }
         public JobPeriods JobPeriods { get; set; }
         public AssetPairsLocalStorageSettings AssetPairsLocalStorage { get; set; }
+        public CacheSettings CacheSettings { get; set; }
     }
 
     public class LpMarkupSettings
@@ -91,5 +92,11 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class AssetPairsLocalStorageSettings
     {
         public IReadOnlyList<AssetPairSetting> AssetPairs { get; set; }
+    }
+
+    public class CacheSettings
+    {
+        public string RedisConfiguration { get; set; }
+        public string PaymentLocksCacheKeyPattern { get; set; }
     }
 }
