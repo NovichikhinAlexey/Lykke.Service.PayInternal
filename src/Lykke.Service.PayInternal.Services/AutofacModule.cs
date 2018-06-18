@@ -1,7 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Autofac;
+using Autofac.Core;
+using JetBrains.Annotations;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
+using StackExchange.Redis;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -11,27 +16,26 @@ namespace Lykke.Service.PayInternal.Services
         private readonly int _transactionConfirmationCount;
         private readonly IList<BlockchainWalletAllocationPolicy> _walletAllocationSettings;
         private readonly IReadOnlyList<AssetPairSetting> _assetPairLocalStorageSettings;
+        private readonly CacheSettings _cacheSettings;
 
         public AutofacModule(
-            ExpirationPeriodsSettings expirationPeriods,
+            [NotNull] ExpirationPeriodsSettings expirationPeriods,
             int transactionConfirmationCount,
-            IList<BlockchainWalletAllocationPolicy> walletAllocationSettings, 
-            IReadOnlyList<AssetPairSetting> assetPairLocalStorageSettings)
+            [NotNull] IList<BlockchainWalletAllocationPolicy> walletAllocationSettings, 
+            [NotNull] IReadOnlyList<AssetPairSetting> assetPairLocalStorageSettings, 
+            [NotNull] CacheSettings cacheSettings)
         {
-            _expirationPeriods = expirationPeriods;
+            _expirationPeriods = expirationPeriods ?? throw new ArgumentNullException(nameof(expirationPeriods));
             _transactionConfirmationCount = transactionConfirmationCount;
-            _walletAllocationSettings = walletAllocationSettings;
-            _assetPairLocalStorageSettings = assetPairLocalStorageSettings;
+            _walletAllocationSettings = walletAllocationSettings ?? throw new ArgumentNullException(nameof(walletAllocationSettings));
+            _assetPairLocalStorageSettings = assetPairLocalStorageSettings ?? throw new ArgumentNullException(nameof(assetPairLocalStorageSettings));
+            _cacheSettings = cacheSettings ?? throw new ArgumentNullException(nameof(cacheSettings));
         }
         
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<MerchantService>()
                 .As<IMerchantService>();
-
-            builder.RegisterType<PaymentRequestService>()
-                .As<IPaymentRequestService>()
-                .WithParameter(TypedParameter.From(_expirationPeriods));
 
             builder.RegisterType<RefundService>()
                 .As<IRefundService>()
@@ -76,6 +80,22 @@ namespace Lykke.Service.PayInternal.Services
             builder.RegisterType<AssetPairSettingsService>()
                 .WithParameter(TypedParameter.From(_assetPairLocalStorageSettings))
                 .As<IAssetPairSettingsService>();
+
+            builder.Register(c => ConnectionMultiplexer.Connect(_cacheSettings.RedisConfiguration))
+                .As<IConnectionMultiplexer>()
+                .SingleInstance();
+
+            builder.RegisterType<RedisLocksService>()
+                .WithParameter(TypedParameter.From(_cacheSettings.PaymentLocksCacheKeyPattern))
+                .Keyed<IDistributedLocksService>(DistributedLockPurpose.InternalPayment)
+                .SingleInstance();
+
+            builder.RegisterType<PaymentRequestService>()
+                .As<IPaymentRequestService>()
+                .WithParameter(TypedParameter.From(_expirationPeriods))
+                .WithParameter(new ResolvedParameter(
+                    (pi, ctx) => pi.ParameterType == typeof(IDistributedLocksService),
+                    (pi, ctx) => ctx.ResolveKeyed<IDistributedLocksService>(DistributedLockPurpose.InternalPayment)));
         }
     }
 }

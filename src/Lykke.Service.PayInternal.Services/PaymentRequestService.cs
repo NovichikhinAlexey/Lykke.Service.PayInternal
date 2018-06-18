@@ -31,6 +31,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransactionsService _transactionsService;
         private readonly ExpirationPeriodsSettings _expirationPeriods;
         private readonly IMerchantWalletService _merchantWalletService;
+        private readonly IDistributedLocksService _paymentLocksService;
         private readonly ILog _log;
 
         public PaymentRequestService(
@@ -43,7 +44,8 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IWalletManager walletsManager,
             [NotNull] ITransactionsService transactionsService,
             [NotNull] ExpirationPeriodsSettings expirationPeriods,
-            [NotNull] IMerchantWalletService merchantWalletService)
+            [NotNull] IMerchantWalletService merchantWalletService, 
+            [NotNull] IDistributedLocksService paymentLocksService)
         {
             _paymentRequestRepository = paymentRequestRepository ?? throw new ArgumentNullException(nameof(paymentRequestRepository));
             _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
@@ -55,6 +57,7 @@ namespace Lykke.Service.PayInternal.Services
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
             _expirationPeriods = expirationPeriods ?? throw new ArgumentNullException(nameof(expirationPeriods));
             _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
+            _paymentLocksService = paymentLocksService ?? throw new ArgumentNullException(nameof(paymentLocksService));
         }
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -169,6 +172,8 @@ namespace Lykke.Service.PayInternal.Services
             PaymentRequestStatusInfo newStatusInfo =
                 statusInfo ?? await _paymentRequestStatusResolver.GetStatus(walletAddress);
 
+            bool releaseLock = paymentRequest.Status == PaymentRequestStatus.InProcess;
+
             paymentRequest.Status = newStatusInfo.Status;
             paymentRequest.PaidDate = newStatusInfo.Date;
             paymentRequest.PaidAmount = newStatusInfo.Amount;
@@ -177,6 +182,9 @@ namespace Lykke.Service.PayInternal.Services
                 : PaymentRequestProcessingError.None;
 
             await _paymentRequestRepository.UpdateAsync(paymentRequest);
+
+            if (releaseLock)
+                await _paymentLocksService.ReleaseLockAsync(paymentRequest.Id, paymentRequest.MerchantId);
 
             //todo: move to separate builder service
             PaymentRequestRefund refundInfo = await GetRefundInfoAsync(paymentRequest.WalletAddress);
@@ -217,32 +225,56 @@ namespace Lykke.Service.PayInternal.Services
             if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(cmd.MerchantId, cmd.PaymentRequestId);
 
-            IMerchantWallet paymentWallet = await _merchantWalletService.GetDefaultAsync(cmd.PayerMerchantId,
+            IMerchantWallet payerWallet = await _merchantWalletService.GetDefaultAsync(cmd.PayerMerchantId,
                 paymentRequest.PaymentAssetId, PaymentDirection.Outgoing);
 
             string destinationWalletAddress = await _walletsManager.ResolveBlockchainAddressAsync(
                 paymentRequest.WalletAddress,
                 paymentRequest.PaymentAssetId);
 
-            TransferResult transferResult = await _transferService.ExecuteAsync(new TransferCommand
+            bool locked = await _paymentLocksService.TryAcquireLockAsync(
+                paymentRequest.Id,
+                cmd.MerchantId,
+                paymentRequest.DueDate);
+
+            if (!locked)
+                throw new DistributedLockAcquireException(paymentRequest.Id);
+
+            TransferResult transferResult;
+
+            try
             {
-                AssetId = paymentRequest.PaymentAssetId,
-                Amounts = new List<TransferAmount>
+                await UpdateStatusAsync(paymentRequest.WalletAddress, PaymentRequestStatusInfo.InProcess());
+
+                transferResult = await _transferService.ExecuteAsync(new TransferCommand
                 {
-                    new TransferAmount
+                    AssetId = paymentRequest.PaymentAssetId,
+                    Amounts = new List<TransferAmount>
                     {
-                        Amount = cmd.Amount,
-                        Destination = destinationWalletAddress,
-                        Source = paymentWallet.WalletAddress
+                        new TransferAmount
+                        {
+                            Amount = cmd.Amount,
+                            Destination = destinationWalletAddress,
+                            Source = payerWallet.WalletAddress
+                        }
                     }
-                }
-            });
+                });
 
-            if (!transferResult.HasSuccess())
-                throw new PaymentOperationFailedException {TransferErrors = transferResult.GetErrors()};
+                if (!transferResult.HasSuccess())
+                    throw new PaymentOperationFailedException { TransferErrors = transferResult.GetErrors() };
 
-            if (transferResult.HasError())
-                throw new PaymentOperationPartiallyFailedException {TransferErrors = transferResult.GetErrors()};
+                if (transferResult.HasError())
+                    throw new PaymentOperationPartiallyFailedException {TransferErrors = transferResult.GetErrors()};
+            }
+            catch (Exception)
+            {
+                await UpdateStatusAsync(paymentRequest.WalletAddress,
+                    PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.UnknownPayment));
+
+                await _paymentLocksService.ReleaseLockAsync(paymentRequest.Id, cmd.MerchantId);
+
+                throw;
+            }
 
             return new PaymentResult
             {
