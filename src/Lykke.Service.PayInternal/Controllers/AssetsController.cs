@@ -176,11 +176,6 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                IMerchant merchant = await _merchantService.GetAsync(settingsRequest.MerchantId);
-
-                if (merchant == null)
-                    return NotFound(ErrorResponse.Create("Merchant not found"));
-
                 await _assetSettingsService.SetByMerchantAsync(settingsRequest.MerchantId,
                     settingsRequest.PaymentAssets,
                     settingsRequest.SettlementAssets);

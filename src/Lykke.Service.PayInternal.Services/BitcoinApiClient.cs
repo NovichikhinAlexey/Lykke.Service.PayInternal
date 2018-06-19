@@ -119,7 +119,7 @@ namespace Lykke.Service.PayInternal.Services
             return Task.FromResult(true);
         }
 
-        public async Task<IReadOnlyList<BlockchainBalanceResult>> GetBalanceAsync(string address)
+        public async Task<IReadOnlyList<BlockchainBalanceResult>> GetBalancesAsync(string address)
         {
             var balanceResult = new BlockchainBalanceResult
             {
@@ -136,7 +136,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (Exception e)
             {
-                _log.WriteError(nameof(GetBalanceAsync), new {address}, e);
+                _log.WriteError(nameof(GetBalancesAsync), new {address}, e);
             }
 
             return new List<BlockchainBalanceResult> {balanceResult};

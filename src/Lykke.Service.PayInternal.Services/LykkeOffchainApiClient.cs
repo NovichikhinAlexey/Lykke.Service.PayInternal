@@ -23,6 +23,11 @@ namespace Lykke.Service.PayInternal.Services
             throw new System.NotImplementedException();
         }
 
+        public async Task<IReadOnlyList<BlockchainBalanceResult>> GetBalancesAsync(string address)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public async Task<IReadOnlyList<BlockchainBalanceResult>> GetBalanceAsync(string address)
         {
             throw new System.NotImplementedException();

@@ -49,8 +49,8 @@ namespace Lykke.Service.PayInternal.Controllers
         /// </summary>
         /// <param name="request">Merchant wallet creation details</param>
         /// <response code="200">Merchant wallet details</response>
-        /// <response code="400">The network given is not supported</response>
-        /// <response code="404">Merchant, Asset or Blockchain client implementation not found</response>
+        /// <response code="400">Merchant not found or network given is not supported</response>
+        /// <response code="404">Asset or Blockchain client implementation not found</response>
         /// <response code="502">Blockchain API error</response>
         [HttpPost]
         [SwaggerOperation("CreateMerchantWallet")]
@@ -61,11 +61,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> Create([FromBody] CreateMerchantWalletModel request)
         {
-            IMerchant merchant = await _merchantService.GetAsync(request.MerchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Merchant not found"));
-
             if (!request.Network.HasValue || request.Network == BlockchainType.None)
                 return BadRequest(ErrorResponse.Create("Invalid network value, possible values are: Bitcoin, Ethereum"));
 
@@ -139,7 +134,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <param name="request">Merchant wallet default assets update details</param>
         /// <returns></returns>
         /// <response code="204">Successfully updated</response>
-        /// <response code="404">Merchant, Asset or Merchant wallet not found</response>
+        /// <response code="404">Asset or Merchant wallet not found</response>
         [HttpPost]
         [Route("defaultAssets")]
         [SwaggerOperation("SetMerchantWalletDefaultAssets")]
@@ -148,11 +143,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> SetDefaultAssets([FromBody] UpdateMerchantWalletDefaultAssetsModel request)
         {
-            IMerchant merchant = await _merchantService.GetAsync(request.MerchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Merchant not found"));
-
             if (!request.Network.HasValue || request.Network == BlockchainType.None)
                 return BadRequest(ErrorResponse.Create("Invalid network value, possible values are: Bitcoin, Ethereum"));
 

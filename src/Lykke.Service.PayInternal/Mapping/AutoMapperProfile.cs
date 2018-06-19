@@ -6,6 +6,7 @@ using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
+using Lykke.Service.PayInternal.Core.Domain.Exchange;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
@@ -18,6 +19,7 @@ using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.AssetRates;
 using Lykke.Service.PayInternal.Models.Assets;
+using Lykke.Service.PayInternal.Models.Exchange;
 using Lykke.Service.PayInternal.Models.Markups;
 using Lykke.Service.PayInternal.Models.MerchantGroups;
 using Lykke.Service.PayInternal.Models.MerchantWallets;
@@ -107,6 +109,12 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.QuotingAssetId,
                     opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
                         dest.QuotingAssetId = (string) resContext.Items["QuotingAssetId"]));
+
+            CreateMap<ExchangeModel, ExchangeCommand>(MemberList.Destination)
+                .ForMember(dest => dest.SourceAssetId, opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.SourceAssetId))
+                .ForMember(dest => dest.DestAssetId, opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.DestAssetId));
+
+            CreateMap<ExchangeResult, ExchangeResponse>(MemberList.Destination);
 
             PaymentRequestApiModels();
 
