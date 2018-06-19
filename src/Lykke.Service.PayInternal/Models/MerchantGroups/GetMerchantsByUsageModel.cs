@@ -14,6 +14,7 @@ namespace Lykke.Service.PayInternal.Models.MerchantGroups
         /// </summary>
         [Required]
         [RowKey(ErrorMessage = "Invalid characters used or value is empty")]
+        [MerchantExists]
         public string MerchantId { get; set; }
 
         /// <summary>

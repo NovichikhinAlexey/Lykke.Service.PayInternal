@@ -144,7 +144,7 @@ namespace Lykke.Service.PayInternal.Services
             throw new UnrecognizedApiResponse(response?.GetType().FullName);
         }
 
-        public async Task<IReadOnlyList<BlockchainBalanceResult>> GetBalanceAsync(string address)
+        public async Task<IReadOnlyList<BlockchainBalanceResult>> GetBalancesAsync(string address)
         {
             //todo
             return new List<BlockchainBalanceResult>

@@ -8,7 +8,6 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Filters;
@@ -179,23 +178,16 @@ namespace Lykke.Service.PayInternal.Controllers
         /// </summary>
         /// <param name="request">Get Merchants by usage request details</param>
         /// <response code="200">List of merchants</response>
-        /// <response code="404">Merchant not found</response>
         [HttpPost]
         [Route("merchants/byUsage")]
         [SwaggerOperation(nameof(GetMerchantsByUsage))]
         [ProducesResponseType(typeof(MerchantsByUsageResponse), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ValidateModel]
         public async Task<IActionResult> GetMerchantsByUsage([FromBody] GetMerchantsByUsageModel request)
         {
             if (!request.MerchantGroupUse.HasValue)
                 return BadRequest(ErrorResponse.Create("MerchantGroupUse can't be empty"));
-
-            IMerchant merchant = await _merchantService.GetAsync(request.MerchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Merchant not found"));
 
             IReadOnlyList<string> merchants =
                 await _merchantGroupService.GetMerchantsByUsageAsync(request.MerchantId, request.MerchantGroupUse.Value);

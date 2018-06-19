@@ -69,6 +69,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class BitcoinSettings
     {
         public string Network { get; set; }
+        public string ExchangeHotWalletAddress { get; set; }
         public BlockchainExplorerSettings BlockchainExplorer { get; set; }
 
     }
@@ -81,6 +82,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class EthereumBlockchainSettings
     {
         public string ApiKey { get; set; }
+        public string ExchangeHotWalletAddress { get; set; }
         public BlockchainExplorerSettings BlockchainExplorer { get; set; }
     }
 

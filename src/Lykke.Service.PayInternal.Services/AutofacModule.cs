@@ -96,6 +96,9 @@ namespace Lykke.Service.PayInternal.Services
                 .WithParameter(new ResolvedParameter(
                     (pi, ctx) => pi.ParameterType == typeof(IDistributedLocksService),
                     (pi, ctx) => ctx.ResolveKeyed<IDistributedLocksService>(DistributedLockPurpose.InternalPayment)));
+
+            builder.RegisterType<ExchangeService>()
+                .As<IExchangeService>();
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using Lykke.Service.PayInternal.Core.Domain.Exchange;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
+using Lykke.Service.PayInternal.Core.Services;
 
 namespace Lykke.Service.PayInternal.Core
 {

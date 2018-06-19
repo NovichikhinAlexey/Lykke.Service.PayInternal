@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.AssetRates;
+using Lykke.Service.PayInternal.Client.Models.Exchange;
 using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
@@ -456,5 +457,12 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request">Payment details</param>
         /// <returns></returns>
         Task PayAsync(PaymentRequest request);
+
+        /// <summary>
+        /// Executes exchange
+        /// </summary>
+        /// <param name="request">Exchange operation details</param>
+        /// <returns>Exchange execution result</returns>
+        Task<ExchangeResponse> ExchangeAsync(ExchangeRequest request);
     }
 }

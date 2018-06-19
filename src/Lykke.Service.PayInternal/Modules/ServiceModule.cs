@@ -130,9 +130,9 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<MarkupService>()
                 .As<IMarkupService>();
 
-            builder.RegisterType<BcnExplorerResolver>()
+            builder.RegisterType<BcnSettingsResolver>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain))
-                .As<IBcnExplorerResolver>();
+                .As<IBcnSettingsResolver>();
 
             builder.RegisterType<FileService>()
                 .As<IFileService>();
@@ -225,6 +225,10 @@ namespace Lykke.Service.PayInternal.Modules
                 .SingleInstance();
 
             builder.RegisterType<VirtualAddressResolver>()
+                .AsSelf()
+                .SingleInstance();
+
+            builder.RegisterType<AssetIdValueResolver>()
                 .AsSelf()
                 .SingleInstance();
         }

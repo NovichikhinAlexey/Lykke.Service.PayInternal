@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
@@ -113,7 +112,7 @@ namespace Lykke.Service.PayInternal.Services
                     merchantId,
                     network,
                     walletAddress
-                }.ToJson(), e);
+                }, e);
 
                 throw new MerchantWalletNotFoundException(merchantId, network, walletAddress);
             }
@@ -156,6 +155,20 @@ namespace Lykke.Service.PayInternal.Services
             return _merchantWalletRespository.GetByMerchantAsync(merchantId);
         }
 
+        public async Task<IMerchantWallet> GetByIdAsync(string merchantWalletId)
+        {
+            try
+            {
+                return await _merchantWalletRespository.GetByIdAsync(merchantWalletId);
+            }
+            catch (KeyNotFoundException e)
+            {
+                _log.WriteError(nameof(GetByIdAsync), new {merchantWalletId}, e);
+
+                throw new MerchantWalletIdNotFoundException(merchantWalletId);
+            }
+        }
+
         public async Task<IReadOnlyList<MerchantWalletBalanceLine>> GetBalancesAsync(string merchantId)
         {
             var balances = new List<MerchantWalletBalanceLine>();
@@ -167,7 +180,7 @@ namespace Lykke.Service.PayInternal.Services
                 IBlockchainApiClient blockchainClient = _blockchainClientProvider.Get(merchantWallet.Network);
 
                 IReadOnlyList<BlockchainBalanceResult> walletBalance =
-                    await blockchainClient.GetBalanceAsync(merchantWallet.WalletAddress);
+                    await blockchainClient.GetBalancesAsync(merchantWallet.WalletAddress);
 
                 balances.AddRange(walletBalance.Select(x => new MerchantWalletBalanceLine
                 {

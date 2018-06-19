@@ -7,6 +7,7 @@ using Lykke.Service.PayInternal.Client.Api;
 using Lykke.Service.PayInternal.Client.Exceptions;
 using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.AssetRates;
+using Lykke.Service.PayInternal.Client.Models.Exchange;
 using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
@@ -34,6 +35,7 @@ namespace Lykke.Service.PayInternal.Client
         private readonly ISupervisorMembershipApi _supervisorMembershipApi;
         private readonly IFilesApi _filesApi;
         private readonly IMerchantWalletsApi _merchantWalletsApi;
+        private readonly IExchangeApi _exchangeApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -65,6 +67,7 @@ namespace Lykke.Service.PayInternal.Client
             _supervisorMembershipApi = RestService.For<ISupervisorMembershipApi>(_httpClient);
             _filesApi = RestService.For<IFilesApi>(_httpClient);
             _merchantWalletsApi = RestService.For<IMerchantWalletsApi>(_httpClient);
+            _exchangeApi = RestService.For<IExchangeApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
@@ -383,6 +386,11 @@ namespace Lykke.Service.PayInternal.Client
         public Task PayAsync(PaymentRequest request)
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.PayAsync(request));
+        }
+
+        public Task<ExchangeResponse> ExchangeAsync(ExchangeRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _exchangeApi.ExecuteAsync(request));
         }
 
         public void Dispose()
