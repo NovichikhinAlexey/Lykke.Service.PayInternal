@@ -50,6 +50,14 @@ namespace Lykke.Service.PayInternal.Services
                     opt => opt.ResolveUsing((src, dest, destMemeber, resContext) =>
                         dest.TokenAddress = (string) resContext.Items["TokenAddress"]));
 
+            CreateMap<TransferAmount, AirlinesTransferFromDepositRequest>(MemberList.Destination)
+                .ForMember(dest => dest.DepositAddress, opt => opt.MapFrom(src => src.Source))
+                .ForMember(dest => dest.DestinationAddress, opt => opt.MapFrom(src => src.Destination))
+                .ForMember(dest => dest.TokenAmount, opt => opt.MapFrom(src => src.Amount))
+                .ForMember(dest => dest.TokenAddress,
+                    opt => opt.ResolveUsing((src, dest, destMemeber, resContext) =>
+                        dest.TokenAddress = (string) resContext.Items["TokenAddress"]));
+
             CreateMap<ICreateTransactionCommand, PaymentRequestTransaction>(MemberList.Source)
                 .ForMember(dest => dest.TransactionId, opt => opt.MapFrom(src => src.Hash))
                 .ForMember(dest => dest.PaymentRequestId,

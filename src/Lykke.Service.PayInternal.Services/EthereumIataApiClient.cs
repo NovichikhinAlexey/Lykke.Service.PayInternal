@@ -20,7 +20,7 @@ using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Services
 {
-    public class EthereumApiClient : IBlockchainApiClient
+    public class EthereumIataApiClient : IBlockchainApiClient
     {
         private readonly IEthereumCoreAPI _ethereumServiceClient;
         private readonly EthereumBlockchainSettings _ethereumSettings;
@@ -29,25 +29,25 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
 
-        public EthereumApiClient(
-            [NotNull] IEthereumCoreAPI ethereumServiceClient,
-            [NotNull] EthereumBlockchainSettings ethereumSettings,
-            [NotNull] ILog log,
-            [NotNull] IAssetsLocalCache assetsLocalCache,
-            [NotNull] ILykkeAssetsResolver lykkeAssetsResolver,
-            [NotNull] IAssetsService assetsService)
+        public EthereumIataApiClient(
+            [NotNull] IEthereumCoreAPI ethereumServiceClient, 
+            [NotNull] EthereumBlockchainSettings ethereumSettings, 
+            [NotNull] IAssetsLocalCache assetsLocalCache, 
+            [NotNull] IAssetsService assetsService, 
+            [NotNull] ILykkeAssetsResolver lykkeAssetsResolver, 
+            [NotNull] ILog log)
         {
             _ethereumServiceClient = ethereumServiceClient ?? throw new ArgumentNullException(nameof(ethereumServiceClient));
             _ethereumSettings = ethereumSettings ?? throw new ArgumentNullException(nameof(ethereumSettings));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
+            _assetsService = assetsService ?? throw new ArgumentNullException(nameof(assetsService));
             _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
-            _assetsService = assetsService ?? throw new ArgumentNullException(nameof(assetsLocalCache));
-            _log = log.CreateComponentScope(nameof(EthereumApiClient)) ?? throw new ArgumentNullException(nameof(log));
+            _log = log.CreateComponentScope(nameof(EthereumIataApiClient)) ?? throw new ArgumentNullException(nameof(log));
         }
 
         public async Task<BlockchainTransferResult> TransferAsync(BlockchainTransferCommand transfer)
         {
-            BlockchainTransferResult result = new BlockchainTransferResult { Blockchain = BlockchainType.Ethereum };
+            BlockchainTransferResult result = new BlockchainTransferResult {Blockchain = BlockchainType.EthereumIata};
 
             string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(transfer.AssetId);
 
@@ -63,10 +63,10 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (TransferAmount transferAmount in transfer.Amounts)
             {
-                var transferRequest = Mapper.Map<TransferFromDepositRequest>(transferAmount,
+                var transferRequest = Mapper.Map<AirlinesTransferFromDepositRequest>(transferAmount,
                     opts => opts.Items["TokenAddress"] = tokenAddress);
 
-                object response = await _ethereumServiceClient.ApiLykkePayErc20depositsTransferPostAsync(
+                object response = await _ethereumServiceClient.ApiAirlinesErc20depositsTransferPostAsync(
                     _ethereumSettings.ApiKey, transferRequest);
 
                 var errorMessage = string.Empty;
@@ -75,10 +75,11 @@ namespace Lykke.Service.PayInternal.Services
 
                 if (response is ApiException ex)
                 {
-                    await _log.WriteWarningAsync(nameof(TransferAsync), transferAmount.ToJson(), ex.Error?.ToJson());
+                    _log.WriteWarning(nameof(TransferAsync), transferAmount, ex.Error?.ToJson());
 
                     errorMessage = ex.Error?.Message;
-                } else if (response is OperationIdResponse op)
+                }
+                else if (response is OperationIdResponse op)
                 {
                     operationId = op.OperationId;
                 }
@@ -106,14 +107,14 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<string> CreateAddressAsync()
         {
             object response =
-                await _ethereumServiceClient.ApiLykkePayErc20depositsPostAsync(_ethereumSettings.ApiKey, StringUtils.GenerateId());
+                await _ethereumServiceClient.ApiAirlinesErc20depositsPostAsync(_ethereumSettings.ApiKey, StringUtils.GenerateId());
 
             if (response is ApiException ex)
             {
-                await _log.WriteWarningAsync(nameof(CreateAddressAsync), "New erc20 address generation",
+                _log.WriteWarning(nameof(CreateAddressAsync), "New erc20 address generation",
                     ex.Error?.Message);
 
-                throw new WalletAddressAllocationException(BlockchainType.Ethereum);
+                throw new WalletAddressAllocationException(BlockchainType.EthereumIata);
             }
 
             if (response is RegisterResponse result)
@@ -130,10 +131,10 @@ namespace Lykke.Service.PayInternal.Services
 
             if (response is ApiException ex)
             {
-                await _log.WriteWarningAsync(nameof(ValidateAddressAsync), "Ethereum address validation",
+                _log.WriteWarning(nameof(ValidateAddressAsync), "EthereumIata address validation",
                     ex.Error?.Message);
 
-                throw new WalletAddressValidationException(BlockchainType.Ethereum, address);
+                throw new WalletAddressValidationException(BlockchainType.EthereumIata, address);
             }
 
             if (response is IsAddressValidResponse result)
@@ -170,7 +171,7 @@ namespace Lykke.Service.PayInternal.Services
 
                     Asset asset = await _assetsLocalCache.GetAssetByIdAsync(token.AssetId);
 
-                    if (asset == null)
+                    if (asset == null) 
                         continue;
 
                     balances.Add(new BlockchainBalanceResult

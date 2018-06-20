@@ -29,6 +29,7 @@ namespace Lykke.Service.PayInternal.Services
                                 .AddLastSymbolIfNotExists('/')), transactionHash);
                     break;
                 case BlockchainType.Ethereum:
+                case BlockchainType.EthereumIata:
                     uri = new Uri(
                         new Uri(
                             _blockchainSettings.Ethereum.BlockchainExplorer.TransactionUrl
@@ -53,6 +54,7 @@ namespace Lykke.Service.PayInternal.Services
                     address = _blockchainSettings.Bitcoin.ExchangeHotWalletAddress;
                     break;
                 case BlockchainType.Ethereum:
+                case BlockchainType.EthereumIata:
                     address = _blockchainSettings.Ethereum.ExchangeHotWalletAddress;
                     break;
                 case BlockchainType.None:

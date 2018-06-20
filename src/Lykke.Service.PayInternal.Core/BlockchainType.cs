@@ -10,6 +10,8 @@ namespace Lykke.Service.PayInternal.Core
 
         Bitcoin,
 
-        Ethereum
+        Ethereum,
+
+        EthereumIata
     }
 }
