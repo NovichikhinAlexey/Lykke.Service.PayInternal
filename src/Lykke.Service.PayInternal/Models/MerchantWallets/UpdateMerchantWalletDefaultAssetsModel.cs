@@ -22,7 +22,7 @@ namespace Lykke.Service.PayInternal.Models.MerchantWallets
         /// Gets or sets wallet network
         /// </summary>
         [Required]
-        [EnumDataType(typeof(BlockchainType), ErrorMessage = "Invalid value, possible values are: Bitcoin, Ethereum")]
+        [EnumDataType(typeof(BlockchainType), ErrorMessage = "Invalid value, possible values are: Bitcoin, Ethereum, EthereumIata")]
         public BlockchainType? Network { get; set; }
 
         /// <summary>
