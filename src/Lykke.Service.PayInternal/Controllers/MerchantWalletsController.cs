@@ -62,7 +62,7 @@ namespace Lykke.Service.PayInternal.Controllers
         public async Task<IActionResult> Create([FromBody] CreateMerchantWalletModel request)
         {
             if (!request.Network.HasValue || request.Network == BlockchainType.None)
-                return BadRequest(ErrorResponse.Create("Invalid network value, possible values are: Bitcoin, Ethereum"));
+                return BadRequest(ErrorResponse.Create("Invalid network value, possible values are: Bitcoin, Ethereum, EthereumIata"));
 
             try
             {
@@ -144,7 +144,7 @@ namespace Lykke.Service.PayInternal.Controllers
         public async Task<IActionResult> SetDefaultAssets([FromBody] UpdateMerchantWalletDefaultAssetsModel request)
         {
             if (!request.Network.HasValue || request.Network == BlockchainType.None)
-                return BadRequest(ErrorResponse.Create("Invalid network value, possible values are: Bitcoin, Ethereum"));
+                return BadRequest(ErrorResponse.Create("Invalid network value, possible values are: Bitcoin, Ethereum, EthereumIata"));
 
             var assetsToValidate = new List<string>();
 
