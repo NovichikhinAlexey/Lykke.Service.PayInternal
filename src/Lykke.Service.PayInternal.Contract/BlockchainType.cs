@@ -23,6 +23,11 @@
         /// <summary>
         /// Lykke offchain
         /// </summary>
-        Lykke
+        Lykke,
+
+        /// <summary>
+        /// Ethereum blockchain with IATA specific implementation
+        /// </summary>
+        EthereumIata
     }
 }
