@@ -57,7 +57,7 @@ namespace Lykke.Service.PayInternal.Services
                         case LykkeConstants.BitcoinAsset: 
                             return new ToOneAddress(x.Source, x.Amount);
                         case LykkeConstants.SatoshiAsset:
-                            return new ToOneAddress(x.Source, x.Amount.SatoshiToBtc());
+                            return new ToOneAddress(x.Source, x.Amount?.SatoshiToBtc());
                         default: 
                             throw new AssetNotSupportedException(transfer.AssetId);
                     }

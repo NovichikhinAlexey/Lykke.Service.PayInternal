@@ -34,8 +34,8 @@ namespace Lykke.Service.PayInternal.Core
             return src.GetFailedTxs().Select(x => x.Error);
         }
 
-        public static Task<TransferResult> ExecuteAsync(this ITransferService src, string assetId, decimal amount,
-            string sourceAddress, string destAddress)
+        public static Task<TransferResult> ExecuteAsync(this ITransferService src, string assetId,
+            string sourceAddress, string destAddress, decimal? amount = null)
         {
             return src.ExecuteAsync(new TransferCommand
             {
@@ -53,15 +53,43 @@ namespace Lykke.Service.PayInternal.Core
         }
 
         public static async Task<TransferResult> ExchangeThrowFail(this ITransferService src, string assetId,
-            decimal amount, string sourceAddress, string destAddress)
+            string sourceAddress, string destAddress, decimal? amount = null)
         {
-            TransferResult transferResult = await src.ExecuteAsync(assetId, amount, sourceAddress, destAddress);
+            TransferResult transferResult = await src.ExecuteAsync(assetId, sourceAddress, destAddress, amount);
 
             if (!transferResult.HasSuccess())
                 throw new ExchangeOperationFailedException { TransferErrors = transferResult.GetErrors() };
 
             if (transferResult.HasError())
                 throw new ExchangeOperationPartiallyFailedException { TransferErrors = transferResult.GetErrors() };
+
+            return transferResult;
+        }
+
+        public static async Task<TransferResult> SettleThrowFail(this ITransferService src, string assetId,
+            string sourceAddress, string destAddress, decimal? amount = null)
+        {
+            TransferResult transferResult = await src.ExecuteAsync(assetId, sourceAddress, destAddress, amount);
+
+            if (!transferResult.HasSuccess())
+                throw new SettlementOperationFailedException {TransferErrors = transferResult.GetErrors()};
+
+            if (transferResult.HasError())
+                throw new SettlementOperationPartiallyFailedException {TransferErrors = transferResult.GetErrors()};
+
+            return transferResult;
+        }
+
+        public static async Task<TransferResult> PayThrowFail(this ITransferService src, string assetId,
+            string sourceAddress, string destAddress, decimal? amount = null)
+        {
+            TransferResult transferResult = await src.ExecuteAsync(assetId, sourceAddress, destAddress, amount);
+
+            if (!transferResult.HasSuccess())
+                throw new PaymentOperationFailedException {TransferErrors = transferResult.GetErrors()};
+
+            if (transferResult.HasError())
+                throw new PaymentOperationPartiallyFailedException {TransferErrors = transferResult.GetErrors()};
 
             return transferResult;
         }
