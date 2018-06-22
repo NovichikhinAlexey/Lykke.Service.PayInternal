@@ -296,6 +296,11 @@ namespace Lykke.Service.PayInternal.Client
             return response;
         }
 
+        public Task<string> GetMerchantLogoUrl(string merchantId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.GetMerchantLogoUrl(merchantId));
+        }
+
         public async Task UploadFileAsync(string merchantId, byte[] content, string fileName, string contentType)
         {
             var streamPart = new StreamPart(new MemoryStream(content), fileName, contentType);
