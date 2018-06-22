@@ -16,6 +16,12 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public JobPeriods JobPeriods { get; set; }
         public AssetPairsLocalStorageSettings AssetPairsLocalStorage { get; set; }
         public CacheSettings CacheSettings { get; set; }
+        public MerchantSettings Merchant { get; set; }
+    }
+
+    public class MerchantSettings
+    {
+        public int LogoSize { get; set; }
     }
 
     public class LpMarkupSettings

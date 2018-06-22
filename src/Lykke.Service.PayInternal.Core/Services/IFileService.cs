@@ -1,4 +1,5 @@
 ﻿using Lykke.Service.PayInternal.Core.Domain.File;
+using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -9,8 +10,9 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task<IEnumerable<FileInfo>> GetInfoAsync(string merchantId);
         Task<FileInfo> GetInfoAsync(string merchantId, string fileId);
         Task<byte[]> GetFileAsync(string fileId);
+        Task<string> GetMerchantLogoUrl(string merchantId);
 
-        Task SaveAsync(FileInfo fileInfo, byte[] content);
+        Task SaveAsync(string merchantId, IFormFile file);
 
         Task DeleteAsync(string merchantId, string fileId);
     }

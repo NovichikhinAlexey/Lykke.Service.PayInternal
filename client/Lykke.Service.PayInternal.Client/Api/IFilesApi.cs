@@ -14,6 +14,9 @@ namespace Lykke.Service.PayInternal.Client.Api
         [Get("/api/files/{merchantId}/{fileId}")]
         Task<byte[]> GetAsync(string merchantId, string fileId);
 
+        [Get("/api/files/logo/{merchantId}")]
+        Task<string> GetMerchantLogoUrl(string merchantId);
+
         [Multipart]
         [Post("/api/files/{merchantId}")]
         Task UploadAsync(string merchantId, [AliasAs("file")] StreamPart stream);

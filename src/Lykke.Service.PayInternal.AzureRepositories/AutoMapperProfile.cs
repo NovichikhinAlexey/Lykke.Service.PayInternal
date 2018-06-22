@@ -61,6 +61,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             CreateMap<MarkupEntity, Core.Domain.Markup.Markup>(MemberList.Destination);
             
             CreateMap<FileInfoEntity, FileInfo>(MemberList.Destination)
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.Timestamp))
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.RowKey));
 
             CreateMap<ISupervisorMembership, SupervisorMembershipEntity>(MemberList.Source)
@@ -80,6 +81,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                 .ForMember(dest => dest.Id, opt => opt.Ignore());
 
             CreateMap<FileInfo, FileInfoEntity>(MemberList.Source)
+                .ForSourceMember(src => src.CreatedAt, opt => opt.Ignore())
                 .ForSourceMember(src => src.Id, opt => opt.Ignore());
                 
             CreateMap<IAssetGeneralSettings, AssetGeneralSettingsEntity>(MemberList.Source);

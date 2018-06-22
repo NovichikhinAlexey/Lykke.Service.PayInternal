@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.File;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Models.File;
 using Microsoft.AspNetCore.Http;
@@ -61,6 +63,29 @@ namespace Lykke.Service.PayInternal.Controllers
         }
 
         /// <summary>
+        /// Get merchant logo blob url
+        /// </summary>
+        /// <param name="merchantId">The merchant id</param>
+        /// <response code="200">Merchant logo blob url</response>
+        /// <response code="404">Not found</response>
+        [HttpGet]
+        [Route("logo/{merchantId}")]
+        [SwaggerOperation(nameof(GetMerchantLogoUrl))]
+        [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> GetMerchantLogoUrl(string merchantId)
+        {
+            try
+            {
+                return Ok(await _fileService.GetMerchantLogoUrl(merchantId));
+            }
+            catch (MerchantLogoNotFoundException ex)
+            {
+                return NotFound();
+            }
+        }
+
+        /// <summary>
         /// Saves file.
         /// </summary>
         /// <param name="merchantId">The merchant id.</param>
@@ -77,23 +102,7 @@ namespace Lykke.Service.PayInternal.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("Invalid file");
 
-            var fileInfo = new FileInfo
-            {
-                MerchantId = merchantId,
-                Type = file.ContentType,
-                Name = file.FileName,
-                Size = (int)file.Length
-            };
-
-            byte[] content;
-
-            using (var ms = new System.IO.MemoryStream())
-            {
-                file.CopyTo(ms);
-                content = ms.ToArray();
-            }
-
-            await _fileService.SaveAsync(fileInfo, content);
+            await _fileService.SaveAsync(merchantId, file);
 
             return NoContent();
         }

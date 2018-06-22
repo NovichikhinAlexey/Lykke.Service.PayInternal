@@ -17,6 +17,11 @@ namespace Lykke.Service.PayInternal.Core.Domain.File
         public string Id { get; set; }
 
         /// <summary>
+        /// Timestamp of the file
+        /// </summary>
+        public DateTime CreatedAt { get; set; }
+
+        /// <summary>
         /// The name of the file with extension.
         /// </summary>
         public string Name { get; set; }
