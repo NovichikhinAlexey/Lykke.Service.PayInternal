@@ -53,19 +53,19 @@ namespace Lykke.Service.PayInternal.Services
             decimal exchangeAmount = cmd.SourceAmount * rate.BidPrice;
 
             if (hotwalletBalance < exchangeAmount)
-                throw new ExchangeOperationInsufficientFundsException(hotwallet, cmd.DestAssetId);
+                throw new InsufficientFundsException(hotwallet, cmd.DestAssetId);
 
             await _transferService.ExchangeThrowFail(
                 cmd.SourceAssetId,
-                cmd.SourceAmount,
                 await GetSourceAddressAsync(cmd),
-                hotwallet);
+                hotwallet,
+                cmd.SourceAmount);
 
             await _transferService.ExchangeThrowFail(
                 cmd.DestAssetId, 
-                exchangeAmount, 
                 hotwallet,
-                await GetDestWalletAddressAsync(cmd));
+                await GetDestWalletAddressAsync(cmd),
+                exchangeAmount);
 
             return new ExchangeResult
             {

@@ -89,7 +89,7 @@ namespace Lykke.Service.PayInternal.Services
 
                 result.Transactions.Add(new BlockchainTransactionResult
                 {
-                    Amount = transferAmount.Amount,
+                    Amount = transferAmount.Amount ?? 0,
                     AssetId = asset.DisplayId,
                     Hash = string.Empty,
                     IdentityType = TransactionIdentityType.Specific,

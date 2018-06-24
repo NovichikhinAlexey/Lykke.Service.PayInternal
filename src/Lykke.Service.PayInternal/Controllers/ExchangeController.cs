@@ -78,7 +78,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
-            catch (ExchangeOperationInsufficientFundsException e)
+            catch (InsufficientFundsException e)
             {
                 _log.WriteError(nameof(Execute), new
                 {

@@ -25,5 +25,7 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task HandleExpiredAsync();
 
         Task<PaymentResult> PayAsync(PaymentCommand cmd);
+
+        Task<SettlementResult> SettleAsync(string merchantId, string paymentRequestId);
     }
 }

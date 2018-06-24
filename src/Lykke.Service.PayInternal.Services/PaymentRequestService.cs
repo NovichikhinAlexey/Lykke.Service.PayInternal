@@ -7,7 +7,6 @@ using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
-using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -87,7 +86,7 @@ namespace Lykke.Service.PayInternal.Services
 
             return new PaymentRequestRefund
             {
-                Amount = transfer.Amounts.Sum(x => x.Amount),
+                Amount = transfer.Amounts.Sum(x => x.Amount ?? 0),
                 Timestamp = transfer.CreatedOn,
                 Address = transfer.Amounts.Unique(x => x.Destination).Single(),
                 DueDate = transactions.OrderByDescending(x => x.DueDate).First().DueDate,
@@ -186,10 +185,12 @@ namespace Lykke.Service.PayInternal.Services
             if (releaseLock)
                 await _paymentLocksService.ReleaseLockAsync(paymentRequest.Id, paymentRequest.MerchantId);
 
-            //todo: move to separate builder service
             PaymentRequestRefund refundInfo = await GetRefundInfoAsync(paymentRequest.WalletAddress);
 
             await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
+
+            if (paymentRequest.StatusValidForSettlement())
+                await SettleAsync(paymentRequest.MerchantId, paymentRequest.Id);
         }
 
         public async Task HandleExpiredAsync()
@@ -225,8 +226,10 @@ namespace Lykke.Service.PayInternal.Services
             if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(cmd.MerchantId, cmd.PaymentRequestId);
 
-            IMerchantWallet payerWallet = await _merchantWalletService.GetDefaultAsync(cmd.PayerMerchantId,
-                paymentRequest.PaymentAssetId, PaymentDirection.Outgoing);
+            string payerWalletAddress = (await _merchantWalletService.GetDefaultAsync(
+                cmd.PayerMerchantId,
+                paymentRequest.PaymentAssetId, 
+                PaymentDirection.Outgoing)).WalletAddress;
 
             string destinationWalletAddress = await _walletsManager.ResolveBlockchainAddressAsync(
                 paymentRequest.WalletAddress,
@@ -246,25 +249,11 @@ namespace Lykke.Service.PayInternal.Services
             {
                 await UpdateStatusAsync(paymentRequest.WalletAddress, PaymentRequestStatusInfo.InProcess());
 
-                transferResult = await _transferService.ExecuteAsync(new TransferCommand
-                {
-                    AssetId = paymentRequest.PaymentAssetId,
-                    Amounts = new List<TransferAmount>
-                    {
-                        new TransferAmount
-                        {
-                            Amount = cmd.Amount,
-                            Destination = destinationWalletAddress,
-                            Source = payerWallet.WalletAddress
-                        }
-                    }
-                });
-
-                if (!transferResult.HasSuccess())
-                    throw new PaymentOperationFailedException { TransferErrors = transferResult.GetErrors() };
-
-                if (transferResult.HasError())
-                    throw new PaymentOperationPartiallyFailedException {TransferErrors = transferResult.GetErrors()};
+                transferResult = await _transferService.PayThrowFail(
+                    paymentRequest.PaymentAssetId,
+                    payerWalletAddress, 
+                    destinationWalletAddress, 
+                    cmd.Amount);
             }
             catch (Exception)
             {
@@ -281,6 +270,39 @@ namespace Lykke.Service.PayInternal.Services
                 PaymentRequestId = paymentRequest.Id,
                 PaymentRequestWalletAddress = paymentRequest.WalletAddress,
                 AssetId = transferResult.Transactions.Unique(x => x.AssetId).Single(),
+                Amount = transferResult.GetSuccedeedTxs().Sum(x => x.Amount)
+            };
+        }
+
+        public async Task<SettlementResult> SettleAsync(string merchantId, string paymentRequestId)
+        {
+            IPaymentRequest paymentRequest = await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
+
+            if (paymentRequest == null)
+                throw new PaymentRequestNotFoundException(merchantId, paymentRequestId);
+
+            if (!paymentRequest.StatusValidForSettlement())
+                throw new SettlementValidationException("Invalid status");
+
+            string sourceWalletAddress = await _walletsManager.ResolveBlockchainAddressAsync(
+                paymentRequest.WalletAddress,
+                paymentRequest.PaymentAssetId);
+
+            string destWalletAddress = (await _merchantWalletService.GetDefaultAsync(
+                paymentRequest.MerchantId,
+                paymentRequest.PaymentAssetId,
+                PaymentDirection.Incoming)).WalletAddress;
+
+            TransferResult transferResult = await _transferService.SettleThrowFail(
+                paymentRequest.PaymentAssetId,
+                sourceWalletAddress,
+                destWalletAddress);
+
+            return new SettlementResult
+            {
+                Blockchain = transferResult.Blockchain,
+                WalletAddress = destWalletAddress,
+                AssetId = paymentRequest.PaymentAssetId,
                 Amount = transferResult.GetSuccedeedTxs().Sum(x => x.Amount)
             };
         }

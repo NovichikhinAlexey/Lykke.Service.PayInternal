@@ -47,5 +47,15 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
         {
             return Status == PaymentRequestStatus.New;
         }
+
+        public bool StatusValidForSettlement()
+        {
+            return Status == PaymentRequestStatus.Confirmed ||
+                   Status == PaymentRequestStatus.Error &&
+                    (ProcessingError == PaymentRequestProcessingError.LatePaid ||
+                     ProcessingError == PaymentRequestProcessingError.PaymentAmountAbove ||
+                     ProcessingError == PaymentRequestProcessingError.PaymentAmountBelow ||
+                     ProcessingError == PaymentRequestProcessingError.PaymentExpired);
+        }
     }
 }
