@@ -64,7 +64,12 @@ namespace Lykke.Service.PayInternal.Services
             foreach (TransferAmount transferAmount in transfer.Amounts)
             {
                 var transferRequest = Mapper.Map<AirlinesTransferFromDepositRequest>(transferAmount,
-                    opts => opts.Items["TokenAddress"] = tokenAddress);
+                    opts =>
+                    {
+                        opts.Items["TokenAddress"] = tokenAddress;
+                        opts.Items["AssetMultiplier"] = asset.MultiplierPower;
+                        opts.Items["AssetAccuracy"] = asset.Accuracy;
+                    });
 
                 object response = await _ethereumServiceClient.ApiAirlinesErc20depositsTransferPostAsync(
                     _ethereumSettings.ApiKey, transferRequest);
@@ -176,8 +181,8 @@ namespace Lykke.Service.PayInternal.Services
 
                     balances.Add(new BlockchainBalanceResult
                     {
-                        AssetId = asset.DisplayId,
-                        Balance = balanceResponse.Balance.ToAmount(asset.MultiplierPower, asset.Accuracy)
+                        AssetId = asset.Id,
+                        Balance = balanceResponse.Balance.FromContract(asset.MultiplierPower, asset.Accuracy)
                     });
                 }
 

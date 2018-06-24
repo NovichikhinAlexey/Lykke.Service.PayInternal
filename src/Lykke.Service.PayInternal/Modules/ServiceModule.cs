@@ -236,6 +236,10 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<AssetIdValueResolver>()
                 .AsSelf()
                 .SingleInstance();
+
+            builder.RegisterType<AssetDisplayIdValueResolver>()
+                .AsSelf()
+                .SingleInstance();
         }
 
         private void RegisterPeriodicalHandlers(ContainerBuilder builder)

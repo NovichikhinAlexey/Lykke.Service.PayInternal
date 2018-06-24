@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
@@ -18,13 +19,15 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IMerchantWalletRespository _merchantWalletRespository;
         private readonly IAssetSettingsService _assetSettingsService;
         private readonly IBlockchainClientProvider _blockchainClientProvider;
+        private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly ILog _log;
 
         public MerchantWalletService(
             [NotNull] IMerchantWalletRespository merchantWalletRespository,
             [NotNull] IAssetSettingsService assetSettingsService,
             [NotNull] IBlockchainClientProvider blockchainClientProvider,
-            [NotNull] ILog log)
+            [NotNull] ILog log, 
+            [NotNull] IAssetsLocalCache assetsLocalCache)
         {
             _merchantWalletRespository = merchantWalletRespository ??
                                          throw new ArgumentNullException(nameof(merchantWalletRespository));
@@ -32,6 +35,7 @@ namespace Lykke.Service.PayInternal.Services
                 assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
             _blockchainClientProvider = blockchainClientProvider ??
                                         throw new ArgumentNullException(nameof(blockchainClientProvider));
+            _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _log = log.CreateComponentScope(nameof(MerchantWalletService)) ??
                    throw new ArgumentNullException(nameof(log));
         }
@@ -127,8 +131,11 @@ namespace Lykke.Service.PayInternal.Services
                 (await _merchantWalletRespository.GetByMerchantAsync(merchantId)).Where(x => x.Network == network)
                 .ToList();
 
+            string assetDisplayId =
+                assetId.IsGuid() ? (await _assetsLocalCache.GetAssetByIdAsync(assetId)).DisplayId : assetId;
+
             IReadOnlyList<IMerchantWallet> assetDefaultWallets = merchantWallets
-                .Where(w => w.GetDefaultAssets(paymentDirection).Contains(assetId))
+                .Where(w => w.GetDefaultAssets(paymentDirection).Contains(assetDisplayId))
                 .ToList();
 
             if (assetDefaultWallets.MoreThanOne())
