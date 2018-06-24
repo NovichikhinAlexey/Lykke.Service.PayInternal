@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Common;
+using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
@@ -14,18 +16,21 @@ namespace Lykke.Service.PayInternal.Services
     {
         private readonly IAssetGeneralSettingsRepository _assetGeneralSettingsRepository;
         private readonly IAssetMerchantSettingsRepository _assetMerchantSettingsRepository;
+        private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IMarkupService _markupService;
 
         private const char AssetsSeparator = ';';
 
         public AssetSettingsService(
-            IAssetGeneralSettingsRepository assetGeneralAvailabilityRepository,
-            IAssetMerchantSettingsRepository assetPersonalAvailabilityRepository,
-            IMarkupService markupService)
+            [NotNull] IAssetGeneralSettingsRepository assetGeneralAvailabilityRepository,
+            [NotNull] IAssetMerchantSettingsRepository assetPersonalAvailabilityRepository,
+            [NotNull] IMarkupService markupService, 
+            [NotNull] IAssetsLocalCache assetsLocalCache)
         {
             _assetGeneralSettingsRepository = assetGeneralAvailabilityRepository ?? throw new ArgumentNullException(nameof(assetGeneralAvailabilityRepository));
             _assetMerchantSettingsRepository = assetPersonalAvailabilityRepository ?? throw new ArgumentNullException(nameof(assetPersonalAvailabilityRepository));
             _markupService = markupService ?? throw new ArgumentNullException(nameof(markupService));
+            _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
         }
 
         public Task<IReadOnlyList<string>> ResolveSettlementAsync(string merchantId)
@@ -61,7 +66,11 @@ namespace Lykke.Service.PayInternal.Services
         {
             string assetIdAdjusted = assetId == LykkeConstants.SatoshiAsset ? LykkeConstants.BitcoinAsset : assetId;
 
-            IAssetGeneralSettings assetAvailability = await _assetGeneralSettingsRepository.GetAsync(assetIdAdjusted);
+            string assetDisplayId = assetIdAdjusted.IsGuid()
+                ? (await _assetsLocalCache.GetAssetByIdAsync(assetIdAdjusted)).DisplayId
+                : assetIdAdjusted;
+
+            IAssetGeneralSettings assetAvailability = await _assetGeneralSettingsRepository.GetAsync(assetDisplayId);
 
             return assetAvailability?.Network ?? throw new AssetNetworkNotDefinedException(assetId);
         }

@@ -176,7 +176,7 @@ namespace Lykke.Service.PayInternal.Services
                     balances.Add(new BlockchainBalanceResult
                     {
                         AssetId = asset.DisplayId,
-                        Balance = balanceResponse.Balance.ToAmount(asset.MultiplierPower, asset.Accuracy)
+                        Balance = balanceResponse.Balance.FromContract(asset.MultiplierPower, asset.Accuracy)
                     });
                 }
 

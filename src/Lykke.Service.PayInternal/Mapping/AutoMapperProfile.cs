@@ -89,7 +89,7 @@ namespace Lykke.Service.PayInternal.Mapping
 
             CreateMap<MerchantWalletBalanceLine, MerchantWalletBalanceResponse>(MemberList.Destination)
                 .ForMember(dest => dest.MerchantWalletId, opt => opt.MapFrom(src => src.Id))
-                .ForMember(dest => dest.AssetDisplayId, opt => opt.MapFrom(src => src.AssetId));
+                .ForMember(dest => dest.AssetDisplayId, opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.AssetId));
 
             CreateMap<PaymentModel, PaymentCommand>(MemberList.Destination);
 
@@ -114,7 +114,11 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.SourceAssetId, opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.SourceAssetId))
                 .ForMember(dest => dest.DestAssetId, opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.DestAssetId));
 
-            CreateMap<ExchangeResult, ExchangeResponse>(MemberList.Destination);
+            CreateMap<ExchangeResult, ExchangeResponse>(MemberList.Destination)
+                .ForMember(dest => dest.DestAssetId,
+                    opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.DestAssetId))
+                .ForMember(dest => dest.SourceAssetId,
+                    opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.SourceAssetId));
 
             PaymentRequestApiModels();
 
