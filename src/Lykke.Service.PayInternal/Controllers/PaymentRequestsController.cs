@@ -360,6 +360,16 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return NoContent();
             }
+            catch (InsufficientFundsException e)
+            {
+                _log.WriteError(nameof(Pay), new
+                {
+                    e.AssetId,
+                    e.WalletAddress
+                }, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
             catch (PaymentRequestNotFoundException e)
             {
                 _log.WriteError(nameof(Pay), new
