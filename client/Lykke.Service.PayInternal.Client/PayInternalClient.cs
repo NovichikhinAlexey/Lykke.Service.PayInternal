@@ -20,6 +20,7 @@ using Refit;
 using Lykke.Service.PayInternal.Client.Models.File;
 using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
 using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
+using Lykke.Service.PayInternal.Client.Models.Transactions.Ethereum;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -401,6 +402,30 @@ namespace Lykke.Service.PayInternal.Client
         public Task<ExchangeResponse> ExchangeAsync(ExchangeRequest request)
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() => _exchangeApi.ExecuteAsync(request));
+        }
+
+        public Task RegisterEthereumInboundTransactionAsync(RegisterInboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.RegisterEthereumInboundTransactionAsync(request));
+        }
+
+        public Task RegisterEthereumOutboundTransactionAsync(RegisterOutboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.RegisterEthereumOutboundTransactionAsync(request));
+        }
+
+        public Task CompleteEthereumOutboundTransactionAsync(CompleteOutboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.CompleteEthereumOutboundTransactionAsync(request));
+        }
+
+        public Task FailEthereumOutboundTransactionAsync(FailOutboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.FailEthereumOutboundTransactionAsync(request));
         }
 
         public void Dispose()
