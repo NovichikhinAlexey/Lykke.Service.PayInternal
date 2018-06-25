@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
@@ -20,15 +21,18 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IBlockchainClientProvider _blockchainClientProvider;
         private readonly ITransferRepository _transferRepository;
         private readonly IAssetSettingsService _assetSettingsService;
+        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
 
         public TransferService(
             [NotNull] ITransferRepository transferRepository,
             [NotNull] IBlockchainClientProvider blockchainClientProvider,
-            [NotNull] IAssetSettingsService assetSettingsService)
+            [NotNull] IAssetSettingsService assetSettingsService, 
+            [NotNull] ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _transferRepository = transferRepository ?? throw new ArgumentNullException(nameof(transferRepository));
             _blockchainClientProvider = blockchainClientProvider ?? throw new ArgumentNullException(nameof(blockchainClientProvider));
             _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
+            _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
         }
 
         public async Task<TransferResult> ExecuteAsync(TransferCommand transferCommand)
@@ -39,11 +43,13 @@ namespace Lykke.Service.PayInternal.Services
 
             BlockchainTransferCommand cmd = new BlockchainTransferCommand(transferCommand.AssetId);
 
+            string lykkeAssetId = transferCommand.AssetId.IsGuid()
+                ? transferCommand.AssetId
+                : await _lykkeAssetsResolver.GetLykkeId(transferCommand.AssetId);
+
             foreach (var transferCommandAmount in transferCommand.Amounts)
             {
-                decimal balance = await blockchainClient.GetBalanceAsync(
-                    transferCommandAmount.Source,
-                    transferCommand.AssetId);
+                decimal balance = await blockchainClient.GetBalanceAsync(transferCommandAmount.Source, lykkeAssetId);
 
                 if (transferCommandAmount.Amount == null)
                 {
