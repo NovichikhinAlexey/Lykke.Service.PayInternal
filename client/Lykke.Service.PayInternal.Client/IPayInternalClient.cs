@@ -14,6 +14,7 @@ using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Lykke.Service.PayInternal.Client.Models.File;
 using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
 using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
+using Lykke.Service.PayInternal.Client.Models.Transactions.Ethereum;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -464,5 +465,33 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request">Exchange operation details</param>
         /// <returns>Exchange execution result</returns>
         Task<ExchangeResponse> ExchangeAsync(ExchangeRequest request);
+
+        /// <summary>
+        /// Registers new ethereum inbound transaction
+        /// </summary>
+        /// <param name="request">Transaction registration details</param>
+        /// <returns></returns>
+        Task RegisterEthereumInboundTransactionAsync(RegisterInboundTxModel request);
+
+        /// <summary>
+        /// Registers new ethereum outbound transaction
+        /// </summary>
+        /// <param name="request">Transaction registration details</param>
+        /// <returns></returns>
+        Task RegisterEthereumOutboundTransactionAsync(RegisterOutboundTxModel request);
+
+        /// <summary>
+        /// Marks ethereum outbound transaction as completed
+        /// </summary>
+        /// <param name="request">Transaction identification details</param>
+        /// <returns></returns>
+        Task CompleteEthereumOutboundTransactionAsync(CompleteOutboundTxModel request);
+
+        /// <summary>
+        ///  Marks ethereum outbound transaction as failed
+        /// </summary>
+        /// <param name="request">Transaction identification details</param>
+        /// <returns></returns>
+        Task FailEthereumOutboundTransactionAsync(FailOutboundTxModel request);
     }
 }

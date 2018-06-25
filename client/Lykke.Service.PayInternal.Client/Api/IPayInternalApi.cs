@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
+using Lykke.Service.PayInternal.Client.Models.Transactions.Ethereum;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Refit;
 
@@ -28,5 +29,17 @@ namespace Lykke.Service.PayInternal.Client.Api
 
         [Post("/api/wallets/expired")]
         Task SetWalletExpiredAsync([Body] BlockchainWalletExpiredRequest request);
+
+        [Post("/api/ethereumTransactions/inbound")]
+        Task RegisterEthereumInboundTransactionAsync([Body] RegisterInboundTxModel request);
+
+        [Post("/api/ethereumTransactions/outbound")]
+        Task RegisterEthereumOutboundTransactionAsync([Body] RegisterOutboundTxModel request);
+
+        [Post("/api/ethereumTransactions/outbound/complete")]
+        Task CompleteEthereumOutboundTransactionAsync([Body] CompleteOutboundTxModel request);
+
+        [Post("/api/ethereumTransactions/outbound/fail")]
+        Task FailEthereumOutboundTransactionAsync([Body] FailOutboundTxModel request);
     }
 }
