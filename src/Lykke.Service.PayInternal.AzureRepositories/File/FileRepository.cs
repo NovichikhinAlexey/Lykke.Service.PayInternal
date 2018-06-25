@@ -28,6 +28,11 @@ namespace Lykke.Service.PayInternal.AzureRepositories.File
             }
         }
 
+        public async Task<string> GetBlobUrl(string fileName)
+        {
+            return await _storage.HasBlobAsync(ContainerName, fileName) ? _storage.GetBlobUrl(ContainerName, fileName) : null;
+        }
+
         public async Task<string> InsertAsync(byte[] file, string id)
         {
             await _storage.SaveBlobAsync(ContainerName, id, file);
