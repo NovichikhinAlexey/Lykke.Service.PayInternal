@@ -27,21 +27,14 @@ namespace Lykke.Service.PayInternal.Services
             CreateMap<IPaymentRequestTransaction, TransferCommand>(MemberList.Destination)
                 .ForMember(dest => dest.Amounts, opt => opt.ResolveUsing<RefundAmountResolver>());
 
-            CreateMap<ICreateTransactionRequest, CreateTransactionCommand>(MemberList.Destination)
-                .ForMember(dest => dest.DueDate, opt => opt.Ignore())
-                .ForMember(dest => dest.TransferId, opt => opt.Ignore())
-                .ForMember(dest => dest.Type,
-                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
-                        dest.Type = (TransactionType) resContext.Items["TransactionType"]))
-                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<VirtualAddressResolver>());
-
             CreateMap<ICreateLykkeTransactionRequest, CreateLykkeTransactionCommand>(MemberList.Destination)
                 .ForMember(dest => dest.Type,
                     opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
                         dest.Type = (TransactionType) resContext.Items["TransactionType"]));
 
             CreateMap<IUpdateTransactionRequest, UpdateTransactionCommand>(MemberList.Destination)
-                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<VirtualAddressResolver>());
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.WalletAddress));
 
             CreateMap<TransferAmount, TransferFromDepositRequest>(MemberList.Destination)
                 .ForMember(dest => dest.DepositAddress, opt => opt.MapFrom(src => src.Source))

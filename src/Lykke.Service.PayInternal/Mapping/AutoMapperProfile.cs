@@ -1,5 +1,6 @@
 ﻿using System;
 using AutoMapper;
+using AzureStorage.Tables.Templates;
 using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain;
@@ -26,8 +27,10 @@ using Lykke.Service.PayInternal.Models.MerchantWallets;
 using Lykke.Service.PayInternal.Models.Orders;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Lykke.Service.PayInternal.Models.SupervisorMembership;
+using Lykke.Service.PayInternal.Models.Transactions.Ethereum;
 using Lykke.Service.PayInternal.Models.Transfers;
 using Lykke.Service.PayInternal.Services.Domain;
+using Lykke.Service.PayInternal.Services.Mapping;
 
 namespace Lykke.Service.PayInternal.Mapping
 {
@@ -119,6 +122,45 @@ namespace Lykke.Service.PayInternal.Mapping
                     opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.DestAssetId))
                 .ForMember(dest => dest.SourceAssetId,
                     opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.SourceAssetId));
+
+            // incoming ethereum payment
+            CreateMap<RegisterInboundTxRequest, CreateTransactionCommand>(MemberList.Destination)
+                .ForMember(dest => dest.DueDate, opt => opt.Ignore())
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress))
+                .ForMember(dest => dest.Confirmations,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.Confirmations = (int) resContext.Items["Confirmations"]))
+                .ForMember(dest => dest.SourceWalletAddresses, opt => opt.MapFrom(src => new[] {src.FromAddress}))
+                .ForMember(dest => dest.TransferId, opt => opt.Ignore())
+                .ForMember(dest => dest.Type, opt => opt.UseValue(TransactionType.Payment));
+
+            // incoming ethereum payment update
+            CreateMap<RegisterInboundTxRequest, UpdateTransactionCommand>(MemberList.Destination)
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress))
+                .ForMember(dest => dest.Confirmations,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.Confirmations = (int) resContext.Items["Confirmations"]));
+
+            // incoming bitcoin payment
+            CreateMap<ICreateTransactionRequest, CreateTransactionCommand>(MemberList.Destination)
+                .ForMember(dest => dest.DueDate, opt => opt.Ignore())
+                .ForMember(dest => dest.TransferId, opt => opt.Ignore())
+                .ForMember(dest => dest.Type,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.Type = (TransactionType) resContext.Items["TransactionType"]))
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.WalletAddress));
+
+            // outgoing ethereum payment update
+            CreateMap<RegisterOutboundTxRequest, UpdateTransactionCommand>(MemberList.Destination)
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress))
+                .ForMember(dest => dest.Confirmations,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.Confirmations = (int)resContext.Items["Confirmations"]));
+
 
             PaymentRequestApiModels();
 

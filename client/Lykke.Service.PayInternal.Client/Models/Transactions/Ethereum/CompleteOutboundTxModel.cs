@@ -24,5 +24,10 @@
         /// Gets or sets workflow type
         /// </summary>
         public WorkflowType WorkflowType { get; set; }
+
+        /// <summary>
+        /// Gets or sets blockchain type
+        /// </summary>
+        public BlockchainType Blockchain { get; set; }
     }
 }

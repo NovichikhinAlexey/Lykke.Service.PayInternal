@@ -41,6 +41,8 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
 
         public TimeSpan Refund { get; set; }
 
+        public TimeSpan Exchange { get; set; }
+
         /// <summary>
         /// By default wallet address has the same dueDate as payment request. 
         /// WalletExtra is an extra time to keep wallet address in lock after payment request expired in order to wait for late payments.

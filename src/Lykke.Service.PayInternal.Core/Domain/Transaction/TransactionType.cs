@@ -18,6 +18,16 @@
         /// <summary>
         /// Settlement transaction
         /// </summary>
-        Settlement
+        Settlement,
+
+        /// <summary>
+        /// Cash in transaction
+        /// </summary>
+        CashIn,
+
+        /// <summary>
+        /// Exchange transaction
+        /// </summary>
+        Exchange,
     }
 }
