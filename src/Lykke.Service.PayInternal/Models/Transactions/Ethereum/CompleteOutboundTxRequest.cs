@@ -34,5 +34,12 @@ namespace Lykke.Service.PayInternal.Models.Transactions.Ethereum
         [Required]
         [EnumDataType(typeof(WorkflowType), ErrorMessage = "Invalid value, possible values are: LykkePay, Airlines")]
         public WorkflowType WorkflowType { get; set; }
+
+        /// <summary>
+        /// Gets or sets blockchain type
+        /// </summary>
+        [Required]
+        [EnumDataType(typeof(BlockchainType), ErrorMessage = "Invalid value, possible values are: Ethereum, EthereumIata")]
+        public BlockchainType Blockchain { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Validation;
 
@@ -9,7 +10,7 @@ namespace Lykke.Service.PayInternal.Models.Transactions.Ethereum
     /// <summary>
     /// Ethereum outbound transaction registration request details
     /// </summary>
-    public class RegisterOutboundTxRequest
+    public class RegisterOutboundTxRequest : IBlockchainTypeHolder
     {
         /// <summary>
         /// Gets or sets transaction hash

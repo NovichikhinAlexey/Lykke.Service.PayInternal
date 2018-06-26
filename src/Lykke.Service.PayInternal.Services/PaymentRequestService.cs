@@ -15,6 +15,7 @@ using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
+using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -31,6 +32,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ExpirationPeriodsSettings _expirationPeriods;
         private readonly IMerchantWalletService _merchantWalletService;
         private readonly IDistributedLocksService _paymentLocksService;
+        private readonly ITransactionPublisher _transactionPublisher;
         private readonly ILog _log;
 
         public PaymentRequestService(
@@ -44,7 +46,8 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] ITransactionsService transactionsService,
             [NotNull] ExpirationPeriodsSettings expirationPeriods,
             [NotNull] IMerchantWalletService merchantWalletService, 
-            [NotNull] IDistributedLocksService paymentLocksService)
+            [NotNull] IDistributedLocksService paymentLocksService, 
+            [NotNull] ITransactionPublisher transactionPublisher)
         {
             _paymentRequestRepository = paymentRequestRepository ?? throw new ArgumentNullException(nameof(paymentRequestRepository));
             _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
@@ -57,6 +60,7 @@ namespace Lykke.Service.PayInternal.Services
             _expirationPeriods = expirationPeriods ?? throw new ArgumentNullException(nameof(expirationPeriods));
             _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
             _paymentLocksService = paymentLocksService ?? throw new ArgumentNullException(nameof(paymentLocksService));
+            _transactionPublisher = transactionPublisher ?? throw new ArgumentNullException(nameof(transactionPublisher));
         }
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -254,6 +258,28 @@ namespace Lykke.Service.PayInternal.Services
                     payerWalletAddress, 
                     destinationWalletAddress, 
                     cmd.Amount);
+
+                foreach (var transferResultTransaction in transferResult.Transactions)
+                {
+                    IPaymentRequestTransaction paymentTx = await _transactionsService.CreateTransactionAsync(
+                        new CreateTransactionCommand
+                        {
+                            Amount = transferResultTransaction.Amount,
+                            Blockchain = transferResult.Blockchain,
+                            AssetId = transferResultTransaction.AssetId,
+                            WalletAddress = paymentRequest.WalletAddress,
+                            DueDate = paymentRequest.DueDate,
+                            IdentityType = transferResultTransaction.IdentityType,
+                            Identity = transferResultTransaction.Identity,
+                            Confirmations = 0,
+                            Hash = transferResultTransaction.Hash,
+                            TransferId = transferResult.Id,
+                            Type = TransactionType.Payment,
+                            SourceWalletAddresses = transferResultTransaction.Sources.ToArray()
+                        });
+
+                    await _transactionPublisher.PublishAsync(paymentTx);
+                }
             }
             catch (Exception)
             {
@@ -297,6 +323,27 @@ namespace Lykke.Service.PayInternal.Services
                 paymentRequest.PaymentAssetId,
                 sourceWalletAddress,
                 destWalletAddress);
+
+            foreach (var transferResultTransaction in transferResult.Transactions)
+            {
+                IPaymentRequestTransaction settlementTx = await _transactionsService.CreateTransactionAsync(
+                    new CreateTransactionCommand
+                    {
+                        Amount = transferResultTransaction.Amount,
+                        Blockchain = transferResult.Blockchain,
+                        AssetId = transferResultTransaction.AssetId,
+                        WalletAddress = paymentRequest.WalletAddress,
+                        DueDate = paymentRequest.DueDate,
+                        IdentityType = transferResultTransaction.IdentityType,
+                        Identity = transferResultTransaction.Identity,
+                        Confirmations = 0,
+                        Hash = transferResultTransaction.Hash,
+                        TransferId = transferResult.Id,
+                        Type = TransactionType.Settlement
+                    });
+
+                await _transactionPublisher.PublishAsync(settlementTx);
+            }
 
             return new SettlementResult
             {

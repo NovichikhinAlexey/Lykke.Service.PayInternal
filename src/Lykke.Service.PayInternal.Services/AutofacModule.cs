@@ -98,6 +98,7 @@ namespace Lykke.Service.PayInternal.Services
                     (pi, ctx) => ctx.ResolveKeyed<IDistributedLocksService>(DistributedLockPurpose.InternalPayment)));
 
             builder.RegisterType<ExchangeService>()
+                .WithParameter(TypedParameter.From(_expirationPeriods))
                 .As<IExchangeService>();
         }
     }
