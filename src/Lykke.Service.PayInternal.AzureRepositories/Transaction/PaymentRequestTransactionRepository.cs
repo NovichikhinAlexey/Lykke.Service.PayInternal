@@ -48,7 +48,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
             AzureIndex indexByDueDate = PaymentRequestTransactionEntity.IndexByDueDate.Create(entity);
 
-            await _indexByDueDateStorage.InsertOrMergeAsync(indexByDueDate);
+            if (indexByDueDate != null)
+                await _indexByDueDateStorage.InsertOrMergeAsync(indexByDueDate);
 
             return Mapper.Map<PaymentRequestTransaction>(entity);
         }

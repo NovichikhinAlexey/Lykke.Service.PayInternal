@@ -16,7 +16,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         private decimal _amount;
         private int _confirmations;
         private DateTime? _firstSeen;
-        private DateTime _dueDate;
+        private DateTime? _dueDate;
         private TransactionType _transactionType;
         private BlockchainType _blockchain;
         private TransactionIdentityType _transactionIdentityType;
@@ -98,7 +98,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             }
         }
 
-        public DateTime DueDate
+        public DateTime? DueDate
         {
             get => _dueDate;
             set
@@ -124,7 +124,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
         {
             public static string GeneratePartitionKey(string walletAddress)
             {
-                return walletAddress;
+                return walletAddress ?? "NoWalletAddress";
             }
 
             public static string GenerateRowKey(BlockchainType blockchain, TransactionIdentityType identityType, string identity)
@@ -153,7 +153,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
             public static string GenerateRowKey(string walletAddress)
             {
-                return walletAddress;
+                return walletAddress ?? "NoWalletAddress";
             }
 
             public static AzureIndex Create(PaymentRequestTransactionEntity entity)
@@ -181,9 +181,12 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
             public static AzureIndex Create(PaymentRequestTransactionEntity entity)
             {
-                return AzureIndex.Create(GeneratePartitionKey(entity.DueDate),
-                    GenerateRowKey(entity.IdentityType, entity.Identity, entity.Blockchain, entity.WalletAddress),
-                    entity);
+                return entity.DueDate.HasValue
+                    ? AzureIndex.Create(
+                        GeneratePartitionKey(entity.DueDate.Value),
+                        GenerateRowKey(entity.IdentityType, entity.Identity, entity.Blockchain, entity.WalletAddress),
+                        entity)
+                    : null;
             }
         }
     }
