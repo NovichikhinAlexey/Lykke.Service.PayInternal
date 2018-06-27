@@ -3,27 +3,12 @@
     /// <summary>
     /// Exchange operation details
     /// </summary>
-    public class ExchangeRequest
+    public class ExchangeRequest: PreExchangeRequest
     {
-        /// <summary>
-        /// Gets ot sets merchant id
-        /// </summary>
-        public string MerchantId { get; set; }
-
         /// <summary>
         /// Gets or sets source merchant wallet id
         /// </summary>
         public string SourceMerchantWalletId { get; set; }
-
-        /// <summary>
-        /// Gets or sets source asset id
-        /// </summary>
-        public string SourceAssetId { get; set; }
-
-        /// <summary>
-        /// Gets or sets source amount
-        /// </summary>
-        public decimal SourceAmount { get; set; }
 
         /// <summary>
         /// Gets or sets destination merchant walletd id
@@ -31,8 +16,8 @@
         public string DestMerchantWalletId { get; set; }
 
         /// <summary>
-        /// Gets or sets destination asset id
+        /// Gets or sets expected rate
         /// </summary>
-        public string DestAssetId { get; set; }
+        public decimal ExpectedRate { get; set; }
     }
 }

@@ -467,6 +467,13 @@ namespace Lykke.Service.PayInternal.Client
         Task<ExchangeResponse> ExchangeAsync(ExchangeRequest request);
 
         /// <summary>
+        /// Returns current exchange rate
+        /// </summary>
+        /// <param name="request">PreExchange operation details</param>
+        /// /// <returns>Result of possible exchange execution </returns>
+        Task<ExchangeResponse> PreExchangeAsync(PreExchangeRequest request);
+
+        /// <summary>
         /// Registers new ethereum inbound transaction
         /// </summary>
         /// <param name="request">Transaction registration details</param>
