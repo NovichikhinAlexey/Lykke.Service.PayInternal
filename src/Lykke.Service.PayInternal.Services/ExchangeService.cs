@@ -53,13 +53,17 @@ namespace Lykke.Service.PayInternal.Services
             if (await _assetSettingsService.GetNetworkAsync(cmd.DestAssetId) != network)
                 throw new ExchangeOperationNotSupportedException();
 
+            IAssetPairRate rate = await _assetRatesService.GetCurrentRate(cmd.SourceAssetId, cmd.DestAssetId);
+            if (rate.BidPrice != cmd.ExpectedRate)
+            {
+                throw new ExchangeRateChangedException(rate.BidPrice);
+            }
+
             string hotwallet = _bcnSettingsResolver.GetExchangeHotWallet(network);
 
             IBlockchainApiClient blockchainApiClient = _blockchainClientProvider.Get(network);
 
-            decimal hotwalletBalance = await blockchainApiClient.GetBalanceAsync(hotwallet, cmd.DestAssetId);
-
-            IAssetPairRate rate = await _assetRatesService.GetCurrentRate(cmd.SourceAssetId, cmd.DestAssetId);
+            decimal hotwalletBalance = await blockchainApiClient.GetBalanceAsync(hotwallet, cmd.DestAssetId);            
 
             decimal exchangeAmount = cmd.SourceAmount * rate.BidPrice;
 
@@ -136,6 +140,22 @@ namespace Lykke.Service.PayInternal.Services
                     SourceWalletAddresses = transferTransactionResult.Sources.ToArray()
                 });
             }
+        }
+
+        public async Task<ExchangeResult> PreExchangeAsync(PreExchangeCommand cmd)
+        {
+            IAssetPairRate rate = await _assetRatesService.GetCurrentRate(cmd.SourceAssetId, cmd.DestAssetId);
+
+            decimal exchangeAmount = cmd.SourceAmount * rate.BidPrice;
+
+            return new ExchangeResult
+            {
+                SourceAssetId = cmd.SourceAssetId,
+                SourceAmount = cmd.SourceAmount,
+                DestAssetId = cmd.DestAssetId,
+                DestAmount = exchangeAmount,
+                Rate = rate.BidPrice
+            };
         }
     }
 }
