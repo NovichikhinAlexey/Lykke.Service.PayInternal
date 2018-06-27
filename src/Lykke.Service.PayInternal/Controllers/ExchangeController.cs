@@ -15,7 +15,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
-    [Route("api/exchange")]
+    [Route("api/exchange/[action]")]
     public class ExchangeController : Controller
     {
         private readonly IExchangeService _exchangeService;
@@ -91,6 +91,55 @@ namespace Lykke.Service.PayInternal.Controllers
             catch (ExchangeOperationFailedException e)
             {
                 _log.WriteError(nameof(Execute), new {errors = e.TransferErrors}, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (ExchangeRateChangedException e)
+            {
+                _log.WriteError(nameof(Execute), new
+                {
+                    e.CurrentRate,
+                    request.ExpectedRate
+                }, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+        }
+
+        /// <summary>
+        /// Returns current exchange rate
+        /// </summary>
+        /// <param name="request">PreExchange operation details</param>
+        /// <returns></returns>
+        /// <response code="200">Exchange result</response>
+        /// <response code="400">Asset network not defined, operation not supported, asset pair not found, insufficient funds, exchange failed</response>
+        [HttpPost]
+        [SwaggerOperation(nameof(PreExchange))]
+        [ProducesResponseType(typeof(ExchangeResponse), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ValidateModel]
+        public async Task<IActionResult> PreExchange([FromBody] PreExchangeModel request)
+        {
+            try
+            {
+                ExchangeResult exchangeResult =
+                    await _exchangeService.PreExchangeAsync(Mapper.Map<PreExchangeCommand>(request));
+
+                return Ok(Mapper.Map<ExchangeResponse>(exchangeResult));
+            }
+            catch (InvalidOperationException e)
+            {
+                _log.WriteError(nameof(Execute), request, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (AssetPairUnknownException e)
+            {
+                _log.WriteError(nameof(Execute), new
+                {
+                    e.BaseAssetId,
+                    e.QuotingAssetId
+                }, e);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
