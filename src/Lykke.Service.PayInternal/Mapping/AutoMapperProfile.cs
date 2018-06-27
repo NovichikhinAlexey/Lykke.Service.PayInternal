@@ -117,6 +117,10 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.SourceAssetId, opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.SourceAssetId))
                 .ForMember(dest => dest.DestAssetId, opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.DestAssetId));
 
+            CreateMap<PreExchangeModel, PreExchangeCommand>(MemberList.Destination)
+                .ForMember(dest => dest.SourceAssetId, opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.SourceAssetId))
+                .ForMember(dest => dest.DestAssetId, opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.DestAssetId));
+
             CreateMap<ExchangeResult, ExchangeResponse>(MemberList.Destination)
                 .ForMember(dest => dest.DestAssetId,
                     opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.DestAssetId))

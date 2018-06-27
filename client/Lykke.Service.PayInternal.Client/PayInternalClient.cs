@@ -394,6 +394,11 @@ namespace Lykke.Service.PayInternal.Client
             return _runner.RunWithDefaultErrorHandlingAsync(() => _exchangeApi.ExecuteAsync(request));
         }
 
+        public Task<ExchangeResponse> PreExchangeAsync(PreExchangeRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _exchangeApi.PreExchangeAsync(request));
+        }
+
         public Task RegisterEthereumInboundTransactionAsync(RegisterInboundTxModel request)
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() =>

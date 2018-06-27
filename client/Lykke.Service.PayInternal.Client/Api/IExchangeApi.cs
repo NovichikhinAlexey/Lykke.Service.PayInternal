@@ -6,7 +6,10 @@ namespace Lykke.Service.PayInternal.Client.Api
 {
     internal interface IExchangeApi
     {
-        [Post("/api/exchange")]
+        [Post("/api/exchange/Execute")]
         Task<ExchangeResponse> ExecuteAsync([Body] ExchangeRequest request);
+
+        [Post("/api/exchange/PreExchange")]
+        Task<ExchangeResponse> PreExchangeAsync([Body] PreExchangeRequest request);
     }
 }
