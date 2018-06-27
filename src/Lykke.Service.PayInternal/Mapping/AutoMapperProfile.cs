@@ -161,6 +161,14 @@ namespace Lykke.Service.PayInternal.Mapping
                     opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
                         dest.Confirmations = (int)resContext.Items["Confirmations"]));
 
+            // outgoing ethereum payment complete
+            CreateMap<CompleteOutboundTxRequest, UpdateTransactionCommand>(MemberList.Destination)
+                .ForMember(dest => dest.Confirmations,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.Confirmations = (int) resContext.Items["Confirmations"]))
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress));
+
 
             PaymentRequestApiModels();
 

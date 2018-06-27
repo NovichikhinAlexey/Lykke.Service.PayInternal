@@ -99,8 +99,18 @@ namespace Lykke.Service.PayInternal.Controllers
                             break;
                         case TransactionType.Exchange:
                         case TransactionType.Settlement:
-                            await _transactionsService.UpdateAsync(
-                                Mapper.Map<UpdateTransactionCommand>(request, opt => opt.Items["Confirmations"] = 3));
+                            //todo: for settlement better to map walletaddres because we know it (it is FromAddress)
+                            await _transactionsService.UpdateAsync(new UpdateTransactionCommand
+                            {
+                                Blockchain = request.Blockchain,
+                                Amount = request.Amount,
+                                BlockId = request.BlockId,
+                                Confirmations = 3,
+                                FirstSeen = request.FirstSeen,
+                                Hash = request.Hash,
+                                Identity = request.Identity,
+                                IdentityType = request.IdentityType
+                            });
                             break;
                         default: throw new UnexpectedTransactionTypeException(tx.TransactionType);
                     }
