@@ -104,6 +104,17 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
+            catch (MultipleDefaultMerchantWalletsException e)
+            {
+                _log.WriteError(nameof(Execute), new
+                {
+                    e.AssetId,
+                    e.MerchantId,
+                    e.PaymentDirection
+                }, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
         }
 
         /// <summary>
