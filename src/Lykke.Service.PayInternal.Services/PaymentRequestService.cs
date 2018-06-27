@@ -88,12 +88,14 @@ namespace Lykke.Service.PayInternal.Services
 
             Transfer transfer = await _transferService.GetAsync(transferIds.Single());
 
+            IPaymentRequest paymentRequest = await FindAsync(walletAddress);
+
             return new PaymentRequestRefund
             {
                 Amount = transfer.Amounts.Sum(x => x.Amount ?? 0),
                 Timestamp = transfer.CreatedOn,
                 Address = transfer.Amounts.Unique(x => x.Destination).Single(),
-                DueDate = transactions.OrderByDescending(x => x.DueDate).First().DueDate,
+                DueDate = transactions.OrderByDescending(x => x.DueDate).First().DueDate ?? paymentRequest.DueDate,
                 Transactions = Mapper.Map<IEnumerable<PaymentRequestRefundTransaction>>(transactions)
             };
         }

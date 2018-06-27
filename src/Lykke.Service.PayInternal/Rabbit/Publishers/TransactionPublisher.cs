@@ -44,7 +44,8 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
                 Confirmations = transaction.Confirmations,
                 BlockId = transaction.BlockId,
                 Blockchain = Enum.Parse<BlockchainType>(transaction.Blockchain.ToString()),
-                DueDate = transaction.DueDate
+                //todo
+                DueDate = transaction.DueDate ?? DateTime.UtcNow.AddDays(1)
             };
 
             await _log.WriteInfoAsync(nameof(TransactionPublisher), nameof(PublishAsync), message.ToJson(),
