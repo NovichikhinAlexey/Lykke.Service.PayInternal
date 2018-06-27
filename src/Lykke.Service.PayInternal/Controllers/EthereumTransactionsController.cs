@@ -330,6 +330,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> FailOutboundTransaction([FromBody] FailOutboundTxRequest request)
         {
+            // todo:
             throw new NotImplementedException();
         }
     }

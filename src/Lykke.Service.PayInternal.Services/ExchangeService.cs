@@ -24,29 +24,26 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IBcnSettingsResolver _bcnSettingsResolver;
         private readonly ITransferService _transferService;
         private readonly ITransactionsService _transactionsService;
-        private readonly ITransactionPublisher _transactionPublisher;
-        private readonly ExpirationPeriodsSettings _expirationPeriods;
 
         public ExchangeService(
-            [NotNull] IMerchantWalletService merchantWalletService, 
-            [NotNull] IBlockchainClientProvider blockchainClientProvider, 
-            [NotNull] IAssetRatesService assetRatesService, 
-            [NotNull] IAssetSettingsService assetSettingsService, 
-            [NotNull] IBcnSettingsResolver bcnSettingsResolver, 
-            [NotNull] ITransferService transferService, 
-            [NotNull] ITransactionsService transactionsService, 
-            [NotNull] ITransactionPublisher transactionPublisher, 
-            [NotNull] ExpirationPeriodsSettings expirationPeriods)
+            [NotNull] IMerchantWalletService merchantWalletService,
+            [NotNull] IBlockchainClientProvider blockchainClientProvider,
+            [NotNull] IAssetRatesService assetRatesService,
+            [NotNull] IAssetSettingsService assetSettingsService,
+            [NotNull] IBcnSettingsResolver bcnSettingsResolver,
+            [NotNull] ITransferService transferService,
+            [NotNull] ITransactionsService transactionsService)
         {
-            _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
-            _blockchainClientProvider = blockchainClientProvider ?? throw new ArgumentNullException(nameof(blockchainClientProvider));
+            _merchantWalletService =
+                merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
+            _blockchainClientProvider = blockchainClientProvider ??
+                                        throw new ArgumentNullException(nameof(blockchainClientProvider));
             _assetRatesService = assetRatesService ?? throw new ArgumentNullException(nameof(assetRatesService));
-            _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
+            _assetSettingsService =
+                assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
             _bcnSettingsResolver = bcnSettingsResolver ?? throw new ArgumentNullException(nameof(bcnSettingsResolver));
             _transferService = transferService ?? throw new ArgumentNullException(nameof(transferService));
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
-            _transactionPublisher = transactionPublisher ?? throw new ArgumentNullException(nameof(transactionPublisher));
-            _expirationPeriods = expirationPeriods ?? throw new ArgumentNullException(nameof(expirationPeriods));
         }
 
         public async Task<ExchangeResult> ExecuteAsync(ExchangeCommand cmd)
@@ -78,7 +75,7 @@ namespace Lykke.Service.PayInternal.Services
             await RegisterTransferTxsAsync(toHotWallet);
 
             TransferResult fromHotWallet = await _transferService.ExchangeThrowFail(
-                cmd.DestAssetId, 
+                cmd.DestAssetId,
                 hotwallet,
                 await GetDestWalletAddressAsync(cmd),
                 exchangeAmount);
@@ -109,7 +106,8 @@ namespace Lykke.Service.PayInternal.Services
             return merchantWallet?.WalletAddress;
         }
 
-        private async Task<IMerchantWallet> GetExchangeWalletAsync(ExchangeCommand cmd, PaymentDirection paymentDirection)
+        private async Task<IMerchantWallet> GetExchangeWalletAsync(ExchangeCommand cmd,
+            PaymentDirection paymentDirection)
         {
             string merchantWalletId = cmd.GetWalletId(paymentDirection);
 
@@ -124,23 +122,19 @@ namespace Lykke.Service.PayInternal.Services
         {
             foreach (var transferTransactionResult in transfer.Transactions)
             {
-                IPaymentRequestTransaction exchangeTx = await _transactionsService.CreateTransactionAsync(
-                    new CreateTransactionCommand
-                    {
-                        Amount = transferTransactionResult.Amount,
-                        Blockchain = transfer.Blockchain,
-                        AssetId = transferTransactionResult.AssetId,
-                        Confirmations = 0,
-                        DueDate = DateTime.UtcNow.Add(_expirationPeriods.Exchange),
-                        Hash = transferTransactionResult.Hash,
-                        IdentityType = transferTransactionResult.IdentityType,
-                        Identity = transferTransactionResult.Identity,
-                        TransferId = transfer.Id,
-                        Type = TransactionType.Exchange,
-                        SourceWalletAddresses = transferTransactionResult.Sources.ToArray()
-                    });
-
-                await _transactionPublisher.PublishAsync(exchangeTx);
+                await _transactionsService.CreateTransactionAsync(new CreateTransactionCommand
+                {
+                    Amount = transferTransactionResult.Amount,
+                    Blockchain = transfer.Blockchain,
+                    AssetId = transferTransactionResult.AssetId,
+                    Confirmations = 0,
+                    Hash = transferTransactionResult.Hash,
+                    IdentityType = transferTransactionResult.IdentityType,
+                    Identity = transferTransactionResult.Identity,
+                    TransferId = transfer.Id,
+                    Type = TransactionType.Exchange,
+                    SourceWalletAddresses = transferTransactionResult.Sources.ToArray()
+                });
             }
         }
     }
