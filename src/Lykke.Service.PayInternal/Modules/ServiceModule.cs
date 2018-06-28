@@ -9,6 +9,7 @@ using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.MarketProfile.Client;
+using Lykke.Service.PayHistory.Client;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
@@ -164,6 +165,9 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterInstance(new QBitNinjaClient(_settings.CurrentValue.NinjaServiceClient.ServiceUrl))
                 .AsSelf();
+
+            AutofacExtension.RegisterHistoryOperationPublisher(builder,
+                _settings.CurrentValue.PayHistoryServicePublisher, _log);
         }
 
         private void RegisterCaches(ContainerBuilder builder)

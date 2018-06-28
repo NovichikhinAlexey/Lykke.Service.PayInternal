@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Lykke.Service.PayHistory.Client.Publisher;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Core.Settings.SlackNotifications;
 using Lykke.SettingsReader.Attributes;
@@ -16,6 +17,7 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public EthereumServiceClientSettings EthereumServiceClient { get; set; }
         public AssetsMapSettings AssetsMap { get; set; }
         public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
+        public RabbitMqPublisherSettings PayHistoryServicePublisher { get; set; }
     }
 
     public class BitcoinCoreSettings

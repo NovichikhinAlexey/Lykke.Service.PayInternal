@@ -11,9 +11,10 @@
     <None Remove="Domain\PaymentRequest\**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Lykke.Common" Version="6.8.6" />
+    <PackageReference Include="Lykke.Common" Version="7.0.1" />
     <PackageReference Include="Lykke.Service.Assets.Client" Version="4.0.1" />
     <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.0.22" />
+    <PackageReference Include="Lykke.Service.PayHistory.Client" Version="1.0.1" />
     <PackageReference Include="Lykke.SettingsReader" Version="2.4.0" />
   </ItemGroup>
 </Project>

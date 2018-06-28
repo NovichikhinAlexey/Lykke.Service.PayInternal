@@ -139,6 +139,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories
 
             builder.RegisterInstance<IMerchantWalletRespository>(new MerchantWalletRepository(
                 AzureTableStorage<MerchantWalletEntity>.Create(_merchantsConnectionString, merchantWalletsTableName, _log),
+                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantWalletsTableName, _log),
                 AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantWalletsTableName, _log)));
 
             builder.RegisterInstance<IAssetPairRateRepository>(new AssetPairRateRepository(

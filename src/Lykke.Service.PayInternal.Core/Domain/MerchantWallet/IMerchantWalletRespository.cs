@@ -7,7 +7,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.MerchantWallet
     {
         Task<IMerchantWallet> CreateAsync(IMerchantWallet src);
 
-        Task<IMerchantWallet> GetAsync(string merchantId, BlockchainType network, string walletAddress);
+        Task<IMerchantWallet> GetByAddressAsync(BlockchainType network, string walletAddress);
 
         Task<IMerchantWallet> GetByIdAsync(string id);
 

@@ -176,6 +176,20 @@ namespace Lykke.Service.PayInternal.Services
             }
         }
 
+        public async Task<IMerchantWallet> GetByAddressAsync(BlockchainType network, string walletAddress)
+        {
+            try
+            {
+                return await _merchantWalletRespository.GetByAddressAsync(network, walletAddress);
+            }
+            catch (KeyNotFoundException e)
+            {
+                _log.WriteError(nameof(GetByAddressAsync), new { network, walletAddress }, e);
+
+                throw new MerchantWalletNotFoundException(string.Empty, network, walletAddress);
+            }
+        }
+
         public async Task<IReadOnlyList<MerchantWalletBalanceLine>> GetBalancesAsync(string merchantId)
         {
             var balances = new List<MerchantWalletBalanceLine>();
