@@ -173,6 +173,18 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.WalletAddress,
                     opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress));
 
+            // outgoing ethereum payment not enough funds
+            CreateMap<NotEnoughFundsOutboundTxRequest, UpdateTransactionCommand>(MemberList.Destination)
+                .ForMember(dest => dest.Amount, opt => opt.UseValue(0))
+                .ForMember(dest => dest.Confirmations,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.Confirmations = (int) resContext.Items["Confirmations"]))
+                .ForMember(dest => dest.BlockId, opt => opt.Ignore())
+                .ForMember(dest => dest.Confirmations, opt => opt.Ignore())
+                .ForMember(dest => dest.FirstSeen, opt => opt.Ignore())
+                .ForMember(dest => dest.Hash, opt => opt.Ignore())
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress));
 
             PaymentRequestApiModels();
 

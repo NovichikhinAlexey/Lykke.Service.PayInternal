@@ -42,5 +42,8 @@ namespace Lykke.Service.PayInternal.Client.Api
 
         [Post("/api/ethereumTransactions/outbound/fail")]
         Task FailEthereumOutboundTransactionAsync([Body] FailOutboundTxModel request);
+
+        [Post("/api/ethereumTransactions/outbound/notEnoughFunds")]
+        Task FailEthereumOutboundTransactionAsync([Body] NotEnoughFundsOutboundTxModel request);
     }
 }

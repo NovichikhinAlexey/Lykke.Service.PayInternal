@@ -513,5 +513,12 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request">Transaction identification details</param>
         /// <returns></returns>
         Task FailEthereumOutboundTransactionAsync(FailOutboundTxModel request);
+
+        /// <summary>
+        ///  Marks ethereum outbound transaction as complemeted with zero amount
+        /// </summary>
+        /// <param name="request">Transaction identification details</param>
+        /// <returns></returns>
+        Task FailEthereumOutboundTransactionAsync(NotEnoughFundsOutboundTxModel request);
     }
 }

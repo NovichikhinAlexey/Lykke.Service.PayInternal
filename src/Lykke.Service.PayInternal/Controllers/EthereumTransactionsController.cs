@@ -7,6 +7,7 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -311,7 +312,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     }
                 }
 
-                return Ok();
+                return NoContent();
             }
             catch (OutboundTransactionsNotFound e)
             {
@@ -342,6 +343,59 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             // todo:
             throw new NotImplementedException();
+        }
+
+        [HttpPost]
+        [Route("outbound/notEnoughFunds")]
+        [SwaggerOperation(nameof(FailOutboundTransaction))]
+        [ProducesResponseType(typeof(void), (int)HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ValidateModel]
+        public async Task<IActionResult> FailOutboundTransaction([FromBody] NotEnoughFundsOutboundTxRequest request)
+        {
+            try
+            {
+                var txs = (await _transactionsService.GetByBcnIdentityAsync(
+                    request.Blockchain,
+                    request.IdentityType,
+                    request.Identity)).ToList();
+
+                if (!txs.Any())
+                    throw new OutboundTransactionsNotFound(request.Blockchain, request.IdentityType, request.Identity);
+
+                foreach (var tx in txs)
+                {
+                    switch (tx.TransactionType)
+                    {
+                        case TransactionType.Payment:
+                            await _transactionsService.UpdateAsync(
+                                Mapper.Map<UpdateTransactionCommand>(request, opt => opt.Items["Confirmations"] = 3));
+                            await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress,
+                                PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.PaymentAmountBelow));
+                            break;
+                        default: throw new UnexpectedTransactionTypeException(tx.TransactionType);
+                    }
+                }
+
+                return NoContent();
+            }
+            catch (OutboundTransactionsNotFound e)
+            {
+                _log.WriteError("NotEnoughFundsOutboundTx", new
+                {
+                    e.Blockchain,
+                    e.Identity,
+                    e.IdentityType
+                }, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (UnexpectedTransactionTypeException e)
+            {
+                _log.WriteError("NotEnoughFundsOutboundTx", new {e.TransactionType}, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
         }
     }
 }
