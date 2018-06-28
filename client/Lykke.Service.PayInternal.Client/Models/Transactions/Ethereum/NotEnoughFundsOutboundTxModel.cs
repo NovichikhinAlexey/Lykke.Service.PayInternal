@@ -31,11 +31,6 @@
         public BlockchainType Blockchain { get; set; }
 
         /// <summary>
-        /// Gets or sets amount
-        /// </summary>
-        public decimal Amount { get; set; }
-
-        /// <summary>
         /// Gets or sets source address
         /// </summary>
         public string FromAddress { get; set; }

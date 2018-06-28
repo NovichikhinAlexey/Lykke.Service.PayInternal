@@ -43,12 +43,6 @@ namespace Lykke.Service.PayInternal.Models.Transactions.Ethereum
         public BlockchainType Blockchain { get; set; }
 
         /// <summary>
-        /// Gets or sets amount
-        /// </summary>
-        [Required]
-        public decimal Amount { get; set; }
-
-        /// <summary>
         /// Gets or sets source address
         /// </summary>
         [Required]
