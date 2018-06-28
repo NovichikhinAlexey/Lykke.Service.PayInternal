@@ -74,24 +74,15 @@ namespace Lykke.Service.PayInternal.Services
                 object response = await _ethereumServiceClient.ApiAirlinesErc20depositsTransferPostAsync(
                     _ethereumSettings.ApiKey, transferRequest);
 
-                var errorMessage = string.Empty;
+                var ex = response as ApiException;
 
-                var operationId = string.Empty;
+                var operation = response as OperationIdResponse;
 
-                if (response is ApiException ex)
-                {
+                if (ex != null)
                     _log.WriteWarning(nameof(TransferAsync), transferAmount, ex.Error?.ToJson());
 
-                    errorMessage = ex.Error?.Message;
-                }
-                else if (response is OperationIdResponse op)
-                {
-                    operationId = op.OperationId;
-                }
-                else
-                {
+                if (ex == null && operation == null)
                     throw new UnrecognizedApiResponse(response?.GetType().FullName ?? "Response object is null");
-                }
 
                 result.Transactions.Add(new BlockchainTransactionResult
                 {
@@ -99,10 +90,11 @@ namespace Lykke.Service.PayInternal.Services
                     AssetId = asset.DisplayId,
                     Hash = string.Empty,
                     IdentityType = TransactionIdentityType.Specific,
-                    Identity = operationId,
-                    Sources = new List<string> { transferAmount.Source },
-                    Destinations = new List<string> { transferAmount.Destination },
-                    Error = errorMessage
+                    Identity = operation?.OperationId ?? string.Empty,
+                    Sources = new List<string> {transferAmount.Source},
+                    Destinations = new List<string> {transferAmount.Destination},
+                    Error = ex?.Error?.Message ?? string.Empty,
+                    ErrorType = ex.GetDomainError()
                 });
             }
 
