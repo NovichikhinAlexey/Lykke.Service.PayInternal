@@ -368,10 +368,11 @@ namespace Lykke.Service.PayInternal.Controllers
                     switch (tx.TransactionType)
                     {
                         case TransactionType.Payment:
+                            _log.WriteInfo("NotEnoughFundsOutboundTx", request, "Processing payment transaction as failed");
                             await _transactionsService.UpdateAsync(
                                 Mapper.Map<UpdateTransactionCommand>(request, opt => opt.Items["Confirmations"] = 3));
                             await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress,
-                                PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.PaymentAmountBelow));
+                                PaymentRequestStatusInfo.New());
                             break;
                         default: throw new UnexpectedTransactionTypeException(tx.TransactionType);
                     }
