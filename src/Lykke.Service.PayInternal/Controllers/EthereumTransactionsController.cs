@@ -174,7 +174,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     e.MerchantId,
                     e.Network,
                     e.WalletAddress
-                });
+                }, e);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
@@ -393,7 +393,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     e.MerchantId,
                     e.Network,
                     e.WalletAddress
-                });
+                }, e);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
