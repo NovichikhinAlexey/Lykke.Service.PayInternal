@@ -103,5 +103,26 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantWallet
                 return AzureIndex.Create(GeneratePartitionKey(src.Id), GenerateRowKey(), src);
             }
         }
+
+        public static class IndexByAddress
+        {
+            public static string GeneratePartitionKey(BlockchainType network, string walletAddress)
+            {
+                if (!walletAddress.IsValidPartitionOrRowKey())
+                    throw new InvalidRowKeyValueException(nameof(walletAddress), walletAddress);
+
+                return $"{network.ToString()}_{walletAddress}";
+            }
+
+            public static string GenerateRowKey()
+            {
+                return "IndexByWallet";
+            }
+
+            public static AzureIndex Create(MerchantWalletEntity src)
+            {
+                return AzureIndex.Create(GeneratePartitionKey(src.Network, src.WalletAddress), GenerateRowKey(), src);
+            }
+        }
     }
 }

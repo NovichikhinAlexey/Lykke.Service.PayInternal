@@ -6,7 +6,9 @@ using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Service.PayHistory.Client.Publisher;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -24,16 +26,22 @@ namespace Lykke.Service.PayInternal.Controllers
     {
         private readonly ITransactionsService _transactionsService;
         private readonly IPaymentRequestService _paymentRequestService;
+        private readonly HistoryOperationPublisher _historyOperationPublisher;
+        private readonly IMerchantWalletService _merchantWalletService;
         private readonly ILog _log;
 
         public EthereumTransactionsController(
             [NotNull] ITransactionsService transactionsService, 
             [NotNull] IPaymentRequestService paymentRequestService, 
-            [NotNull] ILog log)
+            [NotNull] ILog log, 
+            [NotNull] HistoryOperationPublisher historyOperationPublisher, 
+            [NotNull] IMerchantWalletService merchantWalletService)
         {
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
             _paymentRequestService = paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
             _log = log ?? throw new ArgumentNullException(nameof(log));
+            _historyOperationPublisher = historyOperationPublisher ?? throw new ArgumentNullException(nameof(historyOperationPublisher));
+            _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
         }
 
         [HttpPost]
@@ -81,6 +89,19 @@ namespace Lykke.Service.PayInternal.Controllers
                                 SourceWalletAddresses = new[] {request.FromAddress},
                                 Type = TransactionType.CashIn
                             });
+
+                            IMerchantWallet merchantWallet =
+                                await _merchantWalletService.GetByAddressAsync(request.Blockchain, request.ToAddress);
+
+                            await _historyOperationPublisher.PublishAsync(new HistoryOperation
+                            {
+                                Amount = request.Amount,
+                                AssetId = request.AssetId,
+                                Type = HistoryOperationType.Recharge,
+                                CreatedOn = DateTime.UtcNow,
+                                TxHash = request.Hash,
+                                MerchantId = merchantWallet?.MerchantId,
+                            });
                             break;
                         default: throw new UnexpectedWorkflowTypeException(request.WorkflowType);
                     }
@@ -99,8 +120,35 @@ namespace Lykke.Service.PayInternal.Controllers
                             await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
                             break;
                         case TransactionType.Exchange:
+                            // todo: move 3 to settings
+                            await _transactionsService.UpdateAsync(new UpdateTransactionCommand
+                            {
+                                Blockchain = request.Blockchain,
+                                Amount = request.Amount,
+                                BlockId = request.BlockId,
+                                Confirmations = 3,
+                                FirstSeen = request.FirstSeen,
+                                Hash = request.Hash,
+                                Identity = request.Identity,
+                                IdentityType = request.IdentityType
+                            });
+
+                            IMerchantWallet merchantWallet =
+                                await _merchantWalletService.GetByAddressAsync(request.Blockchain, request.ToAddress);
+
+                            await _historyOperationPublisher.PublishAsync(new HistoryOperation
+                            {
+                                Amount = request.Amount,
+                                AssetId = request.AssetId,
+                                Type = HistoryOperationType.IncomingExchange,
+                                CreatedOn = DateTime.UtcNow,
+                                TxHash = request.Hash,
+                                MerchantId = merchantWallet?.MerchantId,
+                            });
+                            break;
                         case TransactionType.Settlement:
-                            //todo: for settlement better to map walletaddres because we know it (it is FromAddress)
+                            // todo: move 3 to settings
+                            // todo: for settlement better to map walletaddres because we know it (it is FromAddress)
                             await _transactionsService.UpdateAsync(new UpdateTransactionCommand
                             {
                                 Blockchain = request.Blockchain,
@@ -118,6 +166,17 @@ namespace Lykke.Service.PayInternal.Controllers
                 }
 
                 return Ok();
+            }
+            catch (MerchantWalletNotFoundException e)
+            {
+                _log.WriteError(nameof(RegisterInboundTransaction), new
+                {
+                    e.MerchantId,
+                    e.Network,
+                    e.WalletAddress
+                });
+
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (PaymentRequestNotFoundException e)
             {
@@ -294,6 +353,19 @@ namespace Lykke.Service.PayInternal.Controllers
                                 FirstSeen = tx.FirstSeen,
                                 Hash = tx.TransactionId
                             });
+
+                            IMerchantWallet merchantWallet =
+                                await _merchantWalletService.GetByAddressAsync(request.Blockchain, request.FromAddress);
+
+                            await _historyOperationPublisher.PublishAsync(new HistoryOperation
+                            {
+                                Amount = request.Amount,
+                                AssetId = tx.AssetId,
+                                Type = HistoryOperationType.OutgoingExchange,
+                                CreatedOn = DateTime.UtcNow,
+                                TxHash = request.Hash,
+                                MerchantId = merchantWallet?.MerchantId,
+                            });
                             break;
                         case TransactionType.Settlement:
                             await _transactionsService.UpdateAsync(new UpdateTransactionCommand
@@ -313,6 +385,17 @@ namespace Lykke.Service.PayInternal.Controllers
                 }
 
                 return NoContent();
+            }
+            catch (MerchantWalletNotFoundException e)
+            {
+                _log.WriteError(nameof(CompleteOutboundTransaction), new
+                {
+                    e.MerchantId,
+                    e.Network,
+                    e.WalletAddress
+                });
+
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (OutboundTransactionsNotFound e)
             {
