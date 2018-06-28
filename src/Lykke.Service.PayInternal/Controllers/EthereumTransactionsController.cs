@@ -6,6 +6,7 @@ using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Service.PayHistory.Client.Models;
 using Lykke.Service.PayHistory.Client.Publisher;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
@@ -167,6 +168,12 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok();
             }
+            catch (PayHistoryApiException e)
+            {
+                _log.WriteError(nameof(RegisterInboundTransaction), request, e);
+
+                return Ok();
+            }
             catch (MerchantWalletNotFoundException e)
             {
                 _log.WriteError(nameof(RegisterInboundTransaction), new
@@ -176,7 +183,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     e.WalletAddress
                 }, e);
 
-                return BadRequest(ErrorResponse.Create(e.Message));
+                return Ok();
             }
             catch (PaymentRequestNotFoundException e)
             {
@@ -386,6 +393,12 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return NoContent();
             }
+            catch (PayHistoryApiException e)
+            {
+                _log.WriteError(nameof(CompleteOutboundTransaction), request, e);
+
+                return Ok();
+            }
             catch (MerchantWalletNotFoundException e)
             {
                 _log.WriteError(nameof(CompleteOutboundTransaction), new
@@ -395,7 +408,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     e.WalletAddress
                 }, e);
 
-                return BadRequest(ErrorResponse.Create(e.Message));
+                return Ok();
             }
             catch (OutboundTransactionsNotFound e)
             {
