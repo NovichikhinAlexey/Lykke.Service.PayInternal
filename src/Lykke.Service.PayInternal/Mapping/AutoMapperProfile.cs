@@ -180,7 +180,6 @@ namespace Lykke.Service.PayInternal.Mapping
                     opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
                         dest.Confirmations = (int) resContext.Items["Confirmations"]))
                 .ForMember(dest => dest.BlockId, opt => opt.Ignore())
-                .ForMember(dest => dest.Confirmations, opt => opt.Ignore())
                 .ForMember(dest => dest.FirstSeen, opt => opt.Ignore())
                 .ForMember(dest => dest.Hash, opt => opt.Ignore())
                 .ForMember(dest => dest.WalletAddress,
