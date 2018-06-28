@@ -11,7 +11,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Exchange
         {
         }
 
-        public ExchangeRateChangedException(decimal currentRate):this($"Exchange rate is changed with {currentRate}.")
+        public ExchangeRateChangedException(decimal currentRate):this($"The exchange rate has been changed.")
         {
             CurrentRate = currentRate;
         }
