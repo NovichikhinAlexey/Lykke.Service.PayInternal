@@ -13,6 +13,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transfer
 
         public string Error { get; set; }
 
+        public TransactionErrorType ErrorType { get; set; }
+
         public IEnumerable<string> Sources { get; set; }
 
         public IEnumerable<string> Destinations { get; set; }

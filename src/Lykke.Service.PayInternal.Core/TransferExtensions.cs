@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -57,6 +58,12 @@ namespace Lykke.Service.PayInternal.Core
         {
             TransferResult transferResult = await src.ExecuteAsync(assetId, sourceAddress, destAddress, amount);
 
+            foreach (var transactionResult in transferResult.Transactions)
+            {
+                if (transactionResult.ErrorType == TransactionErrorType.NotEnoughFunds)
+                    throw new InsufficientFundsException(sourceAddress, assetId);
+            }
+
             if (!transferResult.HasSuccess())
                 throw new ExchangeOperationFailedException { TransferErrors = transferResult.GetErrors() };
 
@@ -84,6 +91,12 @@ namespace Lykke.Service.PayInternal.Core
             string sourceAddress, string destAddress, decimal? amount = null)
         {
             TransferResult transferResult = await src.ExecuteAsync(assetId, sourceAddress, destAddress, amount);
+
+            foreach (var transactionResult in transferResult.Transactions)
+            {
+                if (transactionResult.ErrorType == TransactionErrorType.NotEnoughFunds)
+                    throw new InsufficientFundsException(sourceAddress, assetId);
+            }
 
             if (!transferResult.HasSuccess())
                 throw new PaymentOperationFailedException {TransferErrors = transferResult.GetErrors()};

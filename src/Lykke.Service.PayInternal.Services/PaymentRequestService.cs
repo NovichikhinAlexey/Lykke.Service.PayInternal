@@ -257,8 +257,8 @@ namespace Lykke.Service.PayInternal.Services
 
                 transferResult = await _transferService.PayThrowFail(
                     paymentRequest.PaymentAssetId,
-                    payerWalletAddress, 
-                    destinationWalletAddress, 
+                    payerWalletAddress,
+                    destinationWalletAddress,
                     cmd.Amount);
 
                 foreach (var transferResultTransaction in transferResult.Transactions)
@@ -283,10 +283,13 @@ namespace Lykke.Service.PayInternal.Services
                     await _transactionPublisher.PublishAsync(paymentTx);
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                await UpdateStatusAsync(paymentRequest.WalletAddress,
-                    PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.UnknownPayment));
+                PaymentRequestStatusInfo newStatus = e is InsufficientFundsException
+                    ? PaymentRequestStatusInfo.New()
+                    : PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.UnknownPayment);
+
+                await UpdateStatusAsync(paymentRequest.WalletAddress, newStatus);
 
                 await _paymentLocksService.ReleaseLockAsync(paymentRequest.Id, cmd.MerchantId);
 
