@@ -423,6 +423,12 @@ namespace Lykke.Service.PayInternal.Client
                 _payInternalApi.FailEthereumOutboundTransactionAsync(request));
         }
 
+        public Task FailEthereumOutboundTransactionAsync(NotEnoughFundsOutboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.FailEthereumOutboundTransactionAsync(request));
+        }
+
         public void Dispose()
         {
             _httpClient?.Dispose();
