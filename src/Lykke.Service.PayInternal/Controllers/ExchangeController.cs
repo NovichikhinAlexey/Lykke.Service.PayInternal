@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -111,6 +112,27 @@ namespace Lykke.Service.PayInternal.Controllers
                     e.AssetId,
                     e.MerchantId,
                     e.PaymentDirection
+                }, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (DefaultMerchantWalletNotFoundException e)
+            {
+                _log.WriteError(nameof(Execute), new
+                {
+                    e.AssetId,
+                    e.MerchantId,
+                    e.PaymentDirection
+                });
+
+                return BadRequest(ErrorResponse.Create(e.MerchantId));
+            }
+            catch (MerchantWalletOwnershipException e)
+            {
+                _log.WriteError(nameof(Execute), new
+                {
+                    e.MerchantId,
+                    e.WalletAddress
                 }, e);
 
                 return BadRequest(ErrorResponse.Create(e.Message));

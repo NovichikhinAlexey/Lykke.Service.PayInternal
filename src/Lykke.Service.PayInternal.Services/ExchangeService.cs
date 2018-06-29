@@ -100,6 +100,9 @@ namespace Lykke.Service.PayInternal.Services
         {
             IMerchantWallet merchantWallet = await GetExchangeWalletAsync(cmd, PaymentDirection.Outgoing);
 
+            if (merchantWallet.MerchantId != cmd.MerchantId)
+                throw new MerchantWalletOwnershipException(cmd.MerchantId, merchantWallet.WalletAddress);
+
             return merchantWallet?.WalletAddress;
         }
 

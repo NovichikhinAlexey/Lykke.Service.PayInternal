@@ -90,12 +90,22 @@ namespace Lykke.Service.PayInternal.Services
                 .Keyed<IDistributedLocksService>(DistributedLockPurpose.InternalPayment)
                 .SingleInstance();
 
+            builder.RegisterType<RedisLocksService>()
+                .WithParameter(TypedParameter.From(_cacheSettings.CheckoutLocksCacheKeyPattern))
+                .Keyed<IDistributedLocksService>(DistributedLockPurpose.OrderCheckout)
+                .SingleInstance();
+
             builder.RegisterType<PaymentRequestService>()
                 .As<IPaymentRequestService>()
                 .WithParameter(TypedParameter.From(_expirationPeriods))
                 .WithParameter(new ResolvedParameter(
-                    (pi, ctx) => pi.ParameterType == typeof(IDistributedLocksService),
-                    (pi, ctx) => ctx.ResolveKeyed<IDistributedLocksService>(DistributedLockPurpose.InternalPayment)));
+                    (pi, ctx) => pi.ParameterType == typeof(IDistributedLocksService) &&
+                                 pi.Name == "paymentLocksService",
+                    (pi, ctx) => ctx.ResolveKeyed<IDistributedLocksService>(DistributedLockPurpose.InternalPayment)))
+                .WithParameter(new ResolvedParameter(
+                    (pi, ctx) => pi.ParameterType == typeof(IDistributedLocksService) &&
+                                 pi.Name == "checkoutLocksService",
+                    (pi, ctx) => ctx.ResolveKeyed<IDistributedLocksService>(DistributedLockPurpose.OrderCheckout)));
 
             builder.RegisterType<ExchangeService>()
                 .As<IExchangeService>();

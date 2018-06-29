@@ -33,7 +33,7 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IEthereumCoreAPI ethereumServiceClient, 
             [NotNull] EthereumBlockchainSettings ethereumSettings, 
             [NotNull] IAssetsLocalCache assetsLocalCache, 
-            [NotNull] IAssetsService assetsService, 
+            [NotNull] IAssetsService assetsService,
             [NotNull] ILykkeAssetsResolver lykkeAssetsResolver, 
             [NotNull] ILog log)
         {

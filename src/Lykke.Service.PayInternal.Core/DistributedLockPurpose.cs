@@ -2,6 +2,7 @@
 {
     public enum DistributedLockPurpose
     {
-        InternalPayment
+        InternalPayment,
+        OrderCheckout
     }
 }

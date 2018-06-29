@@ -16,6 +16,7 @@ using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Services.Domain;
+using Polly;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -32,6 +33,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ExpirationPeriodsSettings _expirationPeriods;
         private readonly IMerchantWalletService _merchantWalletService;
         private readonly IDistributedLocksService _paymentLocksService;
+        private readonly IDistributedLocksService _checkoutLocksService;
         private readonly ITransactionPublisher _transactionPublisher;
         private readonly ILog _log;
 
@@ -47,7 +49,8 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] ExpirationPeriodsSettings expirationPeriods,
             [NotNull] IMerchantWalletService merchantWalletService, 
             [NotNull] IDistributedLocksService paymentLocksService, 
-            [NotNull] ITransactionPublisher transactionPublisher)
+            [NotNull] ITransactionPublisher transactionPublisher, 
+            [NotNull] IDistributedLocksService checkoutLocksService)
         {
             _paymentRequestRepository = paymentRequestRepository ?? throw new ArgumentNullException(nameof(paymentRequestRepository));
             _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
@@ -61,6 +64,7 @@ namespace Lykke.Service.PayInternal.Services
             _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
             _paymentLocksService = paymentLocksService ?? throw new ArgumentNullException(nameof(paymentLocksService));
             _transactionPublisher = transactionPublisher ?? throw new ArgumentNullException(nameof(transactionPublisher));
+            _checkoutLocksService = checkoutLocksService ?? throw new ArgumentNullException(nameof(checkoutLocksService));
         }
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -150,21 +154,12 @@ namespace Lykke.Service.PayInternal.Services
             if (paymentRequest.Status != PaymentRequestStatus.New)
                 return paymentRequest;
 
-            await _walletsManager.EnsureBcnAddressAllocated(paymentRequest.MerchantId, paymentRequest.WalletAddress,
-                paymentRequest.PaymentAssetId);
-
-            IOrder order = await _orderService.GetLatestOrCreateAsync(paymentRequest, force);
-
-            if (paymentRequest.OrderId != order.Id)
-            {
-                paymentRequest.OrderId = order.Id;
-                await _paymentRequestRepository.UpdateAsync(paymentRequest);
-
-                await _log.WriteInfoAsync(nameof(PaymentRequestService), nameof(CheckoutAsync),
-                    paymentRequest.ToJson(), "Payment request order updated.");
-            }
-
-            return paymentRequest;
+            return await Policy
+                .Handle<DistributedLockAcquireException>()
+                .WaitAndRetryForeverAsync(
+                    attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                    (ex, timespan) => _log.WriteErrorAsync("Acquiring checkout lock with retry", new {paymentRequestId}.ToJson(), ex))
+                .ExecuteAsync(() => TryCheckoutAsync(paymentRequest, force));
         }
 
         public async Task UpdateStatusAsync(string walletAddress, PaymentRequestStatusInfo statusInfo = null)
@@ -357,6 +352,38 @@ namespace Lykke.Service.PayInternal.Services
                 AssetId = paymentRequest.PaymentAssetId,
                 Amount = transferResult.GetSuccedeedTxs().Sum(x => x.Amount)
             };
+        }
+
+        private async Task<IPaymentRequest> TryCheckoutAsync(IPaymentRequest paymentRequest, bool force)
+        {
+            bool locked = await _checkoutLocksService.TryAcquireLockAsync(
+                paymentRequest.Id,
+                paymentRequest.MerchantId,
+                paymentRequest.DueDate);
+
+            if (!locked)
+                throw new DistributedLockAcquireException(paymentRequest.Id);
+
+            try
+            {
+                await _walletsManager.EnsureBcnAddressAllocated(paymentRequest.MerchantId,
+                    paymentRequest.WalletAddress,
+                    paymentRequest.PaymentAssetId);
+
+                IOrder order = await _orderService.GetLatestOrCreateAsync(paymentRequest, force);
+
+                if (paymentRequest.OrderId != order.Id)
+                {
+                    paymentRequest.OrderId = order.Id;
+                    await _paymentRequestRepository.UpdateAsync(paymentRequest);
+                }
+            }
+            finally
+            {
+                await _checkoutLocksService.ReleaseLockAsync(paymentRequest.Id, paymentRequest.MerchantId);
+            }
+
+            return paymentRequest;
         }
     }
 }
