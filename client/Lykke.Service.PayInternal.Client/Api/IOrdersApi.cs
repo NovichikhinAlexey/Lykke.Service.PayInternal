@@ -11,5 +11,8 @@ namespace Lykke.Service.PayInternal.Client.Api
 
         [Post("/api/orders")]
         Task<OrderModel> ChechoutAsync([Body] ChechoutRequestModel model);
+
+        [Post("/api/orders/calculate")]
+        Task<CalculatedAmountResponse> GetCalculatedAmountInfoAsync([Body] GetCalculatedAmountInfoRequest model);
     }
 }

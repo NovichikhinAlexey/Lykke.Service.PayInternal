@@ -6,6 +6,7 @@ using Common;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
+using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -30,7 +31,7 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             _paymentRequestService = paymentRequestService;
             _orderService = orderService;
-            _log = log;
+            _log = log.CreateComponentScope(nameof(OrdersController));
         }
 
         /// <summary>
@@ -60,7 +61,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (Exception exception)
             {
-                await _log.WriteErrorAsync(nameof(OrdersController), nameof(GetAsync),
+                _log.WriteError(nameof(GetAsync),
                     new {PaymentRequestId = paymentRequestId}.ToJson(), exception);
 
                 throw;
@@ -92,29 +93,57 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException assetEx)
             {
-                await _log.WriteErrorAsync(nameof(OrdersController), nameof(ChechoutAsync),
+                _log.WriteErrorAsync(nameof(ChechoutAsync),
                     new {assetEx.Asset}.ToJson(), assetEx);
 
                 return BadRequest(ErrorResponse.Create(assetEx.Message));
             }
             catch (AssetNetworkNotDefinedException networkEx)
             {
-                await _log.WriteErrorAsync(nameof(OrdersController), nameof(ChechoutAsync),
+                _log.WriteErrorAsync(nameof(ChechoutAsync),
                     new {networkEx.AssetId}.ToJson(), networkEx);
 
                 return BadRequest(ErrorResponse.Create(networkEx.Message));
             }
             catch (MarkupNotFoundException markupEx)
             {
-                await _log.WriteErrorAsync(nameof(OrdersController), nameof(ChechoutAsync),
+                _log.WriteErrorAsync(nameof(ChechoutAsync),
                     new { markupEx.MerchantId, markupEx.AssetPairId }.ToJson(), markupEx);
 
                 return BadRequest(ErrorResponse.Create(markupEx.Message));
             }
             catch (Exception ex)
             {
-                await _log.WriteErrorAsync(nameof(OrdersController), nameof(ChechoutAsync),
+                _log.WriteErrorAsync(nameof(ChechoutAsync),
                     model.ToJson(), ex);
+
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Creates an order if it does not exist or expired.
+        /// </summary>
+        /// <param name="model">The order creation information.</param>
+        /// <returns>An active order related with payment request.</returns>
+        /// <response code="200">An active order related with payment request.</response>
+        [HttpPost]
+        [Route("orders/calculate")]
+        [SwaggerOperation("GetCalculatedAmountInfo")]
+        [ProducesResponseType(typeof(ICalculatedAmountInfo), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ValidateModel]
+        public async Task<IActionResult> GetCalculatedAmountInfoAsync([FromBody] GetCalculatedAmountInfoRequest model)
+        {
+            try
+            {
+                ICalculatedAmountInfo calculatedAmountInfo = await _orderService.GetCalculatedAmountInfoAsync(model.SettlementAssetId, model.PaymentAssetId, model.Amount, model.MerchantId);
+
+                return Ok(calculatedAmountInfo);
+            }
+            catch (Exception ex)
+            {
+                _log.WriteErrorAsync(nameof(GetCalculatedAmountInfoAsync), model.ToJson(), ex);
 
                 throw;
             }
