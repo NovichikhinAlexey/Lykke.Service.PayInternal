@@ -1,5 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
-using JetBrains.Annotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using Common;
 using Lykke.Service.PayInternal.Validation;
 
 namespace Lykke.Service.PayInternal.Models.Exchange
@@ -28,6 +29,7 @@ namespace Lykke.Service.PayInternal.Models.Exchange
         /// Gets or sets source amount
         /// </summary>
         [Required]
+        [Range(Double.Epsilon, Double.MaxValue, ErrorMessage = "Source amount must be greater than 0")]
         public decimal SourceAmount { get; set; }
 
         /// <summary>
