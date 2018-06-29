@@ -40,7 +40,7 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
             _paymentRequestService = paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _log = log?.CreateComponentScope(nameof(EthereumTransactionsController)) ?? throw new ArgumentNullException(nameof(log));
             _historyOperationPublisher = historyOperationPublisher ?? throw new ArgumentNullException(nameof(historyOperationPublisher));
             _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
         }
@@ -54,6 +54,8 @@ namespace Lykke.Service.PayInternal.Controllers
         public async Task<IActionResult> RegisterInboundTransaction(
             [FromBody] RegisterInboundTxRequest request)
         {
+            _log.WriteInfo(nameof(RegisterInboundTransaction), request, "Started");
+
             try
             {
                 var txs = (await _transactionsService.GetByBcnIdentityAsync(
@@ -67,6 +69,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     {
                         // payment
                         case WorkflowType.LykkePay:
+                            _log.WriteInfo(nameof(RegisterInboundTransaction), request, "Incoming payment LykkePay");
                             //todo: move 3 to settings
                             var cmd = Mapper.Map<CreateTransactionCommand>(request,
                                 opt => opt.Items["Confirmations"] = 3);
@@ -75,6 +78,7 @@ namespace Lykke.Service.PayInternal.Controllers
                             break;
                         // cashin
                         case WorkflowType.Airlines:
+                            _log.WriteInfo(nameof(RegisterInboundTransaction), request, "Incoming Cashin IATA");
                             await _transactionsService.CreateTransactionAsync(new CreateTransactionCommand
                             {
                                 Amount = request.Amount,
@@ -94,6 +98,7 @@ namespace Lykke.Service.PayInternal.Controllers
                             IMerchantWallet merchantWallet =
                                 await _merchantWalletService.GetByAddressAsync(request.Blockchain, request.ToAddress);
 
+                            _log.WriteInfo(nameof(RegisterInboundTransaction), request, "Incoming Cashin IATA publishing history");
                             await _historyOperationPublisher.PublishAsync(new HistoryOperation
                             {
                                 Amount = request.Amount,
@@ -115,12 +120,14 @@ namespace Lykke.Service.PayInternal.Controllers
                     switch (tx.TransactionType)
                     {
                         case TransactionType.Payment:
+                            _log.WriteInfo(nameof(RegisterInboundTransaction), request, "Incoming IATA payment");
                             // todo: move 3 to settings
                             await _transactionsService.UpdateAsync(
                                 Mapper.Map<UpdateTransactionCommand>(request, opt => opt.Items["Confirmations"] = 3));
                             await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
                             break;
                         case TransactionType.Exchange:
+                            _log.WriteInfo(nameof(RegisterInboundTransaction), request, "Incoming exchange");
                             // todo: move 3 to settings
                             await _transactionsService.UpdateAsync(new UpdateTransactionCommand
                             {
@@ -137,6 +144,7 @@ namespace Lykke.Service.PayInternal.Controllers
                             IMerchantWallet merchantWallet =
                                 await _merchantWalletService.GetByAddressAsync(request.Blockchain, request.ToAddress);
 
+                            _log.WriteInfo(nameof(RegisterInboundTransaction), request, "Incoming exchange publish history");
                             await _historyOperationPublisher.PublishAsync(new HistoryOperation
                             {
                                 Amount = request.Amount,
@@ -150,6 +158,7 @@ namespace Lykke.Service.PayInternal.Controllers
                         case TransactionType.Settlement:
                             // todo: move 3 to settings
                             // todo: for settlement better to map walletaddres because we know it (it is FromAddress)
+                            _log.WriteInfo(nameof(RegisterInboundTransaction), request, "Incoming settlement");
                             await _transactionsService.UpdateAsync(new UpdateTransactionCommand
                             {
                                 Blockchain = request.Blockchain,
@@ -219,6 +228,8 @@ namespace Lykke.Service.PayInternal.Controllers
         public async Task<IActionResult> RegisterOutboundTransaction(
             [FromBody] RegisterOutboundTxRequest request)
         {
+            _log.WriteInfo(nameof(RegisterOutboundTransaction), request, "Started");
+
             try
             {
                 var txs = (await _transactionsService.GetByBcnIdentityAsync(
@@ -234,12 +245,14 @@ namespace Lykke.Service.PayInternal.Controllers
                     switch (tx.TransactionType)
                     {
                         case TransactionType.Payment:
+                            _log.WriteInfo(nameof(RegisterOutboundTransaction), request, "Outgoing payment IATA");
                             // todo: move 0 to settings
                             await _transactionsService.UpdateAsync(
                                 Mapper.Map<UpdateTransactionCommand>(request, opt => opt.Items["Confirmations"] = 0));
                             await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
                             break;
                         case TransactionType.Refund:
+                            _log.WriteInfo(nameof(RegisterOutboundTransaction), request, "Refund");
                             await _transactionsService.UpdateAsync(new UpdateTransactionCommand
                             {
                                 Blockchain = request.Blockchain,
@@ -255,6 +268,7 @@ namespace Lykke.Service.PayInternal.Controllers
                             await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
                             break;
                         case TransactionType.Exchange:
+                            _log.WriteInfo(nameof(RegisterOutboundTransaction), request, "Outgoing exchange operation");
                             await _transactionsService.UpdateAsync(new UpdateTransactionCommand
                             {
                                 Blockchain = request.Blockchain,
@@ -268,6 +282,7 @@ namespace Lykke.Service.PayInternal.Controllers
                             });
                             break;
                         case TransactionType.Settlement:
+                            _log.WriteInfo(nameof(RegisterOutboundTransaction), request, "Outgoing settlement operation");
                             await _transactionsService.UpdateAsync(new UpdateTransactionCommand
                             {
                                 Blockchain = request.Blockchain,
@@ -313,6 +328,8 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> CompleteOutboundTransaction([FromBody] CompleteOutboundTxRequest request)
         {
+            _log.WriteInfo(nameof(CompleteOutboundTransaction), request, "Started");
+
             try
             {
                 var txs = (await _transactionsService.GetByBcnIdentityAsync(
@@ -328,12 +345,14 @@ namespace Lykke.Service.PayInternal.Controllers
                     switch (tx.TransactionType)
                     {
                         case TransactionType.Payment:
+                            _log.WriteInfo(nameof(CompleteOutboundTransaction), request, "Outbound payment");
                             // todo: move 3 to settings
                             await _transactionsService.UpdateAsync(
                                 Mapper.Map<UpdateTransactionCommand>(request, opt => opt.Items["Confirmations"] = 3));
                             await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
                             break;
                         case TransactionType.Refund:
+                            _log.WriteInfo(nameof(CompleteOutboundTransaction), request, "Refund");
                             await _transactionsService.UpdateAsync(new UpdateTransactionCommand
                             {
                                 Blockchain = request.Blockchain,
@@ -349,6 +368,7 @@ namespace Lykke.Service.PayInternal.Controllers
                             await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
                             break;
                         case TransactionType.Exchange:
+                            _log.WriteInfo(nameof(CompleteOutboundTransaction), request, "Outgoing exchange");
                             await _transactionsService.UpdateAsync(new UpdateTransactionCommand
                             {
                                 Blockchain = request.Blockchain,
@@ -364,6 +384,7 @@ namespace Lykke.Service.PayInternal.Controllers
                             IMerchantWallet merchantWallet =
                                 await _merchantWalletService.GetByAddressAsync(request.Blockchain, request.FromAddress);
 
+                            _log.WriteInfo(nameof(CompleteOutboundTransaction), request, "Outgoing exchange publish to history");
                             await _historyOperationPublisher.PublishAsync(new HistoryOperation
                             {
                                 Amount = request.Amount,
@@ -375,6 +396,7 @@ namespace Lykke.Service.PayInternal.Controllers
                             });
                             break;
                         case TransactionType.Settlement:
+                            _log.WriteInfo(nameof(CompleteOutboundTransaction), request, "Outgoing settlement");
                             await _transactionsService.UpdateAsync(new UpdateTransactionCommand
                             {
                                 Blockchain = request.Blockchain,
@@ -449,6 +471,8 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> FailOutboundTransaction([FromBody] NotEnoughFundsOutboundTxRequest request)
         {
+            _log.WriteInfo(nameof(NotEnoughFundsOutboundTxRequest), request, "Started");
+
             try
             {
                 var txs = (await _transactionsService.GetByBcnIdentityAsync(
@@ -464,6 +488,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     switch (tx.TransactionType)
                     {
                         case TransactionType.Payment:
+                            _log.WriteInfo(nameof(NotEnoughFundsOutboundTxRequest), request, "Payment");
                             await _transactionsService.UpdateAsync(
                                 Mapper.Map<UpdateTransactionCommand>(request, opt => opt.Items["Confirmations"] = 3));
                             await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress,
