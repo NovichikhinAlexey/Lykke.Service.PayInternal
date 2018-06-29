@@ -98,6 +98,12 @@ namespace Lykke.Service.PayInternal.Client
         Task<OrderModel> ChechoutOrderAsync(ChechoutRequestModel model);
 
         /// <summary>
+        /// Get calculated amount to show amount to pay in paymentAsset
+        /// </summary>
+        /// <param name="model">The request in order to get amount</param>
+        Task<CalculatedAmountResponse> GetCalculatedAmountInfoAsync(GetCalculatedAmountInfoRequest model);
+
+        /// <summary>
         /// Returns merchant payment requests.
         /// </summary>
         /// <param name="merchantId">The merchant id.</param>
