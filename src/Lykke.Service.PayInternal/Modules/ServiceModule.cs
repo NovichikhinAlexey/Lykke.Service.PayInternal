@@ -142,6 +142,10 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<FileService>()
                 .As<IFileService>();
+
+            builder.RegisterType<WalletHistoryService>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.RetryPolicy))
+                .As<IWalletHistoryService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
@@ -161,8 +165,7 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterInstance(new QBitNinjaClient(_settings.CurrentValue.NinjaServiceClient.ServiceUrl))
                 .AsSelf();
 
-            AutofacExtension.RegisterHistoryOperationPublisher(builder,
-                _settings.CurrentValue.PayHistoryServicePublisher, _log);
+            builder.RegisterHistoryOperationPublisher(_settings.CurrentValue.PayHistoryServicePublisher, _log);
         }
 
         private void RegisterCaches(ContainerBuilder builder)

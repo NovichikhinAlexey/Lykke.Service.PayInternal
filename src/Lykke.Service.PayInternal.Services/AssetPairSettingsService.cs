@@ -22,13 +22,13 @@ namespace Lykke.Service.PayInternal.Services
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
         }
 
-        public async Task<bool> Contains(string baseAssetId, string quotingAssetId)
+        public async Task<AssetPairSetting> GetAsync(string baseAssetId, string quotingAssetId)
         {
             Asset baseAsset = await _assetsLocalCache.GetAssetByIdAsync(baseAssetId);
 
             Asset quotingAsset = await _assetsLocalCache.GetAssetByIdAsync(quotingAssetId);
 
-            return _assetPairLocalStorageSettings.Any(x =>
+            return _assetPairLocalStorageSettings.SingleOrDefault(x =>
                 x.BaseAssetId == baseAsset.DisplayId && x.QuotingAssetId == quotingAsset.DisplayId);
         }
     }

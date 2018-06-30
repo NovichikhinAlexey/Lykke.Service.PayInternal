@@ -10,7 +10,6 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
@@ -51,7 +50,7 @@ namespace Lykke.Service.PayInternal.Services
             BlockchainType network = await _assetSettingsService.GetNetworkAsync(cmd.SourceAssetId);
 
             if (await _assetSettingsService.GetNetworkAsync(cmd.DestAssetId) != network)
-                throw new ExchangeOperationNotSupportedException();
+                throw new ExchangeOperationNotSupportedException("Assets are being served by different blockchains");
 
             IAssetPairRate rate = await _assetRatesService.GetCurrentRate(cmd.SourceAssetId, cmd.DestAssetId);
             if (rate.BidPrice != cmd.ExpectedRate)
@@ -81,7 +80,7 @@ namespace Lykke.Service.PayInternal.Services
             TransferResult fromHotWallet = await _transferService.ExchangeThrowFail(
                 cmd.DestAssetId,
                 hotwallet,
-                await GetDestWalletAddressAsync(cmd),
+                await GetDestAddressAsync(cmd),
                 exchangeAmount);
 
             await RegisterTransferTxsAsync(fromHotWallet);
@@ -103,14 +102,17 @@ namespace Lykke.Service.PayInternal.Services
             if (merchantWallet.MerchantId != cmd.MerchantId)
                 throw new MerchantWalletOwnershipException(cmd.MerchantId, merchantWallet.WalletAddress);
 
-            return merchantWallet?.WalletAddress;
+            return merchantWallet.WalletAddress;
         }
 
-        private async Task<string> GetDestWalletAddressAsync(ExchangeCommand cmd)
+        private async Task<string> GetDestAddressAsync(ExchangeCommand cmd)
         {
             IMerchantWallet merchantWallet = await GetExchangeWalletAsync(cmd, PaymentDirection.Incoming);
 
-            return merchantWallet?.WalletAddress;
+            if (merchantWallet.MerchantId != cmd.MerchantId)
+                throw new MerchantWalletOwnershipException(cmd.MerchantId, merchantWallet.WalletAddress);
+
+            return merchantWallet.WalletAddress;
         }
 
         private async Task<IMerchantWallet> GetExchangeWalletAsync(ExchangeCommand cmd,

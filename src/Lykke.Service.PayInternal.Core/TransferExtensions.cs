@@ -65,10 +65,10 @@ namespace Lykke.Service.PayInternal.Core
             }
 
             if (!transferResult.HasSuccess())
-                throw new ExchangeOperationFailedException { TransferErrors = transferResult.GetErrors() };
+                throw new ExchangeOperationFailedException(transferResult.GetErrors());
 
             if (transferResult.HasError())
-                throw new ExchangeOperationPartiallyFailedException { TransferErrors = transferResult.GetErrors() };
+                throw new ExchangeOperationPartiallyFailedException(transferResult.GetErrors());
 
             return transferResult;
         }
@@ -79,10 +79,10 @@ namespace Lykke.Service.PayInternal.Core
             TransferResult transferResult = await src.ExecuteAsync(assetId, sourceAddress, destAddress, amount);
 
             if (!transferResult.HasSuccess())
-                throw new SettlementOperationFailedException {TransferErrors = transferResult.GetErrors()};
+                throw new SettlementOperationFailedException(transferResult.GetErrors());
 
             if (transferResult.HasError())
-                throw new SettlementOperationPartiallyFailedException {TransferErrors = transferResult.GetErrors()};
+                throw new SettlementOperationPartiallyFailedException(transferResult.GetErrors());
 
             return transferResult;
         }
@@ -99,10 +99,10 @@ namespace Lykke.Service.PayInternal.Core
             }
 
             if (!transferResult.HasSuccess())
-                throw new PaymentOperationFailedException {TransferErrors = transferResult.GetErrors()};
+                throw new PaymentOperationFailedException(transferResult.GetErrors());
 
             if (transferResult.HasError())
-                throw new PaymentOperationPartiallyFailedException {TransferErrors = transferResult.GetErrors()};
+                throw new PaymentOperationPartiallyFailedException(transferResult.GetErrors());
 
             return transferResult;
         }

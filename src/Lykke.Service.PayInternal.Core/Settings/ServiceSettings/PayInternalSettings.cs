@@ -16,6 +16,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public JobPeriods JobPeriods { get; set; }
         public AssetPairsLocalStorageSettings AssetPairsLocalStorage { get; set; }
         public CacheSettings CacheSettings { get; set; }
+        public RetryPolicySettings RetryPolicy { get; set; }
     }
 
     public class LpMarkupSettings
@@ -89,6 +90,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class AssetPairSetting {
         public string BaseAssetId { get; set; }
         public string QuotingAssetId { get; set; }
+        public int Accuracy { get; set; }
     }
 
     public class AssetPairsLocalStorageSettings
@@ -101,5 +103,10 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public string RedisConfiguration { get; set; }
         public string PaymentLocksCacheKeyPattern { get; set; }
         public string CheckoutLocksCacheKeyPattern { get; set; }
+    }
+
+    public class RetryPolicySettings
+    {
+        public int DefaultAttempts { get; set; }
     }
 }

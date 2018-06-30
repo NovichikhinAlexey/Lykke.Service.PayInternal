@@ -17,6 +17,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
+using Microsoft.Rest;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -57,7 +58,8 @@ namespace Lykke.Service.PayInternal.Services
                 throw new AssetNotSupportedException(asset.Name);
 
             ListOfErc20Token tokenSpecification =
-                await _assetsService.Erc20TokenGetBySpecificationAsync(new Erc20TokenSpecification {Ids = new[] {asset.Id}});
+                await _assetsService.Erc20TokenGetBySpecificationAsync(new Erc20TokenSpecification
+                    {Ids = new[] {asset.Id}});
 
             string tokenAddress = tokenSpecification?.Items.SingleOrDefault(x => x.AssetId == asset.Id)?.Address;
 
@@ -71,8 +73,7 @@ namespace Lykke.Service.PayInternal.Services
                         opts.Items["AssetAccuracy"] = asset.Accuracy;
                     });
 
-                object response = await _ethereumServiceClient.ApiAirlinesErc20depositsTransferPostAsync(
-                    _ethereumSettings.ApiKey, transferRequest);
+                object response = await InvokeTransfer(transferRequest);
 
                 var ex = response as ApiException;
 
@@ -183,6 +184,30 @@ namespace Lykke.Service.PayInternal.Services
             }
 
             throw new UnrecognizedApiResponse(response?.GetType().FullName);
+        }
+
+        private async Task<object> InvokeTransfer(AirlinesTransferFromDepositRequest request)
+        {
+            object response;
+
+            try
+            {
+                response = await _ethereumServiceClient.ApiAirlinesErc20depositsTransferPostAsync(
+                    _ethereumSettings.ApiKey, request);
+            }
+            catch (ValidationException e)
+            {
+                _log.WriteError(nameof(InvokeTransfer), new
+                {
+                    e.Details,
+                    e.Rule,
+                    e.Target
+                }, e);
+
+                response = new ApiException(new ApiError(ExceptionType.WrongParams, e.Message));
+            }
+
+            return response;
         }
     }
 }

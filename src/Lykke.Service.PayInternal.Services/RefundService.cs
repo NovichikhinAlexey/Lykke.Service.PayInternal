@@ -131,10 +131,10 @@ namespace Lykke.Service.PayInternal.Services
                 }
 
                 if (!transferResult.HasSuccess())
-                    throw new RefundOperationFailedException {TransferErrors = transferResult.GetErrors()};
+                    throw new RefundOperationFailedException(transferResult.GetErrors());
 
                 if (transferResult.HasError())
-                    throw new RefundOperationPartiallyFailedException {TransferErrors = transferResult.GetErrors()};
+                    throw new RefundOperationPartiallyFailedException(transferResult.GetErrors());
             }
             catch (Exception)
             {
