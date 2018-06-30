@@ -177,6 +177,44 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
+            catch (ExchangeOperationNotSupportedException e)
+            {
+                _log.WriteError(nameof(PreExchange), request, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (MultipleDefaultMerchantWalletsException e)
+            {
+                _log.WriteError(nameof(PreExchange), new
+                {
+                    e.AssetId,
+                    e.MerchantId,
+                    e.PaymentDirection
+                }, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (DefaultMerchantWalletNotFoundException e)
+            {
+                _log.WriteError(nameof(PreExchange), new
+                {
+                    e.AssetId,
+                    e.MerchantId,
+                    e.PaymentDirection
+                });
+
+                return BadRequest(ErrorResponse.Create(e.MerchantId));
+            }
+            catch (InsufficientFundsException e)
+            {
+                _log.WriteError(nameof(PreExchange), new
+                {
+                    e.WalletAddress,
+                    e.AssetId
+                }, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
         }
     }
 }
