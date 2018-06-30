@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Lykke.Service.PayInternal.Core.Services
+namespace Lykke.Service.PayInternal.Core.Exceptions
 {
     public class ExchangeOperationNotSupportedException : Exception
     {

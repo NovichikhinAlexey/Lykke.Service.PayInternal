@@ -7,9 +7,11 @@ using JetBrains.Annotations;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.MarketProfile.Client.Models;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -34,17 +36,21 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IAssetPairRate> AddAsync(AddAssetPairRateCommand cmd)
         {
-            if (!await _assetPairSettingsService.Contains(cmd.BaseAssetId, cmd.QuotingAssetId))
+            AssetPairSetting settings = await _assetPairSettingsService.GetAsync(cmd.BaseAssetId, cmd.QuotingAssetId);
+
+            if (settings == null)
                 throw new AssetPairRateStorageNotSupportedException(cmd.BaseAssetId, cmd.QuotingAssetId);
 
-            var newRate = Mapper.Map<AssetPairRate>(cmd);
+            await _assetPairRateRepository.AddAsync(
+                Mapper.Map<AssetPairRate>(cmd.Invert().ApplyAccuracy(settings.Accuracy)));
 
-            return await _assetPairRateRepository.AddAsync(newRate);
+            return await _assetPairRateRepository.AddAsync(
+                Mapper.Map<AssetPairRate>(cmd.ApplyAccuracy(settings.Accuracy)));
         }
 
         public async Task<IAssetPairRate> GetCurrentRate(string baseAssetId, string quotingAssetId)
         {
-            if (await _assetPairSettingsService.Contains(baseAssetId, quotingAssetId))
+            if (await _assetPairSettingsService.GetAsync(baseAssetId, quotingAssetId) != null)
             {
                 IReadOnlyList<IAssetPairRate> allRates =
                     await _assetPairRateRepository.GetAsync(baseAssetId, quotingAssetId);

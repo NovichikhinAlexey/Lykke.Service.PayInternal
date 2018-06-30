@@ -8,6 +8,7 @@ using Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
+using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -83,18 +84,43 @@ namespace Lykke.Service.PayInternal.Services
                     return latestOrder;
             }
 
-            IMerchant merchant = await _merchantRepository.GetAsync(paymentRequest.MerchantId);
+            RequestMarkup requestMarkup = Mapper.Map<RequestMarkup>(paymentRequest);
+
+            var paymentInfo = await GetPaymentInfoAsync(paymentRequest.SettlementAssetId, paymentRequest.PaymentAssetId, paymentRequest.Amount, paymentRequest.MerchantId, requestMarkup);
+
+            var order = new Order
+            {
+                MerchantId = paymentRequest.MerchantId,
+                PaymentRequestId = paymentRequest.Id,
+                AssetPairId = paymentInfo.AssetPairId,
+                SettlementAmount = paymentRequest.Amount,
+                PaymentAmount = paymentInfo.PaymentAmount,
+                DueDate = now.Add(_orderExpirationPeriods.Primary),
+                ExtendedDueDate = now.Add(_orderExpirationPeriods.Extended),
+                CreatedDate = now,
+                ExchangeRate = paymentInfo.Rate
+            };
+
+            IOrder createdOrder = await _orderRepository.InsertAsync(order);
+
+            await _log.WriteInfoAsync(nameof(OrderService), nameof(GetLatestOrCreateAsync), order.ToJson(),
+                "Order created.");
+
+            return createdOrder;
+        }
+
+        private async Task<(string AssetPairId, decimal PaymentAmount, decimal Rate)> GetPaymentInfoAsync(string settlementAssetId, string paymentAssetId, decimal amount, string merchantId, RequestMarkup requestMarkup)
+        {
+            IMerchant merchant = await _merchantRepository.GetAsync(merchantId);
 
             if (merchant == null)
-                throw new MerchantNotFoundException(paymentRequest.MerchantId);
+                throw new MerchantNotFoundException(merchantId);
 
-            string lykkePaymentAssetId = await _lykkeAssetsResolver.GetLykkeId(paymentRequest.PaymentAssetId);
+            string lykkePaymentAssetId = await _lykkeAssetsResolver.GetLykkeId(paymentAssetId);
 
-            string lykkeSettlementAssetId = await _lykkeAssetsResolver.GetLykkeId(paymentRequest.SettlementAssetId);
+            string lykkeSettlementAssetId = await _lykkeAssetsResolver.GetLykkeId(settlementAssetId);
 
-            string assetPairId = $"{paymentRequest.PaymentAssetId}{paymentRequest.SettlementAssetId}";
-
-            RequestMarkup requestMarkup = Mapper.Map<RequestMarkup>(paymentRequest);
+            string assetPairId = $"{paymentAssetId}{settlementAssetId}";
 
             IMarkup merchantMarkup;
 
@@ -118,7 +144,7 @@ namespace Lykke.Service.PayInternal.Services
             try
             {
                 paymentAmount = await _calculationService.GetAmountAsync(lykkePaymentAssetId,
-                    lykkeSettlementAssetId, paymentRequest.Amount, requestMarkup, merchantMarkup);
+                    lykkeSettlementAssetId, amount, requestMarkup, merchantMarkup);
 
                 rate = await _calculationService.GetRateAsync(lykkePaymentAssetId, lykkeSettlementAssetId,
                     requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
@@ -131,30 +157,23 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (UnexpectedAssetPairPriceMethodException assetPairEx)
             {
-                _log.WriteError(nameof(GetLatestOrCreateAsync), new {assetPairEx.PriceMethod}, assetPairEx);
+                _log.WriteError(nameof(GetLatestOrCreateAsync), new { assetPairEx.PriceMethod }, assetPairEx);
 
                 throw;
             }
 
-            var order = new Order
+            return (assetPairId, paymentAmount, rate);
+        }
+
+        public async Task<ICalculatedAmountInfo> GetCalculatedAmountInfoAsync(string settlementAssetId, string paymentAssetId, decimal amount, string merchantId)
+        {
+            var paymentInfo = await GetPaymentInfoAsync(settlementAssetId, paymentAssetId, amount, merchantId, new RequestMarkup());
+
+            return new CalculatedAmountInfo
             {
-                MerchantId = paymentRequest.MerchantId,
-                PaymentRequestId = paymentRequest.Id,
-                AssetPairId = assetPairId,
-                SettlementAmount = paymentRequest.Amount,
-                PaymentAmount = paymentAmount,
-                DueDate = now.Add(_orderExpirationPeriods.Primary),
-                ExtendedDueDate = now.Add(_orderExpirationPeriods.Extended),
-                CreatedDate = now,
-                ExchangeRate = rate
+                PaymentAmount = paymentInfo.PaymentAmount,
+                ExchangeRate = paymentInfo.Rate
             };
-
-            IOrder createdOrder = await _orderRepository.InsertAsync(order);
-
-            await _log.WriteInfoAsync(nameof(OrderService), nameof(GetLatestOrCreateAsync), order.ToJson(),
-                "Order created.");
-
-            return createdOrder;
         }
 
         public Task<IOrder> GetByLykkeOperationAsync(string operationId)

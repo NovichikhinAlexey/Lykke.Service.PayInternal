@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
+using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 
 namespace Lykke.Service.PayInternal.Core.Services
@@ -14,5 +15,7 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest, bool force = false);
 
         Task<IOrder> GetByLykkeOperationAsync(string operationId);
+
+        Task<ICalculatedAmountInfo> GetCalculatedAmountInfoAsync(string settlementAssetId, string paymentAssetId, decimal amount, string merchantId);
     }
 }

@@ -49,7 +49,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotImplemented)]
         [ValidateModel]
-        public async Task<IActionResult> Add([FromBody] AddAssetRateModel request)
+        public async Task<IActionResult> AddRate([FromBody] AddAssetRateModel request)
         {
             try
             {
@@ -77,13 +77,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException e)
             {
-                _log.WriteError(nameof(Add), new {e.Asset}, e);
+                _log.WriteError(nameof(AddRate), new {e.Asset}, e);
 
                 return NotFound(ErrorResponse.Create($"Asset not found [{e.Asset}]"));
             }
             catch (AssetPairRateStorageNotSupportedException e)
             {
-                _log.WriteError(nameof(Add), new
+                _log.WriteError(nameof(AddRate), new
                 {
                     e.BaseAssetId,
                     e.QuotingAssetId
@@ -107,7 +107,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(AssetRateResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadGateway)]
-        public async Task<IActionResult> GetCurrent(string baseAssetId, string quotingAssetId)
+        public async Task<IActionResult> GetCurrentRate(string baseAssetId, string quotingAssetId)
         {
             try
             {
@@ -135,13 +135,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException e)
             {
-                _log.WriteError(nameof(GetCurrent), new {e.Asset}, e);
+                _log.WriteError(nameof(GetCurrentRate), new {e.Asset}, e);
 
                 return NotFound(ErrorResponse.Create($"Asset not found [{e.Asset}]"));
             }
             catch (AssetPairUnknownException e)
             {
-                _log.WriteError(nameof(GetCurrent), new
+                _log.WriteError(nameof(GetCurrentRate), new
                 {
                     e.BaseAssetId,
                     e.QuotingAssetId
@@ -152,7 +152,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (UnrecognizedApiResponse e)
             {
-                _log.WriteError(nameof(GetCurrent), new
+                _log.WriteError(nameof(GetCurrentRate), new
                 {
                     baseAssetId,
                     quotingAssetId

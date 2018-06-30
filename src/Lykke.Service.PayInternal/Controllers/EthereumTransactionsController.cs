@@ -40,7 +40,7 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
             _paymentRequestService = paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
-            _log = log?.CreateComponentScope(nameof(EthereumTransactionsController)) ?? throw new ArgumentNullException(nameof(log));
+            _log = log.CreateComponentScope(nameof(EthereumTransactionsController)) ?? throw new ArgumentNullException(nameof(log));
             _historyOperationPublisher = historyOperationPublisher ?? throw new ArgumentNullException(nameof(historyOperationPublisher));
             _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
         }
