@@ -8,6 +8,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Exchange
 
         [CanBeNull] public string DestMerchantWalletId { get; set; }
 
-        public decimal ExpectedRate { get; set; }
+        public decimal? ExpectedRate { get; set; }
     }
 }

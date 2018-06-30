@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Validation;
 
 namespace Lykke.Service.PayInternal.Models.Exchange
@@ -26,6 +25,6 @@ namespace Lykke.Service.PayInternal.Models.Exchange
         /// <summary>
         /// Gets or sets expected rate
         /// </summary>
-        public decimal ExpectedRate { get; set; }
+        public decimal? ExpectedRate { get; set; }
     }
 }

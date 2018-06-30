@@ -53,25 +53,25 @@ namespace Lykke.Service.PayInternal.Services
                 throw new ExchangeOperationNotSupportedException("Assets are being served by different blockchains");
 
             IAssetPairRate rate = await _assetRatesService.GetCurrentRate(cmd.SourceAssetId, cmd.DestAssetId);
-            if (rate.BidPrice != cmd.ExpectedRate)
+
+            if (cmd.ExpectedRate != null && rate.BidPrice != cmd.ExpectedRate)
             {
                 throw new ExchangeRateChangedException(rate.BidPrice);
             }
 
             string hotwallet = _bcnSettingsResolver.GetExchangeHotWallet(network);
 
-            IBlockchainApiClient blockchainApiClient = _blockchainClientProvider.Get(network);
-
-            decimal hotwalletBalance = await blockchainApiClient.GetBalanceAsync(hotwallet, cmd.DestAssetId);            
+            string sourceAddress = await GetSourceAddressAsync(cmd);
 
             decimal exchangeAmount = cmd.SourceAmount * rate.BidPrice;
 
-            if (hotwalletBalance < exchangeAmount)
-                throw new InsufficientFundsException(hotwallet, cmd.DestAssetId);
+            await ValidateTransferBalance(sourceAddress, cmd.SourceAssetId, cmd.SourceAmount);
+
+            await ValidateTransferBalance(hotwallet, cmd.DestAssetId, exchangeAmount);
 
             TransferResult toHotWallet = await _transferService.ExchangeThrowFail(
                 cmd.SourceAssetId,
-                await GetSourceAddressAsync(cmd),
+                sourceAddress,
                 hotwallet,
                 cmd.SourceAmount);
 
@@ -147,11 +147,40 @@ namespace Lykke.Service.PayInternal.Services
             }
         }
 
+        [AssertionMethod]
+        private async Task ValidateTransferBalance(string walletAddress, string assetId, decimal transferAmount)
+        {
+            BlockchainType network = await _assetSettingsService.GetNetworkAsync(assetId);
+
+            IBlockchainApiClient blockchainApiClient = _blockchainClientProvider.Get(network);
+
+            decimal balance = await blockchainApiClient.GetBalanceAsync(walletAddress, assetId);
+
+            if (balance < transferAmount)
+                throw new InsufficientFundsException(walletAddress, assetId);
+        }
+
         public async Task<ExchangeResult> PreExchangeAsync(PreExchangeCommand cmd)
         {
+            BlockchainType network = await _assetSettingsService.GetNetworkAsync(cmd.SourceAssetId);
+
+            if (await _assetSettingsService.GetNetworkAsync(cmd.DestAssetId) != network)
+                throw new ExchangeOperationNotSupportedException("Assets are being served by different blockchains");
+
+            string sourceWalletAddress = (await _merchantWalletService.GetDefaultAsync(
+                cmd.MerchantId,
+                cmd.SourceAssetId,
+                PaymentDirection.Outgoing)).WalletAddress;
+
+            await ValidateTransferBalance(sourceWalletAddress, cmd.SourceAssetId, cmd.SourceAmount);
+
+            string hotwallet = _bcnSettingsResolver.GetExchangeHotWallet(network);
+
             IAssetPairRate rate = await _assetRatesService.GetCurrentRate(cmd.SourceAssetId, cmd.DestAssetId);
 
             decimal exchangeAmount = cmd.SourceAmount * rate.BidPrice;
+
+            await ValidateTransferBalance(hotwallet, cmd.DestAssetId, exchangeAmount);
 
             return new ExchangeResult
             {
