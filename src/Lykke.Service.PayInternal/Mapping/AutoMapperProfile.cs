@@ -1,6 +1,5 @@
 ﻿using System;
 using AutoMapper;
-using AzureStorage.Tables.Templates;
 using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
 using Lykke.Service.PayInternal.Core.Domain;
@@ -8,6 +7,7 @@ using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Domain.Exchange;
+using Lykke.Service.PayInternal.Core.Domain.History;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
@@ -186,6 +186,17 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.Hash, opt => opt.Ignore())
                 .ForMember(dest => dest.WalletAddress,
                     opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress));
+
+            CreateMap<RegisterInboundTxRequest, WalletHistoryCommand>(MemberList.Destination)
+                .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.Hash))
+                .ForMember(dest => dest.WalletAddress, opt => opt.MapFrom(src => src.ToAddress));
+
+            CreateMap<CompleteOutboundTxRequest, WalletHistoryCommand>(MemberList.Destination)
+                .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.Hash))
+                .ForMember(dest => dest.WalletAddress, opt => opt.MapFrom(src => src.FromAddress))
+                .ForMember(dest => dest.AssetId,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.AssetId = (string) resContext.Items["AssetId"]));
 
             PaymentRequestApiModels();
 

@@ -6,7 +6,6 @@
         public string WalletAddress { get; set; }
         public string AssetId { get; set; }
         public decimal Amount { get; set; }
-        public string MerchantId { get; set; }
         public string TransactionHash { get; set; }
     }
 }

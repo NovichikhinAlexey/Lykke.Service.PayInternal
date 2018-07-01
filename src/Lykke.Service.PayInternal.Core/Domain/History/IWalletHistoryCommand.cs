@@ -10,8 +10,6 @@
 
         decimal Amount { get; set; }
 
-        string MerchantId { get; set; }
-
         string TransactionHash { get; set; }
     }
 }
