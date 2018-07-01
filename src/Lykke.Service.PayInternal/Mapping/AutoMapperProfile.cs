@@ -96,6 +96,8 @@ namespace Lykke.Service.PayInternal.Mapping
 
             CreateMap<PaymentModel, PaymentCommand>(MemberList.Destination);
 
+            CreateMap<PrePaymentModel, PaymentCommand>(MemberList.Destination);
+
             CreateMap<AddAssetRateModel, AddAssetPairRateCommand>(MemberList.Destination)
                 .ForMember(dest => dest.BaseAssetId,
                     opt => opt.ResolveUsing((src, dest, destMember, resContext) =>

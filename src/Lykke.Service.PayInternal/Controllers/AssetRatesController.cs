@@ -20,7 +20,7 @@ namespace Lykke.Service.PayInternal.Controllers
     {
         private readonly IAssetRatesService _assetRatesService;
         private readonly IAssetsLocalCache _assetsLocalCache;
-        private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
+        private readonly ILykkeAssetsResolver _lykkeAssetsResolver; 
         private readonly ILog _log;
 
         public AssetRatesController(
