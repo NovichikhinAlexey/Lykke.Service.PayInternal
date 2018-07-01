@@ -6,10 +6,10 @@ using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Common.Log;
 using Lykke.Service.PayHistory.Client.Models;
-using Lykke.Service.PayHistory.Client.Publisher;
 using Lykke.Service.PayInternal.Core;
-using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
+using Lykke.Service.PayInternal.Core.Domain.History;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -27,22 +27,19 @@ namespace Lykke.Service.PayInternal.Controllers
     {
         private readonly ITransactionsService _transactionsService;
         private readonly IPaymentRequestService _paymentRequestService;
-        private readonly HistoryOperationPublisher _historyOperationPublisher;
-        private readonly IMerchantWalletService _merchantWalletService;
+        private readonly IWalletHistoryService _walletHistoryService;
         private readonly ILog _log;
 
         public EthereumTransactionsController(
             [NotNull] ITransactionsService transactionsService, 
-            [NotNull] IPaymentRequestService paymentRequestService, 
-            [NotNull] ILog log, 
-            [NotNull] HistoryOperationPublisher historyOperationPublisher, 
-            [NotNull] IMerchantWalletService merchantWalletService)
+            [NotNull] IPaymentRequestService paymentRequestService,
+            [NotNull] ILogFactory logFactory,
+            [NotNull] IWalletHistoryService walletHistoryService)
         {
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
             _paymentRequestService = paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
-            _log = log.CreateComponentScope(nameof(EthereumTransactionsController)) ?? throw new ArgumentNullException(nameof(log));
-            _historyOperationPublisher = historyOperationPublisher ?? throw new ArgumentNullException(nameof(historyOperationPublisher));
-            _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
+            _log = logFactory.CreateLog(this) ?? throw new ArgumentNullException(nameof(logFactory));
+            _walletHistoryService = walletHistoryService ?? throw new ArgumentNullException(nameof(walletHistoryService));
         }
 
         [HttpPost]
@@ -95,19 +92,8 @@ namespace Lykke.Service.PayInternal.Controllers
                                 Type = TransactionType.CashIn
                             });
 
-                            IMerchantWallet merchantWallet =
-                                await _merchantWalletService.GetByAddressAsync(request.Blockchain, request.ToAddress);
-
-                            _log.WriteInfo(nameof(RegisterInboundTransaction), request, "Incoming Cashin IATA publishing history");
-                            await _historyOperationPublisher.PublishAsync(new HistoryOperation
-                            {
-                                Amount = request.Amount,
-                                AssetId = request.AssetId,
-                                Type = HistoryOperationType.Recharge,
-                                CreatedOn = DateTime.UtcNow,
-                                TxHash = request.Hash,
-                                MerchantId = merchantWallet?.MerchantId,
-                            });
+                            await _walletHistoryService.PublishCashIn(Mapper.Map<WalletHistoryCommand>(request));
+                            
                             break;
                         default: throw new UnexpectedWorkflowTypeException(request.WorkflowType);
                     }
@@ -141,19 +127,8 @@ namespace Lykke.Service.PayInternal.Controllers
                                 IdentityType = request.IdentityType
                             });
 
-                            IMerchantWallet merchantWallet =
-                                await _merchantWalletService.GetByAddressAsync(request.Blockchain, request.ToAddress);
+                            await _walletHistoryService.PublishIncomingExchange(Mapper.Map<WalletHistoryCommand>(request));
 
-                            _log.WriteInfo(nameof(RegisterInboundTransaction), request, "Incoming exchange publish history");
-                            await _historyOperationPublisher.PublishAsync(new HistoryOperation
-                            {
-                                Amount = request.Amount,
-                                AssetId = request.AssetId,
-                                Type = HistoryOperationType.IncomingExchange,
-                                CreatedOn = DateTime.UtcNow,
-                                TxHash = request.Hash,
-                                MerchantId = merchantWallet?.MerchantId,
-                            });
                             break;
                         case TransactionType.Settlement:
                             // todo: move 3 to settings
@@ -381,19 +356,9 @@ namespace Lykke.Service.PayInternal.Controllers
                                 Hash = tx.TransactionId
                             });
 
-                            IMerchantWallet merchantWallet =
-                                await _merchantWalletService.GetByAddressAsync(request.Blockchain, request.FromAddress);
-
-                            _log.WriteInfo(nameof(CompleteOutboundTransaction), request, "Outgoing exchange publish to history");
-                            await _historyOperationPublisher.PublishAsync(new HistoryOperation
-                            {
-                                Amount = request.Amount,
-                                AssetId = tx.AssetId,
-                                Type = HistoryOperationType.OutgoingExchange,
-                                CreatedOn = DateTime.UtcNow,
-                                TxHash = request.Hash,
-                                MerchantId = merchantWallet?.MerchantId,
-                            });
+                            await _walletHistoryService.PublishOutgoingExchange(
+                                Mapper.Map<WalletHistoryCommand>(request, opt => opt.Items["AssetId"] = tx.AssetId));
+                            
                             break;
                         case TransactionType.Settlement:
                             _log.WriteInfo(nameof(CompleteOutboundTransaction), request, "Outgoing settlement");
