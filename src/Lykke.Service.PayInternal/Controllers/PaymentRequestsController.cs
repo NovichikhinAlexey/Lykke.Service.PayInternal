@@ -328,6 +328,97 @@ namespace Lykke.Service.PayInternal.Controllers
         }
 
         /// <summary>
+        /// Validates payment using default payer merchant's wallet
+        /// </summary>
+        /// <param name="request">Payment details</param>
+        /// <response code="204">Validated successfully</response>
+        /// <response code="400">Insufficient funds</response>
+        /// <response code="404">Payment request, merchant, payer merchant, default wallet or payment request wallet not found</response>
+        /// <response code="501">Asset network support not implemented</response>
+        [HttpPost]
+        [Route("paymentrequests/prePayment")]
+        [SwaggerOperation(nameof(PrePay))]
+        [ProducesResponseType(typeof(void), (int)HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotImplemented)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ValidateModel]
+        public async Task<IActionResult> PrePay([FromBody] PrePaymentModel request)
+        {
+            IMerchant merchant = await _merchantService.GetAsync(request.MerchantId);
+
+            if (merchant == null)
+                return NotFound(ErrorResponse.Create("Merchant not found"));
+
+            IMerchant payer = await _merchantService.GetAsync(request.PayerMerchantId);
+
+            if (payer == null)
+                return NotFound(ErrorResponse.Create("Payer merchant not found"));
+
+            try
+            {
+                await _paymentRequestService.PrePayAsync(Mapper.Map<PaymentCommand>(request));
+
+                return NoContent();
+            }
+            catch (InsufficientFundsException e)
+            {
+                _log.WriteError(nameof(PrePay), new
+                {
+                    e.AssetId,
+                    e.WalletAddress
+                }, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (PaymentRequestNotFoundException e)
+            {
+                _log.WriteError(nameof(PrePay), new
+                {
+                    e.PaymentRequestId,
+                    e.MerchantId,
+                    e.WalletAddress
+                }, e);
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (AssetNetworkNotDefinedException e)
+            {
+                _log.WriteError(nameof(PrePay), new { e.AssetId }, e);
+
+                return StatusCode((int)HttpStatusCode.NotImplemented, ErrorResponse.Create(e.Message));
+            }
+            catch (MultipleDefaultMerchantWalletsException e)
+            {
+                _log.WriteError(nameof(PrePay), new
+                {
+                    e.MerchantId,
+                    e.AssetId,
+                    e.PaymentDirection
+                }, e);
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (DefaultMerchantWalletNotFoundException e)
+            {
+                _log.WriteError(nameof(PrePay), new
+                {
+                    e.MerchantId,
+                    e.AssetId,
+                    e.PaymentDirection
+                }, e);
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (WalletNotFoundException e)
+            {
+                _log.WriteError(nameof(PrePay), new { e.WalletAddress }, e);
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+        }
+
+        /// <summary>
         /// Executes payment using default payer merchant's wallet
         /// </summary>
         /// <param name="request">Payment details</param>
@@ -336,8 +427,8 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="404">Payment request, merchant, default wallet, payment request wallet not found or couldn't get payment request lock</response>
         /// <response code="501">Asset network support not implemented</response>
         [HttpPost]
-        [Route("paymentrequests")]
-        [SwaggerOperation("Pay")]
+        [Route("paymentrequests/payment")]
+        [SwaggerOperation(nameof(Pay))]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotImplemented)]

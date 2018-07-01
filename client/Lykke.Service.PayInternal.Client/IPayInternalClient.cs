@@ -479,6 +479,13 @@ namespace Lykke.Service.PayInternal.Client
         Task PayAsync(PaymentRequest request);
 
         /// <summary>
+        /// Validates payment using default payer merchant's wallet
+        /// </summary>
+        /// <param name="request">Prepayment request details</param>
+        /// <returns></returns>
+        Task PrePayAsync(PrePaymentRequest request);
+
+        /// <summary>
         /// Executes exchange
         /// </summary>
         /// <param name="request">Exchange operation details</param>
