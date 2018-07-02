@@ -16,7 +16,6 @@ using Lykke.MonitoringServiceApiCaller;
 
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
-using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Mapping;
 using Lykke.Service.PayInternal.Modules;
 using Lykke.SettingsReader;
@@ -59,12 +58,7 @@ namespace Lykke.Service.PayInternal
                             new Newtonsoft.Json.Serialization.DefaultContractResolver();
                     });
 
-                services.AddSwaggerGen(options =>
-                {
-                    options.DefaultLykkeConfiguration("v1", "PayInternal API");
-                    options.OperationFilter<FileUploadOperationFilter>();
-                    
-                });
+                services.AddSwaggerGen(opt => opt.DefaultLykkeConfiguration("v1", "PayInternal API"));
 
                 EntityMetamodel.Configure(new AnnotationsBasedMetamodelProvider());
 
