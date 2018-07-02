@@ -26,13 +26,13 @@ namespace Lykke.Service.PayInternal.Services
         public WalletHistoryService(
             [NotNull] HistoryOperationPublisher historyOperationPublisher, 
             [NotNull] IMerchantWalletService merchantWalletService, 
-            [NotNull] ILogFactory logFactory, 
+            [NotNull] ILog log, 
             [NotNull] RetryPolicySettings retryPolicySettings)
         {
             _historyOperationPublisher = historyOperationPublisher ?? throw new ArgumentNullException(nameof(historyOperationPublisher));
             _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
             _retryPolicySettings = retryPolicySettings ?? throw new ArgumentNullException(nameof(retryPolicySettings));
-            _log = logFactory.CreateLog(this) ?? throw new ArgumentNullException(nameof(logFactory));
+            _log = log.CreateComponentScope(nameof(WalletHistoryService)) ?? throw new ArgumentNullException(nameof(log));
             _retryPolicy = Policy
                 .Handle<Exception>()
                 .WaitAndRetryAsync(
