@@ -372,7 +372,8 @@ namespace Lykke.Service.PayInternal.Services
                         Confirmations = 0,
                         Hash = transferResultTransaction.Hash,
                         TransferId = transferResult.Id,
-                        Type = TransactionType.Settlement
+                        Type = TransactionType.Settlement,
+                        SourceWalletAddresses = transferResultTransaction.Sources.ToArray()
                     });
 
                 await _transactionPublisher.PublishAsync(settlementTx);
