@@ -166,7 +166,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     e.WalletAddress
                 }, e);
 
-                return Ok();
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (OutboundTransactionsNotFound e)
             {
@@ -193,8 +193,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     e.WalletAddress
                 }, e);
 
-                //todo:
-                return Ok();
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
 
@@ -244,9 +243,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 _log.WriteError("NotEnoughFundsOutboundTx", new {e.TransactionType}, e);
 
-                //todo:
-                return Ok();
-                //return BadRequest(ErrorResponse.Create(e.Message));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
     }
