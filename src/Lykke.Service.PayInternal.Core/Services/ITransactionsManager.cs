@@ -10,5 +10,13 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task<IPaymentRequestTransaction> CreateLykkeTransactionAsync(ICreateLykkeTransactionCommand command);
 
         Task UpdateTransactionAsync(IUpdateTransactionCommand command);
+
+        Task RegisterEthInboundTxAsync(RegisterEthInboundTxCommand cmd);
+
+        Task UpdateEthOutgoingTxAsync(UpdateEthOutgoingTxCommand cmd);
+
+        Task CompleteEthOutgoingTxAsync(CompleteEthOutgoingTxCommand cmd);
+
+        Task FailEthOutgoingTxAsync(NotEnoughFundsEthOutgoingTxCommand cmd);
     }
 }

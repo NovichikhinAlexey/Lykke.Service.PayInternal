@@ -10,7 +10,7 @@ namespace Lykke.Service.PayInternal.Models.Transactions.Ethereum
     /// <summary>
     /// Complete ountbound transaction request details
     /// </summary>
-    public class CompleteOutboundTxRequest : IBlockchainTypeHolder
+    public class CompleteOutboundTxRequest
     {
         /// <summary>
         /// Gets or sets identity type

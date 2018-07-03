@@ -129,26 +129,6 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.SourceAssetId,
                     opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.SourceAssetId));
 
-            // incoming ethereum payment
-            CreateMap<RegisterInboundTxRequest, CreateTransactionCommand>(MemberList.Destination)
-                .ForMember(dest => dest.DueDate, opt => opt.Ignore())
-                .ForMember(dest => dest.WalletAddress,
-                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress))
-                .ForMember(dest => dest.Confirmations,
-                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
-                        dest.Confirmations = (int) resContext.Items["Confirmations"]))
-                .ForMember(dest => dest.SourceWalletAddresses, opt => opt.MapFrom(src => new[] {src.FromAddress}))
-                .ForMember(dest => dest.TransferId, opt => opt.Ignore())
-                .ForMember(dest => dest.Type, opt => opt.UseValue(TransactionType.Payment));
-
-            // incoming ethereum payment update
-            CreateMap<RegisterInboundTxRequest, UpdateTransactionCommand>(MemberList.Destination)
-                .ForMember(dest => dest.WalletAddress,
-                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress))
-                .ForMember(dest => dest.Confirmations,
-                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
-                        dest.Confirmations = (int) resContext.Items["Confirmations"]));
-
             // incoming bitcoin payment
             CreateMap<ICreateTransactionRequest, CreateTransactionCommand>(MemberList.Destination)
                 .ForMember(dest => dest.DueDate, opt => opt.Ignore())
@@ -159,44 +139,7 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.WalletAddress,
                     opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.WalletAddress));
 
-            // outgoing ethereum payment update
-            CreateMap<RegisterOutboundTxRequest, UpdateTransactionCommand>(MemberList.Destination)
-                .ForMember(dest => dest.WalletAddress,
-                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress))
-                .ForMember(dest => dest.Confirmations,
-                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
-                        dest.Confirmations = (int)resContext.Items["Confirmations"]));
-
-            // outgoing ethereum payment complete
-            CreateMap<CompleteOutboundTxRequest, UpdateTransactionCommand>(MemberList.Destination)
-                .ForMember(dest => dest.Confirmations,
-                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
-                        dest.Confirmations = (int) resContext.Items["Confirmations"]))
-                .ForMember(dest => dest.WalletAddress,
-                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress));
-
-            // outgoing ethereum payment not enough funds
-            CreateMap<NotEnoughFundsOutboundTxRequest, UpdateTransactionCommand>(MemberList.Destination)
-                .ForMember(dest => dest.Amount, opt => opt.UseValue(0))
-                .ForMember(dest => dest.Confirmations,
-                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
-                        dest.Confirmations = (int) resContext.Items["Confirmations"]))
-                .ForMember(dest => dest.BlockId, opt => opt.Ignore())
-                .ForMember(dest => dest.FirstSeen, opt => opt.Ignore())
-                .ForMember(dest => dest.Hash, opt => opt.Ignore())
-                .ForMember(dest => dest.WalletAddress,
-                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress));
-
-            CreateMap<RegisterInboundTxRequest, WalletHistoryCommand>(MemberList.Destination)
-                .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.Hash))
-                .ForMember(dest => dest.WalletAddress, opt => opt.MapFrom(src => src.ToAddress));
-
-            CreateMap<CompleteOutboundTxRequest, WalletHistoryCommand>(MemberList.Destination)
-                .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.Hash))
-                .ForMember(dest => dest.WalletAddress, opt => opt.MapFrom(src => src.FromAddress))
-                .ForMember(dest => dest.AssetId,
-                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
-                        dest.AssetId = (string) resContext.Items["AssetId"]));
+            CreateEthereumPaymentMaps();
 
             PaymentRequestApiModels();
 
@@ -303,6 +246,17 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.Blockchain, opt => opt.Ignore());
 
             CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefund, Contract.PaymentRequest.PaymentRequestRefund>();
+        }
+
+        private void CreateEthereumPaymentMaps()
+        {
+            CreateMap<RegisterInboundTxRequest, RegisterEthInboundTxCommand>(MemberList.Destination);
+
+            CreateMap<RegisterOutboundTxRequest, UpdateEthOutgoingTxCommand>(MemberList.Destination);
+
+            CreateMap<CompleteOutboundTxRequest, CompleteEthOutgoingTxCommand>(MemberList.Destination);
+
+            CreateMap<NotEnoughFundsOutboundTxRequest, NotEnoughFundsEthOutgoingTxCommand>(MemberList.Destination);
         }
     }
 }

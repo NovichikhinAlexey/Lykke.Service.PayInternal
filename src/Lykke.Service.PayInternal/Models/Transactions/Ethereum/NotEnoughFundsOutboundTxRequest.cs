@@ -8,7 +8,7 @@ namespace Lykke.Service.PayInternal.Models.Transactions.Ethereum
     /// <summary>
     /// Not enough funds ountbound transaction request details
     /// </summary>
-    public class NotEnoughFundsOutboundTxRequest : IBlockchainTypeHolder
+    public class NotEnoughFundsOutboundTxRequest
     {
         /// <summary>
         /// Gets or sets identity type
