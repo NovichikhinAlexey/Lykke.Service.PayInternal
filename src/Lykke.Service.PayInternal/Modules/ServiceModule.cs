@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
@@ -20,6 +21,7 @@ using Lykke.Service.PayInternal.Services;
 using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
+using Polly;
 using QBitNinja.Client;
 using DbSettings = Lykke.Service.PayInternal.Core.Settings.ServiceSettings.DbSettings;
 
@@ -181,8 +183,18 @@ namespace Lykke.Service.PayInternal.Modules
 
                 return new CachedDataDictionary<string, Asset>
                 (
-                    async () => (await assetsService.AssetGetAllAsync(true)).ToDictionary(itm => itm.Id)
-                );
+                    async () =>
+                    {
+                        IList<Asset> assets = await Policy
+                            .Handle<Exception>()
+                            .WaitAndRetryAsync(
+                                _settings.CurrentValue.PayInternalService.RetryPolicy.DefaultAttempts,
+                                attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                                (ex, timestamp) => _log.WriteError("Getting assets dictionary with retry", ex))
+                            .ExecuteAsync(() => assetsService.AssetGetAllAsync(true));
+
+                        return assets.ToDictionary(itm => itm.Id);
+                    });
             }).SingleInstance();
 
             builder.Register(x =>
@@ -190,8 +202,18 @@ namespace Lykke.Service.PayInternal.Modules
                 var assetsService = x.Resolve<IComponentContext>().Resolve<IAssetsService>();
 
                 return new CachedDataDictionary<string, AssetPair>(
-                    async () => (await assetsService.AssetPairGetAllAsync()).ToDictionary(itm => itm.Id)
-                );
+                    async () =>
+                    {
+                        IList<AssetPair> assetPairs = await Policy
+                            .Handle<Exception>()
+                            .WaitAndRetryAsync(
+                                _settings.CurrentValue.PayInternalService.RetryPolicy.DefaultAttempts,
+                                attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                                (ex, timestamp) => _log.WriteError("Getting asset pairs dictionary with retry", ex))
+                            .ExecuteAsync(() => assetsService.AssetPairGetAllAsync());
+
+                        return assetPairs.ToDictionary(itm => itm.Id);
+                    });
             }).SingleInstance();
 
             builder.RegisterType<AssetsLocalCache>()
