@@ -108,7 +108,7 @@ namespace Lykke.Service.PayInternal.Services
                         await _walletHistoryService.PublishIncomingExchange(Mapper.Map<WalletHistoryCommand>(cmd));
                         break;
                     case TransactionType.Settlement:
-                        _log.WriteInfo(nameof(RegisterEthInboundTxAsync), cmd, "Sttlement incoming transaction update");
+                        _log.WriteInfo(nameof(RegisterEthInboundTxAsync), cmd, "Settlement incoming transaction update");
                         await _transactionsService.UpdateAsync(Mapper.Map<UpdateSettlementEthInboundTxCommand>(cmd,
                             opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
                         break;
