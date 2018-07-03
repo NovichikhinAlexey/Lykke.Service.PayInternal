@@ -181,9 +181,20 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (UnexpectedTransactionTypeException e)
             {
-                _log.WriteError(nameof(CompleteOutboundTransaction), new { e.TransactionType }, e);
+                _log.WriteError(nameof(CompleteOutboundTransaction), new {e.TransactionType}, e);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (InsufficientFundsException e)
+            {
+                _log.WriteError(nameof(CompleteOutboundTransaction), new
+                {
+                    e.AssetId,
+                    e.WalletAddress
+                }, e);
+
+                //todo:
+                return Ok();
             }
         }
 
@@ -233,7 +244,9 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 _log.WriteError("NotEnoughFundsOutboundTx", new {e.TransactionType}, e);
 
-                return BadRequest(ErrorResponse.Create(e.Message));
+                //todo:
+                return Ok();
+                //return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
     }
