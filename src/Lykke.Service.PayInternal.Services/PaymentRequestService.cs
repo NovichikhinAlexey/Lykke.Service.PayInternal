@@ -178,7 +178,7 @@ namespace Lykke.Service.PayInternal.Services
             PaymentRequestStatusInfo newStatusInfo =
                 statusInfo ?? await _paymentRequestStatusResolver.GetStatus(walletAddress);
 
-            bool releaseLock = paymentRequest.Status == PaymentRequestStatus.InProcess;
+            PaymentRequestStatus previousStatus = paymentRequest.Status;
 
             paymentRequest.Status = newStatusInfo.Status;
             paymentRequest.PaidDate = newStatusInfo.Date;
@@ -189,14 +189,18 @@ namespace Lykke.Service.PayInternal.Services
 
             await _paymentRequestRepository.UpdateAsync(paymentRequest);
 
-            if (releaseLock)
+            // if we are updating status from "InProcess" to any other - we have to release the lock
+            if (previousStatus == PaymentRequestStatus.InProcess)
                 await _paymentLocksService.ReleaseLockAsync(paymentRequest.Id, paymentRequest.MerchantId);
 
             PaymentRequestRefund refundInfo = await GetRefundInfoAsync(paymentRequest.WalletAddress);
 
             await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
 
-            if (paymentRequest.StatusValidForSettlement())
+            // doing settlement only once
+            // Some flows assume we can get updates from blockchain multiple times for the same transaction
+            // which leads to the same payment request status 
+            if (paymentRequest.StatusValidForSettlement() && paymentRequest.Status != previousStatus)
                 await SettleAsync(paymentRequest.MerchantId, paymentRequest.Id);
         }
 
