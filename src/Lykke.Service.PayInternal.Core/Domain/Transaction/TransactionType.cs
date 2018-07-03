@@ -1,8 +1,12 @@
-﻿namespace Lykke.Service.PayInternal.Core.Domain.Transaction
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
+namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 {
     /// <summary>
     /// The type of transaction
     /// </summary>
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum TransactionType
     {
         /// <summary>
