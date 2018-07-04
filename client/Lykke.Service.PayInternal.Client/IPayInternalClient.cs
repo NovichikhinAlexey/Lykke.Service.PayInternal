@@ -342,6 +342,12 @@ namespace Lykke.Service.PayInternal.Client
         Task<byte[]> GetFileAsync(string merchantId, string fileId);
 
         /// <summary>
+        /// Get merchant logo url
+        /// </summary>
+        /// <param name="merchantId">The merchant id</param>
+        Task<string> GetMerchantLogoUrl(string merchantId);
+
+        /// <summary>
         /// Saves file.
         /// </summary>
         /// <param name="merchantId">The merchant id.</param>

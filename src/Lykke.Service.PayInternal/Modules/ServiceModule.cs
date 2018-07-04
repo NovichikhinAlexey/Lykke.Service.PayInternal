@@ -143,6 +143,7 @@ namespace Lykke.Service.PayInternal.Modules
                 .As<IBcnSettingsResolver>();
 
             builder.RegisterType<FileService>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Merchant))
                 .As<IFileService>();
 
             builder.RegisterType<WalletHistoryService>()

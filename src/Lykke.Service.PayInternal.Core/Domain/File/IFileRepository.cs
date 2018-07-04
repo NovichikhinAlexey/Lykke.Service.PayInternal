@@ -9,6 +9,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.File
     {
         Task<byte[]> GetAsync(string id);
 
+        Task<string> GetBlobUrl(string fileName);
+
         Task<string> InsertAsync(byte[] file, string id);
 
         Task DeleteAsync(string id);
