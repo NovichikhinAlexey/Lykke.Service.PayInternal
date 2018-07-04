@@ -17,32 +17,31 @@ namespace Lykke.Service.PayInternal.Services
     public class ExchangeService : IExchangeService
     {
         private readonly IMerchantWalletService _merchantWalletService;
-        private readonly IBlockchainClientProvider _blockchainClientProvider;
         private readonly IAssetRatesService _assetRatesService;
         private readonly IAssetSettingsService _assetSettingsService;
         private readonly IBcnSettingsResolver _bcnSettingsResolver;
         private readonly ITransferService _transferService;
         private readonly ITransactionsService _transactionsService;
+        private readonly IWalletBalanceValidator _walletBalanceValidator;
 
         public ExchangeService(
             [NotNull] IMerchantWalletService merchantWalletService,
-            [NotNull] IBlockchainClientProvider blockchainClientProvider,
             [NotNull] IAssetRatesService assetRatesService,
             [NotNull] IAssetSettingsService assetSettingsService,
             [NotNull] IBcnSettingsResolver bcnSettingsResolver,
             [NotNull] ITransferService transferService,
-            [NotNull] ITransactionsService transactionsService)
+            [NotNull] ITransactionsService transactionsService, 
+            [NotNull] IWalletBalanceValidator walletBalanceValidator)
         {
             _merchantWalletService =
                 merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
-            _blockchainClientProvider = blockchainClientProvider ??
-                                        throw new ArgumentNullException(nameof(blockchainClientProvider));
             _assetRatesService = assetRatesService ?? throw new ArgumentNullException(nameof(assetRatesService));
             _assetSettingsService =
                 assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
             _bcnSettingsResolver = bcnSettingsResolver ?? throw new ArgumentNullException(nameof(bcnSettingsResolver));
             _transferService = transferService ?? throw new ArgumentNullException(nameof(transferService));
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
+            _walletBalanceValidator = walletBalanceValidator ?? throw new ArgumentNullException(nameof(walletBalanceValidator));
         }
 
         public async Task<ExchangeResult> ExecuteAsync(ExchangeCommand cmd)
@@ -65,9 +64,9 @@ namespace Lykke.Service.PayInternal.Services
 
             decimal exchangeAmount = cmd.SourceAmount * rate.BidPrice;
 
-            await ValidateTransferBalance(sourceAddress, cmd.SourceAssetId, cmd.SourceAmount);
+            await _walletBalanceValidator.ValidateTransfer(sourceAddress, cmd.SourceAssetId, cmd.SourceAmount);
 
-            await ValidateTransferBalance(hotwallet, cmd.DestAssetId, exchangeAmount);
+            await _walletBalanceValidator.ValidateTransfer(hotwallet, cmd.DestAssetId, exchangeAmount);
 
             TransferResult toHotWallet = await _transferService.ExchangeThrowFail(
                 cmd.SourceAssetId,
@@ -147,19 +146,6 @@ namespace Lykke.Service.PayInternal.Services
             }
         }
 
-        [AssertionMethod]
-        private async Task ValidateTransferBalance(string walletAddress, string assetId, decimal transferAmount)
-        {
-            BlockchainType network = await _assetSettingsService.GetNetworkAsync(assetId);
-
-            IBlockchainApiClient blockchainApiClient = _blockchainClientProvider.Get(network);
-
-            decimal balance = await blockchainApiClient.GetBalanceAsync(walletAddress, assetId);
-
-            if (balance < transferAmount)
-                throw new InsufficientFundsException(walletAddress, assetId);
-        }
-
         public async Task<ExchangeResult> PreExchangeAsync(PreExchangeCommand cmd)
         {
             BlockchainType network = await _assetSettingsService.GetNetworkAsync(cmd.SourceAssetId);
@@ -172,7 +158,7 @@ namespace Lykke.Service.PayInternal.Services
                 cmd.SourceAssetId,
                 PaymentDirection.Outgoing)).WalletAddress;
 
-            await ValidateTransferBalance(sourceWalletAddress, cmd.SourceAssetId, cmd.SourceAmount);
+            await _walletBalanceValidator.ValidateTransfer(sourceWalletAddress, cmd.SourceAssetId, cmd.SourceAmount);
 
             string hotwallet = _bcnSettingsResolver.GetExchangeHotWallet(network);
 
@@ -180,7 +166,7 @@ namespace Lykke.Service.PayInternal.Services
 
             decimal exchangeAmount = cmd.SourceAmount * rate.BidPrice;
 
-            await ValidateTransferBalance(hotwallet, cmd.DestAssetId, exchangeAmount);
+            await _walletBalanceValidator.ValidateTransfer(hotwallet, cmd.DestAssetId, exchangeAmount);
 
             return new ExchangeResult
             {

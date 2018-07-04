@@ -6,8 +6,8 @@ using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
+using Lykke.Service.PayInternal.Core.Domain.Cashout;
 using Lykke.Service.PayInternal.Core.Domain.Exchange;
-using Lykke.Service.PayInternal.Core.Domain.History;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
@@ -31,6 +31,7 @@ using Lykke.Service.PayInternal.Models.Transactions.Ethereum;
 using Lykke.Service.PayInternal.Models.Transfers;
 using Lykke.Service.PayInternal.Services.Domain;
 using Lykke.Service.PayInternal.Services.Mapping;
+using Lykke.Service.PayInternal.Models.Cashout;
 
 namespace Lykke.Service.PayInternal.Mapping
 {
@@ -138,6 +139,14 @@ namespace Lykke.Service.PayInternal.Mapping
                         dest.Type = (TransactionType) resContext.Items["TransactionType"]))
                 .ForMember(dest => dest.WalletAddress,
                     opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.WalletAddress));
+
+            CreateMap<CashoutModel, CashoutCommand>(MemberList.Destination)
+                .ForMember(dest => dest.SourceAssetId,
+                    opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.SourceAssetId));
+
+            CreateMap<CashoutResult, CashoutResponse>(MemberList.Destination)
+                .ForMember(dest => dest.AssetId,
+                    opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.AssetId));
 
             CreateEthereumPaymentMaps();
 
