@@ -149,6 +149,12 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<WalletHistoryService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.RetryPolicy))
                 .As<IWalletHistoryService>();
+
+            builder.RegisterType<CashoutService>()
+                .As<ICashoutService>();
+
+            builder.RegisterType<WalletBalanceValidator>()
+                .As<IWalletBalanceValidator>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
