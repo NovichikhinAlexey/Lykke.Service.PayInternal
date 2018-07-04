@@ -15,6 +15,9 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public BlockchainSettings Blockchain { get; set; }
         public JobPeriods JobPeriods { get; set; }
         public MerchantSettings Merchant { get; set; }
+        public AssetPairsLocalStorageSettings AssetPairsLocalStorage { get; set; }
+        public CacheSettings CacheSettings { get; set; }
+        public RetryPolicySettings RetryPolicy { get; set; }
     }
 
     public class MerchantSettings
@@ -73,6 +76,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class BitcoinSettings
     {
         public string Network { get; set; }
+        public string ExchangeHotWalletAddress { get; set; }
         public BlockchainExplorerSettings BlockchainExplorer { get; set; }
 
     }
@@ -85,6 +89,30 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class EthereumBlockchainSettings
     {
         public string ApiKey { get; set; }
+        public string ExchangeHotWalletAddress { get; set; }
         public BlockchainExplorerSettings BlockchainExplorer { get; set; }
+    }
+
+    public class AssetPairSetting {
+        public string BaseAssetId { get; set; }
+        public string QuotingAssetId { get; set; }
+        public int Accuracy { get; set; }
+    }
+
+    public class AssetPairsLocalStorageSettings
+    {
+        public IReadOnlyList<AssetPairSetting> AssetPairs { get; set; }
+    }
+
+    public class CacheSettings
+    {
+        public string RedisConfiguration { get; set; }
+        public string PaymentLocksCacheKeyPattern { get; set; }
+        public string CheckoutLocksCacheKeyPattern { get; set; }
+    }
+
+    public class RetryPolicySettings
+    {
+        public int DefaultAttempts { get; set; }
     }
 }

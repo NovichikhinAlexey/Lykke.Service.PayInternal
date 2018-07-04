@@ -61,20 +61,25 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IPaymentRequestTransaction> CreateTransactionAsync(ICreateTransactionCommand request)
         {
-            var paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
+            IPaymentRequest paymentRequest = null;
 
-            if (paymentRequest == null)
-                throw new PaymentRequestNotFoundException(request.WalletAddress);
-
-            IPaymentRequestTransaction existing =
-                await _transactionRepository.GetByIdAsync(request.Blockchain, request.IdentityType, request.Identity, request.WalletAddress);
-
-            if (existing != null)
+            if (!string.IsNullOrEmpty(request.WalletAddress))
             {
-                await UpdateAsync(Mapper.Map<UpdateTransactionCommand>(request));
+                paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
 
-                return await _transactionRepository.GetByIdAsync(request.Blockchain, request.IdentityType,
-                    request.Identity, request.WalletAddress);
+                if (paymentRequest == null)
+                    throw new PaymentRequestNotFoundException(request.WalletAddress);
+
+                IPaymentRequestTransaction existing =
+                    await _transactionRepository.GetByIdAsync(request.Blockchain, request.IdentityType, request.Identity, request.WalletAddress);
+
+                if (existing != null)
+                {
+                    await UpdateAsync(Mapper.Map<UpdateTransactionCommand>(request));
+
+                    return await _transactionRepository.GetByIdAsync(request.Blockchain, request.IdentityType,
+                        request.Identity, request.WalletAddress);
+                }
             }
 
             var transactionEntity =

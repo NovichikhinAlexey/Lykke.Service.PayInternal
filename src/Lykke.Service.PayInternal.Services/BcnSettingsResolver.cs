@@ -7,11 +7,11 @@ using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Services
 {
-    public class BcnExplorerResolver : IBcnExplorerResolver
+    public class BcnSettingsResolver : IBcnSettingsResolver
     {
         private readonly BlockchainSettings _blockchainSettings;
 
-        public BcnExplorerResolver([NotNull] BlockchainSettings blockchainSettings)
+        public BcnSettingsResolver([NotNull] BlockchainSettings blockchainSettings)
         {
             _blockchainSettings = blockchainSettings ?? throw new ArgumentNullException(nameof(blockchainSettings));
         }
@@ -29,6 +29,7 @@ namespace Lykke.Service.PayInternal.Services
                                 .AddLastSymbolIfNotExists('/')), transactionHash);
                     break;
                 case BlockchainType.Ethereum:
+                case BlockchainType.EthereumIata:
                     uri = new Uri(
                         new Uri(
                             _blockchainSettings.Ethereum.BlockchainExplorer.TransactionUrl
@@ -41,6 +42,29 @@ namespace Lykke.Service.PayInternal.Services
             }
 
             return uri?.ToString() ?? string.Empty;
+        }
+
+        public string GetExchangeHotWallet(BlockchainType blockchain)
+        {
+            string address;
+
+            switch (blockchain)
+            {
+                case BlockchainType.Bitcoin:
+                    address = _blockchainSettings.Bitcoin.ExchangeHotWalletAddress;
+                    break;
+                case BlockchainType.Ethereum:
+                case BlockchainType.EthereumIata:
+                    address = _blockchainSettings.Ethereum.ExchangeHotWalletAddress;
+                    break;
+                case BlockchainType.None:
+                    address = string.Empty;
+                    break;
+                default:
+                    throw new Exception("Unexpected blockchain type");
+            }
+
+            return address;
         }
     }
 }

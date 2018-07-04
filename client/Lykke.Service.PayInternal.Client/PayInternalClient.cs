@@ -7,6 +7,7 @@ using Lykke.Service.PayInternal.Client.Api;
 using Lykke.Service.PayInternal.Client.Exceptions;
 using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.AssetRates;
+using Lykke.Service.PayInternal.Client.Models.Exchange;
 using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
@@ -19,6 +20,7 @@ using Refit;
 using Lykke.Service.PayInternal.Client.Models.File;
 using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
 using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
+using Lykke.Service.PayInternal.Client.Models.Transactions.Ethereum;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -34,6 +36,7 @@ namespace Lykke.Service.PayInternal.Client
         private readonly ISupervisorMembershipApi _supervisorMembershipApi;
         private readonly IFilesApi _filesApi;
         private readonly IMerchantWalletsApi _merchantWalletsApi;
+        private readonly IExchangeApi _exchangeApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -65,6 +68,7 @@ namespace Lykke.Service.PayInternal.Client
             _supervisorMembershipApi = RestService.For<ISupervisorMembershipApi>(_httpClient);
             _filesApi = RestService.For<IFilesApi>(_httpClient);
             _merchantWalletsApi = RestService.For<IMerchantWalletsApi>(_httpClient);
+            _exchangeApi = RestService.For<IExchangeApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
@@ -123,6 +127,11 @@ namespace Lykke.Service.PayInternal.Client
         public Task<OrderModel> ChechoutOrderAsync(ChechoutRequestModel model)
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.ChechoutAsync(model));
+        }
+
+        public Task<CalculatedAmountResponse> GetCalculatedAmountInfoAsync(GetCalculatedAmountInfoRequest model)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.GetCalculatedAmountInfoAsync(model));
         }
 
         public Task<IReadOnlyList<PaymentRequestModel>> GetPaymentRequestsAsync(string merchantId)
@@ -383,6 +392,56 @@ namespace Lykke.Service.PayInternal.Client
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() =>
                 _assetsApi.GetCurrentAssetPairRateAsync(baseAssetId, quotingAssetId));
+        }
+
+        public Task PayAsync(PaymentRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.PayAsync(request));
+        }
+
+        public Task PrePayAsync(PrePaymentRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.PrePayAsync(request));
+        }
+
+        public Task<ExchangeResponse> ExchangeAsync(ExchangeRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _exchangeApi.ExecuteAsync(request));
+        }
+
+        public Task<ExchangeResponse> PreExchangeAsync(PreExchangeRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _exchangeApi.PreExchangeAsync(request));
+        }
+
+        public Task RegisterEthereumInboundTransactionAsync(RegisterInboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.RegisterEthereumInboundTransactionAsync(request));
+        }
+
+        public Task RegisterEthereumOutboundTransactionAsync(RegisterOutboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.RegisterEthereumOutboundTransactionAsync(request));
+        }
+
+        public Task CompleteEthereumOutboundTransactionAsync(CompleteOutboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.CompleteEthereumOutboundTransactionAsync(request));
+        }
+
+        public Task FailEthereumOutboundTransactionAsync(FailOutboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.FailEthereumOutboundTransactionAsync(request));
+        }
+
+        public Task FailEthereumOutboundTransactionAsync(NotEnoughFundsOutboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.FailEthereumOutboundTransactionAsync(request));
         }
 
         public void Dispose()

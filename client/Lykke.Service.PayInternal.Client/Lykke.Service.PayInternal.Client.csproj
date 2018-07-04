@@ -20,7 +20,7 @@
     <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Lykke.Common" Version="6.6.0" />
+    <PackageReference Include="Lykke.Common" Version="7.0.1" />
     <PackageReference Include="Refit" Version="4.2.0" />
   </ItemGroup>
 </Project>

@@ -89,8 +89,8 @@ namespace Lykke.Service.PayInternal.Services
 
                 result.Transactions.Add(new BlockchainTransactionResult
                 {
-                    Amount = transferAmount.Amount,
-                    AssetId = asset.Name,
+                    Amount = transferAmount.Amount ?? 0,
+                    AssetId = asset.DisplayId,
                     Hash = string.Empty,
                     IdentityType = TransactionIdentityType.Specific,
                     Identity = operationId,
@@ -106,7 +106,7 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<string> CreateAddressAsync()
         {
             object response =
-                await _ethereumServiceClient.ApiLykkePayErc20depositsPostAsync(_ethereumSettings.ApiKey, Guid.NewGuid().ToString());
+                await _ethereumServiceClient.ApiLykkePayErc20depositsPostAsync(_ethereumSettings.ApiKey, StringUtils.GenerateId());
 
             if (response is ApiException ex)
             {
@@ -144,17 +144,47 @@ namespace Lykke.Service.PayInternal.Services
             throw new UnrecognizedApiResponse(response?.GetType().FullName);
         }
 
-        public async Task<IReadOnlyList<BlockchainBalanceResult>> GetBalanceAsync(string address)
+        public async Task<IReadOnlyList<BlockchainBalanceResult>> GetBalancesAsync(string address)
         {
-            //todo
-            return new List<BlockchainBalanceResult>
+            var balances = new List<BlockchainBalanceResult>();
+
+            object response = await _ethereumServiceClient.ApiErc20BalancePostAsync(new GetErcBalance(address));
+
+            if (response is ApiException ex)
             {
-                new BlockchainBalanceResult
+                _log.WriteWarning(nameof(GetBalancesAsync), "EthereumIata balances",
+                    ex.Error?.Message);
+
+                throw new WalletAddressBalanceException(BlockchainType.EthereumIata, address);
+            }
+
+            if (response is AddressTokenBalanceContainerResponse result)
+            {
+                foreach (AddressTokenBalanceResponse balanceResponse in result.Balances)
                 {
-                    AssetId = LykkeConstants.Erc20PktAsset,
-                    Balance = 0
+                    Erc20Token token =
+                        await _assetsService.Erc20TokenGetByAddressAsync(balanceResponse.Erc20TokenAddress);
+
+                    if (string.IsNullOrEmpty(token?.AssetId))
+                        continue;
+
+                    Asset asset = await _assetsLocalCache.GetAssetByIdAsync(token.AssetId);
+
+                    if (asset == null)
+                        continue;
+
+                    balances.Add(new BlockchainBalanceResult
+                    {
+                        AssetId = asset.DisplayId,
+                        Balance = balanceResponse.Balance.FromContract(asset.MultiplierPower, asset.Accuracy)
+                    });
                 }
-            };
+
+                return balances;
+
+            }
+
+            throw new UnrecognizedApiResponse(response?.GetType().FullName);
         }
     }
 }

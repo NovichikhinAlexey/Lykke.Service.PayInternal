@@ -8,17 +8,17 @@ namespace Lykke.Service.PayInternal.Mapping
 {
     public class RefundTxUrlValueResolver : IValueResolver<PaymentRequestRefundTransaction, object, string>
     {
-        private readonly IBcnExplorerResolver _bcnExplorerResolver;
+        private readonly IBcnSettingsResolver _bcnSettingsResolver;
 
-        public RefundTxUrlValueResolver([NotNull] IBcnExplorerResolver bcnExplorerResolver)
+        public RefundTxUrlValueResolver([NotNull] IBcnSettingsResolver bcnSettingsResolver)
         {
-            _bcnExplorerResolver = bcnExplorerResolver ?? throw new ArgumentNullException(nameof(bcnExplorerResolver));
+            _bcnSettingsResolver = bcnSettingsResolver ?? throw new ArgumentNullException(nameof(bcnSettingsResolver));
         }
 
         public string Resolve(PaymentRequestRefundTransaction source, object destination, string destMember,
             ResolutionContext context)
         {
-            return _bcnExplorerResolver.GetExplorerUrl(source.Blockchain, source.Hash);
+            return _bcnSettingsResolver.GetExplorerUrl(source.Blockchain, source.Hash);
         }
     }
 }

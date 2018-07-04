@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.AssetRates;
+using Lykke.Service.PayInternal.Client.Models.Exchange;
 using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
@@ -13,6 +14,7 @@ using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Lykke.Service.PayInternal.Client.Models.File;
 using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
 using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
+using Lykke.Service.PayInternal.Client.Models.Transactions.Ethereum;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -94,6 +96,12 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="model">The order creation information.</param>
         /// <returns>An active order related with payment request.</returns>
         Task<OrderModel> ChechoutOrderAsync(ChechoutRequestModel model);
+
+        /// <summary>
+        /// Get calculated amount to show amount to pay in paymentAsset
+        /// </summary>
+        /// <param name="model">The request in order to get amount</param>
+        Task<CalculatedAmountResponse> GetCalculatedAmountInfoAsync(GetCalculatedAmountInfoRequest model);
 
         /// <summary>
         /// Returns merchant payment requests.
@@ -455,5 +463,68 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="quotingAssetId">Quoting asset id</param>
         /// <returns></returns>
         Task<AssetRateResponse> GetCurrentAssetPairRateAsync(string baseAssetId, string quotingAssetId);
+
+        /// <summary>
+        /// Executes payment using default payer merchant's wallet
+        /// </summary>
+        /// <param name="request">Payment details</param>
+        /// <returns></returns>
+        Task PayAsync(PaymentRequest request);
+
+        /// <summary>
+        /// Validates payment using default payer merchant's wallet
+        /// </summary>
+        /// <param name="request">Prepayment request details</param>
+        /// <returns></returns>
+        Task PrePayAsync(PrePaymentRequest request);
+
+        /// <summary>
+        /// Executes exchange
+        /// </summary>
+        /// <param name="request">Exchange operation details</param>
+        /// <returns>Exchange execution result</returns>
+        Task<ExchangeResponse> ExchangeAsync(ExchangeRequest request);
+
+        /// <summary>
+        /// Returns current exchange rate
+        /// </summary>
+        /// <param name="request">PreExchange operation details</param>
+        /// /// <returns>Result of possible exchange execution </returns>
+        Task<ExchangeResponse> PreExchangeAsync(PreExchangeRequest request);
+
+        /// <summary>
+        /// Registers new ethereum inbound transaction
+        /// </summary>
+        /// <param name="request">Transaction registration details</param>
+        /// <returns></returns>
+        Task RegisterEthereumInboundTransactionAsync(RegisterInboundTxModel request);
+
+        /// <summary>
+        /// Registers new ethereum outbound transaction
+        /// </summary>
+        /// <param name="request">Transaction registration details</param>
+        /// <returns></returns>
+        Task RegisterEthereumOutboundTransactionAsync(RegisterOutboundTxModel request);
+
+        /// <summary>
+        /// Marks ethereum outbound transaction as completed
+        /// </summary>
+        /// <param name="request">Transaction identification details</param>
+        /// <returns></returns>
+        Task CompleteEthereumOutboundTransactionAsync(CompleteOutboundTxModel request);
+
+        /// <summary>
+        ///  Marks ethereum outbound transaction as failed
+        /// </summary>
+        /// <param name="request">Transaction identification details</param>
+        /// <returns></returns>
+        Task FailEthereumOutboundTransactionAsync(FailOutboundTxModel request);
+
+        /// <summary>
+        ///  Marks ethereum outbound transaction as complemeted with zero amount
+        /// </summary>
+        /// <param name="request">Transaction identification details</param>
+        /// <returns></returns>
+        Task FailEthereumOutboundTransactionAsync(NotEnoughFundsOutboundTxModel request);
     }
 }

@@ -45,5 +45,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
         bool StatusValidForRefund();
 
         bool StatusValidForPastDueTransition();
+
+        bool StatusValidForSettlement();
     }
 }

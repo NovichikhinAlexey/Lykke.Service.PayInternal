@@ -1,7 +1,9 @@
 ﻿namespace Lykke.Service.PayInternal.Core.Services
 {
-    public interface IBcnExplorerResolver
+    public interface IBcnSettingsResolver
     {
         string GetExplorerUrl(BlockchainType blockchain, string transactionHash);
+
+        string GetExchangeHotWallet(BlockchainType blockchain);
     }
 }

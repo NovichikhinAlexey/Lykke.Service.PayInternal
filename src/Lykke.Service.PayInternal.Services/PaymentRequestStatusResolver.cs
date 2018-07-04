@@ -49,7 +49,8 @@ namespace Lykke.Service.PayInternal.Services
 
             if (txs.Any(x => x.IsSettlement()))
             {
-                paymentStatusInfo = await GetStatusForSettlement(paymentRequest);
+                //todo: better to have separate status for settlement
+                paymentStatusInfo = await GetStatusForPayment(paymentRequest);
             } else if (txs.Any(x => x.IsRefund()))
             {
                 paymentStatusInfo = await GetStatusForRefund(paymentRequest);

@@ -6,6 +6,8 @@ using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
+using Lykke.Service.PayInternal.Core.Domain.Exchange;
+using Lykke.Service.PayInternal.Core.Domain.History;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
@@ -18,14 +20,17 @@ using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.AssetRates;
 using Lykke.Service.PayInternal.Models.Assets;
+using Lykke.Service.PayInternal.Models.Exchange;
 using Lykke.Service.PayInternal.Models.Markups;
 using Lykke.Service.PayInternal.Models.MerchantGroups;
 using Lykke.Service.PayInternal.Models.MerchantWallets;
 using Lykke.Service.PayInternal.Models.Orders;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Lykke.Service.PayInternal.Models.SupervisorMembership;
+using Lykke.Service.PayInternal.Models.Transactions.Ethereum;
 using Lykke.Service.PayInternal.Models.Transfers;
 using Lykke.Service.PayInternal.Services.Domain;
+using Lykke.Service.PayInternal.Services.Mapping;
 
 namespace Lykke.Service.PayInternal.Mapping
 {
@@ -87,12 +92,54 @@ namespace Lykke.Service.PayInternal.Mapping
 
             CreateMap<MerchantWalletBalanceLine, MerchantWalletBalanceResponse>(MemberList.Destination)
                 .ForMember(dest => dest.MerchantWalletId, opt => opt.MapFrom(src => src.Id))
-                .ForMember(dest => dest.AssetDisplayId, opt => opt.MapFrom(src => src.AssetId));
+                .ForMember(dest => dest.AssetDisplayId, opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.AssetId));
 
-            CreateMap<AddAssetRateModel, AddAssetPairRateCommand>(MemberList.Destination);
+            CreateMap<PaymentModel, PaymentCommand>(MemberList.Destination);
 
-            CreateMap<IAssetPairRate, AssetRateResponse>(MemberList.Destination)
-                .ForMember(dest => dest.Timestamp, opt => opt.MapFrom(src => src.CreatedOn));
+            CreateMap<PrePaymentModel, PaymentCommand>(MemberList.Destination);
+
+            CreateMap<AddAssetRateModel, AddAssetPairRateCommand>(MemberList.Destination)
+                .ForMember(dest => dest.BaseAssetId,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.BaseAssetId = (string) resContext.Items["BaseAssetId"]))
+                .ForMember(dest => dest.QuotingAssetId,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.QuotingAssetId = (string) resContext.Items["QuotingAssetId"]));
+
+            CreateMap<IAssetPairRate, AssetRateResponse>()
+                .ForMember(dest => dest.Timestamp, opt => opt.MapFrom(src => src.CreatedOn))
+                .ForMember(dest => dest.BaseAssetId,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.BaseAssetId = (string) resContext.Items["BaseAssetId"]))
+                .ForMember(dest => dest.QuotingAssetId,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.QuotingAssetId = (string) resContext.Items["QuotingAssetId"]));
+
+            CreateMap<ExchangeModel, ExchangeCommand>(MemberList.Destination)
+                .ForMember(dest => dest.SourceAssetId, opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.SourceAssetId))
+                .ForMember(dest => dest.DestAssetId, opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.DestAssetId));
+
+            CreateMap<PreExchangeModel, PreExchangeCommand>(MemberList.Destination)
+                .ForMember(dest => dest.SourceAssetId, opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.SourceAssetId))
+                .ForMember(dest => dest.DestAssetId, opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.DestAssetId));
+
+            CreateMap<ExchangeResult, ExchangeResponse>(MemberList.Destination)
+                .ForMember(dest => dest.DestAssetId,
+                    opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.DestAssetId))
+                .ForMember(dest => dest.SourceAssetId,
+                    opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.SourceAssetId));
+
+            // incoming bitcoin payment
+            CreateMap<ICreateTransactionRequest, CreateTransactionCommand>(MemberList.Destination)
+                .ForMember(dest => dest.DueDate, opt => opt.Ignore())
+                .ForMember(dest => dest.TransferId, opt => opt.Ignore())
+                .ForMember(dest => dest.Type,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.Type = (TransactionType) resContext.Items["TransactionType"]))
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.WalletAddress));
+
+            CreateEthereumPaymentMaps();
 
             PaymentRequestApiModels();
 
@@ -197,6 +244,17 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.Blockchain, opt => opt.Ignore());
 
             CreateMap<Core.Domain.PaymentRequests.PaymentRequestRefund, Contract.PaymentRequest.PaymentRequestRefund>();
+        }
+
+        private void CreateEthereumPaymentMaps()
+        {
+            CreateMap<RegisterInboundTxRequest, RegisterEthInboundTxCommand>(MemberList.Destination);
+
+            CreateMap<RegisterOutboundTxRequest, UpdateEthOutgoingTxCommand>(MemberList.Destination);
+
+            CreateMap<CompleteOutboundTxRequest, CompleteEthOutgoingTxCommand>(MemberList.Destination);
+
+            CreateMap<NotEnoughFundsOutboundTxRequest, NotEnoughFundsEthOutgoingTxCommand>(MemberList.Destination);
         }
     }
 }

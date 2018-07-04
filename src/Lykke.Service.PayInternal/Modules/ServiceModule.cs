@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
@@ -9,6 +10,7 @@ using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.MarketProfile.Client;
+using Lykke.Service.PayHistory.Client;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
@@ -19,6 +21,7 @@ using Lykke.Service.PayInternal.Services;
 using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
+using Polly;
 using QBitNinja.Client;
 using DbSettings = Lykke.Service.PayInternal.Core.Settings.ServiceSettings.DbSettings;
 
@@ -123,6 +126,11 @@ namespace Lykke.Service.PayInternal.Modules
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum))
                 .SingleInstance();
 
+            builder.RegisterType<EthereumIataApiClient>()
+                .Keyed<IBlockchainApiClient>(BlockchainType.EthereumIata)
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum))
+                .SingleInstance();
+
             builder.RegisterType<LykkeAssetsResolver>()
                 .As<ILykkeAssetsResolver>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.AssetsMap));
@@ -130,13 +138,17 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<MarkupService>()
                 .As<IMarkupService>();
 
-            builder.RegisterType<BcnExplorerResolver>()
+            builder.RegisterType<BcnSettingsResolver>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain))
-                .As<IBcnExplorerResolver>();
+                .As<IBcnSettingsResolver>();
 
             builder.RegisterType<FileService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Merchant))
                 .As<IFileService>();
+
+            builder.RegisterType<WalletHistoryService>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.RetryPolicy))
+                .As<IWalletHistoryService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
@@ -155,6 +167,8 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterInstance(new QBitNinjaClient(_settings.CurrentValue.NinjaServiceClient.ServiceUrl))
                 .AsSelf();
+
+            builder.RegisterHistoryOperationPublisher(_settings.CurrentValue.PayHistoryServicePublisher, _log);
         }
 
         private void RegisterCaches(ContainerBuilder builder)
@@ -165,8 +179,18 @@ namespace Lykke.Service.PayInternal.Modules
 
                 return new CachedDataDictionary<string, Asset>
                 (
-                    async () => (await assetsService.AssetGetAllAsync(true)).ToDictionary(itm => itm.Id)
-                );
+                    async () =>
+                    {
+                        IList<Asset> assets = await Policy
+                            .Handle<Exception>()
+                            .WaitAndRetryAsync(
+                                _settings.CurrentValue.PayInternalService.RetryPolicy.DefaultAttempts,
+                                attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                                (ex, timestamp) => _log.WriteError("Getting assets dictionary with retry", ex))
+                            .ExecuteAsync(() => assetsService.AssetGetAllAsync(true));
+
+                        return assets.ToDictionary(itm => itm.Id);
+                    });
             }).SingleInstance();
 
             builder.Register(x =>
@@ -174,8 +198,18 @@ namespace Lykke.Service.PayInternal.Modules
                 var assetsService = x.Resolve<IComponentContext>().Resolve<IAssetsService>();
 
                 return new CachedDataDictionary<string, AssetPair>(
-                    async () => (await assetsService.AssetPairGetAllAsync()).ToDictionary(itm => itm.Id)
-                );
+                    async () =>
+                    {
+                        IList<AssetPair> assetPairs = await Policy
+                            .Handle<Exception>()
+                            .WaitAndRetryAsync(
+                                _settings.CurrentValue.PayInternalService.RetryPolicy.DefaultAttempts,
+                                attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                                (ex, timestamp) => _log.WriteError("Getting asset pairs dictionary with retry", ex))
+                            .ExecuteAsync(() => assetsService.AssetPairGetAllAsync());
+
+                        return assetPairs.ToDictionary(itm => itm.Id);
+                    });
             }).SingleInstance();
 
             builder.RegisterType<AssetsLocalCache>()
@@ -226,6 +260,14 @@ namespace Lykke.Service.PayInternal.Modules
                 .SingleInstance();
 
             builder.RegisterType<VirtualAddressResolver>()
+                .AsSelf()
+                .SingleInstance();
+
+            builder.RegisterType<AssetIdValueResolver>()
+                .AsSelf()
+                .SingleInstance();
+
+            builder.RegisterType<AssetDisplayIdValueResolver>()
                 .AsSelf()
                 .SingleInstance();
         }

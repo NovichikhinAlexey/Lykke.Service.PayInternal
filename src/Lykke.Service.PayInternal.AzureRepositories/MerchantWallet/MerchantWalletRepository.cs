@@ -15,13 +15,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantWallet
     {
         private readonly INoSQLTableStorage<MerchantWalletEntity> _tableStorage;
         private readonly INoSQLTableStorage<AzureIndex> _indexByIdStorage;
+        private readonly INoSQLTableStorage<AzureIndex> _indexByAddressStorage;
 
         public MerchantWalletRepository(
             [NotNull] INoSQLTableStorage<MerchantWalletEntity> tableStorage, 
-            [NotNull] INoSQLTableStorage<AzureIndex> indexByIdStorage)
+            [NotNull] INoSQLTableStorage<AzureIndex> indexByIdStorage, 
+            [NotNull] INoSQLTableStorage<AzureIndex> indexByAddressStorage)
         {
             _tableStorage = tableStorage ?? throw new ArgumentNullException(nameof(tableStorage));
             _indexByIdStorage = indexByIdStorage ?? throw new ArgumentNullException(nameof(indexByIdStorage));
+            _indexByAddressStorage = indexByAddressStorage ?? throw new ArgumentNullException(nameof(indexByAddressStorage));
         }
 
         public async Task<IMerchantWallet> CreateAsync(IMerchantWallet src)
@@ -30,18 +33,27 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantWallet
 
             await _tableStorage.InsertAsync(entity);
 
-            AzureIndex index = MerchantWalletEntity.IndexById.Create(entity);
+            AzureIndex indexById = MerchantWalletEntity.IndexById.Create(entity);
 
-            await _indexByIdStorage.InsertAsync(index);
+            await _indexByIdStorage.InsertAsync(indexById);
+
+            AzureIndex indexByAddress = MerchantWalletEntity.IndexByAddress.Create(entity);
+
+            await _indexByAddressStorage.InsertAsync(indexByAddress);
 
             return Mapper.Map<Core.Domain.MerchantWallet.MerchantWallet>(entity);
         }
 
-        public async Task<IMerchantWallet> GetAsync(string merchantId, BlockchainType network, string walletAddress)
+        public async Task<IMerchantWallet> GetByAddressAsync(BlockchainType network, string walletAddress)
         {
-            MerchantWalletEntity entity = await _tableStorage.GetDataAsync(
-                MerchantWalletEntity.ByMerchant.GeneratePartitionKey(merchantId),
-                MerchantWalletEntity.ByMerchant.GenerateRowKey(network, walletAddress));
+            AzureIndex index = await _indexByAddressStorage.GetDataAsync(
+                MerchantWalletEntity.IndexByAddress.GeneratePartitionKey(network, walletAddress),
+                MerchantWalletEntity.IndexByAddress.GenerateRowKey());
+
+            if (index == null) 
+                throw new KeyNotFoundException();
+
+            MerchantWalletEntity entity = await _tableStorage.GetDataAsync(index);
 
             return Mapper.Map<Core.Domain.MerchantWallet.MerchantWallet>(entity);
         }
@@ -103,6 +115,11 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantWallet
             await _indexByIdStorage.DeleteAsync(
                 MerchantWalletEntity.IndexById.GeneratePartitionKey(deletedEntity.Id),
                 MerchantWalletEntity.IndexById.GenerateRowKey());
+
+            await _indexByAddressStorage.DeleteAsync(
+                MerchantWalletEntity.IndexByAddress.GeneratePartitionKey(deletedEntity.Network,
+                    deletedEntity.WalletAddress),
+                MerchantWalletEntity.IndexByAddress.GenerateRowKey());
         }
 
         public async Task DeleteAsync(string merchantWalletId)
@@ -114,9 +131,15 @@ namespace Lykke.Service.PayInternal.AzureRepositories.MerchantWallet
             if (index == null)
                 throw new KeyNotFoundException();
 
+            MerchantWalletEntity deletedEntity =
+                await _tableStorage.DeleteAsync(index.PrimaryPartitionKey, index.PrimaryRowKey);
+
             await _indexByIdStorage.DeleteAsync(index);
 
-            await _tableStorage.DeleteAsync(index.PrimaryPartitionKey, index.PrimaryRowKey);
+            await _indexByAddressStorage.DeleteAsync(
+                MerchantWalletEntity.IndexByAddress.GeneratePartitionKey(deletedEntity.Network,
+                    deletedEntity.WalletAddress),
+                MerchantWalletEntity.IndexByAddress.GenerateRowKey());
         }
     }
 }
