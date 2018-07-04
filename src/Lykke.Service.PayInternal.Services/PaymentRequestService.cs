@@ -195,13 +195,16 @@ namespace Lykke.Service.PayInternal.Services
 
             PaymentRequestRefund refundInfo = await GetRefundInfoAsync(paymentRequest.WalletAddress);
 
-            await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
+            if (paymentRequest.Status != previousStatus)
+            {
+                await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
 
-            // doing settlement only once
-            // Some flows assume we can get updates from blockchain multiple times for the same transaction
-            // which leads to the same payment request status 
-            if (paymentRequest.StatusValidForSettlement() && paymentRequest.Status != previousStatus)
-                await SettleAsync(paymentRequest.MerchantId, paymentRequest.Id);
+                // doing settlement only once
+                // Some flows assume we can get updates from blockchain multiple times for the same transaction
+                // which leads to the same payment request status 
+                if (paymentRequest.StatusValidForSettlement())
+                    await SettleAsync(paymentRequest.MerchantId, paymentRequest.Id);
+            }
         }
 
         public async Task HandleExpiredAsync()
