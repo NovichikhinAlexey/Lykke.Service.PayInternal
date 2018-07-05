@@ -152,6 +152,10 @@ namespace Lykke.Service.PayInternal.Services
                         _log.WriteInfo(nameof(UpdateEthOutgoingTxAsync), cmd, "Outgoing settlement operation");
                         await _transactionsService.UpdateAsync(Mapper.Map<UpdateSettlementEthOutgoingTxCommand>(cmd));
                         break;
+                    case TransactionType.CashOut:
+                        _log.WriteInfo(nameof(UpdateEthOutgoingTxAsync), cmd, "Cashout operation");
+                        await _transactionsService.UpdateAsync(Mapper.Map<UpdateCashoutEthOutgoingTxCommand>(cmd));
+                        break;
                     default: throw new UnexpectedTransactionTypeException(tx.TransactionType);
                 }
             }
@@ -221,6 +225,11 @@ namespace Lykke.Service.PayInternal.Services
                         await _transactionsService.UpdateAsync(Mapper.Map<CompleteSettlementEthOutgoingTxCommand>(cmd,
                             opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
                         break;
+                    case TransactionType.CashOut:
+                        _log.WriteInfo(nameof(CompleteEthOutgoingTxAsync), cmd, "Complete outgoing cashout");
+                        await _transactionsService.UpdateAsync(Mapper.Map<CompleteCashoutEthOutgoingTxCommand>(cmd,
+                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
+                        break;
                     default: throw new UnexpectedTransactionTypeException(tx.TransactionType);
                 }
             }
@@ -243,11 +252,21 @@ namespace Lykke.Service.PayInternal.Services
                 switch (tx.TransactionType)
                 {
                     case TransactionType.Payment:
-                        _log.WriteInfo(nameof(FailEthOutgoingTxAsync), cmd, "Fail outgoing payment");
+                        _log.WriteInfo(nameof(FailEthOutgoingTxAsync), cmd, "Failing outgoing payment");
                         await _transactionsService.UpdateAsync(Mapper.Map<FailPaymentEthOutgoingTxCommand>(cmd,
                             opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
                         await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress,
                             PaymentRequestStatusInfo.New());
+                        break;
+                    case TransactionType.CashOut:
+                        _log.WriteInfo(nameof(FailEthOutgoingTxAsync), cmd, "Failing cashout");
+                        await _transactionsService.UpdateAsync(Mapper.Map<FailCashoutEthOutgoingTxCommand>(cmd,
+                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
+                        break;
+                    case TransactionType.Exchange:
+                        _log.WriteInfo(nameof(FailEthOutgoingTxAsync), cmd, "Failing outgoing exchange");
+                        await _transactionsService.UpdateAsync(Mapper.Map<FailExchangeEthOutgoingTxCommand>(cmd,
+                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
                         break;
                     default: throw new UnexpectedTransactionTypeException(tx.TransactionType);
                 }
