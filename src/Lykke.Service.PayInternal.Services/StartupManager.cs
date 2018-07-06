@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Autofac;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -21,16 +22,25 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ILog _log;
         private readonly AppSettings _appSettings;
         private readonly IPaymentRequestExpirationHandler _paymentRequestExpirationHandler;
+        private readonly IWalletEventsPublisher _walletEventsPublisher;
+        private readonly IPaymentRequestPublisher _paymentRequestPublisher;
+        private readonly ITransactionPublisher _transactionPublisher;
 
         public StartupManager(
-            ILog log,
-            AppSettings appSettings,
-            IPaymentRequestExpirationHandler paymentRequestExpirationHandler)
+            [NotNull] ILog log,
+            [NotNull] AppSettings appSettings,
+            [NotNull] IPaymentRequestExpirationHandler paymentRequestExpirationHandler,
+            [NotNull] IWalletEventsPublisher walletEventsPublisher, 
+            [NotNull] IPaymentRequestPublisher paymentRequestPublisher, 
+            [NotNull] ITransactionPublisher transactionPublisher)
         {
-            _log = log?.CreateComponentScope(nameof(StartupManager)) ?? throw new ArgumentNullException(nameof(log));
+            _log = log.CreateComponentScope(nameof(StartupManager)) ?? throw new ArgumentNullException(nameof(log));
             _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
             _paymentRequestExpirationHandler = paymentRequestExpirationHandler ??
                                                throw new ArgumentNullException(nameof(paymentRequestExpirationHandler));
+            _walletEventsPublisher = walletEventsPublisher ?? throw new ArgumentNullException(nameof(walletEventsPublisher));
+            _paymentRequestPublisher = paymentRequestPublisher ?? throw new ArgumentNullException(nameof(paymentRequestPublisher));
+            _transactionPublisher = transactionPublisher ?? throw new ArgumentNullException(nameof(transactionPublisher));
         }
 
         public async Task StartAsync()
@@ -46,13 +56,29 @@ namespace Lykke.Service.PayInternal.Services
 
             await _log.WriteInfoAsync(nameof(StartAsync), string.Empty, "Settings checked successfully.");
 
-            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty,
-                "Starting payment request expiration handler ...");
+            StartComponentAsync("Payment request expiration handler", _paymentRequestExpirationHandler);
 
-            _paymentRequestExpirationHandler.Start();
+            StartComponentAsync("Wallet events publisher", _walletEventsPublisher);
 
-            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty,
-                "Payment request expiration handler successfully started.");
+            StartComponentAsync("Payment request publisher", _paymentRequestPublisher);
+
+            StartComponentAsync("Transaction publisher", _transactionPublisher);
+        }
+
+        private void StartComponentAsync(string componentDisplayName, object component)
+        {
+            _log.WriteInfo(nameof(StartAsync), string.Empty, $"Starting {componentDisplayName} ...");
+
+            if (component is IStartable startableComponent)
+            {
+                startableComponent.Start();
+
+                _log.WriteInfo(nameof(StartAsync), string.Empty, $"{componentDisplayName} successfully started.");
+            }
+            else
+            {
+                _log.WriteWarning(nameof(StartAsync), component, "Component has not been started");
+            }
         }
     }
 }
