@@ -124,6 +124,8 @@ namespace Lykke.Service.PayInternal.Services
                         src => src.ContextData.DeserializeJson<CashoutTransactionContext>().EmployeeEmail));
 
             CreateEthereumPaymentMaps();
+
+            CreateHistoryMaps();
         }
 
         private void CreateEthereumPaymentMaps()
@@ -135,20 +137,22 @@ namespace Lykke.Service.PayInternal.Services
                     opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress))
                 .ForMember(dest => dest.Confirmations,
                     opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
-                        dest.Confirmations = (int)resContext.Items["Confirmations"]))
-                .ForMember(dest => dest.SourceWalletAddresses, opt => opt.MapFrom(src => new[] { src.FromAddress }))
+                        dest.Confirmations = (int) resContext.Items["Confirmations"]))
+                .ForMember(dest => dest.SourceWalletAddresses, opt => opt.MapFrom(src => new[] {src.FromAddress}))
                 .ForMember(dest => dest.TransferId, opt => opt.Ignore())
-                .ForMember(dest => dest.Type, opt => opt.UseValue(TransactionType.Payment));
+                .ForMember(dest => dest.Type, opt => opt.UseValue(TransactionType.Payment))
+                .ForMember(dest => dest.ContextData, opt => opt.Ignore());
 
             CreateMap<RegisterInTxCommand, RegisterCashinTxCommand>(MemberList.Destination)
                 .ForMember(dest => dest.Confirmations,
                     opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
-                        dest.Confirmations = (int)resContext.Items["Confirmations"]))
-                .ForMember(dest => dest.SourceWalletAddresses, opt => opt.MapFrom(src => new[] { src.FromAddress }))
+                        dest.Confirmations = (int) resContext.Items["Confirmations"]))
+                .ForMember(dest => dest.SourceWalletAddresses, opt => opt.MapFrom(src => new[] {src.FromAddress}))
                 .ForMember(dest => dest.Type, opt => opt.UseValue(TransactionType.CashIn))
                 .ForMember(dest => dest.TransferId, opt => opt.Ignore())
                 .ForMember(dest => dest.DueDate, opt => opt.Ignore())
-                .ForMember(dest => dest.WalletAddress, opt => opt.Ignore());
+                .ForMember(dest => dest.WalletAddress, opt => opt.Ignore())
+                .ForMember(dest => dest.ContextData, opt => opt.Ignore());
 
             // incoming ethereum payment update
             CreateMap<RegisterInTxCommand, UpdateTransactionCommand>(MemberList.Destination)
@@ -234,30 +238,6 @@ namespace Lykke.Service.PayInternal.Services
                         dest.Confirmations = (int)resContext.Items["Confirmations"]))
                 .ForMember(dest => dest.WalletAddress, opt => opt.Ignore());
 
-            CreateMap<CompleteOutTxCommand, WalletHistoryCommand>(MemberList.Destination)
-                .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.Hash))
-                .ForMember(dest => dest.WalletAddress, opt => opt.MapFrom(src => src.FromAddress))
-                .ForMember(dest => dest.AssetId,
-                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
-                        dest.AssetId = (string)resContext.Items["AssetId"]));
-
-            CreateMap<CompleteOutTxCommand, WalletHistoryCashoutCommand>(MemberList.Destination)
-                .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.Hash))
-                .ForMember(dest => dest.WalletAddress, opt => opt.MapFrom(src => src.FromAddress));
-
-            CreateMap<IPaymentRequestTransaction, WalletHistoryCashoutCommand>(MemberList.Destination)
-                .ForMember(dest => dest.AssetId, opt => opt.MapFrom(src => src.AssetId))
-                .ForMember(dest => dest.DesiredAsset,
-                    opt => opt.MapFrom(src =>
-                        src.ContextData.DeserializeJson<CashoutTransactionContext>().DesiredAsset))
-                .ForMember(dest => dest.EmployeeEmail,
-                    opt => opt.MapFrom(
-                        src => src.ContextData.DeserializeJson<CashoutTransactionContext>().EmployeeEmail));
-
-            CreateMap<RegisterInTxCommand, WalletHistoryCommand>(MemberList.Destination)
-                .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.Hash))
-                .ForMember(dest => dest.WalletAddress, opt => opt.MapFrom(src => src.ToAddress));
-
             // outgoing ethereum payment not enough funds
             CreateMap<NotEnoughFundsOutTxCommand, FailPaymentOutTxCommand>(MemberList.Destination)
                 .ForMember(dest => dest.Amount, opt => opt.UseValue(0))
@@ -291,6 +271,41 @@ namespace Lykke.Service.PayInternal.Services
                 .ForMember(dest => dest.FirstSeen, opt => opt.Ignore())
                 .ForMember(dest => dest.Hash, opt => opt.Ignore())
                 .ForMember(dest => dest.WalletAddress, opt => opt.Ignore());
+        }
+
+        private void CreateHistoryMaps()
+        {
+            CreateMap<CompleteOutTxCommand, WalletHistoryCommand>(MemberList.Destination)
+               .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.Hash))
+               .ForMember(dest => dest.WalletAddress, opt => opt.MapFrom(src => src.FromAddress))
+               .ForMember(dest => dest.AssetId,
+                   opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                       dest.AssetId = (string)resContext.Items["AssetId"]));
+
+            // WalletHistoryCashoutCommand is being mapped from two maps
+            // Map 1
+            CreateMap<CompleteOutTxCommand, WalletHistoryCashoutCommand>(MemberList.Destination)
+                .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.Hash))
+                .ForMember(dest => dest.WalletAddress, opt => opt.MapFrom(src => src.FromAddress))
+                .ForMember(dest => dest.AssetId, opt => opt.Ignore())
+                .ForMember(dest => dest.DesiredAsset, opt => opt.Ignore())
+                .ForMember(dest => dest.EmployeeEmail, opt => opt.Ignore());
+
+            // Map2
+            CreateMap<IPaymentRequestTransaction, WalletHistoryCashoutCommand>(MemberList.Destination)
+                .ForMember(dest => dest.AssetId, opt => opt.MapFrom(src => src.AssetId))
+                .ForMember(dest => dest.DesiredAsset,
+                    opt => opt.MapFrom(src =>
+                        src.ContextData.DeserializeJson<CashoutTransactionContext>().DesiredAsset))
+                .ForMember(dest => dest.EmployeeEmail,
+                    opt => opt.MapFrom(
+                        src => src.ContextData.DeserializeJson<CashoutTransactionContext>().EmployeeEmail))
+                .ForMember(dest => dest.TransactionHash, opt => opt.Ignore())
+                .ForMember(dest => dest.WalletAddress, opt => opt.Ignore());
+
+            CreateMap<RegisterInTxCommand, WalletHistoryCommand>(MemberList.Destination)
+                .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.Hash))
+                .ForMember(dest => dest.WalletAddress, opt => opt.MapFrom(src => src.ToAddress));
         }
     }
 }
