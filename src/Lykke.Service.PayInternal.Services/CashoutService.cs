@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Common;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Cashout;
@@ -70,7 +71,8 @@ namespace Lykke.Service.PayInternal.Services
                     Identity = transferTransactionResult.Identity,
                     TransferId = toHotWallet.Id,
                     Type = TransactionType.CashOut,
-                    SourceWalletAddresses = transferTransactionResult.Sources.ToArray()
+                    SourceWalletAddresses = transferTransactionResult.Sources.ToArray(),
+                    ContextData = cmd.GetContext().ToJson()
                 });
             }
 

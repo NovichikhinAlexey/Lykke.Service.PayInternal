@@ -98,6 +98,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             }
         }
 
+        public string ContextData { get; set; }
+
         public DateTime? DueDate
         {
             get => _dueDate;

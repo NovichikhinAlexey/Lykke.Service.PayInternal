@@ -18,5 +18,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         string TransferId { get; set; }
         TransactionIdentityType IdentityType { get; set; }
         string Identity { get; set; }
+        string ContextData { get; set; }
     }
 }

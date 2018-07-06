@@ -61,7 +61,7 @@ namespace Lykke.Service.PayInternal.Services
 
             builder.RegisterType<TransactionsManager>()
                 .WithParameter(TypedParameter.From(_transactionConfirmationCount))
-                .As<ITransactionsManager>();
+                .As<ITransactionsManager, IEthereumTransactionsManager>();
 
             builder.RegisterType<BlockchainClientProvider>()
                 .As<IBlockchainClientProvider>();

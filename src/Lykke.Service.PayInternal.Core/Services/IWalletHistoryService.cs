@@ -5,10 +5,12 @@ namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface IWalletHistoryService
     {
-        Task PublishCashIn(IWalletHistoryCommand cmd);
+        Task PublishCashInAsync(IWalletHistoryCommand cmd);
 
-        Task PublishOutgoingExchange(IWalletHistoryCommand cmd);
+        Task PublishOutgoingExchangeAsync(IWalletHistoryCommand cmd);
 
-        Task PublishIncomingExchange(IWalletHistoryCommand cmd);
+        Task PublishIncomingExchangeAsync(IWalletHistoryCommand cmd);
+
+        Task PublishCashoutAsync(IWalletHistoryCashoutCommand cmd);
     }
 }

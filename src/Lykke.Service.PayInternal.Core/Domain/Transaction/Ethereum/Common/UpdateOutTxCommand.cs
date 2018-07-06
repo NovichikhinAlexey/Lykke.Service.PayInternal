@@ -1,8 +1,11 @@
 ﻿using System;
 
-namespace Lykke.Service.PayInternal.Core.Domain.Transaction
+namespace Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Common
 {
-    public class UpdateEthOutgoingTxCommand : IBlockchainTypeHolder
+    /// <summary>
+    /// Command to update any outgoing transaction
+    /// </summary>
+    public class UpdateOutTxCommand : IBlockchainTypeHolder
     {
         public string Hash { get; set; }
         public decimal Amount { get; set; }

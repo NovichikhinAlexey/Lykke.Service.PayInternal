@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayHistory.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Common;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Models.Transactions.Ethereum;
@@ -19,14 +20,14 @@ namespace Lykke.Service.PayInternal.Controllers
     [ApiController]
     public class EthereumTransactionsController : ControllerBase
     {
-        private readonly ITransactionsManager _transactionsManager;
+        private readonly IEthereumTransactionsManager _ethTransactionsManager;
         private readonly ILog _log;
 
         public EthereumTransactionsController(
-            [NotNull] ITransactionsManager transactionsManager,
+            [NotNull] IEthereumTransactionsManager ethTransactionsManager,
             [NotNull] ILog log)
         {
-            _transactionsManager = transactionsManager ?? throw new ArgumentNullException(nameof(transactionsManager));
+            _ethTransactionsManager = ethTransactionsManager ?? throw new ArgumentNullException(nameof(ethTransactionsManager));
             _log = log.CreateComponentScope(nameof(EthereumTransactionsController)) ?? throw new ArgumentNullException(nameof(log));
         }
 
@@ -46,7 +47,7 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                await _transactionsManager.RegisterEthInboundTxAsync(Mapper.Map<RegisterEthInboundTxCommand>(request));
+                await _ethTransactionsManager.RegisterInboundAsync(Mapper.Map<RegisterInTxCommand>(request));
 
                 return Ok();
             }
@@ -108,7 +109,7 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                await _transactionsManager.UpdateEthOutgoingTxAsync(Mapper.Map<UpdateEthOutgoingTxCommand>(request));
+                await _ethTransactionsManager.UpdateOutgoingAsync(Mapper.Map<UpdateOutTxCommand>(request));
 
                 return Ok();
             }
@@ -146,8 +147,8 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                await _transactionsManager.CompleteEthOutgoingTxAsync(
-                    Mapper.Map<CompleteEthOutgoingTxCommand>(request));
+                await _ethTransactionsManager.CompleteOutgoingAsync(
+                    Mapper.Map<CompleteOutTxCommand>(request));
 
                 return Ok();
             }
@@ -223,8 +224,8 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                await _transactionsManager.FailEthOutgoingTxAsync(
-                    Mapper.Map<NotEnoughFundsEthOutgoingTxCommand>(request));
+                await _ethTransactionsManager.FailOutgoingAsync(
+                    Mapper.Map<NotEnoughFundsOutTxCommand>(request));
 
                 return Ok();
             }

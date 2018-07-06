@@ -1,8 +1,11 @@
 ﻿using System;
 
-namespace Lykke.Service.PayInternal.Core.Domain.Transaction
+namespace Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Common
 {
-    public class CompleteEthOutgoingTxCommand : IBlockchainTypeHolder
+    /// <summary>
+    /// Command to complete any outgoing transaction
+    /// </summary>
+    public class CompleteOutTxCommand : IBlockchainTypeHolder
     {
         public TransactionIdentityType IdentityType { get; set; }
         public string Identity { get; set; }

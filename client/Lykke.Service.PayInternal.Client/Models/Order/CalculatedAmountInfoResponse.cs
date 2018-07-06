@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Lykke.Service.PayInternal.Client.Models.Order
+﻿namespace Lykke.Service.PayInternal.Client.Models.Order
 {
     public class CalculatedAmountResponse
     {

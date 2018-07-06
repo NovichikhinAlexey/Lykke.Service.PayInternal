@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
+using Lykke.Service.PayHistory.Client.AutorestClient.Models;
 using Lykke.Service.PayHistory.Client.Publisher;
 using Lykke.Service.PayInternal.Core.Domain.History;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
@@ -41,7 +42,7 @@ namespace Lykke.Service.PayInternal.Services
                     (ex, timespan) => _log.Error("Publish wallet history with retry", ex));
         }
 
-        public async Task PublishCashIn(IWalletHistoryCommand cmd)
+        public async Task PublishCashInAsync(IWalletHistoryCommand cmd)
         {
             IMerchantWallet merchantWallet =
                 await _merchantWalletService.GetByAddressAsync(cmd.Blockchain, cmd.WalletAddress);
@@ -58,7 +59,7 @@ namespace Lykke.Service.PayInternal.Services
                 }));
         }
 
-        public async Task PublishOutgoingExchange(IWalletHistoryCommand cmd)
+        public async Task PublishOutgoingExchangeAsync(IWalletHistoryCommand cmd)
         {
             IMerchantWallet merchantWallet =
                 await _merchantWalletService.GetByAddressAsync(cmd.Blockchain, cmd.WalletAddress);
@@ -75,7 +76,7 @@ namespace Lykke.Service.PayInternal.Services
                 }));
         }
 
-        public async Task PublishIncomingExchange(IWalletHistoryCommand cmd)
+        public async Task PublishIncomingExchangeAsync(IWalletHistoryCommand cmd)
         {
             IMerchantWallet merchantWallet =
                 await _merchantWalletService.GetByAddressAsync(cmd.Blockchain, cmd.WalletAddress);
@@ -88,7 +89,26 @@ namespace Lykke.Service.PayInternal.Services
                     Type = HistoryOperationType.IncomingExchange,
                     CreatedOn = DateTime.UtcNow,
                     TxHash = cmd.TransactionHash,
+                    MerchantId = merchantWallet.MerchantId
+                }));
+        }
+
+        public async Task PublishCashoutAsync(IWalletHistoryCashoutCommand cmd)
+        {
+            IMerchantWallet merchantWallet =
+                await _merchantWalletService.GetByAddressAsync(cmd.Blockchain, cmd.WalletAddress);
+
+            await _retryPolicy
+                .ExecuteAsync(() => _historyOperationPublisher.PublishAsync(new HistoryOperation
+                {
+                    Amount = cmd.Amount,
+                    AssetId = cmd.AssetId,
+                    Type = HistoryOperationType.CashOut,
+                    CreatedOn = DateTime.UtcNow,
+                    TxHash = cmd.TransactionHash,
                     MerchantId = merchantWallet.MerchantId,
+                    DesiredAssetId = cmd.DesiredAsset,
+                    EmployeeEmail = cmd.EmployeeEmail
                 }));
         }
     }

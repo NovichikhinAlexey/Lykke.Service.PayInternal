@@ -14,7 +14,6 @@ using Lykke.Service.PayInternal.Models.Transactions;
 using Lykke.Service.PayInternal.Services.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Linq;
 
 namespace Lykke.Service.PayInternal.Controllers
 {

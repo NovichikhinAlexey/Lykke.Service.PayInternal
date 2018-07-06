@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.File;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;

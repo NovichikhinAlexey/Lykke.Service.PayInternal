@@ -47,6 +47,8 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         /// WalletExtra is an extra time to keep wallet address in lock after payment request expired in order to wait for late payments.
         /// </summary>
         public TimeSpan WalletExtra { get; set; }
+
+        public TimeSpan AssetsCache { get; set; }
     }
 
     public class BlockchainSettings
