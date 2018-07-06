@@ -15,7 +15,7 @@
     <PackageReference Include="Lykke.Service.Assets.Client" Version="4.1.0" />
     <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.1.0" />
     <PackageReference Include="Lykke.Service.PayCallback.Client" Version="1.0.10" />
-    <PackageReference Include="Lykke.Service.PayHistory.Client" Version="1.0.8" />
+    <PackageReference Include="Lykke.Service.PayHistory.Client" Version="1.0.9" />
     <PackageReference Include="Lykke.SettingsReader" Version="2.4.1" />
   </ItemGroup>
 </Project>
