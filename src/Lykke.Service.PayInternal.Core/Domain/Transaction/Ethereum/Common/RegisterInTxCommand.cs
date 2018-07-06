@@ -2,7 +2,10 @@
 
 namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 {
-    public class RegisterEthInboundTxCommand : IBlockchainTypeHolder
+    /// <summary>
+    /// Command to register any incoming transaction
+    /// </summary>
+    public class RegisterInTxCommand : IBlockchainTypeHolder
     {
         public string Hash { get; set; }
         public decimal Amount { get; set; }

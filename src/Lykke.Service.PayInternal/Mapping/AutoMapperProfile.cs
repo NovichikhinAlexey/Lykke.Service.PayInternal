@@ -15,6 +15,7 @@ using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Common;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
@@ -257,13 +258,13 @@ namespace Lykke.Service.PayInternal.Mapping
 
         private void CreateEthereumPaymentMaps()
         {
-            CreateMap<RegisterInboundTxRequest, RegisterEthInboundTxCommand>(MemberList.Destination);
+            CreateMap<RegisterInboundTxRequest, RegisterInTxCommand>(MemberList.Destination);
 
-            CreateMap<RegisterOutboundTxRequest, UpdateEthOutgoingTxCommand>(MemberList.Destination);
+            CreateMap<RegisterOutboundTxRequest, UpdateOutTxCommand>(MemberList.Destination);
 
-            CreateMap<CompleteOutboundTxRequest, CompleteEthOutgoingTxCommand>(MemberList.Destination);
+            CreateMap<CompleteOutboundTxRequest, CompleteOutTxCommand>(MemberList.Destination);
 
-            CreateMap<NotEnoughFundsOutboundTxRequest, NotEnoughFundsEthOutgoingTxCommand>(MemberList.Destination);
+            CreateMap<NotEnoughFundsOutboundTxRequest, NotEnoughFundsOutTxCommand>(MemberList.Destination);
         }
     }
 }

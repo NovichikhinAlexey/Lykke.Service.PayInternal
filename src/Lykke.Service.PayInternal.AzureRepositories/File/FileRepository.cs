@@ -1,8 +1,5 @@
 ﻿using AzureStorage;
 using Lykke.Service.PayInternal.Core.Domain.File;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Lykke.Service.PayInternal.AzureRepositories.File

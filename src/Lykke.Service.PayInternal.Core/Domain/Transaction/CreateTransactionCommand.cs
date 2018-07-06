@@ -1,10 +1,8 @@
 ﻿using System;
-using Lykke.Service.PayInternal.Core;
-using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
-namespace Lykke.Service.PayInternal.Services.Domain
+namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 {
-    public class CreateCashInTransactionCommand : ICreateTransactionCommand
+    public class CreateTransactionCommand : ICreateTransactionCommand
     {
         public string Hash { get; set; }
         public string WalletAddress { get; set; }
@@ -20,5 +18,6 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public string TransferId { get; set; }
         public TransactionIdentityType IdentityType { get; set; }
         public string Identity { get; set; }
+        public string ContextData { get; set; }
     }
 }

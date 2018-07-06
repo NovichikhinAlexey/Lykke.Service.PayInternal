@@ -3,16 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain.Confirmations;
 using Lykke.Service.PayInternal.Core.Domain.History;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum;
+using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Common;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
-using UpdateRefundEthOutgoingTxCommand = Lykke.Service.PayInternal.Services.Domain.UpdateRefundEthOutgoingTxCommand;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -21,6 +24,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransactionsService _transactionsService;
         private readonly IPaymentRequestService _paymentRequestService;
         private readonly IWalletHistoryService _walletHistoryService;
+        private readonly IConfirmationsService _confirmationsService;
         private readonly int _transactionConfirmationCount;
         private readonly ILog _log;
 
@@ -29,14 +33,18 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IPaymentRequestService paymentRequestService, 
             [NotNull] ILog log, 
             [NotNull] IWalletHistoryService walletHistoryService, 
-            int transactionConfirmationCount)
+            int transactionConfirmationCount, 
+            [NotNull] IConfirmationsService confirmationsService)
         {
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
             _paymentRequestService = paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
             _walletHistoryService = walletHistoryService ?? throw new ArgumentNullException(nameof(walletHistoryService));
             _transactionConfirmationCount = transactionConfirmationCount;
+            _confirmationsService = confirmationsService ?? throw new ArgumentNullException(nameof(confirmationsService));
             _log = log.CreateComponentScope(nameof(TransactionsManager)) ?? throw new ArgumentNullException(nameof(log));
         }
+
+        #region All transactions but Ethereum
 
         public async Task<IPaymentRequestTransaction> CreateTransactionAsync(ICreateTransactionCommand command)
         {
@@ -45,111 +53,6 @@ namespace Lykke.Service.PayInternal.Services
             await _paymentRequestService.UpdateStatusAsync(command.WalletAddress);
 
             return transaction;
-        }
-
-        public async Task RegisterEthInboundTxAsync(RegisterEthInboundTxCommand cmd)
-        {
-            _log.WriteInfo(nameof(RegisterEthInboundTxAsync), cmd, "Started inbound tx registration");
-
-            var txs = (await _transactionsService.GetByBcnIdentityAsync(
-                    cmd.Blockchain,
-                    cmd.IdentityType,
-                    cmd.Identity)).ToList();
-
-            if (!txs.Any())
-            {
-                switch (cmd.WorkflowType)
-                {
-                    // payment
-                    case WorkflowType.LykkePay:
-                        _log.WriteInfo(nameof(RegisterEthInboundTxAsync), cmd, "Lykke Pay payment transaction");
-                        var lykkePayCmd = Mapper.Map<CreateTransactionCommand>(cmd,
-                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount);
-                        await _transactionsService.CreateTransactionAsync(lykkePayCmd);
-                        await _paymentRequestService.UpdateStatusAsync(lykkePayCmd.WalletAddress);
-                        break;
-                    // cashin
-                    case WorkflowType.Airlines:
-                        _log.WriteInfo(nameof(RegisterEthInboundTxAsync), cmd, "IATA cashin transaction");
-                        await _transactionsService.CreateTransactionAsync(
-                            Mapper.Map<CreateCashInTransactionCommand>(cmd,
-                                opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
-                        await _walletHistoryService.PublishCashIn(Mapper.Map<WalletHistoryCommand>(cmd));
-                        break;
-                    default: throw new UnexpectedWorkflowTypeException(cmd.WorkflowType);
-                }
-
-                return;
-            }
-
-            foreach (var tx in txs)
-            {
-                switch (tx.TransactionType)
-                {
-                    case TransactionType.Payment:
-                        _log.WriteInfo(nameof(RegisterEthInboundTxAsync), cmd, "Payment transaction update");
-                        await _transactionsService.UpdateAsync(Mapper.Map<UpdateTransactionCommand>(cmd,
-                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
-                        await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
-                        break;
-                    case TransactionType.Exchange:
-                        _log.WriteInfo(nameof(RegisterEthInboundTxAsync), cmd, "Exchange incoming transaction update");
-                        await _transactionsService.UpdateAsync(Mapper.Map<UpdateExchangeEthInboundTxCommand>(cmd,
-                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
-                        await _walletHistoryService.PublishIncomingExchange(Mapper.Map<WalletHistoryCommand>(cmd));
-                        break;
-                    case TransactionType.Settlement:
-                        _log.WriteInfo(nameof(RegisterEthInboundTxAsync), cmd, "Settlement incoming transaction update");
-                        await _transactionsService.UpdateAsync(Mapper.Map<UpdateSettlementEthInboundTxCommand>(cmd,
-                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
-                        break;
-                    default: throw new UnexpectedTransactionTypeException(tx.TransactionType);
-                }
-            }
-        }
-
-        public async Task UpdateEthOutgoingTxAsync(UpdateEthOutgoingTxCommand cmd)
-        {
-            _log.WriteInfo(nameof(UpdateEthOutgoingTxAsync), cmd, "Started outgoing tx registration");
-
-            var txs = (await _transactionsService.GetByBcnIdentityAsync(
-                cmd.Blockchain,
-                cmd.IdentityType,
-                cmd.Identity)).ToList();
-
-            if (!txs.Any())
-                throw new OutboundTransactionsNotFound(cmd.Blockchain, cmd.IdentityType, cmd.Identity);
-
-            foreach (var tx in txs)
-            {
-                switch (tx.TransactionType)
-                {
-                    case TransactionType.Payment:
-                        _log.WriteInfo(nameof(UpdateEthOutgoingTxAsync), cmd, "Outgoing payment");
-                        await _transactionsService.UpdateAsync(Mapper.Map<UpdatePaymentEthOutgoingTxCommand>(cmd));
-                        await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
-                        break;
-                    case TransactionType.Refund:
-                        _log.WriteInfo(nameof(UpdateEthOutgoingTxAsync), cmd, "Outgoing payment refund");
-                        await _transactionsService.UpdateAsync(Mapper.Map<UpdateRefundEthOutgoingTxCommand>(cmd,
-                            opt => opt.Items["WalletAddress"] = tx.WalletAddress));
-                        await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
-                        break;
-                    case TransactionType.Exchange:
-                        _log.WriteInfo(nameof(UpdateEthOutgoingTxAsync), cmd, "Outgoing exchange operation");
-                        await _transactionsService.UpdateAsync(Mapper.Map<UpdateExchangeEthOutgoingTxCommand>(cmd));
-                        break;
-                    case TransactionType.Settlement:
-                        _log.WriteInfo(nameof(UpdateEthOutgoingTxAsync), cmd, "Outgoing settlement operation");
-                        await _transactionsService.UpdateAsync(Mapper.Map<UpdateSettlementEthOutgoingTxCommand>(cmd));
-                        break;
-                    case TransactionType.CashOut:
-                        _log.WriteInfo(nameof(UpdateEthOutgoingTxAsync), cmd, "Cashout operation");
-                        await _transactionsService.UpdateAsync(Mapper.Map<UpdateCashoutEthOutgoingTxCommand>(cmd));
-                        break;
-                    default: throw new UnexpectedTransactionTypeException(tx.TransactionType);
-                }
-            }
         }
 
         public async Task UpdateTransactionAsync(IUpdateTransactionCommand cmd)
@@ -172,64 +75,60 @@ namespace Lykke.Service.PayInternal.Services
             }
         }
 
-        public async Task CompleteEthOutgoingTxAsync(CompleteEthOutgoingTxCommand cmd)
-        {
-            _log.WriteInfo(nameof(CompleteEthOutgoingTxAsync), cmd, "Started outgoing tx complete");
+        #endregion
 
+        #region Only Ethereum transactions
+
+        public async Task RegisterInboundAsync(RegisterInTxCommand cmd)
+        {
             var txs = (await _transactionsService.GetByBcnIdentityAsync(
                     cmd.Blockchain,
                     cmd.IdentityType,
                     cmd.Identity)).ToList();
 
             if (!txs.Any())
-                throw new OutboundTransactionsNotFound(cmd.Blockchain, cmd.IdentityType, cmd.Identity);
+            {
+                _log.WriteInfo(nameof(RegisterInboundAsync), cmd, $"Incoming transaction registration [workflow = {cmd.WorkflowType}]");
+
+                ICreateTransactionCommand createCommand = MapToCreateCommand(cmd);
+
+                await _transactionsService.CreateTransactionAsync(createCommand);
+
+                switch (cmd.WorkflowType)
+                {
+                    case WorkflowType.LykkePay:
+                        await _paymentRequestService.UpdateStatusAsync(createCommand.WalletAddress);
+                        break;
+                    case WorkflowType.Airlines:
+                        await _walletHistoryService.PublishCashInAsync(Mapper.Map<WalletHistoryCommand>(cmd));
+                        break;
+                }
+
+                return;
+            }
 
             foreach (var tx in txs)
             {
+                _log.WriteInfo(nameof(RegisterInboundAsync), cmd, $"Incoming transaction update [type={tx.TransactionType}]");
+
+                IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx.TransactionType);
+
+                await _transactionsService.UpdateAsync(updateCommand);
+
                 switch (tx.TransactionType)
                 {
                     case TransactionType.Payment:
-                        _log.WriteInfo(nameof(CompleteEthOutgoingTxAsync), cmd, "Complete outgoing payment");
-                        await _transactionsService.UpdateAsync(Mapper.Map<CompletePaymentEthOutgoingTxCommand>(cmd,
-                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
-                        await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
-                        break;
-                    case TransactionType.Refund:
-                        _log.WriteInfo(nameof(CompleteEthOutgoingTxAsync), cmd, "Complete outgoing refund");
-                        await _transactionsService.UpdateAsync(Mapper.Map<CompleteRefundEthOutgoingTxCommand>(cmd,
-                            opt =>
-                            {
-                                opt.Items["Confirmations"] = _transactionConfirmationCount;
-                                opt.Items["WalletAddress"] = tx.WalletAddress;
-                            }));
                         await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
                         break;
                     case TransactionType.Exchange:
-                        _log.WriteInfo(nameof(CompleteEthOutgoingTxAsync), cmd, "Complete outgoing exchange");
-                        await _transactionsService.UpdateAsync(Mapper.Map<CompleteExchangeEthOutgoingTxCommand>(cmd,
-                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
-                        await _walletHistoryService.PublishOutgoingExchange(
-                            Mapper.Map<WalletHistoryCommand>(cmd, opt => opt.Items["AssetId"] = tx.AssetId));
+                        await _walletHistoryService.PublishIncomingExchangeAsync(Mapper.Map<WalletHistoryCommand>(cmd));
                         break;
-                    case TransactionType.Settlement:
-                        _log.WriteInfo(nameof(CompleteEthOutgoingTxAsync), cmd, "Complete outgoing settlement");
-                        await _transactionsService.UpdateAsync(Mapper.Map<CompleteSettlementEthOutgoingTxCommand>(cmd,
-                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
-                        break;
-                    case TransactionType.CashOut:
-                        _log.WriteInfo(nameof(CompleteEthOutgoingTxAsync), cmd, "Complete outgoing cashout");
-                        await _transactionsService.UpdateAsync(Mapper.Map<CompleteCashoutEthOutgoingTxCommand>(cmd,
-                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
-                        break;
-                    default: throw new UnexpectedTransactionTypeException(tx.TransactionType);
                 }
             }
         }
 
-        public async Task FailEthOutgoingTxAsync(NotEnoughFundsEthOutgoingTxCommand cmd)
+        public async Task UpdateOutgoingAsync(UpdateOutTxCommand cmd)
         {
-            _log.WriteInfo(nameof(FailEthOutgoingTxAsync), cmd, "Started outgoing tx fail");
-
             var txs = (await _transactionsService.GetByBcnIdentityAsync(
                 cmd.Blockchain,
                 cmd.IdentityType,
@@ -240,28 +139,186 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var tx in txs)
             {
+                _log.WriteInfo(nameof(UpdateOutgoingAsync), cmd,  $"Outgoing transaction update [type = {tx.TransactionType}]");
+
+                IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx);
+
+                await _transactionsService.UpdateAsync(updateCommand);
+
+                if (tx.TransactionType == TransactionType.Payment || tx.TransactionType == TransactionType.Refund)
+                    await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
+            }
+        }
+
+        public async Task CompleteOutgoingAsync(CompleteOutTxCommand cmd)
+        {
+            var txs = (await _transactionsService.GetByBcnIdentityAsync(
+                cmd.Blockchain,
+                cmd.IdentityType,
+                cmd.Identity)).ToList();
+
+            if (!txs.Any())
+                throw new OutboundTransactionsNotFound(cmd.Blockchain, cmd.IdentityType, cmd.Identity);
+
+            foreach (var tx in txs)
+            {
+                _log.WriteInfo(nameof(CompleteOutgoingAsync), cmd,  $"Complete outgoing transaction [type = {tx.TransactionType}]");
+
+                IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx);
+
+                await _transactionsService.UpdateAsync(updateCommand);
+
                 switch (tx.TransactionType)
                 {
                     case TransactionType.Payment:
-                        _log.WriteInfo(nameof(FailEthOutgoingTxAsync), cmd, "Failing outgoing payment");
-                        await _transactionsService.UpdateAsync(Mapper.Map<FailPaymentEthOutgoingTxCommand>(cmd,
-                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
-                        await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress,
-                            PaymentRequestStatusInfo.New());
-                        break;
-                    case TransactionType.CashOut:
-                        _log.WriteInfo(nameof(FailEthOutgoingTxAsync), cmd, "Failing cashout");
-                        await _transactionsService.UpdateAsync(Mapper.Map<FailCashoutEthOutgoingTxCommand>(cmd,
-                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
+                    case TransactionType.Refund:
+                        await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
                         break;
                     case TransactionType.Exchange:
-                        _log.WriteInfo(nameof(FailEthOutgoingTxAsync), cmd, "Failing outgoing exchange");
-                        await _transactionsService.UpdateAsync(Mapper.Map<FailExchangeEthOutgoingTxCommand>(cmd,
-                            opt => opt.Items["Confirmations"] = _transactionConfirmationCount));
+                        await _walletHistoryService.PublishOutgoingExchangeAsync(
+                            Mapper.Map<WalletHistoryCommand>(cmd, opt => opt.Items["AssetId"] = tx.AssetId));
                         break;
-                    default: throw new UnexpectedTransactionTypeException(tx.TransactionType);
+                    case TransactionType.CashOut:
+                        await Task.WhenAll(
+                            _confirmationsService.ConfirmCashoutAsync(Mapper.Map<CashoutConfirmationCommand>(tx)),
+                            _walletHistoryService.PublishCashoutAsync(Mapper.Map<WalletHistoryCashoutCommand>(cmd).Map(tx)));
+                        break;
                 }
             }
         }
+
+        public async Task FailOutgoingAsync(NotEnoughFundsOutTxCommand cmd)
+        {
+            var txs = (await _transactionsService.GetByBcnIdentityAsync(
+                cmd.Blockchain,
+                cmd.IdentityType,
+                cmd.Identity)).ToList();
+
+            if (!txs.Any())
+                throw new OutboundTransactionsNotFound(cmd.Blockchain, cmd.IdentityType, cmd.Identity);
+
+            foreach (var tx in txs)
+            {
+                _log.WriteInfo(nameof(FailOutgoingAsync), cmd, $"Failing outgoing transaction [type={tx.TransactionType}]");
+
+                IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx.TransactionType);
+
+                await _transactionsService.UpdateAsync(updateCommand);
+
+                if (tx.TransactionType == TransactionType.Payment)
+                    await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress, PaymentRequestStatusInfo.New());
+            }
+        }
+
+        #endregion
+
+        #region Commands mapping
+
+        private static Action<IMappingOperationOptions> MapConfirmations(int confirmationsCount)
+        {
+            return opt => opt.Items["Confirmations"] = confirmationsCount;
+        }
+
+        private Action<IMappingOperationOptions> MapConfirmed()
+        {
+            return MapConfirmations(_transactionConfirmationCount);
+        }
+
+        private IUpdateTransactionCommand MapToUpdateCommand(
+            RegisterInTxCommand cmd,
+            TransactionType transactionType)
+        {
+            switch (transactionType)
+            {
+                case TransactionType.Payment:
+                    return Mapper.Map<UpdateTransactionCommand>(cmd, MapConfirmed());
+                case TransactionType.Exchange:
+                    return Mapper.Map<UpdateExchangeInTxCommand>(cmd, MapConfirmed());
+                case TransactionType.Settlement:
+                    return Mapper.Map<UpdateSettlementInTxCommand>(cmd, MapConfirmed());
+                default:
+                    throw new UnexpectedTransactionTypeException(transactionType);
+            }
+        }
+
+        private IUpdateTransactionCommand MapToUpdateCommand(
+            UpdateOutTxCommand cmd,
+            IPaymentRequestTransaction tx)
+        {
+            switch (tx.TransactionType)
+            {
+                case TransactionType.Payment:
+                    return Mapper.Map<UpdatePaymentOutTxCommand>(cmd);
+                case TransactionType.Refund:
+                    return Mapper.Map<UpdateRefundOutTxCommand>(cmd,
+                        opt => opt.Items["WalletAddress"] = tx.WalletAddress);
+                case TransactionType.Exchange:
+                    return Mapper.Map<UpdateExchangeOutTxCommand>(cmd);
+                case TransactionType.Settlement:
+                    return Mapper.Map<UpdateSettlementOutTxCommand>(cmd);
+                case TransactionType.CashOut:
+                    return Mapper.Map<UpdateCashoutTxCommand>(cmd);
+                default:
+                    throw new UnexpectedTransactionTypeException(tx.TransactionType);
+            }
+        }
+
+        private IUpdateTransactionCommand MapToUpdateCommand(
+            CompleteOutTxCommand cmd,
+            IPaymentRequestTransaction tx)
+        {
+            switch (tx.TransactionType)
+            {
+                case TransactionType.Payment:
+                    return Mapper.Map<CompletePaymentOutTxCommand>(cmd, MapConfirmed());
+                case TransactionType.Refund:
+                    return Mapper.Map<CompleteRefundOutTxCommand>(cmd,
+                        opt =>
+                        {
+                            opt.Items["Confirmations"] = _transactionConfirmationCount;
+                            opt.Items["WalletAddress"] = tx.WalletAddress;
+                        });
+                case TransactionType.Exchange:
+                    return Mapper.Map<CompleteExchangeOutTxCommand>(cmd, MapConfirmed());
+                case TransactionType.Settlement:
+                    return Mapper.Map<CompleteSettlementOutTxCommand>(cmd, MapConfirmed());
+                case TransactionType.CashOut:
+                    return Mapper.Map<CompleteCashoutTxCommand>(cmd, MapConfirmed());
+                default:
+                    throw new UnexpectedTransactionTypeException(tx.TransactionType);
+            }
+        }
+
+        private IUpdateTransactionCommand MapToUpdateCommand(
+            NotEnoughFundsOutTxCommand cmd,
+            TransactionType transactionType)
+        {
+            switch (transactionType)
+            {
+                case TransactionType.Payment:
+                    return Mapper.Map<FailPaymentOutTxCommand>(cmd, MapConfirmed());
+                case TransactionType.CashOut:
+                    return Mapper.Map<FailCashoutTxCommand>(cmd, MapConfirmed());
+                case TransactionType.Exchange:
+                    return Mapper.Map<FailExchangeOutTxCommand>(cmd, MapConfirmed());
+                default:
+                    throw new UnexpectedTransactionTypeException(transactionType);
+            }
+        }
+
+        private ICreateTransactionCommand MapToCreateCommand(RegisterInTxCommand cmd)
+        {
+            switch (cmd.WorkflowType)
+            {
+                case WorkflowType.LykkePay:
+                    return Mapper.Map<CreateTransactionCommand>(cmd, MapConfirmed());
+                case WorkflowType.Airlines:
+                    return Mapper.Map<RegisterCashinTxCommand>(cmd, MapConfirmed());
+                default:
+                    throw new UnexpectedWorkflowTypeException(cmd.WorkflowType);
+            }
+        }
+
+        #endregion
     }
 }

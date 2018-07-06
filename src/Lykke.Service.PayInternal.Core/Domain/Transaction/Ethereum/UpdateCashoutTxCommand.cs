@@ -1,10 +1,11 @@
 ﻿using System;
-using Lykke.Service.PayInternal.Core;
-using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
-namespace Lykke.Service.PayInternal.Services.Domain
+namespace Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum
 {
-    public class CompleteRefundEthOutgoingTxCommand : IUpdateTransactionCommand
+    /// <summary>
+    /// Command to update outgoing cashout transaction
+    /// </summary>
+    public class UpdateCashoutTxCommand : IUpdateTransactionCommand
     {
         public string Hash { get; set; }
         public BlockchainType Blockchain { get; set; }

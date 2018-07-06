@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
-using Lykke.Service.PayHistory.Client.Publisher;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Core.Settings.SlackNotifications;
 using Lykke.SettingsReader.Attributes;
+using HistoryRabbitMqPublisherSettings = Lykke.Service.PayHistory.Client.Publisher.RabbitMqPublisherSettings;
+using CallBackRabbitMqPublisherSettings = Lykke.Service.PayCallback.Client.InvoiceConfirmation.RabbitMqPublisherSettings;
 
 namespace Lykke.Service.PayInternal.Core.Settings
 {
@@ -16,7 +17,8 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public NinjaServiceClientSettings NinjaServiceClient { get; set; }
         public EthereumServiceClientSettings EthereumServiceClient { get; set; }
         public AssetsMapSettings AssetsMap { get; set; }
-        public RabbitMqPublisherSettings PayHistoryServicePublisher { get; set; }
+        public HistoryRabbitMqPublisherSettings PayHistoryServicePublisher { get; set; }
+        public CallBackRabbitMqPublisherSettings PayInvoiceConfirmationPublisher { get; set; }
     }
 
     public class BitcoinCoreSettings

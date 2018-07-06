@@ -1,10 +1,11 @@
 ﻿using System;
-using Lykke.Service.PayInternal.Core;
-using Lykke.Service.PayInternal.Core.Domain.Transaction;
 
-namespace Lykke.Service.PayInternal.Services.Domain
+namespace Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum
 {
-    public class UpdateExchangeEthInboundTxCommand : IUpdateTransactionCommand
+    /// <summary>
+    /// Command to update outgoing payment transaction
+    /// </summary>
+    public class UpdatePaymentOutTxCommand : IUpdateTransactionCommand
     {
         public string Hash { get; set; }
         public BlockchainType Blockchain { get; set; }
@@ -17,7 +18,7 @@ namespace Lykke.Service.PayInternal.Services.Domain
         public string Identity { get; set; }
         public bool IsPayment()
         {
-            return false;
+            return true;
         }
     }
 }

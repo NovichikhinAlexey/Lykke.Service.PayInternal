@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using AutoMapper;
 using Lykke.Service.EthereumCore.Client.Models;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
+using Lykke.Service.PayInternal.Core.Domain.Cashout;
+using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Context;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 
 namespace Lykke.Service.PayInternal.Services
@@ -29,6 +32,20 @@ namespace Lykke.Service.PayInternal.Services
                 default:
                     return TransactionErrorType.Unknown;
             }
+        }
+
+        public static CashoutTransactionContext GetContext(this CashoutCommand src)
+        {
+            return new CashoutTransactionContext
+            {
+                EmployeeEmail = src.EmployeeEmail,
+                DesiredAsset = src.DesiredAsset
+            };
+        }
+
+        public static TDestination Map<TSource, TDestination>(this TDestination destination, TSource source)
+        {
+            return Mapper.Map(source, destination);
         }
     }
 }

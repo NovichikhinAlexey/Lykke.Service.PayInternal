@@ -1,6 +1,9 @@
-﻿namespace Lykke.Service.PayInternal.Core.Domain.Transaction
+﻿namespace Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Common
 {
-    public class NotEnoughFundsEthOutgoingTxCommand : IBlockchainTypeHolder
+    /// <summary>
+    /// Command to fail outgoing transaction because of funds insufficiency
+    /// </summary>
+    public class NotEnoughFundsOutTxCommand : IBlockchainTypeHolder
     {
         public TransactionIdentityType IdentityType { get; set; }
         public string Identity { get; set; }
