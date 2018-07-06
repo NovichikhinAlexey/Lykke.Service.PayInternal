@@ -233,19 +233,19 @@ namespace Lykke.Service.PayInternal.Modules
         {
             builder.RegisterType<WalletEventsPublisher>()
                 .As<IWalletEventsPublisher>()
-                .As<IStartable>()
+                .As<IStopable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
 
             builder.RegisterType<PaymentRequestPublisher>()
                 .As<IPaymentRequestPublisher>()
-                .As<IStartable>()
+                .As<IStopable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
 
             builder.RegisterType<TransactionPublisher>()
                 .As<ITransactionPublisher>()
-                .As<IStartable>()
+                .As<IStopable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
         }
