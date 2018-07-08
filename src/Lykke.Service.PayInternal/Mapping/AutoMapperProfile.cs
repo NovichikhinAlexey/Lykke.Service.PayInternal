@@ -270,6 +270,8 @@ namespace Lykke.Service.PayInternal.Mapping
             CreateMap<CompleteOutboundTxRequest, CompleteOutTxCommand>(MemberList.Destination);
 
             CreateMap<NotEnoughFundsOutboundTxRequest, NotEnoughFundsOutTxCommand>(MemberList.Destination);
+
+            CreateMap<FailOutboundTxRequest, FailOutTxCommand>(MemberList.Destination);
         }
     }
 }

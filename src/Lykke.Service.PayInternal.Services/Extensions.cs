@@ -34,15 +34,6 @@ namespace Lykke.Service.PayInternal.Services
             }
         }
 
-        public static CashoutTransactionContext GetContext(this CashoutCommand src)
-        {
-            return new CashoutTransactionContext
-            {
-                EmployeeEmail = src.EmployeeEmail,
-                DesiredAsset = src.DesiredAsset
-            };
-        }
-
         public static TDestination Map<TSource, TDestination>(this TDestination destination, TSource source)
         {
             return Mapper.Map(source, destination);

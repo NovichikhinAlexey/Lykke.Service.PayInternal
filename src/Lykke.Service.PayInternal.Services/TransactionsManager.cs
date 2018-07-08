@@ -13,6 +13,7 @@ using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum;
 using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Common;
+using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Context;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Services.Domain;
@@ -130,7 +131,9 @@ namespace Lykke.Service.PayInternal.Services
                         await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
                         break;
                     case TransactionType.Exchange:
-                        await _walletHistoryService.PublishIncomingExchangeAsync(Mapper.Map<WalletHistoryCommand>(cmd));
+                        var context = tx.ContextData.DeserializeJson<ExchangeTransactonContext>();
+                        if (context != null)
+                            await _walletHistoryService.SetTxHashAsync(context.HistoryOperationId, cmd.Hash);
                         break;
                 }
             }
@@ -184,19 +187,58 @@ namespace Lykke.Service.PayInternal.Services
                         await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
                         break;
                     case TransactionType.Exchange:
-                        await _walletHistoryService.PublishOutgoingExchangeAsync(
-                            Mapper.Map<WalletHistoryCommand>(cmd, opt => opt.Items["AssetId"] = tx.AssetId));
+                        var exContext = tx.ContextData.DeserializeJson<ExchangeTransactonContext>();
+                        if (exContext != null)
+                            await _walletHistoryService.SetTxHashAsync(exContext.HistoryOperationId, updateCommand.Hash);
                         break;
                     case TransactionType.CashOut:
-                        await Task.WhenAll(
-                            _confirmationsService.ConfirmCashoutAsync(Mapper.Map<CashoutConfirmationCommand>(tx)),
-                            _walletHistoryService.PublishCashoutAsync(Mapper.Map<WalletHistoryCashoutCommand>(cmd).Map(tx)));
+                        var cashoutContext = tx.ContextData.DeserializeJson<CashoutTransactionContext>();
+                        if (cashoutContext != null)
+                            await _walletHistoryService.SetTxHashAsync(cashoutContext.HistoryOperationId, updateCommand.Hash);
+                        await _confirmationsService.ConfirmCashoutAsync(Mapper.Map<CashoutConfirmationCommand>(tx));
                         break;
                 }
             }
         }
 
         public async Task FailOutgoingAsync(NotEnoughFundsOutTxCommand cmd)
+        {
+            var txs = (await _transactionsService.GetByBcnIdentityAsync(
+                cmd.Blockchain,
+                cmd.IdentityType,
+                cmd.Identity)).ToList();
+
+            if (!txs.Any())
+                throw new OutboundTransactionsNotFound(cmd.Blockchain, cmd.IdentityType, cmd.Identity);
+
+            foreach (var tx in txs)
+            {
+                _log.WriteInfo(nameof(FailOutgoingAsync), cmd, $"Failing outgoing transaction, not enough funds [type={tx.TransactionType}]");
+
+                IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx.TransactionType);
+
+                await _transactionsService.UpdateAsync(updateCommand);
+
+                if (tx.TransactionType == TransactionType.Payment)
+                    await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress, PaymentRequestStatusInfo.New());
+
+                if (tx.TransactionType == TransactionType.Exchange)
+                {
+                    var context = tx.ContextData.DeserializeJson<ExchangeTransactonContext>();
+                    if (context != null)
+                        await _walletHistoryService.RemoveAsync(context.HistoryOperationId);
+                }
+
+                if (tx.TransactionType == TransactionType.CashOut)
+                {
+                    var context = tx.ContextData.DeserializeJson<CashoutTransactionContext>();
+                    if (context != null)
+                        await _walletHistoryService.RemoveAsync(context.HistoryOperationId);
+                }
+            }
+        }
+
+        public async Task FailOutgoingAsync(FailOutTxCommand cmd)
         {
             var txs = (await _transactionsService.GetByBcnIdentityAsync(
                 cmd.Blockchain,
@@ -215,7 +257,22 @@ namespace Lykke.Service.PayInternal.Services
                 await _transactionsService.UpdateAsync(updateCommand);
 
                 if (tx.TransactionType == TransactionType.Payment)
-                    await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress, PaymentRequestStatusInfo.New());
+                    await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress,
+                        PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.UnknownPayment));
+
+                if (tx.TransactionType == TransactionType.Exchange)
+                {
+                    var context = tx.ContextData.DeserializeJson<ExchangeTransactonContext>();
+                    if (context != null)
+                        await _walletHistoryService.RemoveAsync(context.HistoryOperationId);
+                }
+
+                if (tx.TransactionType == TransactionType.CashOut)
+                {
+                    var context = tx.ContextData.DeserializeJson<CashoutTransactionContext>();
+                    if (context != null)
+                        await _walletHistoryService.RemoveAsync(context.HistoryOperationId);
+                }
             }
         }
 
@@ -300,6 +357,23 @@ namespace Lykke.Service.PayInternal.Services
 
         private IUpdateTransactionCommand MapToUpdateCommand(
             NotEnoughFundsOutTxCommand cmd,
+            TransactionType transactionType)
+        {
+            switch (transactionType)
+            {
+                case TransactionType.Payment:
+                    return Mapper.Map<FailPaymentOutTxCommand>(cmd, MapConfirmed());
+                case TransactionType.CashOut:
+                    return Mapper.Map<FailCashoutTxCommand>(cmd, MapConfirmed());
+                case TransactionType.Exchange:
+                    return Mapper.Map<FailExchangeOutTxCommand>(cmd, MapConfirmed());
+                default:
+                    throw new UnexpectedTransactionTypeException(transactionType);
+            }
+        }
+
+        private IUpdateTransactionCommand MapToUpdateCommand(
+            FailOutTxCommand cmd,
             TransactionType transactionType)
         {
             switch (transactionType)

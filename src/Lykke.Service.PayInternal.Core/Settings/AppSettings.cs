@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Lykke.Service.PayHistory.Client;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Core.Settings.SlackNotifications;
 using Lykke.SettingsReader.Attributes;
@@ -19,6 +20,7 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public AssetsMapSettings AssetsMap { get; set; }
         public HistoryRabbitMqPublisherSettings PayHistoryServicePublisher { get; set; }
         public CallBackRabbitMqPublisherSettings PayInvoiceConfirmationPublisher { get; set; }
+        public PayHistoryServiceClientSettings PayHistoryServiceClient { get; set; }
         public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
     }
 

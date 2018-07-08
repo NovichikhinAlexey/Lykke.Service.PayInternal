@@ -255,6 +255,17 @@ namespace Lykke.Service.PayInternal.Services
                 .ForMember(dest => dest.WalletAddress,
                     opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.ToAddress));
 
+            // outgoing ethereum payment fail
+            CreateMap<FailOutTxCommand, FailPaymentOutTxCommand>(MemberList.Destination)
+                .ForMember(dest => dest.Amount, opt => opt.UseValue(0))
+                .ForMember(dest => dest.Confirmations,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.Confirmations = (int) resContext.Items["Confirmations"]))
+                .ForMember(dest => dest.BlockId, opt => opt.Ignore())
+                .ForMember(dest => dest.FirstSeen, opt => opt.Ignore())
+                .ForMember(dest => dest.Hash, opt => opt.Ignore())
+                .ForMember(dest => dest.WalletAddress, opt => opt.Ignore());
+
             // outgoing ethereum cashout not enough funds
             CreateMap<NotEnoughFundsOutTxCommand, FailCashoutTxCommand>(MemberList.Destination)
                 .ForMember(dest => dest.Amount, opt => opt.UseValue(0))
@@ -266,8 +277,30 @@ namespace Lykke.Service.PayInternal.Services
                 .ForMember(dest => dest.Hash, opt => opt.Ignore())
                 .ForMember(dest => dest.WalletAddress, opt => opt.Ignore());
 
+            // outgoing ethereum cashout fail
+            CreateMap<FailOutTxCommand, FailCashoutTxCommand>(MemberList.Destination)
+                .ForMember(dest => dest.Amount, opt => opt.UseValue(0))
+                .ForMember(dest => dest.Confirmations,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.Confirmations = (int) resContext.Items["Confirmations"]))
+                .ForMember(dest => dest.BlockId, opt => opt.Ignore())
+                .ForMember(dest => dest.FirstSeen, opt => opt.Ignore())
+                .ForMember(dest => dest.Hash, opt => opt.Ignore())
+                .ForMember(dest => dest.WalletAddress, opt => opt.Ignore());
+
             // outgoing ethereum exchange not enough funds
             CreateMap<NotEnoughFundsOutTxCommand, FailExchangeOutTxCommand>(MemberList.Destination)
+                .ForMember(dest => dest.Amount, opt => opt.UseValue(0))
+                .ForMember(dest => dest.Confirmations,
+                    opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
+                        dest.Confirmations = (int) resContext.Items["Confirmations"]))
+                .ForMember(dest => dest.BlockId, opt => opt.Ignore())
+                .ForMember(dest => dest.FirstSeen, opt => opt.Ignore())
+                .ForMember(dest => dest.Hash, opt => opt.Ignore())
+                .ForMember(dest => dest.WalletAddress, opt => opt.Ignore());
+
+            // outgoing ethereum exchange fail
+            CreateMap<FailOutTxCommand, FailExchangeOutTxCommand>(MemberList.Destination)
                 .ForMember(dest => dest.Amount, opt => opt.UseValue(0))
                 .ForMember(dest => dest.Confirmations,
                     opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
@@ -296,7 +329,7 @@ namespace Lykke.Service.PayInternal.Services
                 .ForMember(dest => dest.DesiredAsset, opt => opt.Ignore())
                 .ForMember(dest => dest.EmployeeEmail, opt => opt.Ignore());
 
-            // Map2
+            // Map 2
             CreateMap<IPaymentRequestTransaction, WalletHistoryCashoutCommand>(MemberList.Destination)
                 .ForMember(dest => dest.AssetId, opt => opt.MapFrom(src => src.AssetId))
                 .ForMember(dest => dest.DesiredAsset,
@@ -311,6 +344,36 @@ namespace Lykke.Service.PayInternal.Services
             CreateMap<RegisterInTxCommand, WalletHistoryCommand>(MemberList.Destination)
                 .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.Hash))
                 .ForMember(dest => dest.WalletAddress, opt => opt.MapFrom(src => src.ToAddress));
+
+            // WalletHistoryOutgoingExchangeCommand is being mapped from two maps
+            // Map 1
+            CreateMap<TransferTransactionResult, WalletHistoryOutgoingExchangeCommand>(MemberList.Destination)
+                .ForMember(dest => dest.Blockchain, opt => opt.Ignore())
+                .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.Hash))
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.MapFrom(src => string.Join(Constants.Separator, src.Sources)));
+
+            // Map 2
+            CreateMap<TransferResult, WalletHistoryOutgoingExchangeCommand>(MemberList.Destination)
+                .ForMember(dest => dest.Amount, opt => opt.Ignore())
+                .ForMember(dest => dest.AssetId, opt => opt.Ignore())
+                .ForMember(dest => dest.TransactionHash, opt => opt.Ignore())
+                .ForMember(dest => dest.WalletAddress, opt => opt.Ignore());
+
+            // WalletHistoryIncomingExchangeCommand is being mapped from two maps
+            // Map 1
+            CreateMap<TransferTransactionResult, WalletHistoryIncomingExchangeCommand>(MemberList.Destination)
+                .ForMember(dest => dest.Blockchain, opt => opt.Ignore())
+                .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.Hash))
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.MapFrom(src => string.Join(Constants.Separator, src.Destinations)));
+
+            // Map 2
+            CreateMap<TransferResult, WalletHistoryIncomingExchangeCommand>(MemberList.Destination)
+                .ForMember(dest => dest.Amount, opt => opt.Ignore())
+                .ForMember(dest => dest.AssetId, opt => opt.Ignore())
+                .ForMember(dest => dest.TransactionHash, opt => opt.Ignore())
+                .ForMember(dest => dest.WalletAddress, opt => opt.Ignore());
         }
     }
 }

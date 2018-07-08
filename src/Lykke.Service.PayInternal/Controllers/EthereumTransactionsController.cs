@@ -198,6 +198,12 @@ namespace Lykke.Service.PayInternal.Controllers
             }
         }
 
+        /// <summary>
+        /// Fails outgoing ethereum transaction (not defined reason)
+        /// </summary>
+        /// <param name="request">Outgoing ethereum transaction details</param>
+        /// <response code="200">Transaction has been failed</response>
+        /// <response code="400">Transaction not found or unexpected transaction type</response>
         [HttpPost]
         [Route("outbound/fail")]
         [SwaggerOperation(nameof(FailOutboundTransaction))]
@@ -205,8 +211,29 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         public async Task<IActionResult> FailOutboundTransaction([FromBody] FailOutboundTxRequest request)
         {
-            // todo:
-            throw new NotImplementedException();
+            try
+            {
+                await _ethTransactionsManager.FailOutgoingAsync(Mapper.Map<FailOutTxCommand>(request));
+
+                return Ok();
+            }
+            catch (OutboundTransactionsNotFound e)
+            {
+                _log.WriteError(nameof(FailOutboundTransaction), new
+                {
+                    e.Blockchain,
+                    e.Identity,
+                    e.IdentityType
+                }, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (UnexpectedTransactionTypeException e)
+            {
+                _log.WriteError(nameof(FailOutboundTransaction), new { e.TransactionType }, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
         }
 
         /// <summary>
