@@ -10,5 +10,6 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task UpdateOutgoingAsync(UpdateOutTxCommand cmd);
         Task CompleteOutgoingAsync(CompleteOutTxCommand cmd);
         Task FailOutgoingAsync(NotEnoughFundsOutTxCommand cmd);
+        Task FailOutgoingAsync(FailOutTxCommand cmd);
     }
 }

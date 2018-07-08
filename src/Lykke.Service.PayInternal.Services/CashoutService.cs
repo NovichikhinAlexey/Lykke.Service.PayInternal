@@ -3,14 +3,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using Common;
 using JetBrains.Annotations;
+using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Cashout;
+using Lykke.Service.PayInternal.Core.Domain.History;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Context;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -22,6 +24,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransactionsService _transactionsService;
         private readonly IMerchantWalletService _merchantWalletService;
         private readonly IWalletBalanceValidator _walletBalanceValidator;
+        private readonly IWalletHistoryService _walletHistoryService;
 
         public CashoutService(
             [NotNull] IAssetSettingsService assetSettingsService, 
@@ -29,7 +32,8 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] ITransferService transferService, 
             [NotNull] ITransactionsService transactionsService, 
             [NotNull] IMerchantWalletService merchantWalletService, 
-            [NotNull] IWalletBalanceValidator walletBalanceValidator)
+            [NotNull] IWalletBalanceValidator walletBalanceValidator, 
+            [NotNull] IWalletHistoryService walletHistoryService)
         {
             _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
             _bcnSettingsResolver = bcnSettingsResolver ?? throw new ArgumentNullException(nameof(bcnSettingsResolver));
@@ -37,6 +41,7 @@ namespace Lykke.Service.PayInternal.Services
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
             _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
             _walletBalanceValidator = walletBalanceValidator ?? throw new ArgumentNullException(nameof(walletBalanceValidator));
+            _walletHistoryService = walletHistoryService ?? throw new ArgumentNullException(nameof(walletHistoryService));
         }
 
         public async Task<CashoutResult> ExecuteAsync(CashoutCommand cmd)
@@ -60,6 +65,17 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var transferTransactionResult in toHotWallet.Transactions)
             {
+                string historyId = await _walletHistoryService.PublishCashoutAsync(new WalletHistoryCashoutCommand
+                {
+                    Blockchain = toHotWallet.Blockchain,
+                    AssetId = transferTransactionResult.AssetId,
+                    Amount = transferTransactionResult.Amount,
+                    DesiredAsset = cmd.DesiredAsset,
+                    EmployeeEmail = cmd.EmployeeEmail,
+                    TransactionHash = transferTransactionResult.Hash,
+                    WalletAddress = string.Join(Constants.Separator, transferTransactionResult.Sources)
+                });
+
                 await _transactionsService.CreateTransactionAsync(new CreateTransactionCommand
                 {
                     Amount = transferTransactionResult.Amount,
@@ -72,7 +88,12 @@ namespace Lykke.Service.PayInternal.Services
                     TransferId = toHotWallet.Id,
                     Type = TransactionType.CashOut,
                     SourceWalletAddresses = transferTransactionResult.Sources.ToArray(),
-                    ContextData = cmd.GetContext().ToJson()
+                    ContextData = new CashoutTransactionContext
+                    {
+                        DesiredAsset = cmd.DesiredAsset,
+                        EmployeeEmail = cmd.EmployeeEmail,
+                        HistoryOperationId = historyId
+                    }.ToJson()
                 });
             }
 

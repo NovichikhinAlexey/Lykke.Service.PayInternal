@@ -27,9 +27,9 @@
     <PackageReference Include="Lykke.Common" Version="7.0.1" />
     <PackageReference Include="Lykke.Common.ApiLibrary" Version="1.10.1" />
     <PackageReference Include="Lykke.Logs" Version="5.1.0" />
-    <PackageReference Include="Lykke.Service.Assets.Client" Version="4.1.0" />
+    <PackageReference Include="Lykke.Service.Assets.Client" Version="4.2.0" />
     <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.1.0" />
-    <PackageReference Include="Lykke.Service.PayHistory.Client" Version="1.0.9" />
+    <PackageReference Include="Lykke.Service.PayHistory.Client" Version="1.0.11" />
     <PackageReference Include="Lykke.Service.PayInternal.Contract" Version="2.0.2" />
     <PackageReference Include="Lykke.Service.Session" Version="1.0.33" />
     <PackageReference Include="Lykke.SettingsReader" Version="2.4.1" />

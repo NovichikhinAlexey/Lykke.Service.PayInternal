@@ -181,6 +181,8 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterHistoryOperationPublisher(_settings.CurrentValue.PayHistoryServicePublisher, _log);
 
+            builder.RegisterPayHistoryClient(_settings.CurrentValue.PayHistoryServiceClient, _log);
+
             builder.RegisterInvoiceConfirmationPublisher(_settings.CurrentValue.PayInvoiceConfirmationPublisher, _log);
         }
 

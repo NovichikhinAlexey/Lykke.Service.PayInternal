@@ -3,7 +3,9 @@ using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
-using Lykke.Service.PayHistory.Client.AutorestClient.Models;
+using Lykke.Service.PayHistory.AutorestClient.Models;
+using Lykke.Service.PayHistory.Client;
+using Lykke.Service.PayHistory.Client.Models;
 using Lykke.Service.PayHistory.Client.Publisher;
 using Lykke.Service.PayInternal.Core.Domain.History;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
@@ -17,8 +19,10 @@ namespace Lykke.Service.PayInternal.Services
     public class WalletHistoryService : IWalletHistoryService
     {
         private readonly HistoryOperationPublisher _historyOperationPublisher;
+        private readonly IPayHistoryClient _payHistoryClient;
         private readonly IMerchantWalletService _merchantWalletService;
-        private readonly RetryPolicy _retryPolicy;
+        private readonly RetryPolicy _publisherRetryPolicy;
+        private readonly RetryPolicy _clientRetryPolicy;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly RetryPolicySettings _retryPolicySettings;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
@@ -28,88 +32,126 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] HistoryOperationPublisher historyOperationPublisher, 
             [NotNull] IMerchantWalletService merchantWalletService, 
             [NotNull] ILog log, 
-            [NotNull] RetryPolicySettings retryPolicySettings)
+            [NotNull] RetryPolicySettings retryPolicySettings, 
+            [NotNull] IPayHistoryClient payHistoryClient)
         {
             _historyOperationPublisher = historyOperationPublisher ?? throw new ArgumentNullException(nameof(historyOperationPublisher));
             _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
             _retryPolicySettings = retryPolicySettings ?? throw new ArgumentNullException(nameof(retryPolicySettings));
+            _payHistoryClient = payHistoryClient ?? throw new ArgumentNullException(nameof(payHistoryClient));
             _log = log.CreateComponentScope(nameof(WalletHistoryService)) ?? throw new ArgumentNullException(nameof(log));
-            _retryPolicy = Policy
+
+            _publisherRetryPolicy = Policy
                 .Handle<Exception>()
                 .WaitAndRetryAsync(
                     _retryPolicySettings.DefaultAttempts,
                     attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
                     (ex, timespan) => _log.Error("Publish wallet history with retry", ex));
+
+            _clientRetryPolicy = Policy
+                .Handle<Exception>(ex => !(ex is PayHistoryApiException))
+                .WaitAndRetryAsync(
+                    _retryPolicySettings.DefaultAttempts,
+                    attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                    (ex, timespan) => _log.Error("Connecting to history service with retry", ex));
         }
 
-        public async Task PublishCashInAsync(IWalletHistoryCommand cmd)
+        public async Task<string> PublishCashInAsync(IWalletHistoryCommand cmd)
         {
             IMerchantWallet merchantWallet =
                 await _merchantWalletService.GetByAddressAsync(cmd.Blockchain, cmd.WalletAddress);
 
-            await _retryPolicy
-                .ExecuteAsync(() => _historyOperationPublisher.PublishAsync(new HistoryOperation
-                {
-                    Amount = cmd.Amount,
-                    AssetId = cmd.AssetId,
-                    Type = HistoryOperationType.Recharge,
-                    CreatedOn = DateTime.UtcNow,
-                    TxHash = cmd.TransactionHash,
-                    MerchantId = merchantWallet.MerchantId
-                }));
+            var operation = new HistoryOperation
+            {
+                Amount = cmd.Amount,
+                AssetId = cmd.AssetId,
+                Type = HistoryOperationType.Recharge,
+                CreatedOn = DateTime.UtcNow,
+                TxHash = cmd.TransactionHash,
+                MerchantId = merchantWallet.MerchantId
+            };
+
+            await _publisherRetryPolicy
+                .ExecuteAsync(() => _historyOperationPublisher.PublishAsync(operation));
+
+            return operation.Id;
         }
 
-        public async Task PublishOutgoingExchangeAsync(IWalletHistoryCommand cmd)
+        public async Task<string> PublishOutgoingExchangeAsync(IWalletHistoryCommand cmd)
         {
             IMerchantWallet merchantWallet =
                 await _merchantWalletService.GetByAddressAsync(cmd.Blockchain, cmd.WalletAddress);
 
-            await _retryPolicy
-                .ExecuteAsync(() => _historyOperationPublisher.PublishAsync(new HistoryOperation
-                {
-                    Amount = cmd.Amount,
-                    AssetId = cmd.AssetId,
-                    Type = HistoryOperationType.OutgoingExchange,
-                    CreatedOn = DateTime.UtcNow,
-                    TxHash = cmd.TransactionHash,
-                    MerchantId = merchantWallet.MerchantId,
-                }));
+            var operation = new HistoryOperation
+            {
+                Amount = cmd.Amount,
+                AssetId = cmd.AssetId,
+                Type = HistoryOperationType.OutgoingExchange,
+                CreatedOn = DateTime.UtcNow,
+                TxHash = cmd.TransactionHash,
+                MerchantId = merchantWallet.MerchantId,
+            };
+
+            await _publisherRetryPolicy
+                .ExecuteAsync(() => _historyOperationPublisher.PublishAsync(operation));
+
+            return operation.Id;
         }
 
-        public async Task PublishIncomingExchangeAsync(IWalletHistoryCommand cmd)
+        public async Task<string> PublishIncomingExchangeAsync(IWalletHistoryCommand cmd)
         {
             IMerchantWallet merchantWallet =
                 await _merchantWalletService.GetByAddressAsync(cmd.Blockchain, cmd.WalletAddress);
 
-            await _retryPolicy
-                .ExecuteAsync(() => _historyOperationPublisher.PublishAsync(new HistoryOperation
-                {
-                    Amount = cmd.Amount,
-                    AssetId = cmd.AssetId,
-                    Type = HistoryOperationType.IncomingExchange,
-                    CreatedOn = DateTime.UtcNow,
-                    TxHash = cmd.TransactionHash,
-                    MerchantId = merchantWallet.MerchantId
-                }));
+            var operation = new HistoryOperation
+            {
+                Amount = cmd.Amount,
+                AssetId = cmd.AssetId,
+                Type = HistoryOperationType.IncomingExchange,
+                CreatedOn = DateTime.UtcNow,
+                TxHash = cmd.TransactionHash,
+                MerchantId = merchantWallet.MerchantId
+            };
+
+            await _publisherRetryPolicy
+                .ExecuteAsync(() => _historyOperationPublisher.PublishAsync(operation));
+
+            return operation.Id;
         }
 
-        public async Task PublishCashoutAsync(IWalletHistoryCashoutCommand cmd)
+        public async Task<string> PublishCashoutAsync(IWalletHistoryCashoutCommand cmd)
         {
             IMerchantWallet merchantWallet =
                 await _merchantWalletService.GetByAddressAsync(cmd.Blockchain, cmd.WalletAddress);
 
-            await _retryPolicy
-                .ExecuteAsync(() => _historyOperationPublisher.PublishAsync(new HistoryOperation
-                {
-                    Amount = cmd.Amount,
-                    AssetId = cmd.AssetId,
-                    Type = HistoryOperationType.CashOut,
-                    CreatedOn = DateTime.UtcNow,
-                    TxHash = cmd.TransactionHash,
-                    MerchantId = merchantWallet.MerchantId,
-                    DesiredAssetId = cmd.DesiredAsset,
-                    EmployeeEmail = cmd.EmployeeEmail
-                }));
+            var operation = new HistoryOperation
+            {
+                Amount = cmd.Amount,
+                AssetId = cmd.AssetId,
+                Type = HistoryOperationType.CashOut,
+                CreatedOn = DateTime.UtcNow,
+                TxHash = cmd.TransactionHash,
+                MerchantId = merchantWallet.MerchantId,
+                DesiredAssetId = cmd.DesiredAsset,
+                EmployeeEmail = cmd.EmployeeEmail
+            };
+
+            await _publisherRetryPolicy
+                .ExecuteAsync(() => _historyOperationPublisher.PublishAsync(operation));
+
+            return operation.Id;
+        }
+
+        public async Task SetTxHashAsync(string id, string hash)
+        {
+            await _clientRetryPolicy
+                .ExecuteAsync(() => _payHistoryClient.SetTxHashAsync(id, hash));
+        }
+
+        public async Task RemoveAsync(string id)
+        {
+            await _clientRetryPolicy
+                .ExecuteAsync(() => _payHistoryClient.SetRemovedAsync(id));
         }
     }
 }

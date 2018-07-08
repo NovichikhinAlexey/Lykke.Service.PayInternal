@@ -1,16 +1,20 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
+using Common;
 using JetBrains.Annotations;
+using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Domain.Exchange;
+using Lykke.Service.PayInternal.Core.Domain.History;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Context;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -23,6 +27,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransferService _transferService;
         private readonly ITransactionsService _transactionsService;
         private readonly IWalletBalanceValidator _walletBalanceValidator;
+        private readonly IWalletHistoryService _walletHistoryService;
 
         public ExchangeService(
             [NotNull] IMerchantWalletService merchantWalletService,
@@ -31,7 +36,8 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IBcnSettingsResolver bcnSettingsResolver,
             [NotNull] ITransferService transferService,
             [NotNull] ITransactionsService transactionsService, 
-            [NotNull] IWalletBalanceValidator walletBalanceValidator)
+            [NotNull] IWalletBalanceValidator walletBalanceValidator, 
+            [NotNull] IWalletHistoryService walletHistoryService)
         {
             _merchantWalletService =
                 merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
@@ -42,6 +48,7 @@ namespace Lykke.Service.PayInternal.Services
             _transferService = transferService ?? throw new ArgumentNullException(nameof(transferService));
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
             _walletBalanceValidator = walletBalanceValidator ?? throw new ArgumentNullException(nameof(walletBalanceValidator));
+            _walletHistoryService = walletHistoryService ?? throw new ArgumentNullException(nameof(walletHistoryService));
         }
 
         public async Task<ExchangeResult> ExecuteAsync(ExchangeCommand cmd)
@@ -82,7 +89,7 @@ namespace Lykke.Service.PayInternal.Services
                 await GetDestAddressAsync(cmd),
                 exchangeAmount);
 
-            await RegisterTransferTxsAsync(fromHotWallet);
+            await RegisterTransferTxsAsync(fromHotWallet, false);
 
             return new ExchangeResult
             {
@@ -126,23 +133,31 @@ namespace Lykke.Service.PayInternal.Services
                 : await _merchantWalletService.GetByIdAsync(merchantWalletId);
         }
 
-        private async Task RegisterTransferTxsAsync(TransferResult transfer)
+        private async Task RegisterTransferTxsAsync(TransferResult transfer, bool outgoing = true)
         {
             foreach (var transferTransactionResult in transfer.Transactions)
             {
-                await _transactionsService.CreateTransactionAsync(new CreateTransactionCommand
-                {
-                    Amount = transferTransactionResult.Amount,
-                    Blockchain = transfer.Blockchain,
-                    AssetId = transferTransactionResult.AssetId,
-                    Confirmations = 0,
-                    Hash = transferTransactionResult.Hash,
-                    IdentityType = transferTransactionResult.IdentityType,
-                    Identity = transferTransactionResult.Identity,
-                    TransferId = transfer.Id,
-                    Type = TransactionType.Exchange,
-                    SourceWalletAddresses = transferTransactionResult.Sources.ToArray()
-                });
+                string historyId = outgoing
+                    ? await _walletHistoryService.PublishOutgoingExchangeAsync(Mapper
+                        .Map<WalletHistoryOutgoingExchangeCommand>(transferTransactionResult).Map(transfer))
+                    : await _walletHistoryService.PublishIncomingExchangeAsync(Mapper
+                        .Map<WalletHistoryIncomingExchangeCommand>(transferTransactionResult).Map(transfer));
+
+                await _transactionsService.CreateTransactionAsync(
+                    new CreateTransactionCommand
+                    {
+                        Amount = transferTransactionResult.Amount,
+                        Blockchain = transfer.Blockchain,
+                        AssetId = transferTransactionResult.AssetId,
+                        Confirmations = 0,
+                        Hash = transferTransactionResult.Hash,
+                        IdentityType = transferTransactionResult.IdentityType,
+                        Identity = transferTransactionResult.Identity,
+                        TransferId = transfer.Id,
+                        Type = TransactionType.Exchange,
+                        SourceWalletAddresses = transferTransactionResult.Sources.ToArray(),
+                        ContextData = new ExchangeTransactonContext {HistoryOperationId = historyId}.ToJson()
+                    });
             }
         }
 
