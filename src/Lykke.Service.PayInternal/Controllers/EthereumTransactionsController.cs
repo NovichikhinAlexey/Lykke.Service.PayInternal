@@ -5,7 +5,6 @@ using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
-using Lykke.Service.PayHistory.Client.Models;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Common;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -51,12 +50,6 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok();
             }
-            catch (PayHistoryApiException e)
-            {
-                _log.WriteError(nameof(RegisterInboundTransaction), request, e);
-
-                return Ok();
-            }
             catch (MerchantWalletNotFoundException e)
             {
                 _log.WriteError(nameof(RegisterInboundTransaction), new
@@ -99,11 +92,13 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <param name="request">Outgoing ethereum transaction details</param>
         /// <response code="200">Transaction has been successfully updated</response>
         /// <response code="400">Transaction not found or unexpected transaction type</response>
+        /// <response code="404">Transaction not found</response>
         [HttpPost]
         [Route("outbound")]
         [SwaggerOperation(nameof(RegisterOutboundTransaction))]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> RegisterOutboundTransaction(
             [FromBody] RegisterOutboundTxRequest request)
         {
@@ -122,7 +117,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     e.IdentityType
                 }, e);
 
-                return BadRequest(ErrorResponse.Create(e.Message));
+                return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (UnexpectedTransactionTypeException e)
             {
@@ -137,24 +132,20 @@ namespace Lykke.Service.PayInternal.Controllers
         /// </summary>
         /// <param name="request">Outgoing ethereum transaction details</param>
         /// <response code="200">Transaction has been successfully completed</response>
-        /// <response code="400">Transaction not found or unexpected transaction type</response>
+        /// <response code="400">Unexpected transaction type, merchant wallet not found, insufficient funds</response>
+        /// <response code="404">Transaction not found</response>
         [HttpPost]
         [Route("outbound/complete")]
         [SwaggerOperation(nameof(CompleteOutboundTransaction))]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> CompleteOutboundTransaction([FromBody] CompleteOutboundTxRequest request)
         {
             try
             {
                 await _ethTransactionsManager.CompleteOutgoingAsync(
                     Mapper.Map<CompleteOutTxCommand>(request));
-
-                return Ok();
-            }
-            catch (PayHistoryApiException e)
-            {
-                _log.WriteError(nameof(CompleteOutboundTransaction), request, e);
 
                 return Ok();
             }
@@ -178,7 +169,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     e.IdentityType
                 }, e);
 
-                return BadRequest(ErrorResponse.Create(e.Message));
+                return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (UnexpectedTransactionTypeException e)
             {
@@ -203,12 +194,14 @@ namespace Lykke.Service.PayInternal.Controllers
         /// </summary>
         /// <param name="request">Outgoing ethereum transaction details</param>
         /// <response code="200">Transaction has been failed</response>
-        /// <response code="400">Transaction not found or unexpected transaction type</response>
+        /// <response code="400">Unexpected transaction type</response>
+        /// <response code="404">Transaction not found</response>
         [HttpPost]
         [Route("outbound/fail")]
         [SwaggerOperation(nameof(FailOutboundTransaction))]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> FailOutboundTransaction([FromBody] FailOutboundTxRequest request)
         {
             try
@@ -226,11 +219,11 @@ namespace Lykke.Service.PayInternal.Controllers
                     e.IdentityType
                 }, e);
 
-                return BadRequest(ErrorResponse.Create(e.Message));
+                return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (UnexpectedTransactionTypeException e)
             {
-                _log.WriteError(nameof(FailOutboundTransaction), new { e.TransactionType }, e);
+                _log.WriteError(nameof(FailOutboundTransaction), new {e.TransactionType}, e);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
@@ -241,12 +234,14 @@ namespace Lykke.Service.PayInternal.Controllers
         /// </summary>
         /// <param name="request">Outgoing ethereum transaction details</param>
         /// <response code="200">Transaction has been failed</response>
-        /// <response code="400">Transaction not found or unexpected transaction type</response>
+        /// <response code="400">Unexpected transaction type</response>
+        /// <response code="404">Transaction not found</response>
         [HttpPost]
         [Route("outbound/notEnoughFunds")]
         [SwaggerOperation(nameof(FailOutboundTransaction))]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> FailOutboundTransaction([FromBody] NotEnoughFundsOutboundTxRequest request)
         {
             try
@@ -265,7 +260,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     e.IdentityType
                 }, e);
 
-                return BadRequest(ErrorResponse.Create(e.Message));
+                return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (UnexpectedTransactionTypeException e)
             {
