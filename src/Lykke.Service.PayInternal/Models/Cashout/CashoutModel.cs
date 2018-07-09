@@ -22,6 +22,7 @@ namespace Lykke.Service.PayInternal.Models.Cashout
         /// Gets or sets employee email
         /// </summary>
         [Required]
+        [Validation.EmailAddress]
         public string EmployeeEmail { get; set; }
 
         /// <summary>
@@ -41,6 +42,7 @@ namespace Lykke.Service.PayInternal.Models.Cashout
         /// <summary>
         /// Gets or sets desired asset
         /// </summary>
+        [Required]
         public string DesiredAsset { get; set; }
 
         /// <summary>
