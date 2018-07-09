@@ -89,7 +89,7 @@ namespace Lykke.Service.PayInternal.Services
                 Type = HistoryOperationType.OutgoingExchange,
                 CreatedOn = DateTime.UtcNow,
                 TxHash = cmd.TransactionHash,
-                MerchantId = merchantWallet.MerchantId,
+                MerchantId = merchantWallet.MerchantId
             };
 
             await _publisherRetryPolicy

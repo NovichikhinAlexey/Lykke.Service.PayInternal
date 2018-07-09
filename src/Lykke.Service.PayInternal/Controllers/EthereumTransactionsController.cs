@@ -9,6 +9,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Common;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Transactions.Ethereum;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -16,8 +17,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 namespace Lykke.Service.PayInternal.Controllers
 {
     [Route("api/ethereumTransactions")]
-    [ApiController]
-    public class EthereumTransactionsController : ControllerBase
+    public class EthereumTransactionsController : Controller
     {
         private readonly IEthereumTransactionsManager _ethTransactionsManager;
         private readonly ILog _log;
@@ -41,6 +41,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation(nameof(RegisterInboundTransaction))]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
         public async Task<IActionResult> RegisterInboundTransaction(
             [FromBody] RegisterInboundTxRequest request)
         {
@@ -99,6 +100,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> RegisterOutboundTransaction(
             [FromBody] RegisterOutboundTxRequest request)
         {
@@ -140,6 +142,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> CompleteOutboundTransaction([FromBody] CompleteOutboundTxRequest request)
         {
             try
@@ -202,6 +205,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> FailOutboundTransaction([FromBody] FailOutboundTxRequest request)
         {
             try
@@ -242,6 +246,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
         public async Task<IActionResult> FailOutboundTransaction([FromBody] NotEnoughFundsOutboundTxRequest request)
         {
             try
