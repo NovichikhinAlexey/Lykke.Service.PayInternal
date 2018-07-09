@@ -8,6 +8,7 @@ using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Cashout;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Lykke.Service.PayInternal.Models.Cashout;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -15,8 +16,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 namespace Lykke.Service.PayInternal.Controllers
 {
     [Route("api/cashout/[action]")]
-    [ApiController]
-    public class CashoutController : ControllerBase
+    public class CashoutController : Controller
     {
         private readonly ICashoutService _cashoutService;
         private readonly ILog _log;
@@ -42,6 +42,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation(nameof(Execute))]
         [ProducesResponseType(typeof(CashoutResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
         public async Task<IActionResult> Execute([FromBody] CashoutModel request)
         {
             try
