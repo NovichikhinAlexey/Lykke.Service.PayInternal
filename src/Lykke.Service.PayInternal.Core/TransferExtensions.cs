@@ -53,6 +53,26 @@ namespace Lykke.Service.PayInternal.Core
             });
         }
 
+        public static async Task<TransferResult> CashoutThrowFail(this ITransferService src, string assetId,
+            string sourceAddress, string destAddress, decimal? amount = null)
+        {
+            TransferResult transferResult = await src.ExecuteAsync(assetId, sourceAddress, destAddress, amount);
+
+            foreach (var transactionResult in transferResult.Transactions)
+            {
+                if (transactionResult.ErrorType == TransactionErrorType.NotEnoughFunds)
+                    throw new InsufficientFundsException(sourceAddress, assetId);
+            }
+
+            if (!transferResult.HasSuccess())
+                throw new CashoutOperationFailedException(transferResult.GetErrors());
+
+            if (transferResult.HasError())
+                throw new CashoutOperationPartiallyFailedException(transferResult.GetErrors());
+
+            return transferResult;
+        }
+
         public static async Task<TransferResult> ExchangeThrowFail(this ITransferService src, string assetId,
             string sourceAddress, string destAddress, decimal? amount = null)
         {

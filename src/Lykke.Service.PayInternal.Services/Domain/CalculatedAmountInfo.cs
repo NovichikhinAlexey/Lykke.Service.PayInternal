@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Lykke.Service.PayInternal.Core.Domain.Orders;
+﻿using Lykke.Service.PayInternal.Core.Domain.Orders;
 
 namespace Lykke.Service.PayInternal.Services.Domain
 {

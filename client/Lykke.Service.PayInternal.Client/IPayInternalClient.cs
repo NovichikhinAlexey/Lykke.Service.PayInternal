@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.AssetRates;
+using Lykke.Service.PayInternal.Client.Models.Cashout;
 using Lykke.Service.PayInternal.Client.Models.Exchange;
 using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
@@ -526,5 +527,12 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request">Transaction identification details</param>
         /// <returns></returns>
         Task FailEthereumOutboundTransactionAsync(NotEnoughFundsOutboundTxModel request);
+
+        /// <summary>
+        /// Executes cashout
+        /// </summary>
+        /// <param name="request">Cashout request details</param>
+        /// <returns>Cashout execution result</returns>
+        Task<CashoutResponse> CashoutAsync(CashoutRequest request);
     }
 }

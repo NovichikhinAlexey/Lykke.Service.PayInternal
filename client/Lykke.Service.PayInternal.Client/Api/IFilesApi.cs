@@ -1,9 +1,7 @@
 ﻿using Lykke.Service.PayInternal.Client.Models.File;
 using Refit;
-using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Lykke.Service.PayInternal.Client.Api

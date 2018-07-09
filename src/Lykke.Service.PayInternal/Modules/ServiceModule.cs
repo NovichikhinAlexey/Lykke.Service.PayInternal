@@ -10,6 +10,7 @@ using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.MarketProfile.Client;
+using Lykke.Service.PayCallback.Client;
 using Lykke.Service.PayHistory.Client;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Services;
@@ -149,6 +150,16 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<WalletHistoryService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.RetryPolicy))
                 .As<IWalletHistoryService>();
+
+            builder.RegisterType<CashoutService>()
+                .As<ICashoutService>();
+
+            builder.RegisterType<WalletBalanceValidator>()
+                .As<IWalletBalanceValidator>();
+
+            builder.RegisterType<ConfirmationsService>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.RetryPolicy))
+                .As<IConfirmationsService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
@@ -169,6 +180,10 @@ namespace Lykke.Service.PayInternal.Modules
                 .AsSelf();
 
             builder.RegisterHistoryOperationPublisher(_settings.CurrentValue.PayHistoryServicePublisher, _log);
+
+            builder.RegisterPayHistoryClient(_settings.CurrentValue.PayHistoryServiceClient, _log);
+
+            builder.RegisterInvoiceConfirmationPublisher(_settings.CurrentValue.PayInvoiceConfirmationPublisher, _log);
         }
 
         private void RegisterCaches(ContainerBuilder builder)
@@ -190,7 +205,7 @@ namespace Lykke.Service.PayInternal.Modules
                             .ExecuteAsync(() => assetsService.AssetGetAllAsync(true));
 
                         return assets.ToDictionary(itm => itm.Id);
-                    });
+                    }, _settings.CurrentValue.PayInternalService.ExpirationPeriods.AssetsCache);
             }).SingleInstance();
 
             builder.Register(x =>
@@ -209,7 +224,7 @@ namespace Lykke.Service.PayInternal.Modules
                             .ExecuteAsync(() => assetsService.AssetPairGetAllAsync());
 
                         return assetPairs.ToDictionary(itm => itm.Id);
-                    });
+                    }, _settings.CurrentValue.PayInternalService.ExpirationPeriods.AssetsCache);
             }).SingleInstance();
 
             builder.RegisterType<AssetsLocalCache>()
@@ -220,19 +235,19 @@ namespace Lykke.Service.PayInternal.Modules
         {
             builder.RegisterType<WalletEventsPublisher>()
                 .As<IWalletEventsPublisher>()
-                .As<IStartable>()
+                .As<IStopable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
 
             builder.RegisterType<PaymentRequestPublisher>()
                 .As<IPaymentRequestPublisher>()
-                .As<IStartable>()
+                .As<IStopable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
 
             builder.RegisterType<TransactionPublisher>()
                 .As<ITransactionPublisher>()
-                .As<IStartable>()
+                .As<IStopable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
         }

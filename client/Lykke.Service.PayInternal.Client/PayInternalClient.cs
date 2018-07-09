@@ -7,6 +7,7 @@ using Lykke.Service.PayInternal.Client.Api;
 using Lykke.Service.PayInternal.Client.Exceptions;
 using Lykke.Service.PayInternal.Client.Models.Asset;
 using Lykke.Service.PayInternal.Client.Models.AssetRates;
+using Lykke.Service.PayInternal.Client.Models.Cashout;
 using Lykke.Service.PayInternal.Client.Models.Exchange;
 using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
@@ -37,6 +38,7 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IFilesApi _filesApi;
         private readonly IMerchantWalletsApi _merchantWalletsApi;
         private readonly IExchangeApi _exchangeApi;
+        private readonly ICashoutApi _cashoutApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -69,6 +71,7 @@ namespace Lykke.Service.PayInternal.Client
             _filesApi = RestService.For<IFilesApi>(_httpClient);
             _merchantWalletsApi = RestService.For<IMerchantWalletsApi>(_httpClient);
             _exchangeApi = RestService.For<IExchangeApi>(_httpClient);
+            _cashoutApi = RestService.For<ICashoutApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
@@ -442,6 +445,11 @@ namespace Lykke.Service.PayInternal.Client
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() =>
                 _payInternalApi.FailEthereumOutboundTransactionAsync(request));
+        }
+
+        public Task<CashoutResponse> CashoutAsync(CashoutRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _cashoutApi.ExecuteAsync(request));
         }
 
         public void Dispose()

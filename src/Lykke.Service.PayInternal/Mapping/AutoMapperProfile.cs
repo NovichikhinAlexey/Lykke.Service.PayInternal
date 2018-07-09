@@ -6,8 +6,8 @@ using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
+using Lykke.Service.PayInternal.Core.Domain.Cashout;
 using Lykke.Service.PayInternal.Core.Domain.Exchange;
-using Lykke.Service.PayInternal.Core.Domain.History;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
@@ -15,6 +15,7 @@ using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
+using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Common;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Models;
@@ -31,6 +32,7 @@ using Lykke.Service.PayInternal.Models.Transactions.Ethereum;
 using Lykke.Service.PayInternal.Models.Transfers;
 using Lykke.Service.PayInternal.Services.Domain;
 using Lykke.Service.PayInternal.Services.Mapping;
+using Lykke.Service.PayInternal.Models.Cashout;
 
 namespace Lykke.Service.PayInternal.Mapping
 {
@@ -137,7 +139,16 @@ namespace Lykke.Service.PayInternal.Mapping
                     opt => opt.ResolveUsing((src, dest, destMember, resContext) =>
                         dest.Type = (TransactionType) resContext.Items["TransactionType"]))
                 .ForMember(dest => dest.WalletAddress,
-                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.WalletAddress));
+                    opt => opt.ResolveUsing<VirtualAddressResolver, string>(src => src.WalletAddress))
+                .ForMember(dest => dest.ContextData, opt => opt.Ignore());
+
+            CreateMap<CashoutModel, CashoutCommand>(MemberList.Destination)
+                .ForMember(dest => dest.SourceAssetId,
+                    opt => opt.ResolveUsing<AssetIdValueResolver, string>(src => src.SourceAssetId));
+
+            CreateMap<CashoutResult, CashoutResponse>(MemberList.Destination)
+                .ForMember(dest => dest.AssetId,
+                    opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.AssetId));
 
             CreateEthereumPaymentMaps();
 
@@ -186,6 +197,7 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.CreatedOn, opt => opt.Ignore())
                 .ForSourceMember(src => src.IdentityType, opt => opt.Ignore())
                 .ForSourceMember(src => src.Identity, opt => opt.Ignore())
+                .ForSourceMember(src => src.ContextData, opt => opt.Ignore())
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId))
                 .ForMember(dest => dest.Url, opt => opt.ResolveUsing<PaymentTxUrlValueResolver>())
                 .ForMember(dest => dest.RefundUrl, opt => opt.Ignore());
@@ -235,6 +247,7 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForSourceMember(src => src.CreatedOn, opt => opt.Ignore())
                 .ForSourceMember(src => src.IdentityType, opt => opt.Ignore())
                 .ForSourceMember(src => src.Identity, opt => opt.Ignore())
+                .ForSourceMember(src => src.ContextData, opt => opt.Ignore())
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TransactionId))
                 .ForMember(dest => dest.Url, opt => opt.ResolveUsing<PaymentTxUrlValueResolver>());
 
@@ -248,13 +261,15 @@ namespace Lykke.Service.PayInternal.Mapping
 
         private void CreateEthereumPaymentMaps()
         {
-            CreateMap<RegisterInboundTxRequest, RegisterEthInboundTxCommand>(MemberList.Destination);
+            CreateMap<RegisterInboundTxRequest, RegisterInTxCommand>(MemberList.Destination);
 
-            CreateMap<RegisterOutboundTxRequest, UpdateEthOutgoingTxCommand>(MemberList.Destination);
+            CreateMap<RegisterOutboundTxRequest, UpdateOutTxCommand>(MemberList.Destination);
 
-            CreateMap<CompleteOutboundTxRequest, CompleteEthOutgoingTxCommand>(MemberList.Destination);
+            CreateMap<CompleteOutboundTxRequest, CompleteOutTxCommand>(MemberList.Destination);
 
-            CreateMap<NotEnoughFundsOutboundTxRequest, NotEnoughFundsEthOutgoingTxCommand>(MemberList.Destination);
+            CreateMap<NotEnoughFundsOutboundTxRequest, NotEnoughFundsOutTxCommand>(MemberList.Destination);
+
+            CreateMap<FailOutboundTxRequest, FailOutTxCommand>(MemberList.Destination);
         }
     }
 }

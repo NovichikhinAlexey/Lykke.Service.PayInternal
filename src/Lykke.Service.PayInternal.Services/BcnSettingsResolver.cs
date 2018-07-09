@@ -66,5 +66,28 @@ namespace Lykke.Service.PayInternal.Services
 
             return address;
         }
+
+        public string GetCashoutHotWallet(BlockchainType blockchain)
+        {
+            string address;
+
+            switch (blockchain)
+            {
+                case BlockchainType.Bitcoin:
+                    address = _blockchainSettings.Bitcoin.CashoutHotWalletAddress;
+                    break;
+                case BlockchainType.Ethereum:
+                case BlockchainType.EthereumIata:
+                    address = _blockchainSettings.Ethereum.CashoutHotWalletAddress;
+                    break;
+                case BlockchainType.None:
+                    address = string.Empty;
+                    break;
+                default:
+                    throw new Exception("Unexpected blockchain type");
+            }
+
+            return address;
+        }
     }
 }

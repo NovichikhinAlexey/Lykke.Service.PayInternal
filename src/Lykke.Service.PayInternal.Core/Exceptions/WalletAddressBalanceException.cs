@@ -9,7 +9,7 @@ namespace Lykke.Service.PayInternal.Core.Exceptions
         {
         }
 
-        public WalletAddressBalanceException(BlockchainType blockchain, string address) : base("Wallet address balance exception")
+        public WalletAddressBalanceException(BlockchainType blockchain, string address) : base("Error while getting wallet balance")
         {
             Blockchain = blockchain;
             Address = address;

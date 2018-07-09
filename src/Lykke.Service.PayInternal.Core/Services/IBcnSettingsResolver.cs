@@ -5,5 +5,7 @@
         string GetExplorerUrl(BlockchainType blockchain, string transactionHash);
 
         string GetExchangeHotWallet(BlockchainType blockchain);
+
+        string GetCashoutHotWallet(BlockchainType blockchain);
     }
 }

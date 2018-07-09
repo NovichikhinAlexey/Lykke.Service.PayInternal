@@ -35,8 +35,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IDistributedLocksService _paymentLocksService;
         private readonly IDistributedLocksService _checkoutLocksService;
         private readonly ITransactionPublisher _transactionPublisher;
-        private readonly IAssetSettingsService _assetSettingsService;
-        private readonly IBlockchainClientProvider _blockchainClientProvider;
+        private readonly IWalletBalanceValidator _walletBalanceValidator;
         private readonly ILog _log;
 
         public PaymentRequestService(
@@ -53,8 +52,7 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IDistributedLocksService paymentLocksService, 
             [NotNull] ITransactionPublisher transactionPublisher, 
             [NotNull] IDistributedLocksService checkoutLocksService, 
-            [NotNull] IAssetSettingsService assetSettingsService, 
-            [NotNull] IBlockchainClientProvider blockchainClientProvider)
+            [NotNull] IWalletBalanceValidator walletBalanceValidator)
         {
             _paymentRequestRepository = paymentRequestRepository ?? throw new ArgumentNullException(nameof(paymentRequestRepository));
             _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
@@ -69,8 +67,7 @@ namespace Lykke.Service.PayInternal.Services
             _paymentLocksService = paymentLocksService ?? throw new ArgumentNullException(nameof(paymentLocksService));
             _transactionPublisher = transactionPublisher ?? throw new ArgumentNullException(nameof(transactionPublisher));
             _checkoutLocksService = checkoutLocksService ?? throw new ArgumentNullException(nameof(checkoutLocksService));
-            _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
-            _blockchainClientProvider = blockchainClientProvider ?? throw new ArgumentNullException(nameof(blockchainClientProvider));
+            _walletBalanceValidator = walletBalanceValidator ?? throw new ArgumentNullException(nameof(walletBalanceValidator));
         }
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -245,7 +242,7 @@ namespace Lykke.Service.PayInternal.Services
                 paymentRequest.PaymentAssetId,
                 PaymentDirection.Outgoing)).WalletAddress;
 
-            await ValidateTransferBalance(payerWalletAddress, paymentRequest.PaymentAssetId, cmd.Amount);
+            await _walletBalanceValidator.ValidateTransfer(payerWalletAddress, paymentRequest.PaymentAssetId, cmd.Amount);
 
             return new PaymentResult
             {
@@ -421,19 +418,6 @@ namespace Lykke.Service.PayInternal.Services
             }
 
             return paymentRequest;
-        }
-
-        [AssertionMethod]
-        private async Task ValidateTransferBalance(string walletAddress, string assetId, decimal transferAmount)
-        {
-            BlockchainType network = await _assetSettingsService.GetNetworkAsync(assetId);
-
-            IBlockchainApiClient blockchainApiClient = _blockchainClientProvider.Get(network);
-
-            decimal balance = await blockchainApiClient.GetBalanceAsync(walletAddress, assetId);
-
-            if (balance < transferAmount)
-                throw new InsufficientFundsException(walletAddress, assetId);
         }
     }
 }

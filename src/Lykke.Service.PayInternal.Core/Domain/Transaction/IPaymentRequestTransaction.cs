@@ -38,6 +38,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 
         TransactionIdentityType IdentityType { get; set; }
 
+        string ContextData { get; set; }
+
         string Identity { get; set; }
 
         bool IsPayment();

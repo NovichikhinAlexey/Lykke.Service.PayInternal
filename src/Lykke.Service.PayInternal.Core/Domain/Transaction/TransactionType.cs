@@ -33,5 +33,10 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         /// Exchange transaction
         /// </summary>
         Exchange,
+
+        /// <summary>
+        /// Cash out transaction
+        /// </summary>
+        CashOut
     }
 }

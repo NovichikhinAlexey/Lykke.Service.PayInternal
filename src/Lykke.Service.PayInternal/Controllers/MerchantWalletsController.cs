@@ -324,6 +324,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// </summary>
         /// <param name="merchantId">Merchant id</param>
         /// <response code="200">List of balances</response>
+        /// <response code="400">Error while getting wallet balance from provider</response>
         /// <response code="404">Merchant not found</response>
         /// <response code="501">Blockchain client implementation not found</response>
         [HttpGet]
@@ -332,6 +333,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(IEnumerable<MerchantWalletBalanceResponse>), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotImplemented)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> GetBalances(string merchantId)
         {
             merchantId = Uri.UnescapeDataString(merchantId);
@@ -347,6 +349,16 @@ namespace Lykke.Service.PayInternal.Controllers
                     await _merchantWalletService.GetBalancesAsync(merchantId);
 
                 return Ok(Mapper.Map<IEnumerable<MerchantWalletBalanceResponse>>(balances));
+            }
+            catch (WalletAddressBalanceException e)
+            {
+                _log.WriteError(nameof(GetBalances), new
+                {
+                    e.Blockchain,
+                    e.Address
+                }, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (InvalidRowKeyValueException e)
             {
