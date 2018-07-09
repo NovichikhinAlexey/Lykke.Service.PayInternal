@@ -99,7 +99,7 @@ namespace Lykke.Service.PayInternal.Controllers
                     e.PaymentDirection
                 });
 
-                return BadRequest(ErrorResponse.Create(e.MerchantId));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (MerchantWalletOwnershipException e)
             {
