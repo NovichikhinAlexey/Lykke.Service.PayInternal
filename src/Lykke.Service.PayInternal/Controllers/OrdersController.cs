@@ -130,22 +130,54 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [Route("orders/calculate")]
         [SwaggerOperation("GetCalculatedAmountInfo")]
-        [ProducesResponseType(typeof(ICalculatedAmountInfo), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ICalculatedAmountInfo), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ValidateModel]
         public async Task<IActionResult> GetCalculatedAmountInfoAsync([FromBody] GetCalculatedAmountInfoRequest model)
         {
             try
             {
-                ICalculatedAmountInfo calculatedAmountInfo = await _orderService.GetCalculatedAmountInfoAsync(model.SettlementAssetId, model.PaymentAssetId, model.Amount, model.MerchantId);
+                ICalculatedAmountInfo calculatedAmountInfo = await _orderService.GetCalculatedAmountInfoAsync(
+                    model.SettlementAssetId,
+                    model.PaymentAssetId,
+                    model.Amount,
+                    model.MerchantId);
 
                 return Ok(calculatedAmountInfo);
             }
-            catch (Exception ex)
+            catch (MerchantNotFoundException e)
             {
-                _log.WriteErrorAsync(nameof(GetCalculatedAmountInfoAsync), model.ToJson(), ex);
+                _log.WriteError(nameof(GetCalculatedAmountInfoAsync), new {e.MerchantId}, e);
 
-                throw;
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (AssetUnknownException e)
+            {
+                _log.WriteError(nameof(GetCalculatedAmountInfoAsync), new {e.Asset}, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (MarkupNotFoundException e)
+            {
+                _log.WriteError(nameof(GetCalculatedAmountInfoAsync), new
+                {
+                    e.MerchantId,
+                    e.AssetPairId
+                }, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (MarketPriceZeroException e)
+            {
+                _log.WriteError(nameof(GetCalculatedAmountInfoAsync), new {e.PriceType}, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (UnexpectedAssetPairPriceMethodException e)
+            {
+                _log.WriteError(nameof(GetCalculatedAmountInfoAsync), new {e.PriceMethod}, e);
+
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
     }
