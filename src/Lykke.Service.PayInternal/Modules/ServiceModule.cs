@@ -130,6 +130,7 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<EthereumIataApiClient>()
                 .Keyed<IBlockchainApiClient>(BlockchainType.EthereumIata)
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum))
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.RetryPolicy))
                 .SingleInstance();
 
             builder.RegisterType<LykkeAssetsResolver>()
