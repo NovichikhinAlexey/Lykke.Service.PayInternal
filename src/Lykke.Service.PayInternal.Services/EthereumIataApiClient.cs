@@ -18,6 +18,8 @@ using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Microsoft.Rest;
+using Polly;
+using ExceptionType = Lykke.Service.EthereumCore.Client.Models.ExceptionType;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -28,6 +30,10 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IAssetsService _assetsService;
         private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
+        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
+        private readonly RetryPolicySettings _retryPolicySettings;
+        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
+        private readonly Policy<object> _retryPolicy;
         private readonly ILog _log;
 
         public EthereumIataApiClient(
@@ -36,14 +42,30 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IAssetsLocalCache assetsLocalCache, 
             [NotNull] IAssetsService assetsService,
             [NotNull] ILykkeAssetsResolver lykkeAssetsResolver, 
-            [NotNull] ILog log)
+            [NotNull] ILog log, 
+            [NotNull] RetryPolicySettings retryPolicySettings)
         {
             _ethereumServiceClient = ethereumServiceClient ?? throw new ArgumentNullException(nameof(ethereumServiceClient));
             _ethereumSettings = ethereumSettings ?? throw new ArgumentNullException(nameof(ethereumSettings));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _assetsService = assetsService ?? throw new ArgumentNullException(nameof(assetsService));
             _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
+            _retryPolicySettings = retryPolicySettings ?? throw new ArgumentNullException(nameof(retryPolicySettings));
             _log = log.CreateComponentScope(nameof(EthereumIataApiClient)) ?? throw new ArgumentNullException(nameof(log));
+            _retryPolicy = Policy
+                .HandleResult<object>(r =>
+                {
+                    if (r is ApiException apiException)
+                    {
+                        return apiException.Error?.Code == ExceptionType.None;
+                    }
+
+                    return false;
+                })
+                .WaitAndRetryAsync(
+                    _retryPolicySettings.DefaultAttempts,
+                    attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                    (ex, timespan) => _log.WriteError("Connecting ethereum core with retry", ex));
         }
 
         public async Task<BlockchainTransferResult> TransferAsync(BlockchainTransferCommand transfer)
@@ -73,7 +95,7 @@ namespace Lykke.Service.PayInternal.Services
                         opts.Items["AssetAccuracy"] = asset.Accuracy;
                     });
 
-                object response = await InvokeTransfer(transferRequest);
+                object response = await _retryPolicy.ExecuteAsync(() => InvokeTransfer(transferRequest));
 
                 var ex = response as ApiException;
 
@@ -104,8 +126,10 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<string> CreateAddressAsync()
         {
-            object response =
-                await _ethereumServiceClient.ApiAirlinesErc20depositsPostAsync(_ethereumSettings.ApiKey, StringUtils.GenerateId());
+            object response = await _retryPolicy.ExecuteAsync(() =>
+                _ethereumServiceClient.ApiAirlinesErc20depositsPostAsync(
+                    _ethereumSettings.ApiKey,
+                    StringUtils.GenerateId()));
 
             if (response is ApiException ex)
             {
@@ -125,7 +149,8 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<bool> ValidateAddressAsync(string address)
         {
-            object response = await _ethereumServiceClient.ApiValidationGetAsync(address);
+            object response =
+                await _retryPolicy.ExecuteAsync(() => _ethereumServiceClient.ApiValidationGetAsync(address));
 
             if (response is ApiException ex)
             {
@@ -147,12 +172,16 @@ namespace Lykke.Service.PayInternal.Services
         {
             var balances = new List<BlockchainBalanceResult>();
 
-            object response = await _ethereumServiceClient.ApiErc20BalancePostAsync(new GetErcBalance(address));
+            object response = await _retryPolicy.ExecuteAsync(() =>
+                _ethereumServiceClient.ApiErc20BalancePostAsync(new GetErcBalance(address)));
 
             if (response is ApiException ex)
             {
-                _log.WriteWarning(nameof(GetBalancesAsync), "EthereumIata balances",
-                    ex.Error?.Message);
+                _log.WriteError(nameof(GetBalancesAsync), new
+                {
+                    ex.Error.Message,
+                    ex.Error.Code
+                });
 
                 throw new WalletAddressBalanceException(BlockchainType.EthereumIata, address);
             }
