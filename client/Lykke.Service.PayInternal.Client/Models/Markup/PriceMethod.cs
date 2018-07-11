@@ -1,8 +1,12 @@
-﻿namespace Lykke.Service.PayInternal.Client.Models.Markup
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
+namespace Lykke.Service.PayInternal.Client.Models.Markup
 {
     /// <summary>
     /// Price determination method
     /// </summary>
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum PriceMethod
     {
         /// <summary>
