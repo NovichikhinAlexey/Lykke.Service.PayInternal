@@ -110,12 +110,14 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Markup
 
             public static string GenerateRowKey(MarkupIdentityType identityType, string identity)
             {
-                if (!identity.IsValidPartitionOrRowKey())
-                    throw new InvalidRowKeyValueException(nameof(identity), identity);
-
-                return identityType == MarkupIdentityType.None
+                string key = identityType == MarkupIdentityType.None
                     ? $"{identityType.ToString()}"
                     : $"{identityType.ToString()}_{identity}";
+
+                if (!key.IsValidPartitionOrRowKey())
+                    throw new InvalidRowKeyValueException(nameof(key), key);
+
+                return key;
             }
 
             public static MarkupEntity Create(IMarkup src)
