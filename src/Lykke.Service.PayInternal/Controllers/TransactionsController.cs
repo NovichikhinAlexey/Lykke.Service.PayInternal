@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using Common;
 using AutoMapper;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -14,6 +13,7 @@ using Lykke.Service.PayInternal.Models.Transactions;
 using Lykke.Service.PayInternal.Services.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Lykke.Service.PayInternal.Core;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -28,12 +28,12 @@ namespace Lykke.Service.PayInternal.Controllers
         public TransactionsController(
             ITransactionsService transactionsService,
             IPaymentRequestService paymentRequestService,
-            ILog log,
+            ILogFactory logFactory,
             ITransactionsManager transactionsManager)
         {
             _paymentRequestService = paymentRequestService;
             _transactionsService = transactionsService;
-            _log = log;
+            _log = logFactory.CreateLog(this);
             _transactionsManager = transactionsManager;
         }
 
@@ -57,46 +57,36 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 await _transactionsManager.CreateTransactionAsync(command);
 
-                await _log.WriteInfoAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction),
-                    command.ToJson(), "Create new transaction command");
+                _log.Info("Create new transaction command", command);
 
                 return Ok();
             }
-            catch (PaymentRequestNotFoundException ex)
+            catch (PaymentRequestNotFoundException e)
             {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction), new
+                _log.Error(e, new
                 {
-                    ex.MerchantId,
-                    ex.WalletAddress,
-                    ex.PaymentRequestId
-                }.ToJson(), ex);
+                    e.MerchantId,
+                    e.WalletAddress,
+                    e.PaymentRequestId
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
-            catch (UnexpectedAssetException ex)
+            catch (UnexpectedAssetException e)
             {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction), new
+                _log.Error(e, new {e.AssetId,});
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (BlockchainWalletNotLinkedException e)
+            {
+                _log.Error(e, new
                 {
-                    ex.AssetId,
-                }.ToJson(), ex);
+                    e.Blockchain,
+                    e.WalletAddress
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
-            }
-            catch (BlockchainWalletNotLinkedException ex)
-            {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction), new
-                {
-                    ex.Blockchain,
-                    ex.WalletAddress
-                }.ToJson(), ex);
-
-                return BadRequest(ErrorResponse.Create(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(CreatePaymentTransaction), ex);
-
-                throw;
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
         /// <summary>
@@ -116,49 +106,42 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 await _transactionsManager.UpdateTransactionAsync(command);
 
-                await _log.WriteInfoAsync(nameof(TransactionsController), nameof(UpdateTransaction),
-                    command.ToJson(), "Update transaction command");
+                _log.Info("Update transaction command", command);
 
                 return Ok();
             }
-            catch (TransactionNotFoundException ex)
+            catch (TransactionNotFoundException e)
             {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), new
+                _log.Error(e, new
                 {
-                    ex.Blockchain,
-                    ex.IdentityType,
-                    ex.Identity,
-					ex.WalletAddress
-                }.ToJson(), ex);
+                    e.Blockchain,
+                    e.IdentityType,
+                    e.Identity,
+					e.WalletAddress
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
-            catch (PaymentRequestNotFoundException ex)
+            catch (PaymentRequestNotFoundException e)
             {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), new
+                _log.Error(e, new
                 {
-                    ex.MerchantId,
-                    ex.WalletAddress,
-                    ex.PaymentRequestId
-                }.ToJson(), ex);
+                    e.MerchantId,
+                    e.WalletAddress,
+                    e.PaymentRequestId
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
-            catch (BlockchainWalletNotLinkedException ex)
+            catch (BlockchainWalletNotLinkedException e)
             {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), new
+                _log.Error(e, new
                 {
-                    ex.Blockchain,
-                    ex.WalletAddress
-                }.ToJson(), ex);
+                    e.Blockchain,
+                    e.WalletAddress
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(UpdateTransaction), ex);
-
-                throw;
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
 
@@ -172,18 +155,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(List<TransactionStateResponse>), (int) HttpStatusCode.OK)]
         public async Task<IActionResult> GetAllMonitoredAsync()
         {
-            try
-            {
-                var response = await _transactionsService.GetNotExpiredAsync();
+            var response = await _transactionsService.GetNotExpiredAsync();
 
-                return Ok(Mapper.Map<List<TransactionStateResponse>>(response));
-            }
-            catch (Exception ex)
-            {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(GetAllMonitoredAsync), ex);
-
-                throw;
-            }
+            return Ok(Mapper.Map<List<TransactionStateResponse>>(response));
         }
 
 
@@ -200,24 +174,15 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> Expired([FromBody] TransactionExpiredRequest request)
         {
-            try
+            IEnumerable<IPaymentRequestTransaction> txs =
+                await _transactionsService.GetByBcnIdentityAsync(request.Blockchain, request.IdentityType, request.Identity);
+
+            foreach (IPaymentRequestTransaction tx in txs)
             {
-                IEnumerable<IPaymentRequestTransaction> txs =
-                    await _transactionsService.GetByBcnIdentityAsync(request.Blockchain, request.IdentityType, request.Identity);
-
-                foreach (IPaymentRequestTransaction tx in txs)
-                {
-                    await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
-                }
-
-                return Ok();
+                await _paymentRequestService.UpdateStatusAsync(tx.WalletAddress);
             }
-            catch (Exception ex)
-            {
-                await _log.WriteErrorAsync(nameof(TransactionsController), nameof(Expired), ex);
 
-                throw;
-            }
+            return Ok();
         }
     }
 }

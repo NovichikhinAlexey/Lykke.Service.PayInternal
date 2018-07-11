@@ -6,6 +6,7 @@ using AutoMapper;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.EthereumCore.Client;
@@ -32,7 +33,7 @@ namespace Lykke.Service.PayInternal.Services
         public EthereumApiClient(
             [NotNull] IEthereumCoreAPI ethereumServiceClient,
             [NotNull] EthereumBlockchainSettings ethereumSettings,
-            [NotNull] ILog log,
+            [NotNull] ILogFactory logFactory,
             [NotNull] IAssetsLocalCache assetsLocalCache,
             [NotNull] ILykkeAssetsResolver lykkeAssetsResolver,
             [NotNull] IAssetsService assetsService)
@@ -42,7 +43,7 @@ namespace Lykke.Service.PayInternal.Services
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
             _assetsService = assetsService ?? throw new ArgumentNullException(nameof(assetsLocalCache));
-            _log = log.CreateComponentScope(nameof(EthereumApiClient)) ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
         }
 
         public async Task<BlockchainTransferResult> TransferAsync(BlockchainTransferCommand transfer)
@@ -75,9 +76,10 @@ namespace Lykke.Service.PayInternal.Services
 
                 if (response is ApiException ex)
                 {
-                    await _log.WriteWarningAsync(nameof(TransferAsync), transferAmount.ToJson(), ex.Error?.ToJson());
-
                     errorMessage = ex.Error?.Message;
+
+                    _log.Warning(errorMessage, context: ex.Error);
+                    
                 } else if (response is OperationIdResponse op)
                 {
                     operationId = op.OperationId;
@@ -110,8 +112,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (response is ApiException ex)
             {
-                await _log.WriteWarningAsync(nameof(CreateAddressAsync), "New erc20 address generation",
-                    ex.Error?.Message);
+                _log.Warning("New erc20 address generation", context: ex.Error);
 
                 throw new WalletAddressAllocationException(BlockchainType.Ethereum);
             }
@@ -130,8 +131,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (response is ApiException ex)
             {
-                await _log.WriteWarningAsync(nameof(ValidateAddressAsync), "Ethereum address validation",
-                    ex.Error?.Message);
+                _log.Warning("Ethereum address validation", context: ex.Error);
 
                 throw new WalletAddressValidationException(BlockchainType.Ethereum, address);
             }
@@ -152,8 +152,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (response is ApiException ex)
             {
-                _log.WriteWarning(nameof(GetBalancesAsync), "EthereumIata balances",
-                    ex.Error?.Message);
+                _log.Warning("EthereumIata balances", context: ex.Error);
 
                 throw new WalletAddressBalanceException(BlockchainType.EthereumIata, address);
             }

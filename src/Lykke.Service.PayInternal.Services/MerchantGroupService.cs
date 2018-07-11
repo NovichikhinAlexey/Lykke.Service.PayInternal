@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.AzureRepositories;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using KeyNotFoundException = Lykke.Service.PayInternal.Core.Exceptions.KeyNotFoundException;
@@ -19,12 +21,11 @@ namespace Lykke.Service.PayInternal.Services
 
         public MerchantGroupService(
             [NotNull] IMerchantGroupRepository merchantGroupRepository,
-            [NotNull] ILog log)
+            [NotNull] ILogFactory logFactory)
         {
             _merchantGroupRepository = merchantGroupRepository ??
                                        throw new ArgumentNullException(nameof(merchantGroupRepository));
-            _log = log.CreateComponentScope(nameof(MerchantGroupService)) ??
-                   throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
         }
 
         public Task<IMerchantGroup> CreateAsync(IMerchantGroup src)
@@ -35,7 +36,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (DuplicateKeyException ex)
             {
-                _log.WriteError(nameof(CreateAsync), src, ex);
+                _log.Error(ex, src);
 
                 throw new MerchantGroupAlreadyExistsException(src.DisplayName);
             }
@@ -54,7 +55,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException ex)
             {
-                _log.WriteError(nameof(UpdateAsync), src, ex);
+                _log.Error(ex, src);
 
                 throw new MerchantGroupNotFoundException(src.Id);
             }
@@ -68,7 +69,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException ex)
             {
-                _log.WriteError(nameof(DeleteAsync), new {merchantGroupId = id}, ex);
+                _log.Error(ex, new {merchantGroupId = id});
 
                 throw new MerchantGroupNotFoundException(id);
             }

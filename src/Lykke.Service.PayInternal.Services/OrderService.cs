@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using Common;
 using Common.Log;
+using JetBrains.Annotations;
+using Lykke.Common.Log;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
@@ -28,18 +30,18 @@ namespace Lykke.Service.PayInternal.Services
         private readonly OrderExpirationPeriodsSettings _orderExpirationPeriods;
 
         public OrderService(
-            IOrderRepository orderRepository,
-            IMerchantRepository merchantRepository,
-            ICalculationService calculationService,
-            ILog log,
-            OrderExpirationPeriodsSettings orderExpirationPeriods, 
-            IMarkupService markupService,
-            ILykkeAssetsResolver lykkeAssetsResolver)
+            [NotNull] IOrderRepository orderRepository,
+            [NotNull] IMerchantRepository merchantRepository,
+            [NotNull] ICalculationService calculationService,
+            [NotNull] ILogFactory logFactory,
+            [NotNull] OrderExpirationPeriodsSettings orderExpirationPeriods,
+            [NotNull] IMarkupService markupService,
+            [NotNull] ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _orderRepository = orderRepository;
             _merchantRepository = merchantRepository;
             _calculationService = calculationService;
-            _log = log;
+            _log = logFactory.CreateLog(this);
             _orderExpirationPeriods = orderExpirationPeriods;
             _markupService = markupService;
             _lykkeAssetsResolver = lykkeAssetsResolver;
@@ -102,8 +104,7 @@ namespace Lykke.Service.PayInternal.Services
 
             IOrder createdOrder = await _orderRepository.InsertAsync(order);
 
-            await _log.WriteInfoAsync(nameof(OrderService), nameof(GetLatestOrCreateAsync), order.ToJson(),
-                "Order created.");
+            _log.Info("Order created", order);
 
             return createdOrder;
         }
@@ -127,13 +128,13 @@ namespace Lykke.Service.PayInternal.Services
             {
                 merchantMarkup = await _markupService.ResolveAsync(merchant.Id, assetPairId);
             }
-            catch (MarkupNotFoundException ex)
+            catch (MarkupNotFoundException e)
             {
-                await _log.WriteErrorAsync(nameof(OrderService), nameof(GetLatestOrCreateAsync), new
+                _log.Error(e, new
                 {
-                    ex.MerchantId,
-                    ex.AssetPairId
-                }.ToJson(), ex);
+                    e.MerchantId,
+                    e.AssetPairId
+                });
 
                 throw;
             }
@@ -148,15 +149,15 @@ namespace Lykke.Service.PayInternal.Services
                 rate = await _calculationService.GetRateAsync(lykkePaymentAssetId, lykkeSettlementAssetId,
                     requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
             }
-            catch (MarketPriceZeroException priceZeroEx)
+            catch (MarketPriceZeroException e)
             {
-                _log.WriteError(nameof(GetLatestOrCreateAsync), new { priceZeroEx.PriceType }, priceZeroEx);
+                _log.Error(e, new { e.PriceType });
 
                 throw;
             }
-            catch (UnexpectedAssetPairPriceMethodException assetPairEx)
+            catch (UnexpectedAssetPairPriceMethodException e)
             {
-                _log.WriteError(nameof(GetLatestOrCreateAsync), new { assetPairEx.PriceMethod }, assetPairEx);
+                _log.Error(e, new { e.PriceMethod });
 
                 throw;
             }

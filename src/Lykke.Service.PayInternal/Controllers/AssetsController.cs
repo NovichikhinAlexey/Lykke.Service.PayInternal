@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.Assets.Client.Models;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -31,14 +33,14 @@ namespace Lykke.Service.PayInternal.Controllers
             [NotNull] IAssetSettingsService assetSettingsService,
             [NotNull] IAssetsLocalCache assetsLocalCache,
             [NotNull] IMerchantService merchantService,
-            [NotNull] ILog log,
+            [NotNull] ILogFactory logFactory,
             [NotNull] ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _assetSettingsService =
                 assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
-            _log = log.CreateComponentScope(nameof(AssetsController)) ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
             _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
         }
 
@@ -52,18 +54,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(IEnumerable<AssetGeneralSettingsResponseModel>), (int) HttpStatusCode.OK)]
         public async Task<IActionResult> GetAssetGeneralSettings()
         {
-            try
-            {
-                IReadOnlyList<IAssetGeneralSettings> assets = await _assetSettingsService.GetGeneralAsync();
+            IReadOnlyList<IAssetGeneralSettings> assets = await _assetSettingsService.GetGeneralAsync();
 
-                return Ok(Mapper.Map<IReadOnlyList<AssetGeneralSettingsResponseModel>>(assets));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(GetAssetGeneralSettings), ex);
-
-                throw;
-            }
+            return Ok(Mapper.Map<IReadOnlyList<AssetGeneralSettingsResponseModel>>(assets));
         }
 
         /// <summary>
@@ -92,27 +85,21 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return NoContent();
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(SetAssetGeneralSettings), new
+                _log.Error(e, new
                 {
-                    ex.Variable,
-                    ex.Value
-                }, ex);
+                    e.Variable,
+                    e.Value
+                });
 
                 return NotFound(ErrorResponse.Create("Asset not found"));
             }
-            catch (AssetUnknownException assetEx)
+            catch (AssetUnknownException e)
             {
-                _log.WriteError(nameof(SetAssetGeneralSettings), new {assetEx.Asset}, assetEx);
+                _log.Error(e, new {e.Asset});
 
-                return NotFound(ErrorResponse.Create($"Asset {assetEx.Asset} can't be resolved"));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(SetAssetGeneralSettings), ex);
-
-                throw;
+                return NotFound(ErrorResponse.Create($"Asset {e.Asset} can't be resolved"));
             }
         }
 
@@ -142,21 +129,15 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<AssetMerchantSettingsResponse>(personal));
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(GetAssetMerchantSettings), new
+                _log.Error(e, new
                 {
-                    ex.Variable,
-                    ex.Value
-                }, ex);
+                    e.Variable,
+                    e.Value
+                });
 
                 return NotFound(ErrorResponse.Create("Merchant not found"));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(GetAssetMerchantSettings), ex);
-
-                throw;
             }
         }
 
@@ -182,21 +163,15 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return NoContent();
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(SetAssetMerchantSettings), new
+                _log.Error(e, new
                 {
-                    ex.Variable,
-                    ex.Value
-                }, ex);
+                    e.Variable,
+                    e.Value
+                });
 
                 return NotFound(ErrorResponse.Create("Merchant not found"));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(SetAssetMerchantSettings), ex);
-
-                throw;
             }
         }
     }

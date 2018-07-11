@@ -71,12 +71,12 @@ namespace Lykke.Service.PayInternal.Services
 
                 if (isCreateMerchantLogo)
                 {
-                    var img = new ImageSharp.Image(ms);
+                    var img = new Image(ms);
 
-                    var result = img.Resize(new ImageSharp.ResizeOptions
+                    var result = img.Resize(new ResizeOptions
                     {
-                        Mode = ImageSharp.ResizeMode.Max,
-                        Size = new ImageSharp.Size(_merchantSettings.LogoSize, _merchantSettings.LogoSize * img.Width / img.Height)
+                        Mode = ResizeMode.Max,
+                        Size = new Size(_merchantSettings.LogoSize, _merchantSettings.LogoSize * img.Width / img.Height)
                     });
 
                     using (var outStream = new System.IO.MemoryStream())

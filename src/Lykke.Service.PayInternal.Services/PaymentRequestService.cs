@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
@@ -15,7 +15,6 @@ using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
-using Lykke.Service.PayInternal.Services.Domain;
 using Polly;
 
 namespace Lykke.Service.PayInternal.Services
@@ -44,7 +43,7 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IPaymentRequestPublisher paymentRequestPublisher,
             [NotNull] ITransferService transferService,
             [NotNull] IPaymentRequestStatusResolver paymentRequestStatusResolver,
-            [NotNull] ILog log,
+            [NotNull] ILogFactory logFactory,
             [NotNull] IWalletManager walletsManager,
             [NotNull] ITransactionsService transactionsService,
             [NotNull] ExpirationPeriodsSettings expirationPeriods,
@@ -59,7 +58,7 @@ namespace Lykke.Service.PayInternal.Services
             _paymentRequestPublisher = paymentRequestPublisher ?? throw new ArgumentNullException(nameof(paymentRequestPublisher));
             _transferService = transferService ?? throw new ArgumentNullException(nameof(transferService));
             _paymentRequestStatusResolver = paymentRequestStatusResolver ?? throw new ArgumentNullException(nameof(paymentRequestStatusResolver));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
             _walletsManager = walletsManager ?? throw new ArgumentNullException(nameof(walletsManager));
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
             _expirationPeriods = expirationPeriods ?? throw new ArgumentNullException(nameof(expirationPeriods));
@@ -126,8 +125,7 @@ namespace Lykke.Service.PayInternal.Services
 
             IPaymentRequest createdPaymentRequest = await _paymentRequestRepository.InsertAsync(paymentRequest);
 
-            await _log.WriteInfoAsync(nameof(PaymentRequestService), nameof(CreateAsync),
-                paymentRequest.ToJson(), "Payment request created.");
+            _log.Info("Payment request created", paymentRequest);
 
             return createdPaymentRequest;
         }
@@ -161,7 +159,7 @@ namespace Lykke.Service.PayInternal.Services
                 .Handle<DistributedLockAcquireException>()
                 .WaitAndRetryForeverAsync(
                     attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-                    (ex, timespan) => _log.WriteErrorAsync("Acquiring checkout lock with retry", new {paymentRequestId}.ToJson(), ex))
+                    (ex, timespan) => _log.Error(message: "Acquiring checkout lock with retry", context: new {paymentRequestId}))
                 .ExecuteAsync(() => TryCheckoutAsync(paymentRequest, force));
         }
 
@@ -217,16 +215,14 @@ namespace Lykke.Service.PayInternal.Services
 
             if (eligibleForTransition.Any())
             {
-                await _log.WriteInfoAsync(nameof(PaymentRequestService), nameof(HandleExpiredAsync),
-                    $"Found payment requests eligible to move to Past Due: {eligibleForTransition.Count()}");
+                _log.Info($"Found payment requests eligible to move to Past Due: {eligibleForTransition.Count()}");
             }
 
             foreach (IPaymentRequest paymentRequest in eligibleForTransition)
             {
                 await UpdateStatusAsync(paymentRequest.WalletAddress, PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.PaymentExpired));
 
-                await _log.WriteInfoAsync(nameof(PaymentRequestService), nameof(HandleExpiredAsync),
-                    $"Payment request with id {paymentRequest.Id} was moved to Past Due");
+                _log.Info($"Payment request with id {paymentRequest.Id} was moved to Past Due");
             }
         }
 

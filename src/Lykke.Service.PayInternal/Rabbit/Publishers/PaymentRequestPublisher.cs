@@ -2,6 +2,7 @@
 using Autofac;
 using Common;
 using Common.Log;
+using Lykke.Common.Log;
 using Lykke.RabbitMqBroker.Publisher;
 using Lykke.RabbitMqBroker.Subscriber;
 using Lykke.Service.PayInternal.Contract.PaymentRequest;
@@ -16,17 +17,19 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
     {
         private readonly IPaymentRequestDetailsBuilder _paymentRequestDetailsBuilder;
         private readonly ILog _log;
+        private readonly ILogFactory _logFactory;
         private readonly RabbitMqSettings _settings;
         private RabbitMqPublisher<PaymentRequestDetailsMessage> _publisher;
 
         public PaymentRequestPublisher(
             RabbitMqSettings settings, 
             IPaymentRequestDetailsBuilder paymentRequestDetailsBuilder,
-            ILog log)
+            ILogFactory logFactory)
         {
             _settings = settings;
             _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder;
-            _log = log;
+            _logFactory = logFactory;
+            _log = logFactory.CreateLog(this);
         }
 
         public void Start()
@@ -36,11 +39,10 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
 
             settings.MakeDurable();
 
-            _publisher = new RabbitMqPublisher<PaymentRequestDetailsMessage>(settings)
+            _publisher = new RabbitMqPublisher<PaymentRequestDetailsMessage>(_logFactory, settings)
                 .SetSerializer(new JsonMessageSerializer<PaymentRequestDetailsMessage>())
                 .SetPublishStrategy(new DefaultFanoutPublishStrategy(settings))
                 .PublishSynchronously()
-                .SetLogger(_log)
                 .Start();
         }
 
@@ -67,8 +69,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
         
         public async Task PublishAsync(PaymentRequestDetailsMessage message)
         {
-            await _log.WriteInfoAsync(nameof(PaymentRequestPublisher), nameof(PublishAsync), $"message = {message.ToJson()}",
-                "Publishing payment request status update message");
+            _log.Info("Publishing payment request status update message", message);
       
             await _publisher.ProduceAsync(message);
         }

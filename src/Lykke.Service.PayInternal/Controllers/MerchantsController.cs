@@ -7,7 +7,9 @@ using AutoMapper;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.Assets.Client.Models;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
@@ -38,14 +40,15 @@ namespace Lykke.Service.PayInternal.Controllers
         public MerchantsController(
             [NotNull] IMerchantService merchantService,
             [NotNull] IAssetSettingsService assetSettingsService,
-            [NotNull] ILog log,
+            [NotNull] ILogFactory logFactory,
             [NotNull] IMarkupService markupService,
-            [NotNull]IAssetsLocalCache assetsLocalCache,
+            [NotNull] IAssetsLocalCache assetsLocalCache,
             [NotNull] ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
-            _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
-            _log = log.CreateComponentScope(nameof(MerchantsController)) ?? throw new ArgumentNullException(nameof(log));
+            _assetSettingsService =
+                assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
+            _log = logFactory.CreateLog(this);
             _markupService = markupService ?? throw new ArgumentNullException(nameof(markupService));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
@@ -59,7 +62,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpGet]
         [Route("merchants")]
         [SwaggerOperation("MerchantsGetAll")]
-        [ProducesResponseType(typeof(List<MerchantModel>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(List<MerchantModel>), (int) HttpStatusCode.OK)]
         public async Task<IActionResult> GetAsync()
         {
             IReadOnlyList<IMerchant> merchants = await _merchantService.GetAsync();
@@ -68,7 +71,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
             return Ok(model);
         }
-        
+
         /// <summary>
         /// Returns merchant.
         /// </summary>
@@ -79,9 +82,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpGet]
         [Route("merchants/{merchantId}")]
         [SwaggerOperation("MerchantsGetById")]
-        [ProducesResponseType(typeof(MerchantModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(MerchantModel), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         public async Task<IActionResult> GetAsync(string merchantId)
         {
             try
@@ -93,20 +96,18 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<MerchantModel>(merchant));
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(GetAsync), new { ex.Variable, ex.Value }, ex);
+                _log.Error(e, new
+                {
+                    e.Variable,
+                    e.Value
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(GetAsync), ex);
-
-                throw;
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
-        
+
         /// <summary>
         /// Creates merchant.
         /// </summary>
@@ -130,27 +131,25 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<MerchantModel>(createdMerchant));
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(CreateAsync), new { ex.Variable, ex.Value }, ex);
+                _log.Error(e, new
+                {
+                    e.Variable,
+                    e.Value
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (Exception exception) when (exception is DuplicateMerchantNameException ||
                                               exception is DuplicateMerchantApiKeyException)
             {
-                _log.WriteWarning(nameof(CreateAsync), request, exception.Message);
+                _log.Warning(exception.Message, context: request);
 
                 return BadRequest(ErrorResponse.Create(exception.Message));
             }
-            catch (Exception exception)
-            {
-                _log.WriteError(nameof(CreateAsync), request, exception);
-
-                throw;
-            }
         }
- 
+
         /// <summary>
         /// Updates a merchant.
         /// </summary>
@@ -163,7 +162,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("MerchantsUpdate")]
         [ProducesResponseType((int) HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ValidateModel]
         public async Task<IActionResult> UpdateAsync([FromBody] UpdateMerchantRequest request)
         {
@@ -173,23 +172,21 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 await _merchantService.UpdateAsync(merchant);
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(UpdateAsync), new { ex.Variable, ex.Value }, ex);
+                _log.Error(e, new
+                {
+                    e.Variable,
+                    e.Value
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (MerchantNotFoundException exception)
             {
-                _log.WriteWarning(nameof(UpdateAsync), request, exception.Message);
+                _log.Warning(exception.Message, context: request);
 
                 return NotFound(ErrorResponse.Create(exception.Message));
-            }
-            catch (Exception exception)
-            {
-                _log.WriteError(nameof(UpdateAsync), request, exception);
-
-                throw;
             }
 
             return NoContent();
@@ -225,23 +222,21 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return NoContent();
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(SetPublicKeyAsync), new { ex.Variable, ex.Value }, ex);
+                _log.Error(e, new
+                {
+                    e.Variable,
+                    e.Value
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
-            catch (MerchantNotFoundException exception)
+            catch (MerchantNotFoundException e)
             {
-                _log.WriteWarning(nameof(SetPublicKeyAsync), new {MerchantId = merchantId}, exception.Message);
+                _log.Warning(e.Message, context: new {MerchantId = merchantId});
 
-                return NotFound(ErrorResponse.Create(exception.Message));
-            }
-            catch (Exception exception)
-            {
-                _log.WriteError(nameof(SetPublicKeyAsync), new {MerchantId = merchantId}, exception);
-
-                throw;
+                return NotFound(ErrorResponse.Create(e.Message));
             }
         }
 
@@ -270,17 +265,15 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return NoContent();
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(DeleteAsync), new { ex.Variable, ex.Value }, ex);
+                _log.Error(e, new
+                {
+                    e.Variable,
+                    e.Value
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(DeleteAsync), new { unescapedMerchantId = merchantId }, ex);
-
-                throw;
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
 
@@ -314,25 +307,15 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(new AvailableAssetsResponseModel {Assets = resolvedAssets});
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(ResolveAssetsByMerchant), new
+                _log.Error(e, new
                 {
-                    ex.Variable,
-                    ex.Value
-                }, ex);
+                    e.Variable,
+                    e.Value
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(ResolveAssetsByMerchant), new
-                {
-                    merchantId,
-                    type
-                }, ex);
-
-                throw;
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
 
@@ -364,35 +347,25 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<MarkupResponse>(markup));
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(ResolveMarkupByMerchant), new
+                _log.Error(e, new
                 {
-                    ex.Variable,
-                    ex.Value
-                }, ex);
+                    e.Variable,
+                    e.Value
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
-            catch (MarkupNotFoundException markupNotFoundEx)
+            catch (MarkupNotFoundException e)
             {
-                _log.WriteError(nameof(ResolveMarkupByMerchant), new
+                _log.Error(e, new
                 {
-                    markupNotFoundEx.MerchantId,
-                    markupNotFoundEx.AssetPairId
-                }, markupNotFoundEx);
+                    e.MerchantId,
+                    e.AssetPairId
+                });
 
-                return NotFound(ErrorResponse.Create(markupNotFoundEx.Message));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(ResolveMarkupByMerchant), new
-                {
-                    merchantId,
-                    assetPairId
-                }, ex);
-
-                throw;
+                return NotFound(ErrorResponse.Create(e.Message));
             }
         }
 
@@ -422,21 +395,15 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(new AvailableAssetsResponseModel {Assets = assets});
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(ResolveSettlementAssets), new
+                _log.Error(e, new
                 {
-                    ex.Variable,
-                    ex.Value
-                }, ex);
+                    e.Variable,
+                    e.Value
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(ResolveSettlementAssets), new {merchantId}, ex);
-
-                throw;
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
 
@@ -477,31 +444,21 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(new AvailableAssetsResponseModel {Assets = assets});
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(ResolvePaymentAssets), new
+                _log.Error(e, new
                 {
-                    ex.Variable,
-                    ex.Value
-                }, ex);
+                    e.Variable,
+                    e.Value
+                });
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
-            catch (AssetUnknownException assetEx)
+            catch (AssetUnknownException e)
             {
-                _log.WriteError(nameof(ResolvePaymentAssets), new {assetEx.Asset}, assetEx);
+                _log.Error(e, new {e.Asset});
 
-                return BadRequest(ErrorResponse.Create(assetEx.Message));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(ResolvePaymentAssets), new
-                {
-                    merchantId,
-                    settlementAssetId
-                }, ex);
-
-                throw;
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
     }

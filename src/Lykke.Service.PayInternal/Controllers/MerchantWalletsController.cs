@@ -6,6 +6,7 @@ using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
@@ -33,15 +34,14 @@ namespace Lykke.Service.PayInternal.Controllers
             [NotNull] IMerchantService merchantService,
             [NotNull] IAssetsLocalCache assetsLocalCache,
             [NotNull] ILykkeAssetsResolver lykkeAssetsResolver,
-            [NotNull] ILog log)
+            [NotNull] ILogFactory logFactory)
         {
             _merchantWalletService =
                 merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
             _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
-            _log = log.CreateComponentScope(nameof(MerchantWalletsController)) ??
-                   throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
         }
 
         /// <summary>
@@ -57,12 +57,14 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(MerchantWalletResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.BadGateway)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         [ValidateModel]
         public async Task<IActionResult> Create([FromBody] CreateMerchantWalletModel request)
         {
             if (!request.Network.HasValue || request.Network == BlockchainType.None)
-                return BadRequest(ErrorResponse.Create("Invalid network value, possible values are: Bitcoin, Ethereum, EthereumIata"));
+                return BadRequest(
+                    ErrorResponse.Create(
+                        "Invalid network value, possible values are: Bitcoin, Ethereum, EthereumIata"));
 
             try
             {
@@ -73,19 +75,19 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidOperationException e)
             {
-                _log.WriteError(nameof(Create), request, e);
+                _log.Error(e, request);
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (WalletAddressAllocationException e)
             {
-                _log.WriteError(nameof(Create), new {e.Blockchain}, e);
+                _log.Error(e, new {e.Blockchain});
 
                 return StatusCode((int) HttpStatusCode.BadGateway);
             }
             catch (UnrecognizedApiResponse e)
             {
-                _log.WriteError(nameof(Create), new {e.ResponseType}, e);
+                _log.Error(e, new {e.ResponseType});
 
                 return StatusCode((int) HttpStatusCode.BadGateway);
             }
@@ -112,17 +114,17 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MerchantWalletIdNotFoundException e)
             {
-                _log.WriteError(nameof(Delete), new {e.MerchantWalletId}, e);
+                _log.Error(e, new {e.MerchantWalletId});
 
                 return NotFound(ErrorResponse.Create("Merchant wallet not found"));
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(Delete), new
+                _log.Error(e, new
                 {
                     e.Variable,
                     e.Value
-                }, e);
+                });
 
                 return NotFound(ErrorResponse.Create("Merchant wallet not found"));
             }
@@ -144,7 +146,9 @@ namespace Lykke.Service.PayInternal.Controllers
         public async Task<IActionResult> SetDefaultAssets([FromBody] UpdateMerchantWalletDefaultAssetsModel request)
         {
             if (!request.Network.HasValue || request.Network == BlockchainType.None)
-                return BadRequest(ErrorResponse.Create("Invalid network value, possible values are: Bitcoin, Ethereum, EthereumIata"));
+                return BadRequest(
+                    ErrorResponse.Create(
+                        "Invalid network value, possible values are: Bitcoin, Ethereum, EthereumIata"));
 
             var assetsToValidate = new List<string>();
 
@@ -175,18 +179,18 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException e)
             {
-                _log.WriteError(nameof(SetDefaultAssets), new {e.Asset}, e);
+                _log.Error(e, new {e.Asset});
 
                 return NotFound(ErrorResponse.Create($"Asset not found [{e.Asset}]"));
             }
             catch (MerchantWalletNotFoundException e)
             {
-                _log.WriteError(nameof(SetDefaultAssets), new
+                _log.Error(e, new
                 {
                     e.MerchantId,
                     e.Network,
                     e.WalletAddress
-                }, e);
+                });
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
@@ -220,11 +224,11 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(GetByMerchant), new
+                _log.Error(e, new
                 {
                     e.Variable,
                     e.Value
-                }, e);
+                });
 
                 return NotFound(ErrorResponse.Create("Merchant not found"));
             }
@@ -275,45 +279,45 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(GetDefault), new
+                _log.Error(e, new
                 {
                     e.Variable,
                     e.Value
-                }, e);
+                });
 
                 return NotFound(ErrorResponse.Create("Merchant not found"));
             }
             catch (AssetUnknownException e)
             {
-                _log.WriteError(nameof(GetDefault), new { e.Asset }, e);
+                _log.Error(e, new {e.Asset});
 
                 return NotFound(ErrorResponse.Create($"Asset not found [{e.Asset}]"));
             }
             catch (AssetNetworkNotDefinedException e)
             {
-                _log.WriteError(nameof(GetDefault), new {e.AssetId}, e);
+                _log.Error(e, new {e.AssetId});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (MultipleDefaultMerchantWalletsException e)
             {
-                _log.WriteError(nameof(GetDefault), new
+                _log.Error(e, new
                 {
                     e.MerchantId,
                     e.AssetId,
                     e.PaymentDirection
-                }, e);
+                });
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (DefaultMerchantWalletNotFoundException e)
             {
-                _log.WriteError(nameof(GetDefault), new
+                _log.Error(e, new
                 {
                     e.MerchantId,
                     e.AssetId,
                     e.PaymentDirection
-                }, e);
+                });
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
@@ -333,7 +337,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(IEnumerable<MerchantWalletBalanceResponse>), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotImplemented)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
         public async Task<IActionResult> GetBalances(string merchantId)
         {
             merchantId = Uri.UnescapeDataString(merchantId);
@@ -352,27 +356,27 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (WalletAddressBalanceException e)
             {
-                _log.WriteError(nameof(GetBalances), new
+                _log.Error(e, new
                 {
                     e.Blockchain,
                     e.Address
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(GetBalances), new
+                _log.Error(e, new
                 {
                     e.Variable,
                     e.Value
-                }, e);
+                });
 
                 return NotFound(ErrorResponse.Create("Merchant not found"));
             }
             catch (InvalidOperationException e)
             {
-                _log.WriteError(nameof(GetBalances), new {merchantId}, e);
+                _log.Error(e, new {merchantId});
 
                 return StatusCode((int) HttpStatusCode.NotImplemented, ErrorResponse.Create(e.Message));
             }

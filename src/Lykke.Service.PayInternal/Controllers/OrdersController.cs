@@ -1,10 +1,10 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
-using Common;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Common.Log;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
@@ -27,11 +27,11 @@ namespace Lykke.Service.PayInternal.Controllers
         public OrdersController(
             IPaymentRequestService paymentRequestService,
             IOrderService orderService,
-            ILog log)
+            ILogFactory logFactory)
         {
             _paymentRequestService = paymentRequestService;
             _orderService = orderService;
-            _log = log.CreateComponentScope(nameof(OrdersController));
+            _log = logFactory.CreateLog(this);
         }
 
         /// <summary>
@@ -48,24 +48,14 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetAsync(string paymentRequestId, string orderId)
         {
-            try
-            {
-                IOrder order = await _orderService.GetAsync(paymentRequestId, orderId);
+            IOrder order = await _orderService.GetAsync(paymentRequestId, orderId);
 
-                if (order == null)
-                    return NotFound();
+            if (order == null)
+                return NotFound();
 
-                var model = Mapper.Map<OrderModel>(order);
+            var model = Mapper.Map<OrderModel>(order);
 
-                return Ok(model);
-            }
-            catch (Exception exception)
-            {
-                _log.WriteError(nameof(GetAsync),
-                    new {PaymentRequestId = paymentRequestId}.ToJson(), exception);
-
-                throw;
-            }
+            return Ok(model);
         }
 
         /// <summary>
@@ -91,33 +81,27 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<OrderModel>(order));
             }
-            catch (AssetUnknownException assetEx)
+            catch (AssetUnknownException e)
             {
-                _log.WriteErrorAsync(nameof(ChechoutAsync),
-                    new {assetEx.Asset}.ToJson(), assetEx);
+                _log.Error(e, new {e.Asset});
 
-                return BadRequest(ErrorResponse.Create(assetEx.Message));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
-            catch (AssetNetworkNotDefinedException networkEx)
+            catch (AssetNetworkNotDefinedException e)
             {
-                _log.WriteErrorAsync(nameof(ChechoutAsync),
-                    new {networkEx.AssetId}.ToJson(), networkEx);
+                _log.Error(e, new {e.AssetId});
 
-                return BadRequest(ErrorResponse.Create(networkEx.Message));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
-            catch (MarkupNotFoundException markupEx)
+            catch (MarkupNotFoundException e)
             {
-                _log.WriteErrorAsync(nameof(ChechoutAsync),
-                    new { markupEx.MerchantId, markupEx.AssetPairId }.ToJson(), markupEx);
+                _log.Error(e, new
+                {
+                    e.MerchantId,
+                    e.AssetPairId
+                });
 
-                return BadRequest(ErrorResponse.Create(markupEx.Message));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteErrorAsync(nameof(ChechoutAsync),
-                    model.ToJson(), ex);
-
-                throw;
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
 
@@ -147,35 +131,35 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MerchantNotFoundException e)
             {
-                _log.WriteError(nameof(GetCalculatedAmountInfoAsync), new {e.MerchantId}, e);
+                _log.Error(e, new {e.MerchantId});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (AssetUnknownException e)
             {
-                _log.WriteError(nameof(GetCalculatedAmountInfoAsync), new {e.Asset}, e);
+                _log.Error(e, new {e.Asset});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (MarkupNotFoundException e)
             {
-                _log.WriteError(nameof(GetCalculatedAmountInfoAsync), new
+                _log.Error(e, new
                 {
                     e.MerchantId,
                     e.AssetPairId
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (MarketPriceZeroException e)
             {
-                _log.WriteError(nameof(GetCalculatedAmountInfoAsync), new {e.PriceType}, e);
+                _log.Error(e, new {e.PriceType});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (UnexpectedAssetPairPriceMethodException e)
             {
-                _log.WriteError(nameof(GetCalculatedAmountInfoAsync), new {e.PriceMethod}, e);
+                _log.Error(e, new {e.PriceMethod});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }

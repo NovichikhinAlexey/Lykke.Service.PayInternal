@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
-using Common;
 using Common.Log;
+using JetBrains.Annotations;
+using Lykke.Common.Log;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -12,22 +14,26 @@ namespace Lykke.Service.PayInternal.Mapping
         private readonly IWalletManager _walletManager;
         private readonly ILog _log;
 
-        public PaymentRequestBcnWalletAddressValueResolver(IWalletManager walletManager, ILog log)
+        public PaymentRequestBcnWalletAddressValueResolver(
+            [NotNull] IWalletManager walletManager,
+            [NotNull] ILogFactory logFactory)
         {
             _walletManager = walletManager;
-            _log = log;
+            _log = logFactory.CreateLog(this);
         }
 
         public string Resolve(IPaymentRequest source, object destination, string destMember, ResolutionContext context)
         {
             try
             {
-                return _walletManager.ResolveBlockchainAddressAsync(source.WalletAddress, source.PaymentAssetId).GetAwaiter().GetResult();
+                return _walletManager.ResolveBlockchainAddressAsync(
+                        source.WalletAddress,
+                        source.PaymentAssetId)
+                    .GetAwaiter().GetResult();
             }
-            catch (WalletNotFoundException ex)
+            catch (WalletNotFoundException e)
             {
-                _log.WriteErrorAsync(nameof(PaymentRequestBcnWalletAddressValueResolver), nameof(Resolve),
-                    new {ex.WalletAddress}.ToJson(), ex);
+                _log.Error(e, new {e.WalletAddress});
 
                 throw;
             }

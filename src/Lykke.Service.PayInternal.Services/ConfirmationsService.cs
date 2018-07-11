@@ -25,11 +25,11 @@ namespace Lykke.Service.PayInternal.Services
         public ConfirmationsService(
             [NotNull] InvoiceConfirmationPublisher invoiceConfirmationPublisher,
             [NotNull] RetryPolicySettings retryPolicySettings, 
-            [NotNull] ILog log)
+            [NotNull] ILogFactory logFactory)
         {
             _invoiceConfirmationPublisher = invoiceConfirmationPublisher ?? throw new ArgumentNullException(nameof(invoiceConfirmationPublisher));
             _retryPolicySettings = retryPolicySettings ?? throw new ArgumentNullException(nameof(retryPolicySettings));
-            _log = log.CreateComponentScope(nameof(ConfirmationsService)) ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
             _retryPolicy = Policy
                 .Handle<Exception>()
                 .WaitAndRetryAsync(

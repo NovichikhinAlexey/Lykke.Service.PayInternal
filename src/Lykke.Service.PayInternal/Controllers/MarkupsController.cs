@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.Assets.Client.Models;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -28,12 +30,12 @@ namespace Lykke.Service.PayInternal.Controllers
 
         public MarkupsController(
             [NotNull] IMarkupService markupService,
-            [NotNull] ILog log,
+            [NotNull] ILogFactory logFactory,
             [NotNull] IMerchantService merchantService,
             [NotNull] IAssetsLocalCache assetsLocalCache)
         {
             _markupService = markupService ?? throw new ArgumentNullException(nameof(markupService));
-            _log = log.CreateComponentScope(nameof(MarkupsController)) ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
             _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
         }
@@ -48,18 +50,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(IEnumerable<MarkupResponse>), (int) HttpStatusCode.OK)]
         public async Task<IActionResult> GetDefaults()
         {
-            try
-            {
-                IReadOnlyList<IMarkup> defaults = await _markupService.GetDefaultsAsync();
+            IReadOnlyList<IMarkup> defaults = await _markupService.GetDefaultsAsync();
 
-                return Ok(Mapper.Map<IEnumerable<MarkupResponse>>(defaults));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(GetDefaults), ex);
-
-                throw;
-            }
+            return Ok(Mapper.Map<IEnumerable<MarkupResponse>>(defaults));
         }
 
         /// <summary>
@@ -82,17 +75,15 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<MarkupResponse>(markup));
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(GetDefault), new {ex.Variable, ex.Value}, ex);
+                _log.Error(e, new
+                {
+                    e.Variable,
+                    e.Value
+                });
 
                 return NotFound(ErrorResponse.Create("Asset pair not found"));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(GetDefault), ex);
-
-                throw;
             }
         }
 
@@ -125,17 +116,15 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok();
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(SetDefault), new { ex.Variable, ex.Value }, ex);
+                _log.Error(e, new
+                {
+                    e.Variable,
+                    e.Value
+                });
 
                 return NotFound(ErrorResponse.Create("Asset pair not found"));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(SetDefault), ex);
-
-                throw;
             }
         }
 
@@ -164,17 +153,15 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<IEnumerable<MarkupResponse>>(markups));
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(GetAllForMerchant), new { ex.Variable, ex.Value }, ex);
+                _log.Error(e, new
+                {
+                    e.Variable,
+                    e.Value
+                });
 
                 return NotFound(ErrorResponse.Create("Merchant not found"));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(GetAllForMerchant), ex);
-
-                throw;
             }
         }
 
@@ -207,17 +194,15 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<MarkupResponse>(markup));
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(GetForMerchant), new { ex.Variable, ex.Value }, ex);
+                _log.Error(e, new
+                {
+                    e.Variable,
+                    e.Value
+                });
 
                 return NotFound(ErrorResponse.Create("Merchant or asset pair not found"));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(GetForMerchant), ex);
-
-                throw;
             }
         }
 
@@ -264,17 +249,15 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok();
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(SetForMerchant), new { ex.Variable, ex.Value }, ex);
+                _log.Error(e, new
+                {
+                    e.Variable,
+                    e.Value
+                });
 
                 return NotFound(ErrorResponse.Create("Merchant or asset pair not found"));
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(SetForMerchant), ex);
-
-                throw;
             }
         }
     }

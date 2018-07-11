@@ -5,6 +5,8 @@ using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Common.Log;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -27,13 +29,12 @@ namespace Lykke.Service.PayInternal.Controllers
             [NotNull] IAssetRatesService assetRatesService,
             [NotNull] IAssetsLocalCache assetsLocalCache,
             [NotNull] ILykkeAssetsResolver lykkeAssetsResolver,
-            [NotNull] ILog log)
+            [NotNull] ILogFactory logFactory)
         {
             _assetRatesService = assetRatesService ?? throw new ArgumentNullException(nameof(assetRatesService));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
-            _log = log.CreateComponentScope(nameof(AssetRatesController)) ??
-                   throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
         }
 
         /// <summary>
@@ -77,17 +78,17 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException e)
             {
-                _log.WriteError(nameof(AddRate), new {e.Asset}, e);
+                _log.Error(e, new {e.Asset});
 
                 return NotFound(ErrorResponse.Create($"Asset not found [{e.Asset}]"));
             }
             catch (AssetPairRateStorageNotSupportedException e)
             {
-                _log.WriteError(nameof(AddRate), new
+                _log.Error(e, new
                 {
                     e.BaseAssetId,
                     e.QuotingAssetId
-                }, e);
+                });
 
                 return StatusCode((int) HttpStatusCode.NotImplemented, ErrorResponse.Create(e.Message));
             }
@@ -135,28 +136,28 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException e)
             {
-                _log.WriteError(nameof(GetCurrentRate), new {e.Asset}, e);
+                _log.Error(e, new {e.Asset});
 
                 return NotFound(ErrorResponse.Create($"Asset not found [{e.Asset}]"));
             }
             catch (AssetPairUnknownException e)
             {
-                _log.WriteError(nameof(GetCurrentRate), new
+                _log.Error(e, new
                 {
                     e.BaseAssetId,
                     e.QuotingAssetId
-                }, e);
+                });
 
                 return NotFound(
                     ErrorResponse.Create($"Asset pair not found for [{e.BaseAssetId}, {e.QuotingAssetId}]"));
             }
             catch (UnrecognizedApiResponse e)
             {
-                _log.WriteError(nameof(GetCurrentRate), new
+                _log.Error(e, new
                 {
                     baseAssetId,
                     quotingAssetId
-                }, e);
+                });
 
                 return StatusCode((int) HttpStatusCode.BadGateway, ErrorResponse.Create(e.Message));
             }

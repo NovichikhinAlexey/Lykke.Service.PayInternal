@@ -7,6 +7,8 @@ using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Common.Log;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -27,13 +29,12 @@ namespace Lykke.Service.PayInternal.Controllers
         public MerchantGroupsController(
             [NotNull] IMerchantGroupService merchantGroupService,
             [NotNull] IMerchantService merchantService,
-            [NotNull] ILog log)
+            [NotNull] ILogFactory logFactory)
         {
             _merchantGroupService =
                 merchantGroupService ?? throw new ArgumentNullException(nameof(merchantGroupService));
             _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
-            _log = log.CreateComponentScope(nameof(MerchantGroupsController)) ??
-                   throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
         }
 
         /// <summary>
@@ -64,11 +65,11 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<MerchantGroupResponse>(group));
             }
-            catch (MerchantGroupAlreadyExistsException ex)
+            catch (MerchantGroupAlreadyExistsException e)
             {
-                _log.WriteError(nameof(Add), request, ex);
+                _log.Error(e, request);
 
-                return BadRequest(ErrorResponse.Create(ex.Message));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
 
@@ -91,13 +92,13 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<MerchantGroupResponse>(group));
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(Get), new
+                _log.Error(e, new
                 {
-                    ex.Variable,
-                    ex.Value
-                }, ex);
+                    e.Variable,
+                    e.Value
+                });
 
                 return NotFound(ErrorResponse.Create("Group not found"));
             }
@@ -128,11 +129,11 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return NoContent();
             }
-            catch (MerchantGroupNotFoundException ex)
+            catch (MerchantGroupNotFoundException e)
             {
-                _log.WriteError(nameof(Update), new {ex.MerchantGroupId}, ex);
+                _log.Error(e, new {e.MerchantGroupId});
 
-                return NotFound(ErrorResponse.Create(ex.Message));
+                return NotFound(ErrorResponse.Create(e.Message));
             }
         }
 
@@ -155,19 +156,19 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return NoContent();
             }
-            catch (MerchantGroupNotFoundException ex)
+            catch (MerchantGroupNotFoundException e)
             {
-                _log.WriteError(nameof(Delete), new {ex.MerchantGroupId}, ex);
+                _log.Error(e, new {e.MerchantGroupId});
 
-                return NotFound(ErrorResponse.Create(ex.Message));
+                return NotFound(ErrorResponse.Create(e.Message));
             }
-            catch (InvalidRowKeyValueException ex)
+            catch (InvalidRowKeyValueException e)
             {
-                _log.WriteError(nameof(Delete), new
+                _log.Error(e, new
                 {
-                    ex.Variable,
-                    ex.Value
-                }, ex);
+                    e.Variable,
+                    e.Value
+                });
 
                 return NotFound(ErrorResponse.Create("Merchant group not found"));
             }
@@ -190,7 +191,8 @@ namespace Lykke.Service.PayInternal.Controllers
                 return BadRequest(ErrorResponse.Create("MerchantGroupUse can't be empty"));
 
             IReadOnlyList<string> merchants =
-                await _merchantGroupService.GetMerchantsByUsageAsync(request.MerchantId, request.MerchantGroupUse.Value);
+                await _merchantGroupService.GetMerchantsByUsageAsync(request.MerchantId,
+                    request.MerchantGroupUse.Value);
 
             return Ok(new MerchantsByUsageResponse {Merchants = merchants});
         }

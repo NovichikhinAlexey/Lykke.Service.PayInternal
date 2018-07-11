@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
@@ -25,11 +25,11 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IAssetsLocalCache assetsLocalCache,
             [NotNull] LpMarkupSettings lpMarkupSettings,
             [NotNull] IAssetRatesService assetRatesService,
-            [NotNull] ILog log)
+            [NotNull] ILogFactory logFactory)
         {
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _lpMarkupSettings = lpMarkupSettings ?? throw new ArgumentNullException(nameof(lpMarkupSettings));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
             _assetRatesService = assetRatesService ?? throw new ArgumentNullException(nameof(assetRatesService));
         }
 
@@ -38,7 +38,7 @@ namespace Lykke.Service.PayInternal.Services
         {
             var rate = await GetRateAsync(baseAssetId, quotingAssetId, requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
 
-            await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetAmountAsync), new
+            _log.Info("Rate calculation", new
             {
                 baseAssetId,
                 quotingAssetId,
@@ -46,7 +46,7 @@ namespace Lykke.Service.PayInternal.Services
                 requestMarkup,
                 merchantMarkup,
                 rate
-            }.ToJson(), "Rate calculation");
+            });
 
             decimal result = (amount + (decimal) requestMarkup.FixedFee + merchantMarkup.FixedFee) / rate;
 
@@ -70,16 +70,14 @@ namespace Lykke.Service.PayInternal.Services
 
             if (!string.IsNullOrEmpty(merchantMarkup.PriceAssetPairId))
             {
-                await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetRateAsync),
-                    new {merchantMarkup.PriceAssetPairId}.ToJson(), "Price asset pair will be used");
+                _log.Info("Price asset pair will be used", new {merchantMarkup.PriceAssetPairId});
 
                 priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(merchantMarkup.PriceAssetPairId);
 
                 IAssetPairRate assetPairRate =
                     await _assetRatesService.GetCurrentRate(priceAssetPair.BaseAssetId, priceAssetPair.QuotingAssetId);
 
-                await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetRateAsync),
-                    new {PriceMethod = merchantMarkup.PriceMethod.ToString()}.ToJson(), "Price method");
+                _log.Info("Price method", new {PriceMethod = merchantMarkup.PriceMethod.ToString()});
 
                 switch (merchantMarkup.PriceMethod)
                 {
@@ -118,8 +116,11 @@ namespace Lykke.Service.PayInternal.Services
                 }
             }
 
-            await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetRateAsync),
-                new {askPrice, bidPrice}.ToJson(), "Market rate that will be used for calculation");
+            _log.Info("Market rate that will be used for calculation", new
+            {
+                askPrice,
+                bidPrice
+            });
 
             Asset baseAsset = await _assetsLocalCache.GetAssetByIdAsync(baseAssetId);
 
@@ -159,8 +160,11 @@ namespace Lykke.Service.PayInternal.Services
             PriceCalculationMethod priceValueType,
             IMarkup merchantMarkup)
         {
-            _log.WriteInfoAsync(nameof(CalculationService), nameof(CalculatePrice), new {askPrice, bidPrice}.ToJson(),
-                "Rate calculation").GetAwaiter().GetResult();
+            _log.Info("Rate calculation", new
+            {
+                askPrice,
+                bidPrice
+            });
 
             double originalPrice =
                 GetOriginalPriceByMethod(bidPrice, askPrice, priceValueType);
