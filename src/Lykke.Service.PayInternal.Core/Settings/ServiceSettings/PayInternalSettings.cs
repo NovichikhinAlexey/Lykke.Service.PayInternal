@@ -118,5 +118,6 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class RetryPolicySettings
     {
         public int DefaultAttempts { get; set; }
+        public int SettlementAttempts { get; set; }
     }
 }
