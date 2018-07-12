@@ -17,19 +17,22 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IList<BlockchainWalletAllocationPolicy> _walletAllocationSettings;
         private readonly IReadOnlyList<AssetPairSetting> _assetPairLocalStorageSettings;
         private readonly CacheSettings _cacheSettings;
+        private readonly RetryPolicySettings _retryPolicySettings;
 
         public AutofacModule(
             [NotNull] ExpirationPeriodsSettings expirationPeriods,
             int transactionConfirmationCount,
             [NotNull] IList<BlockchainWalletAllocationPolicy> walletAllocationSettings, 
             [NotNull] IReadOnlyList<AssetPairSetting> assetPairLocalStorageSettings, 
-            [NotNull] CacheSettings cacheSettings)
+            [NotNull] CacheSettings cacheSettings, 
+            [NotNull] RetryPolicySettings retryPolicySettings)
         {
             _expirationPeriods = expirationPeriods ?? throw new ArgumentNullException(nameof(expirationPeriods));
             _transactionConfirmationCount = transactionConfirmationCount;
             _walletAllocationSettings = walletAllocationSettings ?? throw new ArgumentNullException(nameof(walletAllocationSettings));
             _assetPairLocalStorageSettings = assetPairLocalStorageSettings ?? throw new ArgumentNullException(nameof(assetPairLocalStorageSettings));
             _cacheSettings = cacheSettings ?? throw new ArgumentNullException(nameof(cacheSettings));
+            _retryPolicySettings = retryPolicySettings ?? throw new ArgumentNullException(nameof(retryPolicySettings));
         }
         
         protected override void Load(ContainerBuilder builder)
@@ -99,6 +102,7 @@ namespace Lykke.Service.PayInternal.Services
             builder.RegisterType<PaymentRequestService>()
                 .As<IPaymentRequestService>()
                 .WithParameter(TypedParameter.From(_expirationPeriods))
+                .WithParameter(TypedParameter.From(_retryPolicySettings))
                 .WithParameter(new ResolvedParameter(
                     (pi, ctx) => pi.ParameterType == typeof(IDistributedLocksService) &&
                                  pi.Name == "paymentLocksService",
