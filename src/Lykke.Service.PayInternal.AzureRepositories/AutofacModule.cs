@@ -1,7 +1,6 @@
 ﻿using Autofac;
 using AzureStorage.Tables;
 using AzureStorage.Tables.Templates.Index;
-using Common.Log;
 using Lykke.Service.PayInternal.AzureRepositories.Asset;
 using Lykke.Service.PayInternal.AzureRepositories.Markup;
 using Lykke.Service.PayInternal.AzureRepositories.Merchant;
@@ -26,6 +25,7 @@ using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 using Lykke.Service.PayInternal.Core.Domain.File;
 using Lykke.Service.PayInternal.AzureRepositories.File;
 using AzureStorage.Blob;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.AzureRepositories.AssetPair;
 using Lykke.Service.PayInternal.AzureRepositories.MerchantWallet;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
@@ -39,20 +39,17 @@ namespace Lykke.Service.PayInternal.AzureRepositories
         private readonly IReloadingManager<string> _merchantsConnectionString;
         private readonly IReloadingManager<string> _paymentRequestsConnectionString;
         private readonly IReloadingManager<string> _transfersConnectionString;
-        private readonly ILog _log;
 
         public AutofacModule(
             IReloadingManager<string> ordersConnectionString,
             IReloadingManager<string> merchantsConnectionString,
             IReloadingManager<string> paymentRequestsConnectionString,
-            IReloadingManager<string> transfersConnectionString,
-            ILog log)
+            IReloadingManager<string> transfersConnectionString)
         {
             _ordersConnectionString = ordersConnectionString;
             _merchantsConnectionString = merchantsConnectionString;
             _paymentRequestsConnectionString = paymentRequestsConnectionString;
             _transfersConnectionString = transfersConnectionString;
-            _log = log;
         }
         
         protected override void Load(ContainerBuilder builder)
@@ -73,78 +70,129 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             const string merchantWalletsTableName = "MerchantWallets";
             const string assetPairRatesTableName = "AssetPairRates";
 
-            builder.RegisterInstance<IMerchantRepository>(new MerchantRepository(
-                AzureTableStorage<MerchantEntity>.Create(_merchantsConnectionString,
-                    merchantsTableName, _log)));
+            builder.Register(c =>
+                    new MerchantRepository(AzureTableStorage<MerchantEntity>.Create(_merchantsConnectionString,
+                        merchantsTableName, c.Resolve<ILogFactory>())))
+                .As<IMerchantRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<IMerchantGroupRepository>(new MerchantGroupRepository(
-                AzureTableStorage<MerchantGroupEntity>.Create(_merchantsConnectionString, merchantGroupsTableName, _log),
-                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantGroupsTableName, _log)));
+            builder.Register(c =>
+                    new MerchantGroupRepository(
+                        AzureTableStorage<MerchantGroupEntity>.Create(_merchantsConnectionString,
+                            merchantGroupsTableName, c.Resolve<ILogFactory>()),
+                        AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantGroupsTableName,
+                            c.Resolve<ILogFactory>())))
+                .As<IMerchantGroupRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<ISupervisorMembershipRepository>(new SupervisorMembershipRepository(
-                AzureTableStorage<SupervisorMembershipEntity>.Create(_merchantsConnectionString, supervisorTableName, _log),
-                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, supervisorTableName, _log)));
+            builder.Register(c => new SupervisorMembershipRepository(
+                    AzureTableStorage<SupervisorMembershipEntity>.Create(_merchantsConnectionString,
+                        supervisorTableName, c.Resolve<ILogFactory>()),
+                    AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, supervisorTableName,
+                        c.Resolve<ILogFactory>())))
+                .As<ISupervisorMembershipRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<IPaymentRequestRepository>(new PaymentRequestRepository(
-                AzureTableStorage<PaymentRequestEntity>.Create(_paymentRequestsConnectionString,
-                    paymentRequestsTableName, _log),
-                AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
-                    paymentRequestsTableName, _log),
-                AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString, 
-                    paymentRequestsTableName, _log)));
+            builder.Register(c => new PaymentRequestRepository(
+                    AzureTableStorage<PaymentRequestEntity>.Create(_paymentRequestsConnectionString,
+                        paymentRequestsTableName, c.Resolve<ILogFactory>()),
+                    AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
+                        paymentRequestsTableName, c.Resolve<ILogFactory>()),
+                    AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
+                        paymentRequestsTableName, c.Resolve<ILogFactory>())))
+                .As<IPaymentRequestRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<IVirtualWalletRepository>(new VirtualWalletRepository(
-                AzureTableStorage<VirtualWalletEntity>.Create(_paymentRequestsConnectionString,
-                    virtualWalletsTableName, _log),
-                AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
-                    virtualWalletsTableName, _log),
-                AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
-                    virtualWalletsTableName, _log)));
+            builder.Register(c => new VirtualWalletRepository(
+                    AzureTableStorage<VirtualWalletEntity>.Create(_paymentRequestsConnectionString,
+                        virtualWalletsTableName, c.Resolve<ILogFactory>()),
+                    AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
+                        virtualWalletsTableName, c.Resolve<ILogFactory>()),
+                    AzureTableStorage<AzureIndex>.Create(_paymentRequestsConnectionString,
+                        virtualWalletsTableName, c.Resolve<ILogFactory>())))
+                .As<IVirtualWalletRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<IBcnWalletUsageRepository>(new BcnWalletUsageRepository(
-                AzureTableStorage<BcnWalletUsageEntity>.Create(_paymentRequestsConnectionString,
-                    bcnWalletsUsageTableName, _log)));
-            
-            builder.RegisterInstance<IOrderRepository>(new OrdersRepository(
-                AzureTableStorage<OrderEntity>.Create(_ordersConnectionString, ordersTableName, _log),
-                AzureTableStorage<AzureIndex>.Create(_ordersConnectionString, ordersTableName, _log)));
+            builder.Register(c =>
+                    new BcnWalletUsageRepository(AzureTableStorage<BcnWalletUsageEntity>.Create(
+                        _paymentRequestsConnectionString, bcnWalletsUsageTableName, c.Resolve<ILogFactory>())))
+                .As<IBcnWalletUsageRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<IAssetGeneralSettingsRepository>(new AssetGeneralSettingsRepository(
-                AzureTableStorage<AssetGeneralSettingsEntity>.Create(_paymentRequestsConnectionString,
-                    assetsAvailabilityTableName, _log)));
+            builder.Register(c =>
+                    new OrdersRepository(
+                        AzureTableStorage<OrderEntity>.Create(_ordersConnectionString, ordersTableName,
+                            c.Resolve<ILogFactory>()),
+                        AzureTableStorage<AzureIndex>.Create(_ordersConnectionString, ordersTableName,
+                            c.Resolve<ILogFactory>())))
+                .As<IOrderRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<IAssetMerchantSettingsRepository>(new AssetMerchantSettingsRepository(
-                AzureTableStorage<AssetMerchantSettingsEntity>.Create(_paymentRequestsConnectionString,
-                    assetsAvailabilityByMerchantTableName, _log)));
+            builder.Register(c =>
+                    new AssetGeneralSettingsRepository(AzureTableStorage<AssetGeneralSettingsEntity>.Create(
+                        _paymentRequestsConnectionString, assetsAvailabilityTableName, c.Resolve<ILogFactory>())))
+                .As<IAssetGeneralSettingsRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<ITransferRepository>(new TransferRepository(
-                AzureTableStorage<TransferEntity>.Create(_transfersConnectionString, transfersTableName, _log),
-                AzureTableStorage<AzureIndex>.Create(_transfersConnectionString, transfersTableName, _log)));
+            builder.Register(c =>
+                    new AssetMerchantSettingsRepository(AzureTableStorage<AssetMerchantSettingsEntity>.Create(
+                        _paymentRequestsConnectionString, assetsAvailabilityByMerchantTableName,
+                        c.Resolve<ILogFactory>())))
+                .As<IAssetMerchantSettingsRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<IPaymentRequestTransactionRepository>(new PaymentRequestTransactionRepository(
-                AzureTableStorage<PaymentRequestTransactionEntity>.Create(_merchantsConnectionString, merchantTransactionsTableName, _log),
-                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantTransactionsTableName, _log),
-                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantTransactionsTableName, _log)));
+            builder.Register(c => new TransferRepository(
+                    AzureTableStorage<TransferEntity>.Create(_transfersConnectionString, transfersTableName,
+                        c.Resolve<ILogFactory>()),
+                    AzureTableStorage<AzureIndex>.Create(_transfersConnectionString, transfersTableName,
+                        c.Resolve<ILogFactory>())))
+                .As<ITransferRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<IMarkupRepository>(new MarkupRepository(
-                AzureTableStorage<MarkupEntity>.Create(_merchantsConnectionString, markupsTableName, _log),
-                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, markupsTableName, _log)));
+            builder.Register(c => new PaymentRequestTransactionRepository(
+                    AzureTableStorage<PaymentRequestTransactionEntity>.Create(_merchantsConnectionString,
+                        merchantTransactionsTableName, c.Resolve<ILogFactory>()),
+                    AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantTransactionsTableName,
+                        c.Resolve<ILogFactory>()),
+                    AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantTransactionsTableName,
+                        c.Resolve<ILogFactory>())))
+                .As<IPaymentRequestTransactionRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<IFileRepository>(
-                new FileRepository(AzureBlobStorage.Create(_merchantsConnectionString)));
+            builder.Register(c => new MarkupRepository(
+                    AzureTableStorage<MarkupEntity>.Create(_merchantsConnectionString, markupsTableName,
+                        c.Resolve<ILogFactory>()),
+                    AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, markupsTableName,
+                        c.Resolve<ILogFactory>())))
+                .As<IMarkupRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<IFileInfoRepository>(
-                new FileInfoRepository(AzureTableStorage<FileInfoEntity>.Create(_merchantsConnectionString,
-                    merchantFilesTableName, _log)));
+            builder.Register(c =>
+                    new FileRepository(AzureBlobStorage.Create(_merchantsConnectionString)))
+                .As<IFileRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<IMerchantWalletRespository>(new MerchantWalletRepository(
-                AzureTableStorage<MerchantWalletEntity>.Create(_merchantsConnectionString, merchantWalletsTableName, _log),
-                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantWalletsTableName, _log),
-                AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantWalletsTableName, _log)));
+            builder.Register(c =>
+                    new FileInfoRepository(AzureTableStorage<FileInfoEntity>.Create(_merchantsConnectionString,
+                        merchantFilesTableName, c.Resolve<ILogFactory>())))
+                .As<IFileInfoRepository>()
+                .SingleInstance();
 
-            builder.RegisterInstance<IAssetPairRateRepository>(new AssetPairRateRepository(
-                AzureTableStorage<AssetPairRateEntity>.Create(_merchantsConnectionString, assetPairRatesTableName,
-                    _log)));
+            builder.Register(c => new MerchantWalletRepository(
+                    AzureTableStorage<MerchantWalletEntity>.Create(_merchantsConnectionString, merchantWalletsTableName,
+                        c.Resolve<ILogFactory>()),
+                    AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantWalletsTableName,
+                        c.Resolve<ILogFactory>()),
+                    AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantWalletsTableName,
+                        c.Resolve<ILogFactory>())))
+                .As<IMerchantWalletRespository>()
+                .SingleInstance();
+
+            builder.Register(c => new AssetPairRateRepository(
+                    AzureTableStorage<AssetPairRateEntity>.Create(_merchantsConnectionString, assetPairRatesTableName,
+                        c.Resolve<ILogFactory>())))
+                .As<IAssetPairRateRepository>()
+                .SingleInstance();
         }
     }
 }

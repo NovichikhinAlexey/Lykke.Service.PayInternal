@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Common;
-using Common.Log;
 using Lykke.Bitcoin.Api.Client;
 using Lykke.Service.Assets.Client;
-using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.PayCallback.Client;
@@ -22,7 +18,6 @@ using Lykke.Service.PayInternal.Services;
 using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
-using Polly;
 using QBitNinja.Client;
 using DbSettings = Lykke.Service.PayInternal.Core.Settings.ServiceSettings.DbSettings;
 
@@ -32,26 +27,20 @@ namespace Lykke.Service.PayInternal.Modules
     {
         private readonly IReloadingManager<AppSettings> _settings;
         private readonly IReloadingManager<DbSettings> _dbSettings;
-        private readonly ILog _log;
         // NOTE: you can remove it if you don't need to use IServiceCollection extensions to register service specific dependencies
         // ReSharper disable once CollectionNeverUpdated.Local
         private readonly IServiceCollection _services;
 
-        public ServiceModule(IReloadingManager<AppSettings> settings, ILog log)
+        public ServiceModule(IReloadingManager<AppSettings> settings)
         {
             _settings = settings;
             _dbSettings = settings.Nested(x => x.PayInternalService.Db);
-            _log = log;
 
             _services = new ServiceCollection();
         }
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterInstance(_log)
-                .As<ILog>()
-                .SingleInstance();
-
             RegisterServiceClients(builder);
 
             RegisterAppServices(builder);
@@ -184,56 +173,20 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterInstance(new QBitNinjaClient(_settings.CurrentValue.NinjaServiceClient.ServiceUrl))
                 .AsSelf();
 
-            builder.RegisterHistoryOperationPublisher(_settings.CurrentValue.PayHistoryServicePublisher, _log);
+            builder.RegisterHistoryOperationPublisher(_settings.CurrentValue.PayHistoryServicePublisher);
 
-            builder.RegisterPayHistoryClient(_settings.CurrentValue.PayHistoryServiceClient, _log);
+            builder.RegisterPayHistoryClient(_settings.CurrentValue.PayHistoryServiceClient.ServiceUrl);
 
-            builder.RegisterInvoiceConfirmationPublisher(_settings.CurrentValue.PayInvoiceConfirmationPublisher, _log);
+            builder.RegisterInvoiceConfirmationPublisher(_settings.CurrentValue.PayInvoiceConfirmationPublisher);
         }
 
         private void RegisterCaches(ContainerBuilder builder)
         {
-            builder.Register(x =>
-            {
-                var assetsService = x.Resolve<IComponentContext>().Resolve<IAssetsService>();
-
-                return new CachedDataDictionary<string, Asset>
-                (
-                    async () =>
-                    {
-                        IList<Asset> assets = await Policy
-                            .Handle<Exception>()
-                            .WaitAndRetryAsync(
-                                _settings.CurrentValue.PayInternalService.RetryPolicy.DefaultAttempts,
-                                attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-                                (ex, timestamp) => _log.WriteError("Getting assets dictionary with retry", ex))
-                            .ExecuteAsync(() => assetsService.AssetGetAllAsync(true));
-
-                        return assets.ToDictionary(itm => itm.Id);
-                    }, _settings.CurrentValue.PayInternalService.ExpirationPeriods.AssetsCache);
-            }).SingleInstance();
-
-            builder.Register(x =>
-            {
-                var assetsService = x.Resolve<IComponentContext>().Resolve<IAssetsService>();
-
-                return new CachedDataDictionary<string, AssetPair>(
-                    async () =>
-                    {
-                        IList<AssetPair> assetPairs = await Policy
-                            .Handle<Exception>()
-                            .WaitAndRetryAsync(
-                                _settings.CurrentValue.PayInternalService.RetryPolicy.DefaultAttempts,
-                                attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-                                (ex, timestamp) => _log.WriteError("Getting asset pairs dictionary with retry", ex))
-                            .ExecuteAsync(() => assetsService.AssetPairGetAllAsync());
-
-                        return assetPairs.ToDictionary(itm => itm.Id);
-                    }, _settings.CurrentValue.PayInternalService.ExpirationPeriods.AssetsCache);
-            }).SingleInstance();
-
             builder.RegisterType<AssetsLocalCache>()
-                .As<IAssetsLocalCache>();
+                .As<IAssetsLocalCache>()
+                .SingleInstance()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.ExpirationPeriods))
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.RetryPolicy));
         }
 
         private void RegisterRabbitMqPublishers(ContainerBuilder builder)

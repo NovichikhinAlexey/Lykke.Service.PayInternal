@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Common.Log;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.MarketProfile.Client.Models;
 using Lykke.Service.PayInternal.Core;
@@ -20,7 +19,6 @@ namespace Lykke.Service.PayInternal.Services.Tests
     {
         private Mock<IAssetsLocalCache> _assetsLocalCacheMock;
         private Mock<IAssetRatesService> _assetRatesService;
-        private Mock<ILog> _logMock;
 
         private ICalculationService _service;
 
@@ -33,7 +31,6 @@ namespace Lykke.Service.PayInternal.Services.Tests
         {
             _assetsLocalCacheMock = new Mock<IAssetsLocalCache>();
             _assetRatesService = new Mock<IAssetRatesService>();
-            _logMock = new Mock<ILog>();
 
             _service = new CalculationService(
                 _assetsLocalCacheMock.Object,
@@ -43,7 +40,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
                     Pips = MerchantPips
                 },
                 _assetRatesService.Object,
-                _logMock.Object);
+                Logs.EmptyLogFactory.Instance);
         }
 
         [TestMethod]
@@ -198,8 +195,6 @@ namespace Lykke.Service.PayInternal.Services.Tests
             };
 
             decimal chfAmount = 10;
-
-            _logMock.Setup(o => o.WriteInfoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>())).Verifiable();
 
             var rate = _service.CalculatePrice(assetPairRate.AskPrice, assetPairRate.BidPrice, assetPair.Accuracy,
                 BtcAccuracy, requestMarkup.Percent, requestMarkup.Pips, PriceCalculationMethod.ByBid, merchantMarkup);

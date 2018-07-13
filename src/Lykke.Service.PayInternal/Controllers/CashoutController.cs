@@ -5,6 +5,7 @@ using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.Cashout;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -12,6 +13,7 @@ using Lykke.Service.PayInternal.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Lykke.Service.PayInternal.Models.Cashout;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Lykke.Service.PayInternal.Core;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -23,10 +25,10 @@ namespace Lykke.Service.PayInternal.Controllers
 
         public CashoutController(
             [NotNull] ICashoutService cashoutService, 
-            [NotNull] ILog log)
+            [NotNull] ILogFactory logFactory)
         {
             _cashoutService = cashoutService ?? throw new ArgumentNullException(nameof(cashoutService));
-            _log = log.CreateComponentScope(nameof(CashoutController)) ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
         }
 
         /// <summary>
@@ -53,46 +55,46 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetNetworkNotDefinedException e)
             {
-                _log.WriteError(nameof(Execute), new {e.AssetId}, e);
+                _log.Error(e, new {e.AssetId});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (InvalidOperationException e)
             {
-                _log.WriteError(nameof(Execute), request, e);
+                _log.Error(e, request);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (InsufficientFundsException e)
             {
-                _log.WriteError(nameof(Execute), new
+                _log.Error(e, new
                 {
                     e.WalletAddress,
                     e.AssetId
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (CashoutOperationFailedException e)
             {
-                _log.WriteError(nameof(Execute), new {errors = e.TransferErrors}, e);
+                _log.Error(e, new {errors = e.TransferErrors});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (MultipleDefaultMerchantWalletsException e)
             {
-                _log.WriteError(nameof(Execute), new
+                _log.Error(e, new
                 {
                     e.AssetId,
                     e.MerchantId,
                     e.PaymentDirection
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (DefaultMerchantWalletNotFoundException e)
             {
-                _log.WriteError(nameof(Execute), new
+                _log.Error(e, new
                 {
                     e.AssetId,
                     e.MerchantId,
@@ -103,17 +105,17 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MerchantWalletOwnershipException e)
             {
-                _log.WriteError(nameof(Execute), new
+                _log.Error(e, new
                 {
                     e.MerchantId,
                     e.WalletAddress
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (CashoutHotwalletNotDefinedException e)
             {
-                _log.WriteError(nameof(Execute), new {e.Blockchain}, e);
+                _log.Error(e, new {e.Blockchain});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }

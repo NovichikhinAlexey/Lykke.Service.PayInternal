@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
-using Common;
-using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Services;
@@ -22,16 +19,13 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly IBcnWalletUsageService _bcnWalletUsageService;
         private readonly IWalletManager _walletManager;
         private readonly IBlockchainAddressValidator _blockchainAddressValidator;
-        private readonly ILog _log;
 
         public WalletsController(
             IBcnWalletUsageService bcnWalletUsageService, 
-            ILog log, 
             IWalletManager walletManager, 
             IBlockchainAddressValidator blockchainAddressValidator)
         {
             _bcnWalletUsageService = bcnWalletUsageService;
-            _log = log;
             _walletManager = walletManager;
             _blockchainAddressValidator = blockchainAddressValidator;
         }
@@ -54,21 +48,12 @@ namespace Lykke.Service.PayInternal.Controllers
             if (!isValid)
                 return BadRequest(ErrorResponse.Create("Wallet address is not valid"));
 
-            try
-            {
-                bool released = await _bcnWalletUsageService.ReleaseAsync(request.WalletAddress, request.Blockchain);
+            bool released = await _bcnWalletUsageService.ReleaseAsync(request.WalletAddress, request.Blockchain);
 
-                if (released)
-                    return Ok();
+            if (released)
+                return Ok();
 
-                return BadRequest(ErrorResponse.Create("Couldn't set wallet as expired"));
-            }
-            catch (Exception ex)
-            {
-                await _log.WriteErrorAsync(nameof(WalletsController), nameof(SetExpired), request.ToJson(), ex);
-
-                throw;
-            }
+            return BadRequest(ErrorResponse.Create("Couldn't set wallet as expired"));
         }
 
         /// <summary>
@@ -81,18 +66,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(IEnumerable<WalletStateResponse>), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> GetNotExpiredWallets()
         {
-            try
-            {
-                IEnumerable<IWalletState> wallets = await _walletManager.GetNotExpiredStateAsync();
+            IEnumerable<IWalletState> wallets = await _walletManager.GetNotExpiredStateAsync();
 
-                return Ok(Mapper.Map<IEnumerable<WalletStateResponse>>(wallets));
-            }
-            catch (Exception ex)
-            {
-                await _log.WriteErrorAsync(nameof(WalletsController), nameof(GetNotExpiredWallets), ex);
-
-                throw;
-            }
+            return Ok(Mapper.Map<IEnumerable<WalletStateResponse>>(wallets));
         }
     }
 }

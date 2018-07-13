@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
@@ -26,7 +27,7 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IMerchantWalletRespository merchantWalletRespository,
             [NotNull] IAssetSettingsService assetSettingsService,
             [NotNull] IBlockchainClientProvider blockchainClientProvider,
-            [NotNull] ILog log, 
+            [NotNull] ILogFactory logFactory,
             [NotNull] IAssetsLocalCache assetsLocalCache)
         {
             _merchantWalletRespository = merchantWalletRespository ??
@@ -36,8 +37,7 @@ namespace Lykke.Service.PayInternal.Services
             _blockchainClientProvider = blockchainClientProvider ??
                                         throw new ArgumentNullException(nameof(blockchainClientProvider));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
-            _log = log.CreateComponentScope(nameof(MerchantWalletService)) ??
-                   throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
         }
 
         public async Task<IMerchantWallet> CreateAsync(CreateMerchantWalletCommand cmd)
@@ -66,12 +66,12 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException e)
             {
-                _log.WriteError(nameof(DeleteAsync), new
+                _log.Error(e, new
                 {
                     merchantId,
                     network,
                     walletAddress
-                }, e);
+                });
 
                 throw new MerchantWalletNotFoundException(merchantId, network, walletAddress);
             }
@@ -85,7 +85,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException e)
             {
-                _log.WriteError(nameof(DeleteAsync), new {merchantWalletId}, e);
+                _log.Error(e, new {merchantWalletId});
 
                 throw new MerchantWalletIdNotFoundException(merchantWalletId);
             }
@@ -111,12 +111,12 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException e)
             {
-                _log.WriteError(nameof(SetDefaultAssetsAsync), new
+                _log.Error(e, new
                 {
                     merchantId,
                     network,
                     walletAddress
-                }, e);
+                });
 
                 throw new MerchantWalletNotFoundException(merchantId, network, walletAddress);
             }
@@ -170,7 +170,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException e)
             {
-                _log.WriteError(nameof(GetByIdAsync), new {merchantWalletId}, e);
+                _log.Error(e, new {merchantWalletId});
 
                 throw new MerchantWalletIdNotFoundException(merchantWalletId);
             }
@@ -184,7 +184,11 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException e)
             {
-                _log.WriteError(nameof(GetByAddressAsync), new { network, walletAddress }, e);
+                _log.Error(e, new
+                {
+                    network,
+                    walletAddress
+                });
 
                 throw new MerchantWalletNotFoundException(string.Empty, network, walletAddress);
             }

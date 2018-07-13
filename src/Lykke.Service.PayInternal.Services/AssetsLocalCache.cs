@@ -1,9 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Common;
+using Common.Log;
+using JetBrains.Annotations;
+using Lykke.Common.Log;
+using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
+using Polly;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -13,11 +20,41 @@ namespace Lykke.Service.PayInternal.Services
         private readonly CachedDataDictionary<string, AssetPair> _assetPairsCache;
 
         public AssetsLocalCache(
-            CachedDataDictionary<string, Asset> assetsCache,
-            CachedDataDictionary<string, AssetPair> assetPairsCache)
+            [NotNull] ILogFactory logFactory,
+            [NotNull] IAssetsService assetsService, 
+            [NotNull] RetryPolicySettings retryPolicySettings, 
+            [NotNull] ExpirationPeriodsSettings expirationPeriodsSettings)
         {
-            _assetsCache = assetsCache ?? throw new ArgumentNullException(nameof(assetsCache));
-            _assetPairsCache = assetPairsCache ?? throw new ArgumentNullException(nameof(assetPairsCache));
+            ILog log = logFactory.CreateLog(this);
+
+            _assetsCache = new CachedDataDictionary<string, Asset>
+            (
+                async () =>
+                {
+                    IList<Asset> assets = await Policy
+                        .Handle<Exception>()
+                        .WaitAndRetryAsync(
+                           retryPolicySettings.DefaultAttempts,
+                            attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                            (ex, timestamp) => log.Error("Getting assets dictionary with retry", ex))
+                        .ExecuteAsync(() => assetsService.AssetGetAllAsync(true));
+
+                    return assets.ToDictionary(itm => itm.Id);
+                }, expirationPeriodsSettings.AssetsCache);
+
+            _assetPairsCache = new CachedDataDictionary<string, AssetPair>(
+                async () =>
+                {
+                    IList<AssetPair> assetPairs = await Policy
+                        .Handle<Exception>()
+                        .WaitAndRetryAsync(
+                            retryPolicySettings.DefaultAttempts,
+                            attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                            (ex, timestamp) => log.Error("Getting asset pairs dictionary with retry", ex))
+                        .ExecuteAsync(() => assetsService.AssetPairGetAllAsync());
+
+                    return assetPairs.ToDictionary(itm => itm.Id);
+                }, expirationPeriodsSettings.AssetsCache);
         }
 
         public async Task<Asset> GetAssetByIdAsync(string assetId)

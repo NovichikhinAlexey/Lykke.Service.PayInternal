@@ -6,6 +6,7 @@ using AutoMapper;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Confirmations;
 using Lykke.Service.PayInternal.Core.Domain.History;
@@ -32,7 +33,7 @@ namespace Lykke.Service.PayInternal.Services
         public TransactionsManager(
             [NotNull] ITransactionsService transactionsService,
             [NotNull] IPaymentRequestService paymentRequestService, 
-            [NotNull] ILog log, 
+            [NotNull] ILogFactory logFactory, 
             [NotNull] IWalletHistoryService walletHistoryService, 
             int transactionConfirmationCount, 
             [NotNull] IConfirmationsService confirmationsService)
@@ -42,7 +43,7 @@ namespace Lykke.Service.PayInternal.Services
             _walletHistoryService = walletHistoryService ?? throw new ArgumentNullException(nameof(walletHistoryService));
             _transactionConfirmationCount = transactionConfirmationCount;
             _confirmationsService = confirmationsService ?? throw new ArgumentNullException(nameof(confirmationsService));
-            _log = log.CreateComponentScope(nameof(TransactionsManager)) ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
         }
 
         #region All transactions but Ethereum
@@ -98,7 +99,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (!txs.Any())
             {
-                _log.WriteInfo(nameof(RegisterInboundAsync), cmd, $"Incoming transaction registration [workflow = {cmd.WorkflowType}]");
+                _log.Info($"Incoming transaction registration [workflow = {cmd.WorkflowType}]", cmd);
 
                 ICreateTransactionCommand createCommand = MapToCreateCommand(cmd);
 
@@ -119,7 +120,7 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var tx in txs)
             {
-                _log.WriteInfo(nameof(RegisterInboundAsync), cmd, $"Incoming transaction update [type={tx.TransactionType}]");
+                _log.Info($"Incoming transaction update [type={tx.TransactionType}]", cmd);
 
                 IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx.TransactionType);
 
@@ -151,7 +152,7 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var tx in txs)
             {
-                _log.WriteInfo(nameof(UpdateOutgoingAsync), cmd,  $"Outgoing transaction update [type = {tx.TransactionType}]");
+                _log.Info($"Outgoing transaction update [type = {tx.TransactionType}]", cmd);
 
                 IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx);
 
@@ -174,7 +175,7 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var tx in txs)
             {
-                _log.WriteInfo(nameof(CompleteOutgoingAsync), cmd,  $"Complete outgoing transaction [type = {tx.TransactionType}]");
+                _log.Info($"Complete outgoing transaction [type = {tx.TransactionType}]", cmd);
 
                 IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx);
 
@@ -213,7 +214,7 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var tx in txs)
             {
-                _log.WriteInfo(nameof(FailOutgoingAsync), cmd, $"Failing outgoing transaction, not enough funds [type={tx.TransactionType}]");
+                _log.Info($"Failing outgoing transaction, not enough funds [type={tx.TransactionType}]", cmd);
 
                 IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx.TransactionType);
 
@@ -250,7 +251,7 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var tx in txs)
             {
-                _log.WriteInfo(nameof(FailOutgoingAsync), cmd, $"Failing outgoing transaction [type={tx.TransactionType}]");
+                _log.Info($"Failing outgoing transaction [type={tx.TransactionType}]", cmd);
 
                 IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx.TransactionType);
 

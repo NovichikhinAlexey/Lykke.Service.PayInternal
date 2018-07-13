@@ -78,7 +78,7 @@ namespace Lykke.Service.PayInternal.Controllers
             {
                 return Ok(await _fileService.GetMerchantLogoUrl(merchantId));
             }
-            catch (MerchantLogoNotFoundException ex)
+            catch (MerchantLogoNotFoundException)
             {
                 return NotFound();
             }

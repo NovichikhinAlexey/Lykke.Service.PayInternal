@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Common;
 using Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Services;
@@ -14,10 +13,12 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Models;
 using ErrorResponse = Lykke.Common.Api.Contract.Responses.ErrorResponse;
+using Lykke.Service.PayInternal.Core;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -38,7 +39,7 @@ namespace Lykke.Service.PayInternal.Controllers
             [NotNull] IPaymentRequestService paymentRequestService,
             [NotNull] IRefundService refundService,
             [NotNull] IAssetSettingsService assetSettingsService,
-            [NotNull] ILog log,
+            [NotNull] ILogFactory logFactory,
             [NotNull] IPaymentRequestDetailsBuilder paymentRequestDetailsBuilder,
             [NotNull] IMerchantService merchantService,
 			[NotNull] ILykkeAssetsResolver lykkeAssetsResolver)
@@ -48,7 +49,7 @@ namespace Lykke.Service.PayInternal.Controllers
             _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
             _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder ?? throw new ArgumentNullException(nameof(paymentRequestDetailsBuilder));
             _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
-            _log = log.CreateComponentScope(nameof(PaymentRequestsController)) ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
         }
 
         /// <summary>
@@ -111,35 +112,21 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetDetailsAsync(string merchantId, string paymentRequestId)
         {
-            try
-            {
-                IPaymentRequest paymentRequest = await _paymentRequestService.GetAsync(merchantId, paymentRequestId);
+            IPaymentRequest paymentRequest = await _paymentRequestService.GetAsync(merchantId, paymentRequestId);
 
-                if (paymentRequest == null)
-                    return NotFound(ErrorResponse.Create("Could not find payment request"));
+            if (paymentRequest == null)
+                return NotFound(ErrorResponse.Create("Could not find payment request"));
 
-                PaymentRequestRefund refundInfo =
-                    await _paymentRequestService.GetRefundInfoAsync(paymentRequest.WalletAddress);
+            PaymentRequestRefund refundInfo =
+                await _paymentRequestService.GetRefundInfoAsync(paymentRequest.WalletAddress);
 
-                PaymentRequestDetailsModel model = await _paymentRequestDetailsBuilder.Build<
-                    PaymentRequestDetailsModel, 
-                    PaymentRequestOrderModel, 
-                    PaymentRequestTransactionModel,
-                    PaymentRequestRefundModel>(paymentRequest, refundInfo);
+            PaymentRequestDetailsModel model = await _paymentRequestDetailsBuilder.Build<
+                PaymentRequestDetailsModel,
+                PaymentRequestOrderModel,
+                PaymentRequestTransactionModel,
+                PaymentRequestRefundModel>(paymentRequest, refundInfo);
 
-                return Ok(model);
-            }
-            catch (Exception ex)
-            {
-                await _log.WriteErrorAsync(nameof(GetDetailsAsync),
-                    new
-                    {
-                        MerchantId = merchantId,
-                        PaymentRequestId = paymentRequestId
-                    }.ToJson(), ex);
-
-                throw;
-            }
+            return Ok(model);
         }
 
         /// <summary>
@@ -204,25 +191,17 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<PaymentRequestModel>(createdPaymentRequest));
             }
-            catch (AssetUnknownException assetEx)
+            catch (AssetUnknownException e)
             {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(CreateAsync),
-                    new {assetEx.Asset}.ToJson(), assetEx);
+                _log.Error(e, new {e.Asset});
 
-                return BadRequest(ErrorResponse.Create($"Asset {assetEx.Asset} can't be resolved"));
+                return BadRequest(ErrorResponse.Create($"Asset {e.Asset} can't be resolved"));
             }
-            catch (AssetNetworkNotDefinedException networkEx)
+            catch (AssetNetworkNotDefinedException e)
             {
-                await _log.WriteErrorAsync(nameof(PaymentRequestsController), nameof(CreateAsync),
-                    new {networkEx.AssetId}.ToJson(), networkEx);
+                _log.Error(e, new {e.AssetId});
 
-                return BadRequest(ErrorResponse.Create(networkEx.Message));
-            }
-            catch (Exception ex)
-            {
-                await _log.WriteErrorAsync(nameof(CreateAsync), model.ToJson(), ex);
-
-                throw;
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
 
@@ -246,33 +225,31 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<RefundResponseModel>(refundResult));
             }
-            catch (RefundOperationFailedException refundFailedEx)
+            catch (RefundOperationFailedException e)
             {
-                await _log.WriteErrorAsync(nameof(RefundAsync), new {errors = refundFailedEx.TransferErrors}.ToJson(),
-                    refundFailedEx);
+                _log.Error(e, new {errors = e.TransferErrors});
             }
-            catch (AssetUnknownException assetEx)
+            catch (AssetUnknownException e)
             {
-                await _log.WriteErrorAsync(nameof(RefundAsync), new {assetEx.Asset}.ToJson(), assetEx);
+                _log.Error(e, new {e.Asset});
             }
-            catch (AssetNetworkNotDefinedException networkEx)
+            catch (AssetNetworkNotDefinedException e)
             {
-                await _log.WriteErrorAsync(nameof(RefundAsync), new {networkEx.AssetId}.ToJson(), networkEx);
+                _log.Error(e, new {e.AssetId});
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                await _log.WriteErrorAsync(nameof(RefundAsync), request.ToJson(), ex);
+                _log.Error(e, request);
 
-                if (ex is RefundValidationException validationEx)
+                if (e is RefundValidationException validationEx)
                 {
-                    await _log.WriteErrorAsync(nameof(RefundAsync),
-                        new {errorType = validationEx.ErrorType.ToString()}.ToJson(), validationEx);
+                    _log.Error(e, new {validationEx.ErrorType});
 
                     return BadRequest(new RefundErrorModel {Code = validationEx.ErrorType});
                 }
             }
 
-            return BadRequest(new RefundErrorModel { Code = RefundErrorType.Unknown });
+            return BadRequest(new RefundErrorModel {Code = RefundErrorType.Unknown});
         }
 
         /// <summary>
@@ -295,30 +272,30 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return NoContent();
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                await _log.WriteErrorAsync(nameof(CancelAsync), new
+                _log.Error(e, new
                 {
                     merchantId,
                     paymentRequestId
-                }.ToJson(), ex);
+                });
 
-                if (ex is PaymentRequestNotFoundException notFoundEx)
+                if (e is PaymentRequestNotFoundException notFoundEx)
                 {
-                    await _log.WriteErrorAsync(nameof(CancelAsync), new
+                    _log.Error(notFoundEx, new
                     {
                         notFoundEx.WalletAddress,
                         notFoundEx.MerchantId,
                         notFoundEx.PaymentRequestId
-                    }.ToJson(), notFoundEx);
+                    });
 
                     return NotFound(ErrorResponse.Create(notFoundEx.Message));
                 }
 
-                if (ex is NotAllowedStatusException notAllowedEx)
+                if (e is NotAllowedStatusException notAllowedEx)
                 {
-                    await _log.WriteErrorAsync(nameof(CancelAsync),
-                        new {status = notAllowedEx.Status.ToString()}.ToJson(), notAllowedEx);
+                    _log.Error(notAllowedEx,
+                        new {status = notAllowedEx.Status.ToString()});
 
                     return BadRequest(ErrorResponse.Create(notAllowedEx.Message));
                 }
@@ -363,56 +340,56 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InsufficientFundsException e)
             {
-                _log.WriteError(nameof(PrePay), new
+                _log.Error(e, new
                 {
                     e.AssetId,
                     e.WalletAddress
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (PaymentRequestNotFoundException e)
             {
-                _log.WriteError(nameof(PrePay), new
+                _log.Error(e, new
                 {
                     e.PaymentRequestId,
                     e.MerchantId,
                     e.WalletAddress
-                }, e);
+                });
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (AssetNetworkNotDefinedException e)
             {
-                _log.WriteError(nameof(PrePay), new { e.AssetId }, e);
+                _log.Error(e, new { e.AssetId });
 
                 return StatusCode((int)HttpStatusCode.NotImplemented, ErrorResponse.Create(e.Message));
             }
             catch (MultipleDefaultMerchantWalletsException e)
             {
-                _log.WriteError(nameof(PrePay), new
+                _log.Error(e, new
                 {
                     e.MerchantId,
                     e.AssetId,
                     e.PaymentDirection
-                }, e);
+                });
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (DefaultMerchantWalletNotFoundException e)
             {
-                _log.WriteError(nameof(PrePay), new
+                _log.Error(e, new
                 {
                     e.MerchantId,
                     e.AssetId,
                     e.PaymentDirection
-                }, e);
+                });
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (WalletNotFoundException e)
             {
-                _log.WriteError(nameof(PrePay), new { e.WalletAddress }, e);
+                _log.Error(e, new {e.WalletAddress});
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
@@ -454,68 +431,68 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InsufficientFundsException e)
             {
-                _log.WriteError(nameof(Pay), new
+                _log.Error(e, new
                 {
                     e.AssetId,
                     e.WalletAddress
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (PaymentRequestNotFoundException e)
             {
-                _log.WriteError(nameof(Pay), new
+                _log.Error(e, new
                 {
                     e.PaymentRequestId,
                     e.MerchantId,
                     e.WalletAddress
-                }, e);
+                });
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (AssetNetworkNotDefinedException e)
             {
-                _log.WriteError(nameof(Pay), new {e.AssetId}, e);
+                _log.Error(e, new {e.AssetId});
 
                 return StatusCode((int) HttpStatusCode.NotImplemented, ErrorResponse.Create(e.Message));
             }
             catch (MultipleDefaultMerchantWalletsException e)
             {
-                _log.WriteError(nameof(Pay), new
+                _log.Error(e, new
                 {
                     e.MerchantId,
                     e.AssetId,
                     e.PaymentDirection
-                }, e);
+                });
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (DefaultMerchantWalletNotFoundException e)
             {
-                _log.WriteError(nameof(Pay), new
+                _log.Error(e, new
                 {
                     e.MerchantId,
                     e.AssetId,
                     e.PaymentDirection
-                }, e);
+                });
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (WalletNotFoundException e)
             {
-                _log.WriteError(nameof(Pay), new {e.WalletAddress}, e);
+                _log.Error(e, new {e.WalletAddress});
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (PaymentOperationFailedException e)
             {
-                _log.WriteError(nameof(Pay), new {errors = e.TransferErrors}, e);
+                _log.Error(e, new {errors = e.TransferErrors});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (DistributedLockAcquireException e)
             {
-                _log.WriteError(nameof(Pay), new {e.Key}, e);
+                _log.Error(e, new {e.Key});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }

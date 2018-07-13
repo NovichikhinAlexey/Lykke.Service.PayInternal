@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using KeyNotFoundException = Lykke.Service.PayInternal.Core.Exceptions.KeyNotFoundException;
+using Lykke.Service.PayInternal.Core;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -22,12 +24,12 @@ namespace Lykke.Service.PayInternal.Services
         
         public SupervisorMembershipService(
             [NotNull] ISupervisorMembershipRepository supervisorMembershipRepository,
-            [NotNull] ILog log, 
+            [NotNull] ILogFactory logFactory, 
             [NotNull] IMerchantGroupService merchantGroupService)
         {
             _supervisorMembershipRepository = supervisorMembershipRepository ?? throw new ArgumentNullException(nameof(supervisorMembershipRepository));
             _merchantGroupService = merchantGroupService ?? throw new ArgumentNullException(nameof(merchantGroupService));
-            _log = log.CreateComponentScope(nameof(SupervisorMembershipService)) ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
         }
 
         public async Task<IMerchantsSupervisorMembership> AddAsync(IMerchantsSupervisorMembership src)
@@ -53,7 +55,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (DuplicateKeyException ex)
             {
-                _log.WriteError(nameof(AddAsync), src, ex);
+                _log.Error(ex, src);
 
                 if (merchantGroup != null)
                     await _merchantGroupService.DeleteAsync(merchantGroup.Id);
@@ -102,7 +104,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException ex)
             {
-                _log.WriteError(nameof(UpdateAsync), src, ex);
+                _log.Error(ex, src);
 
                 throw new SupervisorMembershipNotFoundException(src.EmployeeId);
             }
@@ -116,7 +118,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (DuplicateKeyException ex)
             {
-                _log.WriteError(nameof(AddAsync), src, ex);
+                _log.Error(ex, src);
 
                 throw new SupervisorMembershipAlreadyExistsException(src.EmployeeId);
             }
@@ -130,7 +132,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException ex)
             {
-                _log.WriteError(nameof(RemoveAsync), new {employeeId}, ex);
+                _log.Error(ex, new {employeeId});
 
                 throw new SupervisorMembershipNotFoundException(employeeId);
             }

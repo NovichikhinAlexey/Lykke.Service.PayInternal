@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core.Services;
 
 namespace Lykke.Service.PayInternal.Services
@@ -18,13 +18,13 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ILog _log;
         private readonly IEnumerable<IStopable> _items;
 
-        public ShutdownManager(ILog log, IEnumerable<IStopable> items)
+        public ShutdownManager(ILogFactory logFactory, IEnumerable<IStopable> items)
         {
-            _log = log;
+            _log = logFactory.CreateLog(this);
             _items = items;
         }
 
-        public async Task StopAsync()
+        public void Stop()
         {
             // TODO: Implement your shutdown logic here. Good idea is to log every step
             foreach (var item in _items)
@@ -35,11 +35,9 @@ namespace Lykke.Service.PayInternal.Services
                 }
                 catch (Exception ex)
                 {
-                    _log.WriteWarning(nameof(StopAsync), null, $"Unable to stop {item.GetType().Name}", ex);
+                    _log.Warning(nameof(Stop), $"Unable to stop {item.GetType().Name}", ex);
                 }
             }
-
-            await Task.CompletedTask;
         }
     }
 }

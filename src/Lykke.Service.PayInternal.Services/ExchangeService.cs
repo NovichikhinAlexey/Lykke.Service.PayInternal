@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common;
 using JetBrains.Annotations;
-using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Domain.Exchange;
