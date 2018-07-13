@@ -356,7 +356,7 @@ namespace Lykke.Service.PayInternal.Services
                 .WaitAndRetryAsync(
                     _retryPolicySettings.SettlementAttempts,
                     attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-                    (ex, timespan) => _log.WriteError("Settlement with retry", new {merchantId, paymentRequestId}, ex))
+                    (ex, timespan) => _log.Error(ex, "Settlement with retry", new {merchantId, paymentRequestId}))
                 .ExecuteAsync(() => _transferService.SettleThrowFail(
                     paymentRequest.PaymentAssetId, 
                     sourceWalletAddress,

@@ -35,7 +35,7 @@ namespace Lykke.Service.PayInternal.Services
                 .WaitAndRetryAsync(
                     _retryPolicySettings.DefaultAttempts,
                     attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-                    (ex, timespan) => _log.WriteError("Publish invoice confirmation with retry", null, ex));
+                    (ex, timespan) => _log.Error(ex, "Publish invoice confirmation with retry"));
         }
 
         public async Task ConfirmCashoutAsync(CashoutConfirmationCommand cmd)
