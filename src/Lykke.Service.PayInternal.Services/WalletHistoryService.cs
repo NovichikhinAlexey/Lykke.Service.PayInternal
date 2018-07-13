@@ -46,14 +46,14 @@ namespace Lykke.Service.PayInternal.Services
                 .WaitAndRetryAsync(
                     _retryPolicySettings.DefaultAttempts,
                     attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-                    (ex, timespan) => _log.Error("Publish wallet history with retry", ex));
+                    (ex, timespan) => _log.WriteError("Publish wallet history with retry", null, ex));
 
             _clientRetryPolicy = Policy
                 .Handle<Exception>(ex => !(ex is PayHistoryApiException))
                 .WaitAndRetryAsync(
                     _retryPolicySettings.DefaultAttempts,
                     attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-                    (ex, timespan) => _log.Error("Connecting to history service with retry", ex));
+                    (ex, timespan) => _log.WriteError("Connecting to history service with retry", null, ex));
         }
 
         public async Task<string> PublishCashInAsync(IWalletHistoryCommand cmd)

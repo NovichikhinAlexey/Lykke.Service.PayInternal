@@ -79,7 +79,8 @@ namespace Lykke.Service.PayInternal.Tests
                 appSettings.CurrentValue.PayInternalService.TransactionConfirmationCount,
                 appSettings.CurrentValue.PayInternalService.Blockchain.WalletAllocationPolicy.Policies,
                 appSettings.CurrentValue.PayInternalService.AssetPairsLocalStorage.AssetPairs,
-                appSettings.CurrentValue.PayInternalService.CacheSettings));
+                appSettings.CurrentValue.PayInternalService.CacheSettings,
+                appSettings.CurrentValue.PayInternalService.RetryPolicy));
 
             builder.RegisterModule(new ServiceModule(appSettings));
 

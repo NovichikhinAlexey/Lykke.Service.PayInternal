@@ -35,6 +35,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IDistributedLocksService _checkoutLocksService;
         private readonly ITransactionPublisher _transactionPublisher;
         private readonly IWalletBalanceValidator _walletBalanceValidator;
+        private readonly RetryPolicySettings _retryPolicySettings;
         private readonly ILog _log;
 
         public PaymentRequestService(
@@ -51,7 +52,8 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IDistributedLocksService paymentLocksService, 
             [NotNull] ITransactionPublisher transactionPublisher, 
             [NotNull] IDistributedLocksService checkoutLocksService, 
-            [NotNull] IWalletBalanceValidator walletBalanceValidator)
+            [NotNull] IWalletBalanceValidator walletBalanceValidator, 
+            [NotNull] RetryPolicySettings retryPolicySettings)
         {
             _paymentRequestRepository = paymentRequestRepository ?? throw new ArgumentNullException(nameof(paymentRequestRepository));
             _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
@@ -67,6 +69,7 @@ namespace Lykke.Service.PayInternal.Services
             _transactionPublisher = transactionPublisher ?? throw new ArgumentNullException(nameof(transactionPublisher));
             _checkoutLocksService = checkoutLocksService ?? throw new ArgumentNullException(nameof(checkoutLocksService));
             _walletBalanceValidator = walletBalanceValidator ?? throw new ArgumentNullException(nameof(walletBalanceValidator));
+            _retryPolicySettings = retryPolicySettings;
         }
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -348,10 +351,16 @@ namespace Lykke.Service.PayInternal.Services
                 paymentRequest.PaymentAssetId,
                 PaymentDirection.Incoming)).WalletAddress;
 
-            TransferResult transferResult = await _transferService.SettleThrowFail(
-                paymentRequest.PaymentAssetId,
-                sourceWalletAddress,
-                destWalletAddress);
+            TransferResult transferResult = await Policy
+                .Handle<InsufficientFundsException>()
+                .WaitAndRetryAsync(
+                    _retryPolicySettings.SettlementAttempts,
+                    attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                    (ex, timespan) => _log.WriteError("Settlement with retry", new {merchantId, paymentRequestId}, ex))
+                .ExecuteAsync(() => _transferService.SettleThrowFail(
+                    paymentRequest.PaymentAssetId, 
+                    sourceWalletAddress,
+                    destWalletAddress));
 
             foreach (var transferResultTransaction in transferResult.Transactions)
             {
