@@ -8,6 +8,7 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
@@ -37,6 +38,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransactionPublisher _transactionPublisher;
         private readonly IWalletBalanceValidator _walletBalanceValidator;
         private readonly RetryPolicySettings _retryPolicySettings;
+        private readonly IAssetSettingsService _assetSettingsService;
         private readonly ILog _log;
 
         public PaymentRequestService(
@@ -54,7 +56,8 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] ITransactionPublisher transactionPublisher, 
             [NotNull] IDistributedLocksService checkoutLocksService, 
             [NotNull] IWalletBalanceValidator walletBalanceValidator, 
-            [NotNull] RetryPolicySettings retryPolicySettings)
+            [NotNull] RetryPolicySettings retryPolicySettings, 
+            [NotNull] IAssetSettingsService assetSettingsService)
         {
             _paymentRequestRepository = paymentRequestRepository ?? throw new ArgumentNullException(nameof(paymentRequestRepository));
             _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
@@ -70,7 +73,8 @@ namespace Lykke.Service.PayInternal.Services
             _transactionPublisher = transactionPublisher ?? throw new ArgumentNullException(nameof(transactionPublisher));
             _checkoutLocksService = checkoutLocksService ?? throw new ArgumentNullException(nameof(checkoutLocksService));
             _walletBalanceValidator = walletBalanceValidator ?? throw new ArgumentNullException(nameof(walletBalanceValidator));
-            _retryPolicySettings = retryPolicySettings;
+            _retryPolicySettings = retryPolicySettings ?? throw new ArgumentNullException(nameof(retryPolicySettings));
+            _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
         }
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -199,10 +203,13 @@ namespace Lykke.Service.PayInternal.Services
             {
                 await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
 
-                // doing settlement only once
+                IAssetGeneralSettings assetSettings =
+                    await _assetSettingsService.GetGeneralAsync(paymentRequest.PaymentAssetId);
+
+                // doing auto settlement only once
                 // Some flows assume we can get updates from blockchain multiple times for the same transaction
                 // which leads to the same payment request status 
-                if (paymentRequest.StatusValidForSettlement())
+                if (paymentRequest.StatusValidForSettlement() && (assetSettings?.AutoSettle ?? false))
                     await SettleAsync(paymentRequest.MerchantId, paymentRequest.Id);
             }
         }

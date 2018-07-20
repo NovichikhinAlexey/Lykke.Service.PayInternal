@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Lykke.Logs;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 
@@ -14,6 +15,8 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task<IReadOnlyList<IAssetGeneralSettings>> GetGeneralAsync(AssetAvailabilityType type);
 
         Task<IAssetGeneralSettings> SetGeneralAsync(IAssetGeneralSettings availability);
+
+        Task<IAssetGeneralSettings> GetGeneralAsync(string assetId);
 
         Task<BlockchainType> GetNetworkAsync(string assetId);
 
