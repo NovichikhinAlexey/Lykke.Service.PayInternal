@@ -9,5 +9,7 @@
         public bool PaymentAvailable { get; set; }
 
         public bool SettlementAvailable { get; set; }
+
+        public bool AutoSettle { get; set; }
     }
 }
