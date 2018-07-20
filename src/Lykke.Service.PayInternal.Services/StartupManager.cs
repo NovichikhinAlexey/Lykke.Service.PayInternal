@@ -1,5 +1,6 @@
 ﻿using System;
 using Autofac;
+using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
@@ -45,7 +46,7 @@ namespace Lykke.Service.PayInternal.Services
 
         public void Start()
         {
-            _log.Info(nameof(Start), "Checking app settings consistency...");
+            _log.Info("Checking app settings consistency...");
 
             TimeSpan primaryExpPeriod = _appSettings.PayInternalService.ExpirationPeriods.Order.Primary;
 
@@ -54,7 +55,7 @@ namespace Lykke.Service.PayInternal.Services
             if (primaryExpPeriod > extendedExpPeriod)
                 throw new OrderExpirationSettingsInconsistentException(primaryExpPeriod, extendedExpPeriod);
 
-            _log.Info(nameof(Start), "Settings checked successfully.");
+            _log.Info("Settings checked successfully.");
 
             StartComponent("Payment request expiration handler", _paymentRequestExpirationHandler);
 
@@ -67,17 +68,17 @@ namespace Lykke.Service.PayInternal.Services
 
         private void StartComponent(string componentDisplayName, object component)
         {
-            _log.Info(nameof(Start), $"Starting {componentDisplayName} ...");
+            _log.Info($"Starting {componentDisplayName} ...");
 
             if (component is IStartable startableComponent)
             {
                 startableComponent.Start();
 
-                _log.Info(nameof(Start), $"{componentDisplayName} successfully started.");
+                _log.Info($"{componentDisplayName} successfully started.");
             }
             else
             {
-                _log.Warning(nameof(Start), "Component has not been started", context: component);
+                _log.Warning("Component has not been started", context: component.ToJson());
             }
         }
     }

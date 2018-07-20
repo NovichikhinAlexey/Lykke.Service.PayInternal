@@ -99,7 +99,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (!txs.Any())
             {
-                _log.Info($"Incoming transaction registration [workflow = {cmd.WorkflowType}]", cmd);
+                _log.Info($"Incoming transaction registration [workflow = {cmd.WorkflowType}]", cmd.ToJson());
 
                 ICreateTransactionCommand createCommand = MapToCreateCommand(cmd);
 
@@ -152,7 +152,7 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var tx in txs)
             {
-                _log.Info($"Outgoing transaction update [type = {tx.TransactionType}]", cmd);
+                _log.Info($"Outgoing transaction update [type = {tx.TransactionType}]", cmd.ToJson());
 
                 IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx);
 
@@ -175,7 +175,7 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var tx in txs)
             {
-                _log.Info($"Complete outgoing transaction [type = {tx.TransactionType}]", cmd);
+                _log.Info($"Complete outgoing transaction [type = {tx.TransactionType}]", cmd.ToJson());
 
                 IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx);
 
@@ -214,7 +214,7 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var tx in txs)
             {
-                _log.Info($"Failing outgoing transaction, not enough funds [type={tx.TransactionType}]", cmd);
+                _log.Info($"Failing outgoing transaction, not enough funds [type={tx.TransactionType}]", cmd.ToJson());
 
                 IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx.TransactionType);
 
@@ -251,7 +251,7 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (var tx in txs)
             {
-                _log.Info($"Failing outgoing transaction [type={tx.TransactionType}]", cmd);
+                _log.Info($"Failing outgoing transaction [type={tx.TransactionType}]", cmd.ToJson());
 
                 IUpdateTransactionCommand updateCommand = MapToUpdateCommand(cmd, tx.TransactionType);
 

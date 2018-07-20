@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
@@ -104,7 +105,7 @@ namespace Lykke.Service.PayInternal.Services
                 {
                     if (!string.IsNullOrEmpty(transferResultTransaction.Error))
                     {
-                        _log.Warning("Transaction failed", context: transferResultTransaction);
+                        _log.Warning("Transaction failed", context: transferResultTransaction.ToJson());
 
                         continue;
                     }

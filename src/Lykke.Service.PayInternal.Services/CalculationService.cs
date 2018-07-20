@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
@@ -38,15 +39,8 @@ namespace Lykke.Service.PayInternal.Services
         {
             var rate = await GetRateAsync(baseAssetId, quotingAssetId, requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
 
-            _log.Info("Rate calculation", new
-            {
-                baseAssetId,
-                quotingAssetId,
-                amount,
-                requestMarkup,
-                merchantMarkup,
-                rate
-            });
+            _log.Info("Rate calculation",
+                $"Calculation details: {new {baseAssetId, quotingAssetId, amount, requestMarkup, merchantMarkup, rate}.ToJson()}");
 
             decimal result = (amount + (decimal) requestMarkup.FixedFee + merchantMarkup.FixedFee) / rate;
 
@@ -70,14 +64,14 @@ namespace Lykke.Service.PayInternal.Services
 
             if (!string.IsNullOrEmpty(merchantMarkup.PriceAssetPairId))
             {
-                _log.Info("Price asset pair will be used", new {merchantMarkup.PriceAssetPairId});
+                _log.Info($"Price asset pair will be used: {merchantMarkup.PriceAssetPairId}");
 
                 priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(merchantMarkup.PriceAssetPairId);
 
                 IAssetPairRate assetPairRate =
                     await _assetRatesService.GetCurrentRate(priceAssetPair.BaseAssetId, priceAssetPair.QuotingAssetId);
 
-                _log.Info("Price method", new {PriceMethod = merchantMarkup.PriceMethod.ToString()});
+                _log.Info($"Price method: {merchantMarkup.PriceMethod.ToString()}");
 
                 switch (merchantMarkup.PriceMethod)
                 {
@@ -116,11 +110,7 @@ namespace Lykke.Service.PayInternal.Services
                 }
             }
 
-            _log.Info("Market rate that will be used for calculation", new
-            {
-                askPrice,
-                bidPrice
-            });
+            _log.Info($"Market rate that will be used for calculation, askPrice = {askPrice}, bidPrice = {bidPrice}");
 
             Asset baseAsset = await _assetsLocalCache.GetAssetByIdAsync(baseAssetId);
 
@@ -160,11 +150,7 @@ namespace Lykke.Service.PayInternal.Services
             PriceCalculationMethod priceValueType,
             IMarkup merchantMarkup)
         {
-            _log.Info("Rate calculation", new
-            {
-                askPrice,
-                bidPrice
-            });
+            _log.Info($"Rate calculation, askPrice = {askPrice}, bidPrice = {bidPrice}");
 
             double originalPrice =
                 GetOriginalPriceByMethod(bidPrice, askPrice, priceValueType);

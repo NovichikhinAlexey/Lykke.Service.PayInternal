@@ -35,7 +35,7 @@ namespace Lykke.Service.PayInternal.Services
                 }
                 catch (Exception ex)
                 {
-                    _log.Warning(nameof(Stop), $"Unable to stop {item.GetType().Name}", ex);
+                    _log.Warning($"Unable to stop {item.GetType().Name}", ex);
                 }
             }
         }

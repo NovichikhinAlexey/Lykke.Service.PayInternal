@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
@@ -132,7 +133,7 @@ namespace Lykke.Service.PayInternal.Services
 
             IPaymentRequest createdPaymentRequest = await _paymentRequestRepository.InsertAsync(paymentRequest);
 
-            _log.Info("Payment request created", paymentRequest);
+            _log.Info("Payment request created", paymentRequest.ToJson());
 
             return createdPaymentRequest;
         }
