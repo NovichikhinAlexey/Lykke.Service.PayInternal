@@ -9,5 +9,7 @@
         bool PaymentAvailable { get; set; }
 
         bool SettlementAvailable { get; set; }
+
+        bool AutoSettle { get; set; }
     }
 }

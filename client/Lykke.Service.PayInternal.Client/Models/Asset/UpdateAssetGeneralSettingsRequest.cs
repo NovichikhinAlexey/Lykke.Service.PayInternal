@@ -28,6 +28,12 @@ namespace Lykke.Service.PayInternal.Client.Models.Asset
         public bool SettlementAvailable { get; set; }
 
         /// <summary>
+        /// Get or set if payments in this asset will be settled automatically
+        /// </summary>
+        [Required]
+        public bool AutoSettle { get; set; }
+
+        /// <summary>
         /// Blockchain type
         /// </summary>
         [Required]

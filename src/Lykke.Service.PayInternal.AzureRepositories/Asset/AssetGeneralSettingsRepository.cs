@@ -66,6 +66,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
                 {
                     item.PaymentAvailable = availability.PaymentAvailable;
                     item.SettlementAvailable = availability.SettlementAvailable;
+                    item.AutoSettle = availability.AutoSettle;
                     item.Network = availability.Network;
 
                     return item;
