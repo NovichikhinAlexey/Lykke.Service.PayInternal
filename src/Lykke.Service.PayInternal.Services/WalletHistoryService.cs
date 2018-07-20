@@ -31,7 +31,7 @@ namespace Lykke.Service.PayInternal.Services
         public WalletHistoryService(
             [NotNull] HistoryOperationPublisher historyOperationPublisher, 
             [NotNull] IMerchantWalletService merchantWalletService, 
-            [NotNull] ILog log, 
+            [NotNull] ILogFactory logFactory, 
             [NotNull] RetryPolicySettings retryPolicySettings, 
             [NotNull] IPayHistoryClient payHistoryClient)
         {
@@ -39,21 +39,21 @@ namespace Lykke.Service.PayInternal.Services
             _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
             _retryPolicySettings = retryPolicySettings ?? throw new ArgumentNullException(nameof(retryPolicySettings));
             _payHistoryClient = payHistoryClient ?? throw new ArgumentNullException(nameof(payHistoryClient));
-            _log = log.CreateComponentScope(nameof(WalletHistoryService)) ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
 
             _publisherRetryPolicy = Policy
                 .Handle<Exception>()
                 .WaitAndRetryAsync(
                     _retryPolicySettings.DefaultAttempts,
                     attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-                    (ex, timespan) => _log.WriteError("Publish wallet history with retry", null, ex));
+                    (ex, timespan) => _log.Error(ex, "Publish wallet history with retry"));
 
             _clientRetryPolicy = Policy
                 .Handle<Exception>(ex => !(ex is PayHistoryApiException))
                 .WaitAndRetryAsync(
                     _retryPolicySettings.DefaultAttempts,
                     attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-                    (ex, timespan) => _log.WriteError("Connecting to history service with retry", null, ex));
+                    (ex, timespan) => _log.Error(ex, "Connecting to history service with retry"));
         }
 
         public async Task<string> PublishCashInAsync(IWalletHistoryCommand cmd)

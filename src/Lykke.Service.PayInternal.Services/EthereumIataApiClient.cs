@@ -6,6 +6,7 @@ using AutoMapper;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.EthereumCore.Client;
@@ -42,7 +43,7 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IAssetsLocalCache assetsLocalCache, 
             [NotNull] IAssetsService assetsService,
             [NotNull] ILykkeAssetsResolver lykkeAssetsResolver, 
-            [NotNull] ILog log, 
+            [NotNull] ILogFactory logFactory, 
             [NotNull] RetryPolicySettings retryPolicySettings)
         {
             _ethereumServiceClient = ethereumServiceClient ?? throw new ArgumentNullException(nameof(ethereumServiceClient));
@@ -51,7 +52,7 @@ namespace Lykke.Service.PayInternal.Services
             _assetsService = assetsService ?? throw new ArgumentNullException(nameof(assetsService));
             _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
             _retryPolicySettings = retryPolicySettings ?? throw new ArgumentNullException(nameof(retryPolicySettings));
-            _log = log.CreateComponentScope(nameof(EthereumIataApiClient)) ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
             _retryPolicy = Policy
                 .HandleResult<object>(r =>
                 {
@@ -65,7 +66,7 @@ namespace Lykke.Service.PayInternal.Services
                 .WaitAndRetryAsync(
                     _retryPolicySettings.DefaultAttempts,
                     attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-                    (ex, timespan) => _log.WriteError("Connecting ethereum core with retry", ex));
+                    (ex, timespan) => _log.Error(message: "Connecting ethereum core with retry", context: ex));
         }
 
         public async Task<BlockchainTransferResult> TransferAsync(BlockchainTransferCommand transfer)
@@ -102,7 +103,7 @@ namespace Lykke.Service.PayInternal.Services
                 var operation = response as OperationIdResponse;
 
                 if (ex != null)
-                    _log.WriteWarning(nameof(TransferAsync), transferAmount, ex.Error?.ToJson());
+                    _log.Warning(ex.Error?.Message);
 
                 if (ex == null && operation == null)
                     throw new UnrecognizedApiResponse(response?.GetType().FullName ?? "Response object is null");
@@ -133,8 +134,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (response is ApiException ex)
             {
-                _log.WriteWarning(nameof(CreateAddressAsync), "New erc20 address generation",
-                    ex.Error?.Message);
+                _log.Warning("New erc20 address generation", context: ex.ToJson());
 
                 throw new WalletAddressAllocationException(BlockchainType.EthereumIata);
             }
@@ -154,8 +154,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (response is ApiException ex)
             {
-                _log.WriteWarning(nameof(ValidateAddressAsync), "EthereumIata address validation",
-                    ex.Error?.Message);
+                _log.Warning("EthereumIata address validation", context: ex.ToJson());
 
                 throw new WalletAddressValidationException(BlockchainType.EthereumIata, address);
             }
@@ -177,11 +176,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (response is ApiException ex)
             {
-                _log.WriteError(nameof(GetBalancesAsync), new
-                {
-                    ex.Error.Message,
-                    ex.Error.Code
-                });
+                _log.Error(message: ex.Error?.Message, context: ex.ToJson());
 
                 throw new WalletAddressBalanceException(BlockchainType.EthereumIata, address);
             }
@@ -226,12 +221,12 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (ValidationException e)
             {
-                _log.WriteError(nameof(InvokeTransfer), new
+                _log.Error(e, new
                 {
                     e.Details,
                     e.Rule,
                     e.Target
-                }, e);
+                });
 
                 response = new ApiException(new ApiError(ExceptionType.WrongParams, e.Message));
             }

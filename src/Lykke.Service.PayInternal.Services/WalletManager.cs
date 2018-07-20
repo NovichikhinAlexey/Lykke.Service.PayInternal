@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
@@ -37,7 +38,7 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IBlockchainClientProvider blockchainClientProvider,
             [NotNull] ITransactionsService transactionsService,
             [NotNull] IAssetSettingsService assetSettingsService,
-            [NotNull] ILog log)
+            [NotNull] ILogFactory logFactory)
         {
             _virtualWalletService = virtualWalletService ?? throw new ArgumentNullException(nameof(virtualWalletService));
             _walletAllocationSettings = walletAllocationSettings ?? throw new ArgumentNullException(nameof(walletAllocationSettings));
@@ -46,7 +47,7 @@ namespace Lykke.Service.PayInternal.Services
             _blockchainClientProvider = blockchainClientProvider ?? throw new ArgumentNullException(nameof(blockchainClientProvider));
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
             _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
         }
 
         public async Task<IVirtualWallet> CreateAsync(string merchantId, DateTime dueDate, string assetId = null)
@@ -58,8 +59,7 @@ namespace Lykke.Service.PayInternal.Services
                 wallet = await AddAssetAsync(wallet.MerchantId, wallet.Id, assetId);
             }
 
-            await _log.WriteInfoAsync(nameof(WalletManager), nameof(CreateAsync), wallet.ToJson(),
-                "New virtual wallet created");
+            _log.Info("New virtual wallet created", wallet.ToJson());
 
             return wallet;
         }

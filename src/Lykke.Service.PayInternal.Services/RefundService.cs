@@ -5,13 +5,14 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common;
 using Common.Log;
+using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -26,13 +27,13 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ILog _log;
 
         public RefundService(
-            IPaymentRequestService paymentRequestService, 
-            ITransactionsService transactionsService,
-            ITransferService transferService,
+            [NotNull] IPaymentRequestService paymentRequestService,
+            [NotNull] ITransactionsService transactionsService,
+            [NotNull] ITransferService transferService,
             TimeSpan refundExpirationPeriod,
-            ITransactionPublisher transactionPublisher,
-            ILog log, 
-            IBlockchainAddressValidator blockchainAddressValidator)
+            [NotNull] ITransactionPublisher transactionPublisher,
+            [NotNull] ILogFactory logFactory,
+            [NotNull] IBlockchainAddressValidator blockchainAddressValidator)
         {
             _paymentRequestService =
                 paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
@@ -41,7 +42,7 @@ namespace Lykke.Service.PayInternal.Services
             _refundExpirationPeriod = refundExpirationPeriod;
             _transactionPublisher =
                 transactionPublisher ?? throw new ArgumentNullException(nameof(transactionPublisher));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
             _blockchainAddressValidator = blockchainAddressValidator ??
                                           throw new ArgumentNullException(nameof(blockchainAddressValidator));
         }
@@ -104,8 +105,7 @@ namespace Lykke.Service.PayInternal.Services
                 {
                     if (!string.IsNullOrEmpty(transferResultTransaction.Error))
                     {
-                        await _log.WriteWarningAsync(nameof(RefundService), nameof(ExecuteAsync),
-                            transferResultTransaction.ToJson(), "Transaction failed");
+                        _log.Warning("Transaction failed", context: transferResultTransaction.ToJson());
 
                         continue;
                     }
@@ -144,20 +144,20 @@ namespace Lykke.Service.PayInternal.Services
                 throw;
             }
 
-            return await PrepareRefundResult(paymentRequest, transferResult, refundDueDate);
+            return PrepareRefundResult(paymentRequest, transferResult, refundDueDate);
         }
 
-        private async Task<RefundResult> PrepareRefundResult(IPaymentRequest paymentRequest,
+        private RefundResult PrepareRefundResult(IPaymentRequest paymentRequest,
             TransferResult transferResult, DateTime refundDueDate)
         {
             var assetIds = transferResult.Transactions.Unique(x => x.AssetId).ToList();
 
             if (assetIds.MoreThanOne())
-                await _log.WriteWarningAsync(nameof(PaymentRequestService), nameof(PrepareRefundResult), new
+                _log.Warning("Multiple assets are not expected", context: new
                 {
                     PaymentResuest = paymentRequest,
                     RefundTransferResult = transferResult
-                }.ToJson(), "Multiple assets are not expected");
+                });
 
             return new RefundResult
             {

@@ -10,7 +10,7 @@ namespace Lykke.Service.PayInternal.Client.Exceptions
     public class ErrorResponseException<T> : Exception
     {
         /// <summary>
-        /// Initializes a new instance of <see cref="ErrorResponseException"/> with error message.
+        /// Initializes a new instance of <see cref="ErrorResponseException{T}"/> with error message.
         /// </summary>
         /// <param name="message">The error message</param>
         public ErrorResponseException(string message)
@@ -19,7 +19,7 @@ namespace Lykke.Service.PayInternal.Client.Exceptions
         }
 
         /// <summary>
-        /// Initializes a new instance of <see cref="ErrorResponseException"/> with response error details and API excepiton.
+        /// Initializes a new instance of <see cref="ErrorResponseException{T}"/> with response error details and API excepiton.
         /// </summary>
         /// <param name="error">The response error details</param>
         /// <param name="inner">The exception occurred during calling service API.</param>

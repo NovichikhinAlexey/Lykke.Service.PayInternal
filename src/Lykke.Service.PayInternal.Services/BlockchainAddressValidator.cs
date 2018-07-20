@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
-using Common;
 using Common.Log;
+using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -12,10 +13,12 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IBlockchainClientProvider _blockchainClientProvider;
         private readonly ILog _log;
 
-        public BlockchainAddressValidator(IBlockchainClientProvider blockchainClientProvider, ILog log)
+        public BlockchainAddressValidator(
+            [NotNull] IBlockchainClientProvider blockchainClientProvider, 
+            [NotNull] ILogFactory logFactory)
         {
             _blockchainClientProvider = blockchainClientProvider;
-            _log = log;
+            _log = logFactory.CreateLog(this);
         }
 
         public async Task<bool> Execute(string address, BlockchainType blockchain)
@@ -26,22 +29,19 @@ namespace Lykke.Service.PayInternal.Services
             {
                 return await blockchainClient.ValidateAddressAsync(address);
             }
-            catch (WalletAddressValidationException validationEx)
+            catch (WalletAddressValidationException e)
             {
-                await _log.WriteErrorAsync(nameof(BlockchainAddressValidator), nameof(Execute), new
+                _log.Error(e, new
                 {
-                    Blockchain = validationEx.Blockchain.ToString(),
-                    validationEx.Address
-                }.ToJson(), validationEx);
+                    Blockchain = e.Blockchain.ToString(),
+                    e.Address
+                });
 
                 throw;
             }
-            catch (UnrecognizedApiResponse responseEx)
+            catch (UnrecognizedApiResponse e)
             {
-                await _log.WriteErrorAsync(nameof(BlockchainAddressValidator), nameof(Execute), new
-                {
-                    responseEx.ResponseType
-                }.ToJson(), responseEx);
+                _log.Error(e, new {e.ResponseType});
 
                 throw;
             }

@@ -5,6 +5,8 @@ using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Common.Log;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Exchange;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -22,11 +24,11 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly ILog _log;
 
         public ExchangeController(
-            [NotNull] ILog log, 
+            [NotNull] ILogFactory logFactory, 
             [NotNull] IExchangeService exchangeService)
         {
             _exchangeService = exchangeService ?? throw new ArgumentNullException(nameof(exchangeService));
-            _log = log.CreateComponentScope(nameof(ExchangeController)) ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
         }
 
         /// <summary>
@@ -52,72 +54,72 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetNetworkNotDefinedException e)
             {
-                _log.WriteError(nameof(Execute), new {e.AssetId}, e);
+                _log.Error(e, new {e.AssetId});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (ExchangeOperationNotSupportedException e)
             {
-                _log.WriteError(nameof(Execute), request, e);
+                _log.Error(e, request);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (InvalidOperationException e)
             {
-                _log.WriteError(nameof(Execute), request, e);
+                _log.Error(e, request);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (AssetPairUnknownException e)
             {
-                _log.WriteError(nameof(Execute), new
+                _log.Error(e, new
                 {
                     e.BaseAssetId,
                     e.QuotingAssetId
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (InsufficientFundsException e)
             {
-                _log.WriteError(nameof(Execute), new
+                _log.Error(e, new
                 {
                     e.WalletAddress,
                     e.AssetId
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (ExchangeOperationFailedException e)
             {
-                _log.WriteError(nameof(Execute), new {errors = e.TransferErrors}, e);
+                _log.Error(e, new {errors = e.TransferErrors});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (ExchangeRateChangedException e)
             {
-                _log.WriteError(nameof(Execute), new
+                _log.Error(e, new
                 {
                     e.CurrentRate,
                     request.ExpectedRate
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (MultipleDefaultMerchantWalletsException e)
             {
-                _log.WriteError(nameof(Execute), new
+                _log.Error(e, new
                 {
                     e.AssetId,
                     e.MerchantId,
                     e.PaymentDirection
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (DefaultMerchantWalletNotFoundException e)
             {
-                _log.WriteError(nameof(Execute), new
+                _log.Error(e, new
                 {
                     e.AssetId,
                     e.MerchantId,
@@ -128,11 +130,11 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MerchantWalletOwnershipException e)
             {
-                _log.WriteError(nameof(Execute), new
+                _log.Error(e, new
                 {
                     e.MerchantId,
                     e.WalletAddress
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
@@ -161,40 +163,40 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidOperationException e)
             {
-                _log.WriteError(nameof(Execute), request, e);
+                _log.Error(e, request);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (AssetPairUnknownException e)
             {
-                _log.WriteError(nameof(Execute), new
+                _log.Error(e, new
                 {
                     e.BaseAssetId,
                     e.QuotingAssetId
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (ExchangeOperationNotSupportedException e)
             {
-                _log.WriteError(nameof(PreExchange), request, e);
+                _log.Error(e, request);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (MultipleDefaultMerchantWalletsException e)
             {
-                _log.WriteError(nameof(PreExchange), new
+                _log.Error(e, new
                 {
                     e.AssetId,
                     e.MerchantId,
                     e.PaymentDirection
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (DefaultMerchantWalletNotFoundException e)
             {
-                _log.WriteError(nameof(PreExchange), new
+                _log.Error(e, new
                 {
                     e.AssetId,
                     e.MerchantId,
@@ -205,11 +207,11 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InsufficientFundsException e)
             {
-                _log.WriteError(nameof(PreExchange), new
+                _log.Error(e, new
                 {
                     e.WalletAddress,
                     e.AssetId
-                }, e);
+                });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
