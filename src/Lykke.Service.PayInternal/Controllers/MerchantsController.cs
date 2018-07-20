@@ -144,7 +144,7 @@ namespace Lykke.Service.PayInternal.Controllers
             catch (Exception exception) when (exception is DuplicateMerchantNameException ||
                                               exception is DuplicateMerchantApiKeyException)
             {
-                _log.Warning(exception.Message, context: request);
+                _log.Warning(exception.Message, context: request.ToJson());
 
                 return BadRequest(ErrorResponse.Create(exception.Message));
             }
@@ -184,7 +184,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MerchantNotFoundException exception)
             {
-                _log.Warning(exception.Message, context: request);
+                _log.Warning(exception.Message, context: request.ToJson());
 
                 return NotFound(ErrorResponse.Create(exception.Message));
             }
@@ -234,7 +234,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MerchantNotFoundException e)
             {
-                _log.Warning(e.Message, context: new {MerchantId = merchantId});
+                _log.Warning(e.Message, context: $"MerchantId = {merchantId}");
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }

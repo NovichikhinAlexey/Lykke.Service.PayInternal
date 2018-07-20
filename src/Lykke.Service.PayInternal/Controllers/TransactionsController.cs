@@ -2,6 +2,7 @@
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Common.Log;
@@ -57,7 +58,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 await _transactionsManager.CreateTransactionAsync(command);
 
-                _log.Info("Create new transaction command", command);
+                _log.Info("Create new transaction command", command.ToJson());
 
                 return Ok();
             }
@@ -106,7 +107,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 await _transactionsManager.UpdateTransactionAsync(command);
 
-                _log.Info("Update transaction command", command);
+                _log.Info("Update transaction command", command.ToJson());
 
                 return Ok();
             }

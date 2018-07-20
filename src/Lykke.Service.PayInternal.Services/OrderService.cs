@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
@@ -104,7 +105,7 @@ namespace Lykke.Service.PayInternal.Services
 
             IOrder createdOrder = await _orderRepository.InsertAsync(order);
 
-            _log.Info("Order created", order);
+            _log.Info("Order created", order.ToJson());
 
             return createdOrder;
         }

@@ -134,7 +134,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (response is ApiException ex)
             {
-                _log.Warning("New erc20 address generation", context: ex);
+                _log.Warning("New erc20 address generation", context: ex.ToJson());
 
                 throw new WalletAddressAllocationException(BlockchainType.EthereumIata);
             }
@@ -154,7 +154,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (response is ApiException ex)
             {
-                _log.Warning("EthereumIata address validation", context: ex);
+                _log.Warning("EthereumIata address validation", context: ex.ToJson());
 
                 throw new WalletAddressValidationException(BlockchainType.EthereumIata, address);
             }
@@ -176,7 +176,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (response is ApiException ex)
             {
-                _log.Error(message: ex.Error?.Message, context: ex);
+                _log.Error(message: ex.Error?.Message, context: ex.ToJson());
 
                 throw new WalletAddressBalanceException(BlockchainType.EthereumIata, address);
             }

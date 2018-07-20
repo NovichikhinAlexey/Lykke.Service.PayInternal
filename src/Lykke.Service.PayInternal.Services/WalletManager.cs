@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
@@ -58,7 +59,7 @@ namespace Lykke.Service.PayInternal.Services
                 wallet = await AddAssetAsync(wallet.MerchantId, wallet.Id, assetId);
             }
 
-            _log.Info("New virtual wallet created", wallet);
+            _log.Info("New virtual wallet created", wallet.ToJson());
 
             return wallet;
         }

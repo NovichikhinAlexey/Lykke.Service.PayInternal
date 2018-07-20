@@ -1,4 +1,5 @@
 ﻿using System;
+using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
@@ -12,7 +13,7 @@ namespace Lykke.Service.PayInternal.Core
             [CanBeNull] Exception exception = null,
             [CanBeNull] object context = null)
         {
-            log.Error(exception, null, context);
+            log.Error(exception, null, $"details: {context?.ToJson()}");
         }
 
         public static void Error(
@@ -21,7 +22,7 @@ namespace Lykke.Service.PayInternal.Core
             [CanBeNull] Exception exception = null,
             [CanBeNull] object context = null)
         {
-            log.Error(process, exception, null, context);
+            log.Error(process, exception, null, $"details: {context?.ToJson()}");
         }
     }
 }
