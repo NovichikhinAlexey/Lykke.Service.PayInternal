@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common;
+using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -22,17 +24,20 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransferRepository _transferRepository;
         private readonly IAssetSettingsService _assetSettingsService;
         private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
+        private readonly ILog _log;
 
         public TransferService(
             [NotNull] ITransferRepository transferRepository,
             [NotNull] IBlockchainClientProvider blockchainClientProvider,
             [NotNull] IAssetSettingsService assetSettingsService, 
-            [NotNull] ILykkeAssetsResolver lykkeAssetsResolver)
+            [NotNull] ILykkeAssetsResolver lykkeAssetsResolver,
+            ILogFactory logFactory)
         {
             _transferRepository = transferRepository ?? throw new ArgumentNullException(nameof(transferRepository));
             _blockchainClientProvider = blockchainClientProvider ?? throw new ArgumentNullException(nameof(blockchainClientProvider));
             _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
             _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
+            _log = logFactory.CreateLog(this);
         }
 
         public async Task<TransferResult> ExecuteAsync(TransferCommand transferCommand)
@@ -50,7 +55,7 @@ namespace Lykke.Service.PayInternal.Services
             foreach (var transferCommandAmount in transferCommand.Amounts)
             {
                 decimal balance = await blockchainClient.GetBalanceAsync(transferCommandAmount.Source, lykkeAssetId);
-
+                _log.Info($"GetBalanceAsync - blockchainClient: {blockchainClient.GetType().FullName}, balance: {balance}, transferCommand: {transferCommand.ToJson()}");
                 if (transferCommandAmount.Amount == null)
                 {
                     if (balance > 0)
