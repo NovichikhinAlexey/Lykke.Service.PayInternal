@@ -28,5 +28,10 @@ namespace Lykke.Service.PayInternal.Client.Models.Asset
         /// Get or set if asset is available as settlement asset
         /// </summary>
         public bool SettlementAvailable { get; set; }
+
+        /// <summary>
+        /// Get or set if payments in this asset will be settled automatically
+        /// </summary>
+        public bool AutoSettle { get; set; }
     }
 }

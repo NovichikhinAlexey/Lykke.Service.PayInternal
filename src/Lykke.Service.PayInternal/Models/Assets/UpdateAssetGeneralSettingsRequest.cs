@@ -15,6 +15,9 @@ namespace Lykke.Service.PayInternal.Models.Assets
         public bool SettlementAvailable { get; set; }
 
         [Required]
+        public bool AutoSettle { get; set; }
+
+        [Required]
         [EnumDataType(typeof(BlockchainType), ErrorMessage = "Invalid value, possible values are: None, Bitcoin, Ethereum")]
         public BlockchainType Network { get; set; }
     }

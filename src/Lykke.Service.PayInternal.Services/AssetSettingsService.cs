@@ -62,7 +62,7 @@ namespace Lykke.Service.PayInternal.Services
             return result;
         }
 
-        public async Task<BlockchainType> GetNetworkAsync(string assetId)
+        public async Task<IAssetGeneralSettings> GetGeneralAsync(string assetId)
         {
             string assetIdAdjusted = assetId == LykkeConstants.SatoshiAsset ? LykkeConstants.BitcoinAsset : assetId;
 
@@ -70,7 +70,12 @@ namespace Lykke.Service.PayInternal.Services
                 ? (await _assetsLocalCache.GetAssetByIdAsync(assetIdAdjusted)).DisplayId
                 : assetIdAdjusted;
 
-            IAssetGeneralSettings assetAvailability = await _assetGeneralSettingsRepository.GetAsync(assetDisplayId);
+            return await _assetGeneralSettingsRepository.GetAsync(assetDisplayId);
+        }
+
+        public async Task<BlockchainType> GetNetworkAsync(string assetId)
+        {
+            IAssetGeneralSettings assetAvailability = await GetGeneralAsync(assetId);
 
             return assetAvailability?.Network ?? throw new AssetNetworkNotDefinedException(assetId);
         }

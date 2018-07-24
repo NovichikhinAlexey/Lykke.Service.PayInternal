@@ -14,6 +14,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
     {
         private bool _paymentAvailable;
         private bool _settlementAvailable;
+        private bool? _autoSettle;
         private BlockchainType _network;
 
         public string AssetId { get; set; }
@@ -37,6 +38,17 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Asset
             {
                 _settlementAvailable = value;
                 MarkValueTypePropertyAsDirty(nameof(SettlementAvailable));
+            }
+        }
+
+        public bool AutoSettle
+        {
+            get => _autoSettle ?? false;
+
+            set
+            {
+                _autoSettle = value;
+                MarkValueTypePropertyAsDirty(nameof(AutoSettle));
             }
         }
 
