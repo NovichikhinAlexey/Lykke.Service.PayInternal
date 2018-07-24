@@ -1,5 +1,11 @@
 {
 	"PayInternalService": {
+        "AutoSettle": {
+            "AssetsToMakePartialAutoSettle": ${PayInternalService-AutoSettle-AssetsToMakePartialAutoSettle}:[JsonArray,Tag],
+            "AssetsToSettleToMerchantWallet": ${PayInternalService-AutoSettle-AssetsToMakePartialAutoSettle}:[JsonArray,Tag],
+            "BitcoinAutoSettleWalletAddress": "${PayInternalService-AutoSettle-BitcoinAutoSettleWalletAddress}:[Tag]",
+            "EthereumAutoSettleWalletAddress": "${PayInternalService-AutoSettle-EthereumAutoSettleWalletAddress}:[Tag]"
+        },
 		"Db": {
 			"LogsConnString": "${LogsConnString}:[AzureTableStorage]",
 			"MerchantWalletConnString": "${MerchantConnString}:[AzureTableStorage]",
@@ -84,18 +90,11 @@
 			"SettlementAttempts": 10
 		}
 	},
-	"AssetsMap": {
-		"IATAUSDT2": "273919cb-f656-4686-82da-774b889d8fee",
-		"Values": {
-			"PKT": "a61a3cad-bd63-422a-82a6-3464234856b0",
-			"IATAEURT2": "53209f23-6503-4001-8c26-653653b79e05",
-			"DEB": "dbc17091-442d-4abb-8022-655efc12077e"
-		},
-		"InvoiceCreationPairs": {
-			"IATAUSDT2": "IATAUSDT2",
-			"IATAEURT2": "IATAEURT2"
-		}
-	},
+	"AssetsMap": 
+    {
+        "Values": ${LykkePay-AssetsMap-Values}:[Json],
+        "InvoiceCreationPairs": ${LykkePay-AssetsMap-InvoiceCreationPairs}:[Json]
+    },
 	"AssetsServiceClient": {
 		"ServiceUrl": "${AssetsServiceUrl}",
 		"ExpirationPeriod": "${AssetsServiceExpirationPeriod}"
