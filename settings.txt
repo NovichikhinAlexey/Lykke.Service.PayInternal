@@ -2,7 +2,7 @@
 	"PayInternalService": {
         "AutoSettle": {
             "AssetsToMakePartialAutoSettle": ${PayInternalService-AutoSettle-AssetsToMakePartialAutoSettle}:[JsonArray,Tag],
-            "AssetsToSettleToMerchantWallet": ${PayInternalService-AutoSettle-AssetsToMakePartialAutoSettle}:[JsonArray,Tag],
+            "AssetsToSettleToMerchantWallet": ${PayInternalService-AutoSettle-AssetsToSettleToMerchantWallet}:[JsonArray,Tag],
             "BitcoinAutoSettleWalletAddress": "${PayInternalService-AutoSettle-BitcoinAutoSettleWalletAddress}:[Tag]",
             "EthereumAutoSettleWalletAddress": "${PayInternalService-AutoSettle-EthereumAutoSettleWalletAddress}:[Tag]"
         },
