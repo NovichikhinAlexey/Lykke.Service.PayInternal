@@ -38,6 +38,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransactionPublisher _transactionPublisher;
         private readonly IWalletBalanceValidator _walletBalanceValidator;
         private readonly RetryPolicySettings _retryPolicySettings;
+        private readonly IAutoSettleSettingsResolver _autoSettleSettingsResolver;
         private readonly IAssetSettingsService _assetSettingsService;
         private readonly ILog _log;
 
@@ -56,7 +57,8 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] ITransactionPublisher transactionPublisher, 
             [NotNull] IDistributedLocksService checkoutLocksService, 
             [NotNull] IWalletBalanceValidator walletBalanceValidator, 
-            [NotNull] RetryPolicySettings retryPolicySettings, 
+            [NotNull] RetryPolicySettings retryPolicySettings,
+            [NotNull] IAutoSettleSettingsResolver autoSettleSettingsResolver,
             [NotNull] IAssetSettingsService assetSettingsService)
         {
             _paymentRequestRepository = paymentRequestRepository ?? throw new ArgumentNullException(nameof(paymentRequestRepository));
@@ -74,6 +76,7 @@ namespace Lykke.Service.PayInternal.Services
             _checkoutLocksService = checkoutLocksService ?? throw new ArgumentNullException(nameof(checkoutLocksService));
             _walletBalanceValidator = walletBalanceValidator ?? throw new ArgumentNullException(nameof(walletBalanceValidator));
             _retryPolicySettings = retryPolicySettings ?? throw new ArgumentNullException(nameof(retryPolicySettings));
+            _autoSettleSettingsResolver = autoSettleSettingsResolver ?? throw new ArgumentNullException(nameof(autoSettleSettingsResolver));
             _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
         }
 
@@ -209,7 +212,13 @@ namespace Lykke.Service.PayInternal.Services
                 // Some flows assume we can get updates from blockchain multiple times for the same transaction
                 // which leads to the same payment request status 
                 if (paymentRequest.StatusValidForSettlement() && (assetSettings?.AutoSettle ?? false))
+                {
+                    if (paymentRequest.Status != PaymentRequestStatus.Confirmed
+                        && !_autoSettleSettingsResolver.AllowToMakePartialAutoSettle(paymentRequest.PaymentAssetId))
+                        return;
+
                     await SettleAsync(paymentRequest.MerchantId, paymentRequest.Id);
+                }
             }
         }
 
@@ -354,10 +363,24 @@ namespace Lykke.Service.PayInternal.Services
                 paymentRequest.WalletAddress,
                 paymentRequest.PaymentAssetId);
 
-            string destWalletAddress = (await _merchantWalletService.GetDefaultAsync(
+            string destWalletAddress = string.Empty;
+
+            // check asset to settle to merchant wallet
+            if (_autoSettleSettingsResolver.AllowToSettleToMerchantWallet(paymentRequest.PaymentAssetId))
+            {
+                destWalletAddress = (await _merchantWalletService.GetDefaultAsync(
                 paymentRequest.MerchantId,
                 paymentRequest.PaymentAssetId,
                 PaymentDirection.Incoming)).WalletAddress;
+            }
+            else
+            {
+                BlockchainType network = await _assetSettingsService.GetNetworkAsync(paymentRequest.PaymentAssetId);
+                destWalletAddress = _autoSettleSettingsResolver.GetAutoSettleWallet(network);
+
+                if (string.IsNullOrEmpty(destWalletAddress))
+                    throw new SettlementValidationException($"Destination wallet address to settle is empty for asset {paymentRequest.PaymentAssetId}");
+            }
 
             TransferResult transferResult = await Policy
                 .Handle<InsufficientFundsException>()
