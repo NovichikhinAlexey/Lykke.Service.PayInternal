@@ -15,8 +15,8 @@
 			"TransferConnString": "${MerchantConnString}:[AzureTableStorage,Tag]"
 		},
 		"LpMarkup": {
-			"Percent": ${PayInternalService-LpMarkup-Percent}:[Tag],
-			"Pips": ${PayInternalService-LpMarkup-Pips}:[Tag]
+			"Percent": ${PayInternalService-LpMarkup-Percent},
+			"Pips": ${PayInternalService-LpMarkup-Pips}
 		},
 		"Rabbit": {
 			"ConnectionString": "${GeneralRabbitMqConnectionString}:[RabbitMq,Tag]",
@@ -25,12 +25,12 @@
 			"TransactionUpdatesExchangeName": "${LykkePay-TransactionUpdatesExchangeName}:[Tag]",
 			"TansferRequestsExchangeName": "${LykkePay-TansferRequestsExchangeName}:[Tag]"
 		},
-		"ExpirationPeriods": ${PayInternalService-ExpirationPeriods}:[Json,Tag],
+		"ExpirationPeriods": ${PayInternalService-ExpirationPeriods}:[Json],
 		"JobPeriods": {
-			"PaymentRequestExpirationHandling": "${PayInternalService-PaymentRequestExpirationHandling}:[Tag]"
+			"PaymentRequestExpirationHandling": "${PayInternalService-PaymentRequestExpirationHandling}"
 		},
 		"DataEncriptionPassword": "${PayInternalService-DataEncriptionPassword}:[Tag]",
-		"TransactionConfirmationCount": ${PayInternalService-TransactionConfirmationCount}:[Tag],
+		"TransactionConfirmationCount": ${PayInternalService-TransactionConfirmationCount},
 		"Blockchain": {
 			"WalletAllocationPolicy": {
 				"Policies": ${PayInternalService-Blockchain-WalletAllocationPolicy-Policies}:[JsonArray,Tag]
@@ -39,10 +39,10 @@
 			"Bitcoin": ${PayInternalService-Blockchain-Bitcoin}:[Json,Tag]
 		},
 		"AssetPairsLocalStorage": {
-			"AssetPairs": ${PayInternalService-AssetPairsLocalStorage-AssetPairs}:[JsonArray,Tag]
+			"AssetPairs": ${PayInternalService-AssetPairsLocalStorage-AssetPairs}:[JsonArray]
 		},
 		"CacheSettings": {
-			"RedisConfiguration": "${RedisConfiguration}:[Tag]",
+			"RedisConfiguration": "${RedisConfiguration}",
 			"PaymentLocksCacheKeyPattern": "${PayInternalService-PaymentLocksCacheKeyPattern}:[Tag]",
 			"CheckoutLocksCacheKeyPattern": "${PayInternalService-CheckoutLocksCacheKeyPattern}:[Tag]"
 		},
@@ -50,8 +50,8 @@
 			"LogoSize": "256"
 		},
 		"RetryPolicy": {
-			"DefaultAttempts": ${PayInternalService-RetryPolicy-DefaultAttempts}:[Tag],
-			"SettlementAttempts": ${PayInternalService-RetryPolicy-SettlementAttempts}:[Tag]
+			"DefaultAttempts": ${PayInternalService-RetryPolicy-DefaultAttempts},
+			"SettlementAttempts": ${PayInternalService-RetryPolicy-SettlementAttempts}
 		}
 	},
 	"AssetsMap": 
@@ -60,18 +60,18 @@
         "InvoiceCreationPairs": ${LykkePay-AssetsMap-InvoiceCreationPairs}:[Json]
     },
 	"AssetsServiceClient": {
-		"ServiceUrl": "${AssetsServiceUrl}:[Tag]",
-		"ExpirationPeriod": "${AssetsServiceExpirationPeriod}:[Tag]"
+		"ServiceUrl": "${AssetsServiceUrl}",
+		"ExpirationPeriod": "${AssetsServiceExpirationPeriod}"
 	},
 	"BitCoinCore": {
 		"BitcoinCoreApiUrl": "${BitcoinApiServiceUrl}:[Tag]"
 	},
 	"EthereumServiceClient": {
-		"ServiceUrl": "${EthereumApiServiceUrl}:[Tag]",
-		"HotwalletAddress": "${EthereumApiHotwalletAddress}:[Tag]"
+		"ServiceUrl": "${EthereumApiServiceUrl}",
+		"HotwalletAddress": "${EthereumApiHotwalletAddress}"
 	},
 	"MarketProfileServiceClient": {
-		"ServiceUrl": "${MarketProfileServiceUrl}:[Tag]"
+		"ServiceUrl": "${MarketProfileServiceUrl}"
 	},
 	"NinjaServiceClient": {
 		"ServiceUrl": "${NinjaServiceUrl}:[Tag]"
