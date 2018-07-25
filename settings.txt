@@ -7,87 +7,51 @@
             "EthereumAutoSettleWalletAddress": "${PayInternalService-AutoSettle-EthereumAutoSettleWalletAddress}:[Tag]"
         },
 		"Db": {
-			"LogsConnString": "${LogsConnString}:[AzureTableStorage]",
-			"MerchantWalletConnString": "${MerchantConnString}:[AzureTableStorage]",
-			"MerchantOrderConnString": "${MerchantConnString}:[AzureTableStorage]",
-			"MerchantConnString": "${MerchantConnString}:[AzureTableStorage]",
-			"PaymentRequestConnString": "${MerchantConnString}:[AzureTableStorage]",
-			"TransferConnString": "${MerchantConnString}:[AzureTableStorage]"
+			"LogsConnString": "${LogsConnString}:[AzureTableStorage,Tag]",
+			"MerchantWalletConnString": "${MerchantConnString}:[AzureTableStorage,Tag]",
+			"MerchantOrderConnString": "${MerchantConnString}:[AzureTableStorage,Tag]",
+			"MerchantConnString": "${MerchantConnString}:[AzureTableStorage,Tag]",
+			"PaymentRequestConnString": "${MerchantConnString}:[AzureTableStorage,Tag]",
+			"TransferConnString": "${MerchantConnString}:[AzureTableStorage,Tag]"
 		},
 		"LpMarkup": {
-			"Percent": 1.5,
-			"Pips": 20
+			"Percent": ${PayInternalService-LpMarkup-Percent}:[Tag],
+			"Pips": ${PayInternalService-LpMarkup-Pips}:[Tag]
 		},
 		"Rabbit": {
-			"ConnectionString": "${GeneralRabbitMqConnectionString}:[RabbitMq]",
-			"WalletsExchangeName": "pay.wallets",
-			"PaymentRequestsExchangeName": "pay.paymentrequests",
-			"TransactionUpdatesExchangeName": "pay.transactionevents",
-			"TansferRequestsExchangeName": "pay.transferrequests"
+			"ConnectionString": "${GeneralRabbitMqConnectionString}:[RabbitMq,Tag]",
+			"WalletsExchangeName": "${LykkePay-WalletsExchangeName}:[Tag]",
+			"PaymentRequestsExchangeName": "${LykkePay-PaymentRequestsExchangeName}:[Tag]",
+			"TransactionUpdatesExchangeName": "${LykkePay-TransactionUpdatesExchangeName}:[Tag]",
+			"TansferRequestsExchangeName": "${LykkePay-TansferRequestsExchangeName}:[Tag]"
 		},
-		"ExpirationPeriods": {
-			"Order": {
-				"Primary": "00:02:00",
-				"Extended": "00:05:00"
-			},
-			"Refund": "1.00:00:00",
-			"WalletExtra": "1.00:00:00",
-			"AssetsCache": "1.00:00:00"
-		},
+		"ExpirationPeriods": ${PayInternalService-ExpirationPeriods}:[Json,Tag],
 		"JobPeriods": {
-			"PaymentRequestExpirationHandling": "00:01:00"
+			"PaymentRequestExpirationHandling": "${PayInternalService-PaymentRequestExpirationHandling}:[Tag]"
 		},
-		"DataEncriptionPassword": "DataEncriptionPassword",
-		"TransactionConfirmationCount": 3,
+		"DataEncriptionPassword": "${PayInternalService-DataEncriptionPassword}:[Tag]",
+		"TransactionConfirmationCount": ${PayInternalService-TransactionConfirmationCount}:[Tag],
 		"Blockchain": {
 			"WalletAllocationPolicy": {
-				"Policies": [{
-					"Blockchain": "Bitcoin",
-					"WalletAllocationPolicy": "New"
-				},{
-					"Blockchain": "Ethereum",
-					"WalletAllocationPolicy": "New"
-				}]
+				"Policies": ${PayInternalService-Blockchain-WalletAllocationPolicy-Policies}:[JsonArray,Tag]
 			},
-			"Ethereum": {
-				"ApiKey": "default",
-				"BlockchainExplorer": {
-					"TransactionUrl": "https://ropsten.etherscan.io/tx"
-				},
-				"ExchangeHotWalletAddress": "0xcce0bbf39f359e91d9692d7f25735462b961f3b2",
-				"CashoutHotWalletAddress": "0xd44df69a085309580c190b2348723a7d5ca1992e"
-			},
-			"Bitcoin": {
-				"Network": "TestNet",
-				"BlockchainExplorer": {
-					"TransactionUrl": "https://private-bcn-explorer-dev.lykkex.net/transaction"
-				},
-				"ExchangeHotWalletAddress": "",
-				"CashoutHotWalletAddress": ""
-			}
+			"Ethereum": ${PayInternalService-Blockchain-Ethereum}:[Json,Tag],
+			"Bitcoin": ${PayInternalService-Blockchain-Bitcoin}:[Json,Tag]
 		},
 		"AssetPairsLocalStorage": {
-			"AssetPairs": [{
-				"BaseAssetId": "IATAEURT2",
-				"QuotingAssetId": "IATAUSDT2",
-				"Accuracy": 3
-			},{
-				"BaseAssetId": "IATAUSDT2",
-				"QuotingAssetId": "IATAEURT2",
-				"Accuracy": 3
-			}]
+			"AssetPairs": ${PayInternalService-AssetPairsLocalStorage-AssetPairs}:[JsonArray,Tag]
 		},
 		"CacheSettings": {
-			"RedisConfiguration": "${RedisConfiguration}",
-			"PaymentLocksCacheKeyPattern": "PayInternal:paymentRequests:paymentLock:{0}",
-			"CheckoutLocksCacheKeyPattern": "PayInternal:paymentRequests:checkoutLock:{0}"
+			"RedisConfiguration": "${RedisConfiguration}:[Tag]",
+			"PaymentLocksCacheKeyPattern": "${PayInternalService-PaymentLocksCacheKeyPattern}:[Tag]",
+			"CheckoutLocksCacheKeyPattern": "${PayInternalService-CheckoutLocksCacheKeyPattern}:[Tag]"
 		},
 		"Merchant": {
 			"LogoSize": "256"
 		},
 		"RetryPolicy": {
-			"DefaultAttempts": 5,
-			"SettlementAttempts": 10
+			"DefaultAttempts": ${PayInternalService-RetryPolicy-DefaultAttempts}:[Tag],
+			"SettlementAttempts": ${PayInternalService-RetryPolicy-SettlementAttempts}:[Tag]
 		}
 	},
 	"AssetsMap": 
@@ -96,32 +60,32 @@
         "InvoiceCreationPairs": ${LykkePay-AssetsMap-InvoiceCreationPairs}:[Json]
     },
 	"AssetsServiceClient": {
-		"ServiceUrl": "${AssetsServiceUrl}",
-		"ExpirationPeriod": "${AssetsServiceExpirationPeriod}"
+		"ServiceUrl": "${AssetsServiceUrl}:[Tag]",
+		"ExpirationPeriod": "${AssetsServiceExpirationPeriod}:[Tag]"
 	},
 	"BitCoinCore": {
-		"BitcoinCoreApiUrl": "${BitcoinApiServiceUrl}"
+		"BitcoinCoreApiUrl": "${BitcoinApiServiceUrl}:[Tag]"
 	},
 	"EthereumServiceClient": {
-		"ServiceUrl": "${EthereumApiServiceUrl}",
-		"HotwalletAddress": "${EthereumApiHotwalletAddress}"
+		"ServiceUrl": "${EthereumApiServiceUrl}:[Tag]",
+		"HotwalletAddress": "${EthereumApiHotwalletAddress}:[Tag]"
 	},
 	"MarketProfileServiceClient": {
-		"ServiceUrl": "${MarketProfileServiceUrl}"
+		"ServiceUrl": "${MarketProfileServiceUrl}:[Tag]"
 	},
 	"NinjaServiceClient": {
-		"ServiceUrl": "${NinjaServiceUrl}"
+		"ServiceUrl": "${NinjaServiceUrl}:[Tag]"
 	},
 	"PayHistoryServiceClient": {
-		"ServiceUrl": "${PayHistoryServiceUrl}"
+		"ServiceUrl": "${PayHistoryServiceUrl}:[Tag]"
 	},
 	"PayHistoryServicePublisher": {
-		"ConnectionString": "${GeneralRabbitMqConnectionString}:[RabbitMq]",
-		"ExchangeName": "${PayHistoryExchangeName}"
+		"ConnectionString": "${GeneralRabbitMqConnectionString}:[RabbitMq,Tag]",
+		"ExchangeName": "${PayHistoryExchangeName}:[Tag]"
 	},
 	"PayInvoiceConfirmationPublisher": {
-		"ConnectionString": "${GeneralRabbitMqConnectionString}:[RabbitMq]",
-		"ExchangeName": "${PayInvoiceConfirmationExchangeName}"
+		"ConnectionString": "${GeneralRabbitMqConnectionString}:[RabbitMq,Tag]",
+		"ExchangeName": "${PayInvoiceConfirmationExchangeName}:[Tag]"
 	},
 	"SlackNotifications": {
 		"AzureQueue": {
