@@ -7,6 +7,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     [UsedImplicitly]
     public class PayInternalSettings
     {
+        public AutoSettleSettings AutoSettle { get; set; }
         public DbSettings Db { get; set; }
         public RabbitMqSettings Rabbit { get; set; }
         public ExpirationPeriodsSettings ExpirationPeriods { get; set; }
@@ -18,6 +19,14 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public AssetPairsLocalStorageSettings AssetPairsLocalStorage { get; set; }
         public CacheSettings CacheSettings { get; set; }
         public RetryPolicySettings RetryPolicy { get; set; }
+    }
+
+    public class AutoSettleSettings
+    {
+        public IReadOnlyList<string> AssetsToMakePartialAutoSettle { get; set; }
+        public IReadOnlyList<string> AssetsToSettleToMerchantWallet { get; set; }
+        public string BitcoinAutoSettleWalletAddress { get; set; }
+        public string EthereumAutoSettleWalletAddress { get; set; }
     }
 
     public class MerchantSettings

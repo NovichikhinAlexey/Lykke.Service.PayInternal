@@ -133,6 +133,10 @@ namespace Lykke.Service.PayInternal.Modules
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain))
                 .As<IBcnSettingsResolver>();
 
+            builder.RegisterType<AutoSettleSettingsResolver>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.AutoSettle))
+                .As<IAutoSettleSettingsResolver>();
+
             builder.RegisterType<FileService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Merchant))
                 .As<IFileService>();
