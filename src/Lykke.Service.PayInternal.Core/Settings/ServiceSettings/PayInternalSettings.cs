@@ -23,8 +23,8 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
 
     public class AutoSettleSettings
     {
-        public IList<string> AssetsToMakePartialAutoSettle { get; set; }
-        public IList<string> AssetsToSettleToMerchantWallet { get; set; }
+        public IReadOnlyList<string> AssetsToMakePartialAutoSettle { get; set; }
+        public IReadOnlyList<string> AssetsToSettleToMerchantWallet { get; set; }
         public string BitcoinAutoSettleWalletAddress { get; set; }
         public string EthereumAutoSettleWalletAddress { get; set; }
     }

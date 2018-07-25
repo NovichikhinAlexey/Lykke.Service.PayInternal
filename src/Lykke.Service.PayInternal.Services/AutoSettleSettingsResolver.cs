@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Common;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
