@@ -43,7 +43,7 @@ namespace Lykke.Service.PayInternal.Client.Exceptions
 
         public override string ToString()
         {            
-            return $"Error is {Error.ToJson()}\r\n{base.ToString()}";
+            return $"Error is {Error?.ToJson()}\r\n{base.ToString()}";
         }
     }
 }
