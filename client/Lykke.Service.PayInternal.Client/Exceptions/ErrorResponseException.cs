@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using Common;
 using Refit;
 
 namespace Lykke.Service.PayInternal.Client.Exceptions
@@ -39,5 +40,10 @@ namespace Lykke.Service.PayInternal.Client.Exceptions
         /// Gets a http response status code.
         /// </summary>
         public HttpStatusCode StatusCode { get; }
+
+        public override string ToString()
+        {            
+            return $"Error is {Error.ToJson()}\r\n{base.ToString()}";
+        }
     }
 }
