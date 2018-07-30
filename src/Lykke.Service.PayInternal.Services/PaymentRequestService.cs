@@ -185,6 +185,7 @@ namespace Lykke.Service.PayInternal.Services
                 statusInfo ?? await _paymentRequestStatusResolver.GetStatus(walletAddress);
 
             PaymentRequestStatus previousStatus = paymentRequest.Status;
+            PaymentRequestProcessingError previousProcessingError = paymentRequest.ProcessingError;
 
             paymentRequest.Status = newStatusInfo.Status;
             paymentRequest.PaidDate = newStatusInfo.Date;
@@ -201,7 +202,9 @@ namespace Lykke.Service.PayInternal.Services
 
             PaymentRequestRefund refundInfo = await GetRefundInfoAsync(paymentRequest.WalletAddress);
 
-            if (paymentRequest.Status != previousStatus)
+            if (paymentRequest.Status != previousStatus
+                || (paymentRequest.Status == PaymentRequestStatus.Error 
+                    && paymentRequest.ProcessingError != previousProcessingError))
             {
                 await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
 
