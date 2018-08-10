@@ -243,6 +243,9 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (IPaymentRequest paymentRequest in eligibleForTransition)
             {
+                _log.Info(
+                    $"Payment request with id {paymentRequest.Id} and merchant id {paymentRequest.MerchantId} is about to be moved to Past Due");
+
                 await UpdateStatusAsync(paymentRequest.WalletAddress, PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.PaymentExpired));
 
                 _log.Info($"Payment request with id {paymentRequest.Id} was moved to Past Due");
@@ -366,7 +369,7 @@ namespace Lykke.Service.PayInternal.Services
                 paymentRequest.WalletAddress,
                 paymentRequest.PaymentAssetId);
 
-            string destWalletAddress = string.Empty;
+            string destWalletAddress;
 
             // check asset to settle to merchant wallet
             if (_autoSettleSettingsResolver.AllowToSettleToMerchantWallet(paymentRequest.PaymentAssetId))
@@ -374,16 +377,17 @@ namespace Lykke.Service.PayInternal.Services
                 destWalletAddress = (await _merchantWalletService.GetDefaultAsync(
                 paymentRequest.MerchantId,
                 paymentRequest.PaymentAssetId,
-                PaymentDirection.Incoming)).WalletAddress;
+                PaymentDirection.Incoming))?.WalletAddress;
             }
             else
             {
                 BlockchainType network = await _assetSettingsService.GetNetworkAsync(paymentRequest.PaymentAssetId);
                 destWalletAddress = _autoSettleSettingsResolver.GetAutoSettleWallet(network);
-
-                if (string.IsNullOrEmpty(destWalletAddress))
-                    throw new SettlementValidationException($"Destination wallet address to settle is empty for asset {paymentRequest.PaymentAssetId}");
             }
+
+            if (string.IsNullOrEmpty(destWalletAddress))
+                throw new SettlementValidationException(
+                    $"Destination wallet address is empty. Details: {new {paymentRequest.MerchantId, paymentRequest.PaymentAssetId}.ToJson()}");
 
             TransferResult transferResult = await Policy
                 .Handle<InsufficientFundsException>()
