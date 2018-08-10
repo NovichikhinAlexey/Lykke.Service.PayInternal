@@ -2,7 +2,9 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Common;
+using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Cashout;
@@ -13,6 +15,8 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Context;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
+using Polly;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -25,6 +29,8 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IMerchantWalletService _merchantWalletService;
         private readonly IWalletBalanceValidator _walletBalanceValidator;
         private readonly IWalletHistoryService _walletHistoryService;
+        private readonly Policy _retryPolicy;
+        private readonly ILog _log;
 
         public CashoutService(
             [NotNull] IAssetSettingsService assetSettingsService, 
@@ -33,7 +39,9 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] ITransactionsService transactionsService, 
             [NotNull] IMerchantWalletService merchantWalletService, 
             [NotNull] IWalletBalanceValidator walletBalanceValidator, 
-            [NotNull] IWalletHistoryService walletHistoryService)
+            [NotNull] IWalletHistoryService walletHistoryService,
+            [NotNull] RetryPolicySettings retryPolicySettings,
+            [NotNull] ILogFactory logFactory)
         {
             _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
             _bcnSettingsResolver = bcnSettingsResolver ?? throw new ArgumentNullException(nameof(bcnSettingsResolver));
@@ -42,6 +50,15 @@ namespace Lykke.Service.PayInternal.Services
             _merchantWalletService = merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
             _walletBalanceValidator = walletBalanceValidator ?? throw new ArgumentNullException(nameof(walletBalanceValidator));
             _walletHistoryService = walletHistoryService ?? throw new ArgumentNullException(nameof(walletHistoryService));
+            _log = logFactory.CreateLog(this);
+            _retryPolicy = Policy
+                .Handle<InsufficientFundsException>()
+                .Or<CashoutOperationFailedException>()
+                .Or<CashoutOperationPartiallyFailedException>()
+                .WaitAndRetryAsync(
+                    retryPolicySettings.DefaultAttempts,
+                    attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                    (ex, timespan) => _log.Error(ex, "Cashout with retry"));
         }
 
         public async Task<CashoutResult> ExecuteAsync(CashoutCommand cmd)
@@ -57,11 +74,12 @@ namespace Lykke.Service.PayInternal.Services
 
             await _walletBalanceValidator.ValidateTransfer(sourceAddress, cmd.SourceAssetId, cmd.SourceAmount);
 
-            TransferResult toHotWallet = await _transferService.CashoutThrowFail(
-                cmd.SourceAssetId,
-                sourceAddress,
-                hotwallet,
-                cmd.SourceAmount);
+            TransferResult toHotWallet = await _retryPolicy
+                .ExecuteAsync(() => _transferService.CashoutThrowFail(
+                    cmd.SourceAssetId,
+                    sourceAddress,
+                    hotwallet,
+                    cmd.SourceAmount));
 
             foreach (var transferTransactionResult in toHotWallet.Transactions)
             {

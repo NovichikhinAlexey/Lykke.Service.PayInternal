@@ -3,7 +3,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common;
+using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Domain.Exchange;
@@ -14,6 +16,9 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Context;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
+using Polly;
+using LogExtensions = Lykke.Service.PayInternal.Core.LogExtensions;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -27,6 +32,8 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransactionsService _transactionsService;
         private readonly IWalletBalanceValidator _walletBalanceValidator;
         private readonly IWalletHistoryService _walletHistoryService;
+        private readonly Policy _retryPolicy;
+        private readonly ILog _log;
 
         public ExchangeService(
             [NotNull] IMerchantWalletService merchantWalletService,
@@ -36,7 +43,9 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] ITransferService transferService,
             [NotNull] ITransactionsService transactionsService, 
             [NotNull] IWalletBalanceValidator walletBalanceValidator, 
-            [NotNull] IWalletHistoryService walletHistoryService)
+            [NotNull] IWalletHistoryService walletHistoryService,
+            [NotNull] RetryPolicySettings retryPolicySettings,
+            [NotNull] ILogFactory logFactory)
         {
             _merchantWalletService =
                 merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
@@ -48,6 +57,15 @@ namespace Lykke.Service.PayInternal.Services
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
             _walletBalanceValidator = walletBalanceValidator ?? throw new ArgumentNullException(nameof(walletBalanceValidator));
             _walletHistoryService = walletHistoryService ?? throw new ArgumentNullException(nameof(walletHistoryService));
+            _log = logFactory.CreateLog(this);
+            _retryPolicy = Policy
+                .Handle<InsufficientFundsException>()
+                .Or<ExchangeOperationFailedException>()
+                .Or<ExchangeOperationPartiallyFailedException>()
+                .WaitAndRetryAsync(
+                    retryPolicySettings.DefaultAttempts,
+                    attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                    (ex, timespan) => _log.Error(ex, "Exchange with retry"));
         }
 
         public async Task<ExchangeResult> ExecuteAsync(ExchangeCommand cmd)
@@ -74,19 +92,23 @@ namespace Lykke.Service.PayInternal.Services
 
             await _walletBalanceValidator.ValidateTransfer(hotwallet, cmd.DestAssetId, exchangeAmount);
 
-            TransferResult toHotWallet = await _transferService.ExchangeThrowFail(
-                cmd.SourceAssetId,
-                sourceAddress,
-                hotwallet,
-                cmd.SourceAmount);
+            TransferResult toHotWallet = await _retryPolicy
+                .ExecuteAsync(() => _transferService.ExchangeThrowFail(
+                    cmd.SourceAssetId,
+                    sourceAddress,
+                    hotwallet,
+                    cmd.SourceAmount));
 
             await RegisterTransferTxsAsync(toHotWallet);
 
-            TransferResult fromHotWallet = await _transferService.ExchangeThrowFail(
-                cmd.DestAssetId,
-                hotwallet,
-                await GetDestAddressAsync(cmd),
-                exchangeAmount);
+            string destAddress = await GetDestAddressAsync(cmd);
+
+            TransferResult fromHotWallet = await _retryPolicy
+                .ExecuteAsync(() => _transferService.ExchangeThrowFail(
+                    cmd.DestAssetId,
+                    hotwallet,
+                    destAddress,
+                    exchangeAmount));
 
             await RegisterTransferTxsAsync(fromHotWallet, false);
 

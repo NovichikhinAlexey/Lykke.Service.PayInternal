@@ -113,7 +113,12 @@ namespace Lykke.Service.PayInternal.Services
                     (pi, ctx) => ctx.ResolveKeyed<IDistributedLocksService>(DistributedLockPurpose.OrderCheckout)));
 
             builder.RegisterType<ExchangeService>()
-                .As<IExchangeService>();
+                .As<IExchangeService>()
+                .WithParameter(TypedParameter.From(_retryPolicySettings));
+
+            builder.RegisterType<CashoutService>()
+                .As<ICashoutService>()
+                .WithParameter(TypedParameter.From(_retryPolicySettings));
         }
     }
 }
