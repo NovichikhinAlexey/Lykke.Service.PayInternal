@@ -19,6 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		README.md = README.md
+		settings.txt = settings.txt
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3. Client", "3. Client", "{C9A2CFDE-EA32-4946-B679-7CE6EFA816B8}"
@@ -31,9 +32,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4. Tests", "4. Tests", "{8F
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "5. Contract", "5. Contract", "{91D8C13C-E759-472E-A34C-7D4BC2772387}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lykke.Service.PayInternal.Contract", "src\Lykke.Service.PayInternal.Contract\Lykke.Service.PayInternal.Contract.csproj", "{63110BAB-B672-48E1-837A-61E569128D2D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.PayInternal.Contract", "src\Lykke.Service.PayInternal.Contract\Lykke.Service.PayInternal.Contract.csproj", "{63110BAB-B672-48E1-837A-61E569128D2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lykke.Service.PayInternal.Services.Tests", "tests\Lykke.Service.PayInternal.Services.Tests\Lykke.Service.PayInternal.Services.Tests.csproj", "{DA228DFD-78E9-43EC-9C3E-F8E08FBDEA3C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.PayInternal.Services.Tests", "tests\Lykke.Service.PayInternal.Services.Tests\Lykke.Service.PayInternal.Services.Tests.csproj", "{DA228DFD-78E9-43EC-9C3E-F8E08FBDEA3C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
