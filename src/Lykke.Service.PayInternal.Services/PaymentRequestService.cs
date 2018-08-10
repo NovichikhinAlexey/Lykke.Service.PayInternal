@@ -38,6 +38,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransactionPublisher _transactionPublisher;
         private readonly IWalletBalanceValidator _walletBalanceValidator;
         private readonly RetryPolicySettings _retryPolicySettings;
+        private readonly IAutoSettleSettingsResolver _autoSettleSettingsResolver;
         private readonly IAssetSettingsService _assetSettingsService;
         private readonly ILog _log;
 
@@ -56,7 +57,8 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] ITransactionPublisher transactionPublisher, 
             [NotNull] IDistributedLocksService checkoutLocksService, 
             [NotNull] IWalletBalanceValidator walletBalanceValidator, 
-            [NotNull] RetryPolicySettings retryPolicySettings, 
+            [NotNull] RetryPolicySettings retryPolicySettings,
+            [NotNull] IAutoSettleSettingsResolver autoSettleSettingsResolver,
             [NotNull] IAssetSettingsService assetSettingsService)
         {
             _paymentRequestRepository = paymentRequestRepository ?? throw new ArgumentNullException(nameof(paymentRequestRepository));
@@ -74,6 +76,7 @@ namespace Lykke.Service.PayInternal.Services
             _checkoutLocksService = checkoutLocksService ?? throw new ArgumentNullException(nameof(checkoutLocksService));
             _walletBalanceValidator = walletBalanceValidator ?? throw new ArgumentNullException(nameof(walletBalanceValidator));
             _retryPolicySettings = retryPolicySettings ?? throw new ArgumentNullException(nameof(retryPolicySettings));
+            _autoSettleSettingsResolver = autoSettleSettingsResolver ?? throw new ArgumentNullException(nameof(autoSettleSettingsResolver));
             _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
         }
 
@@ -182,6 +185,7 @@ namespace Lykke.Service.PayInternal.Services
                 statusInfo ?? await _paymentRequestStatusResolver.GetStatus(walletAddress);
 
             PaymentRequestStatus previousStatus = paymentRequest.Status;
+            PaymentRequestProcessingError previousProcessingError = paymentRequest.ProcessingError;
 
             paymentRequest.Status = newStatusInfo.Status;
             paymentRequest.PaidDate = newStatusInfo.Date;
@@ -198,7 +202,9 @@ namespace Lykke.Service.PayInternal.Services
 
             PaymentRequestRefund refundInfo = await GetRefundInfoAsync(paymentRequest.WalletAddress);
 
-            if (paymentRequest.Status != previousStatus)
+            if (paymentRequest.Status != previousStatus
+                || (paymentRequest.Status == PaymentRequestStatus.Error 
+                    && paymentRequest.ProcessingError != previousProcessingError))
             {
                 await _paymentRequestPublisher.PublishAsync(paymentRequest, refundInfo);
 
@@ -209,7 +215,13 @@ namespace Lykke.Service.PayInternal.Services
                 // Some flows assume we can get updates from blockchain multiple times for the same transaction
                 // which leads to the same payment request status 
                 if (paymentRequest.StatusValidForSettlement() && (assetSettings?.AutoSettle ?? false))
+                {
+                    if (paymentRequest.Status != PaymentRequestStatus.Confirmed
+                        && !_autoSettleSettingsResolver.AllowToMakePartialAutoSettle(paymentRequest.PaymentAssetId))
+                        return;
+
                     await SettleAsync(paymentRequest.MerchantId, paymentRequest.Id);
+                }
             }
         }
 
@@ -231,6 +243,9 @@ namespace Lykke.Service.PayInternal.Services
 
             foreach (IPaymentRequest paymentRequest in eligibleForTransition)
             {
+                _log.Info(
+                    $"Payment request with id {paymentRequest.Id} and merchant id {paymentRequest.MerchantId} is about to be moved to Past Due");
+
                 await UpdateStatusAsync(paymentRequest.WalletAddress, PaymentRequestStatusInfo.Error(PaymentRequestProcessingError.PaymentExpired));
 
                 _log.Info($"Payment request with id {paymentRequest.Id} was moved to Past Due");
@@ -354,10 +369,25 @@ namespace Lykke.Service.PayInternal.Services
                 paymentRequest.WalletAddress,
                 paymentRequest.PaymentAssetId);
 
-            string destWalletAddress = (await _merchantWalletService.GetDefaultAsync(
+            string destWalletAddress;
+
+            // check asset to settle to merchant wallet
+            if (_autoSettleSettingsResolver.AllowToSettleToMerchantWallet(paymentRequest.PaymentAssetId))
+            {
+                destWalletAddress = (await _merchantWalletService.GetDefaultAsync(
                 paymentRequest.MerchantId,
                 paymentRequest.PaymentAssetId,
-                PaymentDirection.Incoming)).WalletAddress;
+                PaymentDirection.Incoming))?.WalletAddress;
+            }
+            else
+            {
+                BlockchainType network = await _assetSettingsService.GetNetworkAsync(paymentRequest.PaymentAssetId);
+                destWalletAddress = _autoSettleSettingsResolver.GetAutoSettleWallet(network);
+            }
+
+            if (string.IsNullOrEmpty(destWalletAddress))
+                throw new SettlementValidationException(
+                    $"Destination wallet address is empty. Details: {new {paymentRequest.MerchantId, paymentRequest.PaymentAssetId}.ToJson()}");
 
             TransferResult transferResult = await Policy
                 .Handle<InsufficientFundsException>()
