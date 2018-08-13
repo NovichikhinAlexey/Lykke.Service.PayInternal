@@ -41,6 +41,8 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IAutoSettleSettingsResolver _autoSettleSettingsResolver;
         private readonly IAssetSettingsService _assetSettingsService;
         private readonly ILog _log;
+        private readonly Policy _settlementRetryPolicy;
+        private readonly Policy _paymentRetryPolicy;
 
         public PaymentRequestService(
             [NotNull] IPaymentRequestRepository paymentRequestRepository,
@@ -78,6 +80,24 @@ namespace Lykke.Service.PayInternal.Services
             _retryPolicySettings = retryPolicySettings ?? throw new ArgumentNullException(nameof(retryPolicySettings));
             _autoSettleSettingsResolver = autoSettleSettingsResolver ?? throw new ArgumentNullException(nameof(autoSettleSettingsResolver));
             _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
+
+            _settlementRetryPolicy = Policy
+                .Handle<InsufficientFundsException>()
+                .Or<SettlementOperationFailedException>()
+                .Or<SettlementOperationPartiallyFailedException>()
+                .WaitAndRetryAsync(
+                    _retryPolicySettings.SettlementAttempts,
+                    attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                    (ex, timespan) => _log.Error(ex, "Settlement with retry"));
+
+            _paymentRetryPolicy = Policy
+                .Handle<InsufficientFundsException>()
+                .Or<PaymentOperationFailedException>()
+                .Or<PaymentOperationPartiallyFailedException>()
+                .WaitAndRetryAsync(
+                    _retryPolicySettings.DefaultAttempts,
+                    attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                    (ex, timespan) => _log.Error(ex, "Payment with retry"));
         }
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId)
@@ -302,11 +322,12 @@ namespace Lykke.Service.PayInternal.Services
             {
                 await UpdateStatusAsync(paymentRequest.WalletAddress, PaymentRequestStatusInfo.InProcess());
 
-                transferResult = await _transferService.PayThrowFail(
-                    paymentRequest.PaymentAssetId,
-                    payerWalletAddress,
-                    destinationWalletAddress,
-                    cmd.Amount);
+                transferResult = await _paymentRetryPolicy
+                    .ExecuteAsync(() => _transferService.PayThrowFail(
+                        paymentRequest.PaymentAssetId,
+                        payerWalletAddress,
+                        destinationWalletAddress,
+                        cmd.Amount));
 
                 foreach (var transferResultTransaction in transferResult.Transactions)
                 {
@@ -385,14 +406,9 @@ namespace Lykke.Service.PayInternal.Services
                     throw new SettlementValidationException($"Destination wallet address to settle is empty for asset {paymentRequest.PaymentAssetId}");
             }
 
-            TransferResult transferResult = await Policy
-                .Handle<InsufficientFundsException>()
-                .WaitAndRetryAsync(
-                    _retryPolicySettings.SettlementAttempts,
-                    attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-                    (ex, timespan) => _log.Error(ex, "Settlement with retry", new {merchantId, paymentRequestId}))
+            TransferResult transferResult = await _settlementRetryPolicy
                 .ExecuteAsync(() => _transferService.SettleThrowFail(
-                    paymentRequest.PaymentAssetId, 
+                    paymentRequest.PaymentAssetId,
                     sourceWalletAddress,
                     destWalletAddress));
 
