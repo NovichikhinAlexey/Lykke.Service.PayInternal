@@ -7,7 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Lykke.Bitcoin.Api.Client" Version="1.0.22" />
-    <PackageReference Include="Lykke.Common" Version="7.0.1" />
+    <PackageReference Include="Lykke.Common" Version="7.0.3" />
     <PackageReference Include="Lykke.RabbitMqBroker" Version="7.1.0" />
     <PackageReference Include="Lykke.Service.Assets.Client" Version="4.2.0" />
     <PackageReference Include="Lykke.Service.EthereumCore.Client" Version="1.1.11" />
