@@ -16,6 +16,7 @@ using Lykke.Service.PayInternal.PeriodicalHandlers;
 using Lykke.Service.PayInternal.Rabbit.Publishers;
 using Lykke.Service.PayInternal.Services;
 using Lykke.Service.PayInternal.Services.Mapping;
+using Lykke.Service.PayVolatility.Client;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 using QBitNinja.Client;
@@ -175,6 +176,8 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterPayHistoryClient(_settings.CurrentValue.PayHistoryServiceClient.ServiceUrl);
 
             builder.RegisterInvoiceConfirmationPublisher(_settings.CurrentValue.PayInvoiceConfirmationPublisher);
+
+            builder.RegisterCachedPayVolatilityClient(_settings.CurrentValue.PayVolatilityServiceClient, null);
         }
 
         private void RegisterCaches(ContainerBuilder builder)
