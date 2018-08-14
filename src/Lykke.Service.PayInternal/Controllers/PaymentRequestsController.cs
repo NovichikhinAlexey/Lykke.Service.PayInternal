@@ -2,7 +2,6 @@
 using Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Extensions;
 using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Microsoft.AspNetCore.Mvc;
@@ -161,29 +160,28 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <response code="200">The payment request.</response>
         /// <response code="400">Invalid model.</response>
         [HttpPost]
-        [Route("merchants/paymentrequests")] //TODO: merchants/{merchantId}/peymentrequests when Refit can use path parameter and body togather
+        [Route("merchants/paymentrequests")]
         [SwaggerOperation("PaymentRequestsCreate")]
         [ProducesResponseType(typeof(PaymentRequestModel), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(PaymentRequestErrorModel), (int) HttpStatusCode.BadRequest)]
         [ValidateModel]
         public async Task<IActionResult> CreateAsync([FromBody] CreatePaymentRequestModel model)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(new ErrorResponse().AddErrors(ModelState));
-
             try
             {
                 IReadOnlyList<string> settlementAssets =
                     await _assetSettingsService.ResolveSettlementAsync(model.MerchantId);
 
                 if (!settlementAssets.Contains(model.SettlementAssetId))
-                    return BadRequest(ErrorResponse.Create("Settlement asset is not available"));
+                    return BadRequest(new PaymentRequestErrorModel
+                        {Code = CreatePaymentRequestErrorType.SettlementAssetNotAvailable});
 
                 IReadOnlyList<string> paymentAssets =
                     await _assetSettingsService.ResolvePaymentAsync(model.MerchantId, model.SettlementAssetId);
 
                 if (!paymentAssets.Contains(model.PaymentAssetId))
-                    return BadRequest(ErrorResponse.Create("Payment asset is not available"));
+                    return BadRequest(new PaymentRequestErrorModel
+                        {Code = CreatePaymentRequestErrorType.PaymentAssetNotAvailable});
 
                 var paymentRequest = Mapper.Map<PaymentRequest>(model);
 
@@ -193,15 +191,17 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException e)
             {
-                _log.Error(e, new {e.Asset});
+                _log.Error(e, e.Message, e.Asset);
 
-                return BadRequest(ErrorResponse.Create($"Asset {e.Asset} can't be resolved"));
+                return BadRequest(new PaymentRequestErrorModel
+                    {Code = CreatePaymentRequestErrorType.RequestValidationCommonError});
             }
             catch (AssetNetworkNotDefinedException e)
             {
-                _log.Error(e, new {e.AssetId});
+                _log.Error(e, e.Message, e.AssetId);
 
-                return BadRequest(ErrorResponse.Create(e.Message));
+                return BadRequest(new PaymentRequestErrorModel
+                    {Code = CreatePaymentRequestErrorType.RequestValidationCommonError});
             }
         }
 
