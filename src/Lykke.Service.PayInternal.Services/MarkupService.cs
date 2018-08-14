@@ -1,20 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayVolatility.Client;
+using Lykke.Service.PayVolatility.Models;
 
 namespace Lykke.Service.PayInternal.Services
 {
     public class MarkupService : IMarkupService
     {
         private readonly IMarkupRepository _markupRepository;
+        private readonly IPayVolatilityClient _payVolatilityClient;
 
-        public MarkupService(IMarkupRepository markupRepository)
+        public MarkupService(IMarkupRepository markupRepository, IPayVolatilityClient payVolatilityClient)
         {
             _markupRepository = markupRepository;
+            _payVolatilityClient = payVolatilityClient;
         }
 
         public Task<IMarkup> SetDefaultAsync(string assetPairId, string priceAssetPairId, PriceMethod priceMethod, IMarkupValue markupValue)
@@ -51,24 +56,32 @@ namespace Lykke.Service.PayInternal.Services
             });
         }
 
-        public Task<IReadOnlyList<IMarkup>> GetDefaultsAsync()
+        public async Task<IReadOnlyList<IMarkup>> GetDefaultsAsync()
         {
-            return _markupRepository.GetByIdentityAsync(MarkupIdentityType.None, string.Empty);
+            var markups = await _markupRepository.GetByIdentityAsync(MarkupIdentityType.None, string.Empty);
+            await SetDeltaSpread(markups);
+            return markups;
         }
 
-        public Task<IMarkup> GetDefaultAsync(string assetPairId)
+        public async Task<IMarkup> GetDefaultAsync(string assetPairId)
         {
-            return _markupRepository.GetByIdentityAsync(MarkupIdentityType.None, string.Empty, assetPairId);
+            var markup = await _markupRepository.GetByIdentityAsync(MarkupIdentityType.None, string.Empty, assetPairId);
+            await SetDeltaSpread(markup);
+            return markup;
         }
 
-        public Task<IReadOnlyList<IMarkup>> GetForMerchantAsync(string merchantId)
+        public async Task<IReadOnlyList<IMarkup>> GetForMerchantAsync(string merchantId)
         {
-            return _markupRepository.GetByIdentityAsync(MarkupIdentityType.Merchant, merchantId);
+            var markups = await _markupRepository.GetByIdentityAsync(MarkupIdentityType.Merchant, merchantId);
+            await SetDeltaSpread(markups);
+            return markups;
         }
 
-        public Task<IMarkup> GetForMerchantAsync(string merchantId, string assetPairId)
+        public async Task<IMarkup> GetForMerchantAsync(string merchantId, string assetPairId)
         {
-            return _markupRepository.GetByIdentityAsync(MarkupIdentityType.Merchant, merchantId, assetPairId);
+            var markup = await _markupRepository.GetByIdentityAsync(MarkupIdentityType.Merchant, merchantId, assetPairId);
+            await SetDeltaSpread(markup);
+            return markup;
         }
 
         public async Task<IMarkup> ResolveAsync(string merchantId, string assetPairId)
@@ -77,6 +90,27 @@ namespace Lykke.Service.PayInternal.Services
 
             return markup ?? await GetDefaultAsync(assetPairId) ??
                    throw new MarkupNotFoundException(merchantId, assetPairId);
+        }
+
+        private async Task SetDeltaSpread(IMarkup markup)
+        {
+            VolatilityModel volatilityModel = await _payVolatilityClient.GetDailyVolatilityAsync(markup.AssetPairId);
+            if (volatilityModel != null)
+            {
+                markup.DeltaSpread = volatilityModel.HighPriceVolatilityShield;
+            }
+        }
+
+        private async Task SetDeltaSpread(IEnumerable<IMarkup> markups)
+        {
+            var volatilityModels = (await _payVolatilityClient.GetDailyVolatilitiesAsync()).ToDictionary(v=>v.AssetPairId,StringComparer.OrdinalIgnoreCase);
+            foreach (var markup in markups)
+            {
+                if (volatilityModels.TryGetValue(markup.AssetPairId, out var volatilityModel))
+                {
+                    markup.DeltaSpread = volatilityModel.HighPriceVolatilityShield;
+                }
+            }
         }
     }
 }
