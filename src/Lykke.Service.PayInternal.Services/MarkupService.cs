@@ -100,7 +100,7 @@ namespace Lykke.Service.PayInternal.Services
                 return;
             }
 
-            VolatilityModel volatilityModel = await _payVolatilityClient.GetDailyVolatilityAsync(markup.AssetPairId);
+            VolatilityModel volatilityModel = await _payVolatilityClient.GetDailyVolatilityAsync(assetPairId);
             if (volatilityModel != null)
             {
                 SetDeltaSpread(markup, volatilityModel);
