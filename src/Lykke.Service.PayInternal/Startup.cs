@@ -161,7 +161,7 @@ namespace Lykke.Service.PayInternal
                 HealthNotifier.Notify("Started");
 #if !DEBUG
                 if (!string.IsNullOrEmpty(_monitoringServiceUrl))
-                    await AutoRegistrationInMonitoring.RegisterAsync(Configuration, _monitoringServiceUrl, Log);
+                    await Configuration.RegisterInMonitoringServiceAsync(_monitoringServiceUrl, HealthNotifier);
 #endif
             }
             catch (Exception ex)

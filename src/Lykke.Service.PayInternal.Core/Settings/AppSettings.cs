@@ -51,6 +51,12 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public string ServiceUrl { get; set; }
     }
 
+    public class MonitoringServiceClientSettings
+    {
+        [HttpCheck("api/isalive", false)]
+        public string MonitoringServiceUrl { get; set; }
+    }
+
     public class EthereumServiceClientSettings
     {
         [HttpCheck("api/isalive")]
@@ -60,11 +66,5 @@ namespace Lykke.Service.PayInternal.Core.Settings
     public class AssetsMapSettings
     {
         public IDictionary<string, string> Values { get; set; }
-    }
-
-    public class MonitoringServiceClientSettings
-    {
-        [HttpCheck("api/isalive", false)]
-        public string MonitoringServiceUrl { get; set; }
     }
 }
