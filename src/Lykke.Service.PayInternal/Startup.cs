@@ -33,6 +33,9 @@ namespace Lykke.Service.PayInternal
         public ILog Log { get; private set; }
         private IHealthNotifier HealthNotifier { get; set; }
 
+        // ReSharper disable once NotAccessedField.Local
+        private string _monitoringServiceUrl;
+
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -61,6 +64,7 @@ namespace Lykke.Service.PayInternal
                 var builder = new ContainerBuilder();
 
                 var appSettings = Configuration.LoadSettings<AppSettings>();
+                _monitoringServiceUrl = appSettings.CurrentValue.MonitoringServiceClient?.MonitoringServiceUrl;
 
                 services.AddLykkeLogging(
                     appSettings.ConnectionString(x => x.PayInternalService.Db.LogsConnString),
@@ -154,6 +158,10 @@ namespace Lykke.Service.PayInternal
                 ApplicationContainer.Resolve<IStartupManager>().Start();
 
                 HealthNotifier.Notify("Started");
+#if !DEBUG
+                if (!string.IsNullOrEmpty(_monitoringServiceUrl))
+                    await AutoRegistrationInMonitoring.RegisterAsync(Configuration, _monitoringServiceUrl, Log);
+#endif
             }
             catch (Exception ex)
             {
