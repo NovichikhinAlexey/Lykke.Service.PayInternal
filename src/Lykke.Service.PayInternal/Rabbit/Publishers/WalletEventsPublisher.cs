@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using Autofac;
 using Common;
 using Common.Log;
+using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.RabbitMqBroker.Publisher;
 using Lykke.RabbitMqBroker.Subscriber;
 using Lykke.Service.PayInternal.Contract;
@@ -14,13 +16,17 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
 {
     public class WalletEventsPublisher : IWalletEventsPublisher, IStartable, IStopable
     {
+        private readonly ILogFactory _logFactory;
         private readonly ILog _log;
         private readonly RabbitMqSettings _settings;
         private RabbitMqPublisher<NewWalletMessage> _publisher;
 
-        public WalletEventsPublisher(ILog log, RabbitMqSettings settings)
+        public WalletEventsPublisher(
+            [NotNull] ILogFactory logFactory, 
+            [NotNull] RabbitMqSettings settings)
         {
-            _log = log;
+            _logFactory = logFactory;
+            _log = logFactory.CreateLog(this);
             _settings = settings;
         }
 
@@ -31,11 +37,10 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
 
             settings.MakeDurable();
 
-            _publisher = new RabbitMqPublisher<NewWalletMessage>(settings)
+            _publisher = new RabbitMqPublisher<NewWalletMessage>(_logFactory, settings)
                 .SetSerializer(new JsonMessageSerializer<NewWalletMessage>())
                 .SetPublishStrategy(new DefaultFanoutPublishStrategy(settings))
                 .PublishSynchronously()
-                .SetLogger(_log)
                 .Start();
         }
 
@@ -63,8 +68,7 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
                 DueDate = dueDate
             };
 
-            await _log.WriteInfoAsync(nameof(WalletEventsPublisher), nameof(PublishAsync), message.ToJson(),
-                "Publishing new wallet message");
+            _log.Info("Publishing new wallet message", message);
 
             await PublishAsync(message);
         }

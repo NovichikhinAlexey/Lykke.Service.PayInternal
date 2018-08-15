@@ -49,7 +49,8 @@ namespace Lykke.Service.PayInternal.Services
 
             if (txs.Any(x => x.IsSettlement()))
             {
-                paymentStatusInfo = await GetStatusForSettlement(paymentRequest);
+                //todo: better to have separate status for settlement
+                paymentStatusInfo = await GetStatusForPayment(paymentRequest);
             } else if (txs.Any(x => x.IsRefund()))
             {
                 paymentStatusInfo = await GetStatusForRefund(paymentRequest);
@@ -98,14 +99,12 @@ namespace Lykke.Service.PayInternal.Services
 
             switch (assetId)
             {
-                case LykkeConstants.BitcoinAssetId:
-                    btcPaid = txs.GetTotal();
-                    break;
-                case LykkeConstants.SatoshiAssetId:
+                case LykkeConstants.SatoshiAsset:
                     btcPaid = txs.GetTotal().SatoshiToBtc();
                     break;
                 default:
-                    throw new UnexpectedAssetException(assetId);
+                    btcPaid = txs.GetTotal();
+                    break;
             }
 
             bool allConfirmed = txs.All(x => x.Confirmed(_transactionConfirmationCount));

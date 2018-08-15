@@ -1,9 +1,7 @@
 ﻿namespace Lykke.Service.PayInternal.Core.Domain
 {
-    public interface IWalletAddressHolder
+    public interface IWalletAddressHolder : IBlockchainTypeHolder
     {
         string WalletAddress { get; set; }
-
-        BlockchainType Blockchain { get; set; }
     }
 }

@@ -7,15 +7,31 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     [UsedImplicitly]
     public class PayInternalSettings
     {
+        public AutoSettleSettings AutoSettle { get; set; }
         public DbSettings Db { get; set; }
         public RabbitMqSettings Rabbit { get; set; }
         public ExpirationPeriodsSettings ExpirationPeriods { get; set; }
         public LpMarkupSettings LpMarkup { get; set; }
         public int TransactionConfirmationCount { get; set; }
-        public BlockchainExplorerSettings LykkeBlockchainExplorer { get; set; }
-        public AssetsAvailabilitySettings AssetsAvailability { get; set; }
         public BlockchainSettings Blockchain { get; set; }
         public JobPeriods JobPeriods { get; set; }
+        public MerchantSettings Merchant { get; set; }
+        public AssetPairsLocalStorageSettings AssetPairsLocalStorage { get; set; }
+        public CacheSettings CacheSettings { get; set; }
+        public RetryPolicySettings RetryPolicy { get; set; }
+    }
+
+    public class AutoSettleSettings
+    {
+        public IReadOnlyList<string> AssetsToMakePartialAutoSettle { get; set; }
+        public IReadOnlyList<string> AssetsToSettleToMerchantWallet { get; set; }
+        public string BitcoinAutoSettleWalletAddress { get; set; }
+        public string EthereumAutoSettleWalletAddress { get; set; }
+    }
+
+    public class MerchantSettings
+    {
+        public int LogoSize { get; set; }
     }
 
     public class LpMarkupSettings
@@ -27,11 +43,6 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class BlockchainExplorerSettings
     {
         public string TransactionUrl { get; set; }
-    }
-    public class AssetsAvailabilitySettings
-    {
-        public string PaymentAssets { get; set; }
-        public string SettlementAssets { get; set; }
     }
 
     public class ExpirationPeriodsSettings
@@ -45,12 +56,15 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         /// WalletExtra is an extra time to keep wallet address in lock after payment request expired in order to wait for late payments.
         /// </summary>
         public TimeSpan WalletExtra { get; set; }
+
+        public TimeSpan AssetsCache { get; set; }
     }
 
     public class BlockchainSettings
     {
         public BlockchainWalletAllocationSettings WalletAllocationPolicy { get; set; }
         public BitcoinSettings Bitcoin { get; set; }
+        public EthereumBlockchainSettings Ethereum { get; set; }
     }
 
     public class BlockchainWalletAllocationPolicy
@@ -73,10 +87,46 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     public class BitcoinSettings
     {
         public string Network { get; set; }
+        public string ExchangeHotWalletAddress { get; set; }
+        public string CashoutHotWalletAddress { get; set; }
+        public BlockchainExplorerSettings BlockchainExplorer { get; set; }
+
     }
 
     public class JobPeriods
     {
         public TimeSpan PaymentRequestExpirationHandling { get; set; }
+    }
+
+    public class EthereumBlockchainSettings
+    {
+        public string ApiKey { get; set; }
+        public string ExchangeHotWalletAddress { get; set; }
+        public string CashoutHotWalletAddress { get; set; }
+        public BlockchainExplorerSettings BlockchainExplorer { get; set; }
+    }
+
+    public class AssetPairSetting {
+        public string BaseAssetId { get; set; }
+        public string QuotingAssetId { get; set; }
+        public int Accuracy { get; set; }
+    }
+
+    public class AssetPairsLocalStorageSettings
+    {
+        public IReadOnlyList<AssetPairSetting> AssetPairs { get; set; }
+    }
+
+    public class CacheSettings
+    {
+        public string RedisConfiguration { get; set; }
+        public string PaymentLocksCacheKeyPattern { get; set; }
+        public string CheckoutLocksCacheKeyPattern { get; set; }
+    }
+
+    public class RetryPolicySettings
+    {
+        public int DefaultAttempts { get; set; }
+        public int SettlementAttempts { get; set; }
     }
 }

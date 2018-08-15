@@ -3,10 +3,14 @@ using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common.Log;
+using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Common.Log;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Transfers;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -19,10 +23,12 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly IBtcTransferService _btcTransferService;
         private readonly ILog _log;
 
-        public TransfersController(IBtcTransferService btcTransferService, ILog log)
+        public TransfersController(
+            [NotNull] IBtcTransferService btcTransferService, 
+            [NotNull] ILogFactory logFactory)
         {
             _btcTransferService = btcTransferService ?? throw new ArgumentNullException(nameof(btcTransferService));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
         }
 
         /// <summary>
@@ -34,7 +40,8 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("transfers/BtcFreeTransfer")]
         [SwaggerOperation("BtcFreeTransfer")]
         [ProducesResponseType(typeof(BtcTransferResponse), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.InternalServerError)]
+        [ProducesResponseType(typeof(BtcTransferResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
         public async Task<IActionResult> BtcFreeTransferAsync([FromBody] BtcFreeTransferRequest request)
         {
             try
@@ -43,15 +50,12 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(new BtcTransferResponse {TransactionId = transactionId});
             }
-            catch (Exception ex)
+            catch (TransferException e)
             {
-                await _log.WriteErrorAsync(nameof(TransfersController), nameof(BtcFreeTransferAsync), ex);
+                _log.Error(e, new {e.Code});
 
-                if (ex is TransferException btcException)
-                    return StatusCode((int) HttpStatusCode.InternalServerError, ErrorResponse.Create(btcException.Message));
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
-
-            return StatusCode((int) HttpStatusCode.InternalServerError);
         }
     }
 }

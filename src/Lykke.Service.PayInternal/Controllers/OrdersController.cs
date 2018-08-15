@@ -1,14 +1,17 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
-using Common;
 using Common.Log;
+using Lykke.Common.Api.Contract.Responses;
+using Lykke.Common.Log;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Order;
+using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Orders;
-using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -24,11 +27,11 @@ namespace Lykke.Service.PayInternal.Controllers
         public OrdersController(
             IPaymentRequestService paymentRequestService,
             IOrderService orderService,
-            ILog log)
+            ILogFactory logFactory)
         {
             _paymentRequestService = paymentRequestService;
             _orderService = orderService;
-            _log = log;
+            _log = logFactory.CreateLog(this);
         }
 
         /// <summary>
@@ -45,24 +48,14 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetAsync(string paymentRequestId, string orderId)
         {
-            try
-            {
-                IOrder order = await _orderService.GetAsync(paymentRequestId, orderId);
+            IOrder order = await _orderService.GetAsync(paymentRequestId, orderId);
 
-                if (order == null)
-                    return NotFound();
+            if (order == null)
+                return NotFound();
 
-                var model = Mapper.Map<OrderModel>(order);
+            var model = Mapper.Map<OrderModel>(order);
 
-                return Ok(model);
-            }
-            catch (Exception exception)
-            {
-                await _log.WriteErrorAsync(nameof(OrdersController), nameof(GetAsync),
-                    new {PaymentRequestId = paymentRequestId}.ToJson(), exception);
-
-                throw;
-            }
+            return Ok(model);
         }
 
         /// <summary>
@@ -75,6 +68,8 @@ namespace Lykke.Service.PayInternal.Controllers
         [Route("orders")]
         [SwaggerOperation("OrdersChechout")]
         [ProducesResponseType(typeof(OrderModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
         public async Task<IActionResult> ChechoutAsync([FromBody] ChechoutRequestModel model)
         {
             try
@@ -86,11 +81,87 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<OrderModel>(order));
             }
-            catch (Exception exception)
+            catch (AssetUnknownException e)
             {
-                await _log.WriteErrorAsync(nameof(OrdersController), nameof(ChechoutAsync),
-                    model.ToJson(), exception);
-                throw;
+                _log.Error(e, new {e.Asset});
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (AssetNetworkNotDefinedException e)
+            {
+                _log.Error(e, new {e.AssetId});
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (MarkupNotFoundException e)
+            {
+                _log.Error(e, new
+                {
+                    e.MerchantId,
+                    e.AssetPairId
+                });
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+        }
+
+        /// <summary>
+        /// Creates an order if it does not exist or expired.
+        /// </summary>
+        /// <param name="model">The order creation information.</param>
+        /// <returns>An active order related with payment request.</returns>
+        /// <response code="200">An active order related with payment request.</response>
+        [HttpPost]
+        [Route("orders/calculate")]
+        [SwaggerOperation("GetCalculatedAmountInfo")]
+        [ProducesResponseType(typeof(ICalculatedAmountInfo), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
+        public async Task<IActionResult> GetCalculatedAmountInfoAsync([FromBody] GetCalculatedAmountInfoRequest model)
+        {
+            try
+            {
+                ICalculatedAmountInfo calculatedAmountInfo = await _orderService.GetCalculatedAmountInfoAsync(
+                    model.SettlementAssetId,
+                    model.PaymentAssetId,
+                    model.Amount,
+                    model.MerchantId);
+
+                return Ok(calculatedAmountInfo);
+            }
+            catch (MerchantNotFoundException e)
+            {
+                _log.Error(e, new {e.MerchantId});
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (AssetUnknownException e)
+            {
+                _log.Error(e, new {e.Asset});
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (MarkupNotFoundException e)
+            {
+                _log.Error(e, new
+                {
+                    e.MerchantId,
+                    e.AssetPairId
+                });
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (MarketPriceZeroException e)
+            {
+                _log.Error(e, new {e.PriceType});
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (UnexpectedAssetPairPriceMethodException e)
+            {
+                _log.Error(e, new {e.PriceMethod});
+
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
     }

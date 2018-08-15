@@ -32,7 +32,13 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 
         public TransactionType TransactionType { get; set; }
 
-        public DateTime DueDate { get; set; }
+        public DateTime? DueDate { get; set; }
+
+        public TransactionIdentityType IdentityType { get; set; }
+
+        public string Identity { get; set; }
+
+        public string ContextData { get; set; }
 
         public bool IsPayment()
         {

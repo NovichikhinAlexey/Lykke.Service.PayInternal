@@ -6,13 +6,22 @@ using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Api;
 using Lykke.Service.PayInternal.Client.Exceptions;
 using Lykke.Service.PayInternal.Client.Models.Asset;
+using Lykke.Service.PayInternal.Client.Models.AssetRates;
+using Lykke.Service.PayInternal.Client.Models.Cashout;
+using Lykke.Service.PayInternal.Client.Models.Exchange;
+using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
+using Lykke.Service.PayInternal.Client.Models.SupervisorMembership;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
+using Lykke.Service.PayInternal.Client.Models.File;
+using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
+using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
+using Lykke.Service.PayInternal.Client.Models.Transactions.Ethereum;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -24,6 +33,12 @@ namespace Lykke.Service.PayInternal.Client
         private readonly IOrdersApi _ordersApi;
         private readonly IPaymentRequestsApi _paymentRequestsApi;
         private readonly IAssetsApi _assetsApi;
+        private readonly IMarkupsApi _markupsApi;
+        private readonly ISupervisorMembershipApi _supervisorMembershipApi;
+        private readonly IFilesApi _filesApi;
+        private readonly IMerchantWalletsApi _merchantWalletsApi;
+        private readonly IExchangeApi _exchangeApi;
+        private readonly ICashoutApi _cashoutApi;
         private readonly ApiRunner _runner;
 
         public PayInternalClient(PayInternalServiceClientSettings settings)
@@ -51,144 +66,390 @@ namespace Lykke.Service.PayInternal.Client
             _ordersApi = RestService.For<IOrdersApi>(_httpClient);
             _paymentRequestsApi = RestService.For<IPaymentRequestsApi>(_httpClient);
             _assetsApi = RestService.For<IAssetsApi>(_httpClient);
+            _markupsApi = RestService.For<IMarkupsApi>(_httpClient);
+            _supervisorMembershipApi = RestService.For<ISupervisorMembershipApi>(_httpClient);
+            _filesApi = RestService.For<IFilesApi>(_httpClient);
+            _merchantWalletsApi = RestService.For<IMerchantWalletsApi>(_httpClient);
+            _exchangeApi = RestService.For<IExchangeApi>(_httpClient);
+            _cashoutApi = RestService.For<ICashoutApi>(_httpClient);
             _runner = new ApiRunner();
         }
 
-        public async Task<IEnumerable<WalletStateResponse>> GetNotExpiredWalletsAsync()
+        public Task<IEnumerable<WalletStateResponse>> GetNotExpiredWalletsAsync()
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.GetNotExpiredWalletsAsync());
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.GetNotExpiredWalletsAsync());
         }
 
-        public async Task CreatePaymentTransactionAsync(CreateTransactionRequest request)
+        public Task CreatePaymentTransactionAsync(CreateTransactionRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.CreatePaymentTransactionAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.CreatePaymentTransactionAsync(request));
         }
 
-        public async Task UpdateTransactionAsync(UpdateTransactionRequest request)
+        public Task UpdateTransactionAsync(UpdateTransactionRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.UpdateTransactionAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.UpdateTransactionAsync(request));
         }
 
-        public async Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync()
+        public Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync()
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetAllAsync());
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetAllAsync());
         }
         
-        public async Task<MerchantModel> GetMerchantByIdAsync(string merchantId)
+        public Task<MerchantModel> GetMerchantByIdAsync(string merchantId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetByIdAsync(merchantId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetByIdAsync(merchantId));
         }
 
-        public async Task<MerchantModel> CreateMerchantAsync(CreateMerchantRequest request)
+        public Task<MerchantModel> CreateMerchantAsync(CreateMerchantRequest request)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.CreateAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.CreateAsync(request));
         }
 
-        public async Task UpdateMerchantAsync(UpdateMerchantRequest request)
+        public Task UpdateMerchantAsync(UpdateMerchantRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.UpdateAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.UpdateAsync(request));
         }
 
-        public async Task SetMerchantPublicKeyAsync(string merchantId, byte[] content)
+        public Task SetMerchantPublicKeyAsync(string merchantId, byte[] content)
         {
             var streamPart = new StreamPart(new MemoryStream(content), "public.key");
 
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.SetPublicKeyAsync(merchantId, streamPart));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.SetPublicKeyAsync(merchantId, streamPart));
         }
 
-        public async Task DeleteMerchantAsync(string merchantId)
+        public Task DeleteMerchantAsync(string merchantId)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.DeleteAsync(merchantId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.DeleteAsync(merchantId));
         }
         
-        public async Task<OrderModel> GetOrderAsync(string merchantId, string paymentRequestId)
+        public Task<OrderModel> GetOrderAsync(string merchantId, string paymentRequestId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.GetByIdAsync(merchantId, paymentRequestId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.GetByIdAsync(merchantId, paymentRequestId));
         }
 
-        public async Task<OrderModel> ChechoutOrderAsync(ChechoutRequestModel model)
+        public Task<OrderModel> ChechoutOrderAsync(ChechoutRequestModel model)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.ChechoutAsync(model));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.ChechoutAsync(model));
         }
 
-        public async Task<IReadOnlyList<PaymentRequestModel>> GetPaymentRequestsAsync(string merchantId)
+        public Task<CalculatedAmountResponse> GetCalculatedAmountInfoAsync(GetCalculatedAmountInfoRequest model)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetAllAsync(merchantId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.GetCalculatedAmountInfoAsync(model));
         }
 
-        public async Task<PaymentRequestModel> GetPaymentRequestAsync(string merchantId, string paymentRequestId)
+        public Task<IReadOnlyList<PaymentRequestModel>> GetPaymentRequestsAsync(string merchantId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetAsync(merchantId, paymentRequestId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetAllAsync(merchantId));
         }
 
-        public async Task<PaymentRequestDetailsModel> GetPaymentRequestDetailsAsync(string merchantId, string paymentRequestId)
+        public Task<PaymentRequestModel> GetPaymentRequestAsync(string merchantId, string paymentRequestId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetDetailsAsync(merchantId, paymentRequestId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetAsync(merchantId, paymentRequestId));
         }
 
-        public async Task<PaymentRequestModel> GetPaymentRequestByAddressAsync(string walletAddress)
+        public Task<PaymentRequestDetailsModel> GetPaymentRequestDetailsAsync(string merchantId, string paymentRequestId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetByAddressAsync(walletAddress));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetDetailsAsync(merchantId, paymentRequestId));
         }
 
-        public async Task<PaymentRequestModel> CreatePaymentRequestAsync(CreatePaymentRequestModel model)
+        public Task<PaymentRequestModel> GetPaymentRequestByAddressAsync(string walletAddress)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.CreateAsync(model));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetByAddressAsync(walletAddress));
+        }
+
+        public Task<PaymentRequestModel> CreatePaymentRequestAsync(CreatePaymentRequestModel model)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.CreateAsync(model));
         }
         
-        public async Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request)
+        public Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.BtcFreeTransferAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.BtcFreeTransferAsync(request));
         }
 
-        public async Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactionsAsync()
+        public Task<IEnumerable<TransactionStateResponse>> GetAllMonitoredTransactionsAsync()
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.GetAllMonitoredTransactionsAsync());
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.GetAllMonitoredTransactionsAsync());
         }
 
-        public async Task<RefundResponse> RefundAsync(RefundRequestModel request)
+        public Task<RefundResponse> RefundAsync(RefundRequestModel request)
         {
-            return await _runner.RunAsync(() => _paymentRequestsApi.RefundAsync(request), ExceptionFactories.CreateRefundException);
+            return _runner.RunAsync(() => _paymentRequestsApi.RefundAsync(request), ExceptionFactories.CreateRefundException);
         }
 
-        public async Task<AvailableAssetsResponse> ResolveAvailableAssetsAsync(string merchantId, AssetAvailabilityType type)
+        public Task<AvailableAssetsResponse> ResolveAvailableAssetsAsync(string merchantId, AssetAvailabilityType type)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetAvailableAssetsAsync(merchantId, type));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetAvailableAssetsAsync(merchantId, type));
         }
 
-        public async Task<AvailableAssetsResponse> GetGeneralAvailableAssetsAsync(AssetAvailabilityType type)
+        public Task<AvailableAssetsResponse> GetAvailableSettlementAssetsAsync(string merchantId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetGeneralAvailableAssetsAsync(type));
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _merchantsApi.GetAvailableSettlementAssetsAsync(merchantId));
         }
 
-        public async Task<AvailableAssetsByMerchantResponse> GetPersonalAvailableAssetsAsync(string merchantId)
+        public Task<AvailableAssetsResponse> GetAvailablePaymentAssetsAsync(string merchantId, string settlementAssetId)
         {
-            return await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetPersonalAvailableAssetsAsync(merchantId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _merchantsApi.GetAvailablePaymentAssetsAsync(merchantId, settlementAssetId));
         }
 
-        public async Task SetGeneralAvailableAssetsAsync(UpdateAssetAvailabilityRequest request)
+        public Task<IEnumerable<AssetGeneralSettingsResponse>> GetAssetGeneralSettingsAsync()
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetGeneralAvailableAssetsAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetAssetGeneralSettingsAsync());
         }
 
-        public async Task SetPersonalAvailableAssetsAsync(UpdateAssetAvailabilityByMerchantRequest request)
+        public Task<AssetMerchantSettingsResponse> GetAssetMerchantSettingsAsync(string merchantId)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetPersonalAvailableAssetsAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.GetAssetMerchantSettingsAsync(merchantId));
         }
 
-        public async Task CancelAsync(string merchantId, string paymentRequestId)
+        public Task SetAssetGeneralSettingsAsync(UpdateAssetGeneralSettingsRequest request)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.CancelAsync(merchantId, paymentRequestId));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetAssetGeneralSettingsAsync(request));
         }
 
-        public async Task SetWalletExpiredAsync(BlockchainWalletExpiredRequest request)
+        public Task SetAssetMerchantSettingsAsync(UpdateAssetMerchantSettingsRequest settingsRequest)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.SetWalletExpiredAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.SetAssetMerchantSettingsAsync(settingsRequest));
         }
 
-        public async Task SetTransactionExpiredAsync(TransactionExpiredRequest request)
+        public Task CancelAsync(string merchantId, string paymentRequestId)
         {
-            await _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.SetTransactionExpiredAsync(request));
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.CancelAsync(merchantId, paymentRequestId));
+        }
+
+        public Task SetWalletExpiredAsync(BlockchainWalletExpiredRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.SetWalletExpiredAsync(request));
+        }
+
+        public Task<MarkupResponse> ResolveMarkupByMerchantAsync(string merchantId, string assetPairId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.ResolveMarkupAsync(merchantId, assetPairId));
+        }
+
+        public Task<IReadOnlyList<MarkupResponse>> GetDefaultMarkupsAsync()
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.GetDefaultsAsync());
+        }
+
+        public Task<MarkupResponse> GetDefaultMarkupAsync(string assetPairId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.GetDefaultAsync(assetPairId));
+        }
+
+        public Task SetDefaultMarkupAsync(string assetPairId, UpdateMarkupRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.SetDefaultAsync(assetPairId, request));
+        }
+
+        public Task<IReadOnlyList<MarkupResponse>> GetMarkupsForMerchantAsync(string merchantId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.GetForMerchantAsync(merchantId));
+        }
+
+        public Task<MarkupResponse> GetMarkupForMerchantAsync(string merchantId, string assetPairId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.GetForMerchantAsync(merchantId, assetPairId));
+        }
+
+        public Task SetMarkupForMerchantAsync(string merchantId, string assetPairId, UpdateMarkupRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _markupsApi.SetForMerchantAsync(merchantId, assetPairId, request));
+        }
+
+        public Task<SupervisorMembershipResponse> AddSupervisorMembershipAsync(AddSupervisorMembershipRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorMembershipApi.AddAsync(request));
+        }
+
+        public Task<SupervisorMembershipResponse> GetSupervisorMembershipAsync(string employeeId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorMembershipApi.GetAsync(employeeId));
+        }
+
+        public Task UpdateSupervisorMembershipAsync(UpdateSupervisorMembershipRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorMembershipApi.UpdateAsync(request));
+        }
+
+        public Task RemoveSupervisorMembershipAsync(string employeeId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _supervisorMembershipApi.RemoveAsync(employeeId));
+        }
+
+        public Task<MerchantsSupervisorMembershipResponse> AddSupervisorMembershipForMerchantsAsync(AddSupervisorMembershipMerchantsRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(
+                () => _supervisorMembershipApi.AddForMerchantsAsync(request));
+        }
+
+        public Task<MerchantsSupervisorMembershipResponse> GetSupervisorMembershipWithMerchantsAsync(string employeeId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _supervisorMembershipApi.GetWithMerchantsAsync(employeeId));
+        }
+
+        public Task SetTransactionExpiredAsync(TransactionExpiredRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.SetTransactionExpiredAsync(request));
+        }
+
+        public async Task<IEnumerable<FileInfoModel>> GetFilesAsync(string merchantId)
+        {
+            return await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.GetAllAsync(merchantId));
+        }
+
+        public async Task<byte[]> GetFileAsync(string merchantId, string fileId)
+        {
+            byte[] response = await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.GetAsync(merchantId, fileId));
+
+            return response;
+        }
+
+        public Task<string> GetMerchantLogoUrl(string merchantId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.GetMerchantLogoUrl(merchantId));
+        }
+
+        public async Task UploadFileAsync(string merchantId, byte[] content, string fileName, string contentType)
+        {
+            var streamPart = new StreamPart(new MemoryStream(content), fileName, contentType);
+
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.UploadAsync(merchantId, streamPart));
+        }
+
+        public async Task DeleteFileAsync(string merchantId, string fileId)
+        {
+            await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.DeleteAsync(merchantId, fileId));
+        }
+
+        public Task<MerchantGroupResponse> AddMerchantGroupAsync(AddMerchantGroupRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.AddGroupAsync(request));
+        }
+
+        public Task<MerchantGroupResponse> GetMerchantGroupAsync(string id)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetGroupAsync(id));
+        }
+
+        public Task UpdateMerchantGroupAsync(UpdateMerchantGroupRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.UpdateGroupAsync(request));
+        }
+
+        public Task DeleteMerchantGroupAsync(string id)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.DeleteGroupAsync(id));
+        }
+
+        public Task<MerchantsByUsageResponse> GetMerchantsByUsageAsync(GetMerchantsByUsageRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetMerchantsByUsageAsync(request));
+        }
+
+        public Task<IEnumerable<MerchantGroupResponse>> GetMerchantGroupsByOwnerAsync(string ownerId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetGroupsByOwnerAsync(ownerId));
+        }
+
+        public Task<MerchantWalletResponse> CreateMerchantWalletAsync(CreateMerchantWalletRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.CreateAsync(request));
+        }
+
+        public Task DeleteMerchantWalletAsync(string merchantWalletId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.DeleteAsync(merchantWalletId));
+        }
+
+        public Task SetMerchantWalletDefaultAssetsAsync(UpdateMerchantWalletDefaultAssetsRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.SetDefaultAssetsAsync(request));
+        }
+
+        public Task<IEnumerable<MerchantWalletResponse>> GetMerchantWalletsAsync(string merchantId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.GetByMerchantAsync(merchantId));
+        }
+
+        public Task<MerchantWalletResponse> GetDefaultMerchantWalletAsync(string merchantId, string assetId, PaymentDirection paymentDirection)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _merchantWalletsApi.GetDefaultAsync(merchantId, assetId, paymentDirection));
+        }
+
+        public Task<IEnumerable<MerchantWalletBalanceResponse>> GetMerchantWalletBalancesAsync(string merchantId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantWalletsApi.GetBalancesAsync(merchantId));
+        }
+
+        public Task<AssetRateResponse> AddAssetPairRateAsync(AddAssetRateRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _assetsApi.AddAssetPairRateAsync(request));
+        }
+
+        public Task<AssetRateResponse> GetCurrentAssetPairRateAsync(string baseAssetId, string quotingAssetId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _assetsApi.GetCurrentAssetPairRateAsync(baseAssetId, quotingAssetId));
+        }
+
+        public Task PayAsync(PaymentRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.PayAsync(request));
+        }
+
+        public Task PrePayAsync(PrePaymentRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.PrePayAsync(request));
+        }
+
+        public Task<ExchangeResponse> ExchangeAsync(ExchangeRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _exchangeApi.ExecuteAsync(request));
+        }
+
+        public Task<ExchangeResponse> PreExchangeAsync(PreExchangeRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _exchangeApi.PreExchangeAsync(request));
+        }
+
+        public Task RegisterEthereumInboundTransactionAsync(RegisterInboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.RegisterEthereumInboundTransactionAsync(request));
+        }
+
+        public Task RegisterEthereumOutboundTransactionAsync(RegisterOutboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.RegisterEthereumOutboundTransactionAsync(request));
+        }
+
+        public Task CompleteEthereumOutboundTransactionAsync(CompleteOutboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.CompleteEthereumOutboundTransactionAsync(request));
+        }
+
+        public Task FailEthereumOutboundTransactionAsync(FailOutboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.FailEthereumOutboundTransactionAsync(request));
+        }
+
+        public Task FailEthereumOutboundTransactionAsync(NotEnoughFundsOutboundTxModel request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _payInternalApi.FailEthereumOutboundTransactionAsync(request));
+        }
+
+        public Task<CashoutResponse> CashoutAsync(CashoutRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _cashoutApi.ExecuteAsync(request));
         }
 
         public void Dispose()

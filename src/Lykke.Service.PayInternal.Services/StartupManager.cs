@@ -1,7 +1,9 @@
 ﻿using System;
-using System.Threading.Tasks;
+using Autofac;
+using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
@@ -18,24 +20,33 @@ namespace Lykke.Service.PayInternal.Services
     public class StartupManager : IStartupManager
     {
         // ReSharper disable once NotAccessedField.Local
-        private readonly ILog _log;
         private readonly AppSettings _appSettings;
         private readonly IPaymentRequestExpirationHandler _paymentRequestExpirationHandler;
+        private readonly IWalletEventsPublisher _walletEventsPublisher;
+        private readonly IPaymentRequestPublisher _paymentRequestPublisher;
+        private readonly ITransactionPublisher _transactionPublisher;
+        private readonly ILog _log;
 
         public StartupManager(
-            ILog log,
-            AppSettings appSettings,
-            IPaymentRequestExpirationHandler paymentRequestExpirationHandler)
+            [NotNull] AppSettings appSettings,
+            [NotNull] IPaymentRequestExpirationHandler paymentRequestExpirationHandler,
+            [NotNull] IWalletEventsPublisher walletEventsPublisher, 
+            [NotNull] IPaymentRequestPublisher paymentRequestPublisher, 
+            [NotNull] ITransactionPublisher transactionPublisher,
+            [NotNull] ILogFactory logFactory)
         {
-            _log = log?.CreateComponentScope(nameof(StartupManager)) ?? throw new ArgumentNullException(nameof(log));
             _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
             _paymentRequestExpirationHandler = paymentRequestExpirationHandler ??
                                                throw new ArgumentNullException(nameof(paymentRequestExpirationHandler));
+            _walletEventsPublisher = walletEventsPublisher ?? throw new ArgumentNullException(nameof(walletEventsPublisher));
+            _paymentRequestPublisher = paymentRequestPublisher ?? throw new ArgumentNullException(nameof(paymentRequestPublisher));
+            _transactionPublisher = transactionPublisher ?? throw new ArgumentNullException(nameof(transactionPublisher));
+            _log = logFactory.CreateLog(this);
         }
 
-        public async Task StartAsync()
+        public void Start()
         {
-            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty, "Checking app settings consistency...");
+            _log.Info("Checking app settings consistency...");
 
             TimeSpan primaryExpPeriod = _appSettings.PayInternalService.ExpirationPeriods.Order.Primary;
 
@@ -44,15 +55,31 @@ namespace Lykke.Service.PayInternal.Services
             if (primaryExpPeriod > extendedExpPeriod)
                 throw new OrderExpirationSettingsInconsistentException(primaryExpPeriod, extendedExpPeriod);
 
-            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty, "Settings checked successfully.");
+            _log.Info("Settings checked successfully.");
 
-            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty,
-                "Starting payment request expiration handler ...");
+            StartComponent("Payment request expiration handler", _paymentRequestExpirationHandler);
 
-            _paymentRequestExpirationHandler.Start();
+            StartComponent("Wallet events publisher", _walletEventsPublisher);
 
-            await _log.WriteInfoAsync(nameof(StartAsync), string.Empty,
-                "Payment request expiration handler successfully started.");
+            StartComponent("Payment request publisher", _paymentRequestPublisher);
+
+            StartComponent("Transaction publisher", _transactionPublisher);
+        }
+
+        private void StartComponent(string componentDisplayName, object component)
+        {
+            _log.Info($"Starting {componentDisplayName} ...");
+
+            if (component is IStartable startableComponent)
+            {
+                startableComponent.Start();
+
+                _log.Info($"{componentDisplayName} successfully started.");
+            }
+            else
+            {
+                _log.Warning("Component has not been started", context: component.ToJson());
+            }
         }
     }
 }

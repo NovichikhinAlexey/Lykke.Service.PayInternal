@@ -5,9 +5,11 @@ using Lykke.Service.PayInternal.Core.Services;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
+using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -28,15 +30,19 @@ namespace Lykke.Service.PayInternal.Services
             _transactionConfirmationCount = transactionConfirmationCount;
         }
 
-        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetByWalletAsync(string walletAddress)
+        public Task<IReadOnlyList<IPaymentRequestTransaction>> GetByWalletAsync(string walletAddress)
         {
-            return await _transactionRepository.GetByWalletAsync(walletAddress);
+            return _transactionRepository.GetByWalletAsync(walletAddress);
         }
 
-        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetByTransactionIdAsync(string transactionId,
-            BlockchainType blockchain)
+        public Task<IPaymentRequestTransaction> GetByIdAsync(BlockchainType blockchain, TransactionIdentityType identityType, string identity, string walletAddress)
         {
-            return await _transactionRepository.GetByTransactionIdAsync(transactionId, blockchain);
+            return _transactionRepository.GetByIdAsync(blockchain, identityType, identity, walletAddress);
+        }
+
+        public async Task<IEnumerable<IPaymentRequestTransaction>> GetByBcnIdentityAsync(BlockchainType blockchain, TransactionIdentityType identityType, string identity)
+        {
+            return await _transactionRepository.GetByBcnIdentityAsync(blockchain, identityType, identity);
         }
 
         public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetConfirmedAsync(string walletAddress)
@@ -55,27 +61,29 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<IPaymentRequestTransaction> CreateTransactionAsync(ICreateTransactionCommand request)
         {
-            var paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
+            IPaymentRequest paymentRequest = null;
 
-            if (paymentRequest == null)
-                throw new PaymentRequestNotFoundException(request.WalletAddress);
-
-            var transactionEntity = new PaymentRequestTransaction
+            if (!string.IsNullOrEmpty(request.WalletAddress))
             {
-                WalletAddress = request.WalletAddress,
-                TransactionId = request.TransactionId,
-                Amount = request.Amount,
-                AssetId = request.AssetId,
-                Confirmations = request.Confirmations,
-                BlockId = request.BlockId,
-                Blockchain = request.Blockchain,
-                FirstSeen = request.FirstSeen,
-                PaymentRequestId = paymentRequest.Id,
-                SourceWalletAddresses = request.SourceWalletAddresses,
-                TransactionType = request.Type,
-                DueDate = request.DueDate ?? paymentRequest.DueDate,
-                TransferId = request.TransferId
-            };
+                paymentRequest = await _paymentRequestRepository.FindAsync(request.WalletAddress);
+
+                if (paymentRequest == null)
+                    throw new PaymentRequestNotFoundException(request.WalletAddress);
+
+                IPaymentRequestTransaction existing =
+                    await _transactionRepository.GetByIdAsync(request.Blockchain, request.IdentityType, request.Identity, request.WalletAddress);
+
+                if (existing != null)
+                {
+                    await UpdateAsync(Mapper.Map<UpdateTransactionCommand>(request));
+
+                    return await _transactionRepository.GetByIdAsync(request.Blockchain, request.IdentityType,
+                        request.Identity, request.WalletAddress);
+                }
+            }
+
+            var transactionEntity =
+                Mapper.Map<PaymentRequestTransaction>(request, opts => opts.Items["PaymentRequest"] = paymentRequest);
 
             return await _transactionRepository.AddAsync(transactionEntity);
         }
@@ -86,18 +94,18 @@ namespace Lykke.Service.PayInternal.Services
 
             if (!string.IsNullOrEmpty(request.WalletAddress))
             {
-                IPaymentRequestTransaction tx = await _transactionRepository.GetByIdAsync(request.TransactionId,
-                    request.Blockchain, request.WalletAddress);
+                IPaymentRequestTransaction tx = await _transactionRepository.GetByIdAsync(request.Blockchain,
+                    request.IdentityType, request.Identity, request.WalletAddress);
 
                 if (tx == null)
-                    throw new TransactionNotFoundException(request.TransactionId, request.Blockchain, request.WalletAddress);
+                    throw new TransactionNotFoundException(request.Blockchain, request.IdentityType, request.Identity, request.WalletAddress);
 
                 businessTransactions.Add(tx);
             }
             else
             {
                 IReadOnlyList<IPaymentRequestTransaction> txs =
-                    await _transactionRepository.GetByTransactionIdAsync(request.TransactionId, request.Blockchain);
+                    await _transactionRepository.GetByBcnIdentityAsync(request.Blockchain, request.IdentityType, request.Identity);
 
                 businessTransactions.AddRange(txs);
             }
@@ -110,7 +118,12 @@ namespace Lykke.Service.PayInternal.Services
 
                 if (request.IsPayment())
                 {
-                    tx.Amount = (decimal) request.Amount;
+                    tx.Amount = request.Amount;
+                }
+
+                if (tx.IdentityType != TransactionIdentityType.Hash)
+                {
+                    tx.TransactionId = request.Hash;
                 }
 
                 await _transactionRepository.UpdateAsync(tx);

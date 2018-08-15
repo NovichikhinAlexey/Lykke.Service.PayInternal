@@ -1,8 +1,12 @@
-﻿namespace Lykke.Service.PayInternal.Contract
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
+namespace Lykke.Service.PayInternal.Contract
 {
     /// <summary>
     /// Blockchain type
     /// </summary>
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum BlockchainType
     {
         /// <summary>
@@ -18,6 +22,11 @@
         /// <summary>
         /// Ethereum blockchain
         /// </summary>
-        Ethereum
+        Ethereum,
+
+        /// <summary>
+        /// Ethereum blockchain with IATA specific implementation
+        /// </summary>
+        EthereumIata
     }
 }

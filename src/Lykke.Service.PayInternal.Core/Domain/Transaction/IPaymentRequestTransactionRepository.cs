@@ -16,19 +16,21 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         /// <summary>
         /// Gets business single transaction
         /// </summary>
-        /// <param name="transactionId"></param>
         /// <param name="blockchain"></param>
+        /// <param name="identityType"></param>
+        /// <param name="identity"></param>
         /// <param name="walletAddress"></param>
         /// <returns></returns>
-        Task<IPaymentRequestTransaction> GetByIdAsync(string transactionId, BlockchainType blockchain, string walletAddress);
+        Task<IPaymentRequestTransaction> GetByIdAsync(BlockchainType blockchain, TransactionIdentityType identityType, string identity, string walletAddress);
 
         /// <summary>
         /// Gets multiple business transactions related to single blockchain transaction provided
         /// </summary>
-        /// <param name="transactionId"></param>
         /// <param name="blockchain"></param>
+        /// <param name="identityType"></param>
+        /// <param name="identity"></param>
         /// <returns></returns>
-        Task<IReadOnlyList<IPaymentRequestTransaction>> GetByTransactionIdAsync(string transactionId, BlockchainType blockchain);
+        Task<IReadOnlyList<IPaymentRequestTransaction>> GetByBcnIdentityAsync(BlockchainType blockchain, TransactionIdentityType identityType, string identity);
 
         /// <summary>
         /// Gets business transactions filtered by DueDate  
@@ -49,6 +51,6 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         /// </summary>
         /// <param name="transaction"></param>
         /// <returns></returns>
-        Task UpdateAsync(IPaymentRequestTransaction transaction);
+        Task<IPaymentRequestTransaction> UpdateAsync(IPaymentRequestTransaction transaction);
     }
 }

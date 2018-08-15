@@ -7,8 +7,7 @@ namespace Lykke.Service.PayInternal.Models.Transactions
 {
     public class CreateTransactionRequest : ICreateTransactionRequest
     {
-        [Required]
-        public string TransactionId { get; set; }
+        public string Hash { get; set; }
 
         [Required]
         public string WalletAddress { get; set; }
@@ -25,9 +24,17 @@ namespace Lykke.Service.PayInternal.Models.Transactions
         public string BlockId { get; set; }
 
         [Required]
+        [EnumDataType(typeof(BlockchainType), ErrorMessage = "Invalid value, possible values are: None, Bitcoin, Ethereum")]
         public BlockchainType Blockchain { get; set; }
 
         public DateTime? FirstSeen { get; set; }
+
+        [Required]
+        [EnumDataType(typeof(TransactionIdentityType), ErrorMessage = "Invalid value, possible values are: None, Hash, Specific")]
+        public TransactionIdentityType IdentityType { get; set; }
+
+        [Required]
+        public string Identity { get; set; }
 
         [Required]
         public string[] SourceWalletAddresses { get; set; }

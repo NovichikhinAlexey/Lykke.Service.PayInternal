@@ -4,6 +4,7 @@ using Autofac;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.RabbitMqBroker.Publisher;
 using Lykke.RabbitMqBroker.Subscriber;
 using Lykke.Service.PayInternal.Contract;
@@ -20,12 +21,16 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
     public class TransactionPublisher : ITransactionPublisher, IStartable, IStopable
     {
         private readonly ILog _log;
+        private readonly ILogFactory _logFactory;
         private readonly RabbitMqSettings _settings;
         private RabbitMqPublisher<NewTransactionMessage> _publisher;
 
-        public TransactionPublisher(ILog log, RabbitMqSettings settings)
+        public TransactionPublisher(
+            [NotNull] ILogFactory logFactory, 
+            [NotNull] RabbitMqSettings settings)
         {
-            _log = log;
+            _logFactory = logFactory;
+            _log = logFactory.CreateLog(this);
             _settings = settings;
         }
 
@@ -38,17 +43,17 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
         {
             var message = new NewTransactionMessage
             {
-                Id = transaction.Id,
+                Id = transaction.TransactionId,
                 AssetId = transaction.AssetId,
                 Amount = transaction.Amount,
                 Confirmations = transaction.Confirmations,
                 BlockId = transaction.BlockId,
                 Blockchain = Enum.Parse<BlockchainType>(transaction.Blockchain.ToString()),
-                DueDate = transaction.DueDate
+                //todo
+                DueDate = transaction.DueDate ?? DateTime.UtcNow.AddDays(1)
             };
 
-            await _log.WriteInfoAsync(nameof(TransactionPublisher), nameof(PublishAsync), message.ToJson(),
-                "Publishing new transaction message");
+            _log.Info("Publishing new transaction message", message);
 
             await _publisher.ProduceAsync(message);
         }
@@ -60,11 +65,10 @@ namespace Lykke.Service.PayInternal.Rabbit.Publishers
 
             settings.MakeDurable();
 
-            _publisher = new RabbitMqPublisher<NewTransactionMessage>(settings)
+            _publisher = new RabbitMqPublisher<NewTransactionMessage>(_logFactory, settings)
                 .SetSerializer(new JsonMessageSerializer<NewTransactionMessage>())
                 .SetPublishStrategy(new DefaultFanoutPublishStrategy(settings))
                 .PublishSynchronously()
-                .SetLogger(_log)
                 .Start();
         }
 

@@ -3,14 +3,13 @@ using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using Autofac;
-using Common.Log;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core.Settings;
 using Lykke.Service.PayInternal.Modules;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -65,19 +64,25 @@ namespace Lykke.Service.PayInternal.Tests
 
             var appSettings = configuration.LoadSettings<AppSettings>(DefaultConfigurationKey, true);
 
+            builder.RegisterInstance(Logs.EmptyLogFactory.Instance)
+                .As<ILogFactory>()
+                .SingleInstance();
+
             builder.RegisterModule(new AzureRepositories.AutofacModule(
                 appSettings.Nested(o => o.PayInternalService.Db.MerchantOrderConnString),
                 appSettings.Nested(o => o.PayInternalService.Db.MerchantConnString),
                 appSettings.Nested(o => o.PayInternalService.Db.PaymentRequestConnString),
-                appSettings.Nested(o => o.PayInternalService.Db.TransferConnString),
-                new Mock<ILog>().Object));
+                appSettings.Nested(o => o.PayInternalService.Db.TransferConnString)));
 
             builder.RegisterModule(new Services.AutofacModule(
                 appSettings.CurrentValue.PayInternalService.ExpirationPeriods,
                 appSettings.CurrentValue.PayInternalService.TransactionConfirmationCount,
-                appSettings.CurrentValue.PayInternalService.Blockchain.WalletAllocationPolicy.Policies));
+                appSettings.CurrentValue.PayInternalService.Blockchain.WalletAllocationPolicy.Policies,
+                appSettings.CurrentValue.PayInternalService.AssetPairsLocalStorage.AssetPairs,
+                appSettings.CurrentValue.PayInternalService.CacheSettings,
+                appSettings.CurrentValue.PayInternalService.RetryPolicy));
 
-            builder.RegisterModule(new ServiceModule(appSettings, new Mock<ILog>().Object));
+            builder.RegisterModule(new ServiceModule(appSettings));
 
             var controllerTypes = typeof(Startup).Assembly
                 .GetExportedTypes()

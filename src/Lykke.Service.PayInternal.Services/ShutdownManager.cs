@@ -1,6 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
+using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core.Services;
 
 namespace Lykke.Service.PayInternal.Services
@@ -12,17 +15,29 @@ namespace Lykke.Service.PayInternal.Services
     [UsedImplicitly]
     public class ShutdownManager : IShutdownManager
     {
-        // ReSharper disable once NotAccessedField.Local
         private readonly ILog _log;
+        private readonly IEnumerable<IStopable> _items;
 
-        public ShutdownManager(ILog log)
+        public ShutdownManager(ILogFactory logFactory, IEnumerable<IStopable> items)
         {
-            _log = log;
+            _log = logFactory.CreateLog(this);
+            _items = items;
         }
 
-        public async Task StopAsync()
+        public void Stop()
         {
-            await Task.CompletedTask;
+            // TODO: Implement your shutdown logic here. Good idea is to log every step
+            foreach (var item in _items)
+            {
+                try
+                {
+                    item.Stop();
+                }
+                catch (Exception ex)
+                {
+                    _log.Warning($"Unable to stop {item.GetType().Name}", ex);
+                }
+            }
         }
     }
 }

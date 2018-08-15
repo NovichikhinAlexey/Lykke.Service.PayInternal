@@ -5,13 +5,14 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common;
 using Common.Log;
+using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Services.Domain;
 
 namespace Lykke.Service.PayInternal.Services
 {
@@ -22,15 +23,17 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransferService _transferService;
         private readonly TimeSpan _refundExpirationPeriod;
         private readonly ITransactionPublisher _transactionPublisher;
+        private readonly IBlockchainAddressValidator _blockchainAddressValidator;
         private readonly ILog _log;
 
         public RefundService(
-            IPaymentRequestService paymentRequestService, 
-            ITransactionsService transactionsService,
-            ITransferService transferService,
+            [NotNull] IPaymentRequestService paymentRequestService,
+            [NotNull] ITransactionsService transactionsService,
+            [NotNull] ITransferService transferService,
             TimeSpan refundExpirationPeriod,
-            ITransactionPublisher transactionPublisher,
-            ILog log)
+            [NotNull] ITransactionPublisher transactionPublisher,
+            [NotNull] ILogFactory logFactory,
+            [NotNull] IBlockchainAddressValidator blockchainAddressValidator)
         {
             _paymentRequestService =
                 paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
@@ -39,7 +42,9 @@ namespace Lykke.Service.PayInternal.Services
             _refundExpirationPeriod = refundExpirationPeriod;
             _transactionPublisher =
                 transactionPublisher ?? throw new ArgumentNullException(nameof(transactionPublisher));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
+            _blockchainAddressValidator = blockchainAddressValidator ??
+                                          throw new ArgumentNullException(nameof(blockchainAddressValidator));
         }
 
         public async Task<RefundResult> ExecuteAsync(string merchantId, string paymentRequestId,
@@ -64,6 +69,11 @@ namespace Lykke.Service.PayInternal.Services
                 throw new RefundValidationException(RefundErrorType.MultitransactionNotSupported);
 
             IPaymentRequestTransaction tx = paymentTxs.Single();
+
+            bool isValidAddress = string.IsNullOrWhiteSpace(destinationWalletAddress) ||
+                                  await _blockchainAddressValidator.Execute(destinationWalletAddress, tx.Blockchain);
+            if (!isValidAddress)
+                throw new RefundValidationException(RefundErrorType.InvalidDestinationAddress);
 
             if (!tx.SourceWalletAddresses.Any())
                 throw new RefundValidationException(RefundErrorType.InvalidDestinationAddress);
@@ -95,8 +105,7 @@ namespace Lykke.Service.PayInternal.Services
                 {
                     if (!string.IsNullOrEmpty(transferResultTransaction.Error))
                     {
-                        await _log.WriteWarningAsync(nameof(RefundService), nameof(ExecuteAsync),
-                            transferResultTransaction.ToJson(), "Transaction failed");
+                        _log.Warning("Transaction failed", context: transferResultTransaction.ToJson());
 
                         continue;
                     }
@@ -107,26 +116,25 @@ namespace Lykke.Service.PayInternal.Services
                             Amount = transferResultTransaction.Amount,
                             AssetId = transferResultTransaction.AssetId,
                             Confirmations = 0,
-                            TransactionId = transferResultTransaction.Hash,
+                            Hash = transferResultTransaction.Hash,
                             WalletAddress = paymentRequest.WalletAddress,
                             Type = TransactionType.Refund,
                             Blockchain = transferResult.Blockchain,
                             FirstSeen = null,
                             DueDate = refundDueDate,
-                            TransferId = transferResult.Id
+                            TransferId = transferResult.Id,
+                            IdentityType = transferResultTransaction.IdentityType,
+                            Identity = transferResultTransaction.Identity
                         });
 
                     await _transactionPublisher.PublishAsync(refundTransaction);
                 }
 
-                if (transferResult.Transactions.All(x => x.HasError))
-                    throw new OperationFailedException(transferResult.Transactions.Select(x => x.Error).ToJson());
+                if (!transferResult.HasSuccess())
+                    throw new RefundOperationFailedException(transferResult.GetErrors());
 
-                IEnumerable<TransferTransactionResult> errorTransactions =
-                    transferResult.Transactions.Where(x => x.HasError).ToList();
-
-                if (errorTransactions.Any())
-                    throw new OperationPartiallyFailedException(errorTransactions.Select(x => x.Error).ToJson());
+                if (transferResult.HasError())
+                    throw new RefundOperationPartiallyFailedException(transferResult.GetErrors());
             }
             catch (Exception)
             {
@@ -136,26 +144,24 @@ namespace Lykke.Service.PayInternal.Services
                 throw;
             }
 
-            return await PrepareRefundResult(paymentRequest, transferResult, refundDueDate);
+            return PrepareRefundResult(paymentRequest, transferResult, refundDueDate);
         }
 
-        private async Task<RefundResult> PrepareRefundResult(IPaymentRequest paymentRequest,
+        private RefundResult PrepareRefundResult(IPaymentRequest paymentRequest,
             TransferResult transferResult, DateTime refundDueDate)
         {
             var assetIds = transferResult.Transactions.Unique(x => x.AssetId).ToList();
 
             if (assetIds.MoreThanOne())
-                await _log.WriteWarningAsync(nameof(PaymentRequestService), nameof(PrepareRefundResult), new
+                _log.Warning("Multiple assets are not expected", context: new
                 {
                     PaymentResuest = paymentRequest,
                     RefundTransferResult = transferResult
-                }.ToJson(), "Multiple assets are not expected");
+                });
 
             return new RefundResult
             {
-                Amount = transferResult.Transactions
-                    .Where(x => string.IsNullOrEmpty(x.Error))
-                    .Sum(x => x.Amount),
+                Amount = transferResult.GetSuccedeedTxs().Sum(x => x.Amount),
                 AssetId = assetIds.Single(),
                 PaymentRequestId = paymentRequest.Id,
                 PaymentRequestWalletAddress = paymentRequest.WalletAddress,

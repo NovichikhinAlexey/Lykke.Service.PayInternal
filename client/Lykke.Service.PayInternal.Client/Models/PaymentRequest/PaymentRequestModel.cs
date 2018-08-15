@@ -26,7 +26,11 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         /// Gets or sets the order id
         /// </summary>
         public string OrderId { get; set; }
-        
+        /// <summary>
+        /// Get or set ExternalOrderId
+        /// </summary>
+        public string ExternalOrderId { get; set; }
+
         /// <summary>
         /// Gets or sets the settlement asset id.
         /// </summary>
@@ -76,7 +80,12 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         /// Gets or sets the paid date.
         /// </summary>
         public DateTime? PaidDate { get; set; }
-        
+
+        /// <summary>
+        /// Gets or sets the Timestamp.
+        /// </summary>
+        public DateTime? Timestamp { get; set; }
+
         /// <summary>
         /// Gets or sets the error occurred during processing payment request.
         /// </summary>

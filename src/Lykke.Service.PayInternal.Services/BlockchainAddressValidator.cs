@@ -1,41 +1,49 @@
-﻿using System;
+﻿using System.Threading.Tasks;
+using Common.Log;
+using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using NBitcoin;
 
 namespace Lykke.Service.PayInternal.Services
 {
     public class BlockchainAddressValidator : IBlockchainAddressValidator
     {
-        private readonly Network _bitcoinNetwork;
+        private readonly IBlockchainClientProvider _blockchainClientProvider;
+        private readonly ILog _log;
 
-        public BlockchainAddressValidator(string bitcoinNetwork)
+        public BlockchainAddressValidator(
+            [NotNull] IBlockchainClientProvider blockchainClientProvider, 
+            [NotNull] ILogFactory logFactory)
         {
-            _bitcoinNetwork = Network.GetNetwork(bitcoinNetwork);
+            _blockchainClientProvider = blockchainClientProvider;
+            _log = logFactory.CreateLog(this);
         }
 
-        public bool Execute(string address, BlockchainType blockchain)
+        public async Task<bool> Execute(string address, BlockchainType blockchain)
         {
-            switch (blockchain)
+            IBlockchainApiClient blockchainClient = _blockchainClientProvider.Get(blockchain);
+
+            try
             {
-                case BlockchainType.Bitcoin:
-                    try
-                    {
-                        _bitcoinNetwork.Parse(address);
-                    }
-                    catch (Exception)
-                    {
-                        return false;
-                    }
+                return await blockchainClient.ValidateAddressAsync(address);
+            }
+            catch (WalletAddressValidationException e)
+            {
+                _log.Error(e, new
+                {
+                    Blockchain = e.Blockchain.ToString(),
+                    e.Address
+                });
 
-                    return true;
+                throw;
+            }
+            catch (UnrecognizedApiResponse e)
+            {
+                _log.Error(e, new {e.ResponseType});
 
-                case BlockchainType.Ethereum:
-                    throw new NotImplementedException();
-
-                default:
-                    throw new UnrecognizedBlockchainTypeException(blockchain);
+                throw;
             }
         }
     }

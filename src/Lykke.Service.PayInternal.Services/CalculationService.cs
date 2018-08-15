@@ -2,11 +2,13 @@
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
-using Lykke.Service.MarketProfile.Client;
-using Lykke.Service.MarketProfile.Client.Models;
+using JetBrains.Annotations;
+using Lykke.Common.Log;
+using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
+using Lykke.Service.PayInternal.Core.Domain.AssetPair;
+using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
@@ -15,43 +17,34 @@ namespace Lykke.Service.PayInternal.Services
 {
     public class CalculationService : ICalculationService
     {
-        private readonly ILykkeMarketProfile _marketProfileServiceClient;
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly LpMarkupSettings _lpMarkupSettings;
+        private readonly IAssetRatesService _assetRatesService;
         private readonly ILog _log;
 
         public CalculationService(
-            ILykkeMarketProfile marketProfileServiceClient,
-            IAssetsLocalCache assetsLocalCache,
-            LpMarkupSettings lpMarkupSettings,
-            ILog log)
+            [NotNull] IAssetsLocalCache assetsLocalCache,
+            [NotNull] LpMarkupSettings lpMarkupSettings,
+            [NotNull] IAssetRatesService assetRatesService,
+            [NotNull] ILogFactory logFactory)
         {
-            _marketProfileServiceClient = marketProfileServiceClient ??
-                                          throw new ArgumentNullException(nameof(marketProfileServiceClient));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _lpMarkupSettings = lpMarkupSettings ?? throw new ArgumentNullException(nameof(lpMarkupSettings));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _log = logFactory.CreateLog(this);
+            _assetRatesService = assetRatesService ?? throw new ArgumentNullException(nameof(assetRatesService));
         }
 
-        public async Task<decimal> GetAmountAsync(string assetPairId, decimal amount, IRequestMarkup requestMarkup,
-            IMerchantMarkup merchantMarkup)
+        public async Task<decimal> GetAmountAsync(string baseAssetId, string quotingAssetId, decimal amount, IRequestMarkup requestMarkup,
+            IMarkup merchantMarkup)
         {
-            var rate = await GetRateAsync(assetPairId, requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
+            var rate = await GetRateAsync(baseAssetId, quotingAssetId, requestMarkup.Percent, requestMarkup.Pips, merchantMarkup);
 
-            await _log.WriteInfoAsync(nameof(CalculationService), nameof(GetAmountAsync), new
-            {
-                AssetPairId = assetPairId,
-                Amount = amount,
-                RequestMarkup = requestMarkup,
-                MerchantMarkup = merchantMarkup,
-                CalculatedRate = rate
-            }.ToJson(), "Rate calculation");
+            _log.Info("Rate calculation",
+                $"Calculation details: {new {baseAssetId, quotingAssetId, amount, requestMarkup, merchantMarkup, rate}.ToJson()}");
 
-            decimal result = (amount + (decimal) requestMarkup.FixedFee + (decimal) merchantMarkup.LpFixedFee) / rate;
+            decimal result = (amount + (decimal) requestMarkup.FixedFee + merchantMarkup.FixedFee) / rate;
 
-            var assetPair = await _assetsLocalCache.GetAssetPairByIdAsync(assetPairId);
-
-            var baseAsset = await _assetsLocalCache.GetAssetByIdAsync(assetPair.BaseAssetId);
+            Asset baseAsset = await _assetsLocalCache.GetAssetByIdAsync(baseAssetId);
 
             decimal roundedResult = decimal.Round(result, baseAsset.Accuracy, MidpointRounding.AwayFromZero);
 
@@ -59,29 +52,72 @@ namespace Lykke.Service.PayInternal.Services
         }
 
         public async Task<decimal> GetRateAsync(
-            string assetPairId,
+            string baseAssetId, 
+            string quotingAssetId,
             double markupPercent,
             int markupPips,
-            IMerchantMarkup merchantMarkup)
+            IMarkup merchantMarkup)
         {
-            var response = await _marketProfileServiceClient.ApiMarketProfileByPairCodeGetAsync(assetPairId);
+            decimal askPrice, bidPrice;
 
-            if (response is ErrorModel error)
+            AssetPair priceAssetPair = null, assetPair = null;
+
+            if (!string.IsNullOrEmpty(merchantMarkup.PriceAssetPairId))
             {
-                throw new Exception(error.Message);
+                _log.Info($"Price asset pair will be used: {merchantMarkup.PriceAssetPairId}");
+
+                priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(merchantMarkup.PriceAssetPairId);
+
+                IAssetPairRate assetPairRate =
+                    await _assetRatesService.GetCurrentRate(priceAssetPair.BaseAssetId, priceAssetPair.QuotingAssetId);
+
+                _log.Info($"Price method: {merchantMarkup.PriceMethod.ToString()}");
+
+                switch (merchantMarkup.PriceMethod)
+                {
+                    case PriceMethod.None:
+                    case PriceMethod.Direct:
+                        askPrice = assetPairRate.AskPrice;
+                        bidPrice = assetPairRate.BidPrice;
+                        break;
+                    case PriceMethod.Reverse:
+                        askPrice = Math.Abs(assetPairRate.AskPrice) > 0
+                            ? 1 / assetPairRate.AskPrice
+                            : throw new MarketPriceZeroException("ask");
+                        bidPrice = Math.Abs(assetPairRate.BidPrice) > 0
+                            ? 1 / assetPairRate.BidPrice
+                            : throw new MarketPriceZeroException("bid");
+                        break;
+                    default:
+                        throw new UnexpectedAssetPairPriceMethodException(merchantMarkup.PriceMethod);
+                }
+            } 
+            else 
+            {
+                assetPair = await _assetsLocalCache.GetAssetPairAsync(baseAssetId, quotingAssetId);
+
+                try
+                {
+                    IAssetPairRate assetPairRate = await _assetRatesService.GetCurrentRate(baseAssetId, quotingAssetId);
+
+                    askPrice = assetPairRate.AskPrice;
+
+                    bidPrice = assetPairRate.BidPrice;
+                }
+                catch (Exception)
+                {
+                    askPrice = bidPrice = 1;
+                }
             }
 
-            if (response is AssetPairModel assetPairRate)
-            {
-                var assetPair = await _assetsLocalCache.GetAssetPairByIdAsync(assetPairRate.AssetPair);
+            _log.Info($"Market rate that will be used for calculation, askPrice = {askPrice}, bidPrice = {bidPrice}");
 
-                var baseAsset = await _assetsLocalCache.GetAssetByIdAsync(assetPair.BaseAssetId);
+            Asset baseAsset = await _assetsLocalCache.GetAssetByIdAsync(baseAssetId);
 
-                return CalculatePrice(assetPairRate, assetPair.Accuracy, baseAsset.Accuracy, markupPercent, markupPips,
-                    PriceCalculationMethod.ByBid, merchantMarkup);
-            }
+            int pairAccuracy = priceAssetPair?.Accuracy ?? assetPair?.Accuracy ?? baseAsset.Accuracy;
 
-            throw new Exception("Unknown MarketProfile API response");
+            return CalculatePrice((double) askPrice, (double) bidPrice, pairAccuracy, baseAsset.Accuracy, markupPercent,
+                markupPips, PriceCalculationMethod.ByBid, merchantMarkup);
         }
 
         public async Task<AmountFullFillmentStatus> CalculateBtcAmountFullfillmentAsync(decimal plan, decimal fact)
@@ -92,7 +128,7 @@ namespace Lykke.Service.PayInternal.Services
             if (fact < 0)
                 throw new NegativeValueException(fact);
 
-            var asset = await _assetsLocalCache.GetAssetByIdAsync(LykkeConstants.BitcoinAssetId);
+            var asset = await _assetsLocalCache.GetAssetByIdAsync(LykkeConstants.BitcoinAsset);
 
             decimal diff = plan - fact;
 
@@ -105,27 +141,27 @@ namespace Lykke.Service.PayInternal.Services
         }
 
         public decimal CalculatePrice(
-            AssetPairModel assetPairRate,
+            double askPrice, 
+            double bidPrice,
             int pairAccuracy,
             int assetAccuracy,
             double markupPercent,
             int markupPips,
             PriceCalculationMethod priceValueType,
-            IMerchantMarkup merchantMarkup)
+            IMarkup merchantMarkup)
         {
-            _log.WriteInfoAsync(nameof(CalculationService), nameof(CalculatePrice), assetPairRate.ToJson(),
-                "Rate calculation").GetAwaiter().GetResult();
+            _log.Info($"Rate calculation, askPrice = {askPrice}, bidPrice = {bidPrice}");
 
             double originalPrice =
-                GetOriginalPriceByMethod(assetPairRate.BidPrice, assetPairRate.AskPrice, priceValueType);
+                GetOriginalPriceByMethod(bidPrice, askPrice, priceValueType);
 
             double spread = GetSpread(originalPrice, merchantMarkup.DeltaSpread);
 
             double priceWithSpread = GetPriceWithSpread(originalPrice, spread, priceValueType);
 
-            double lpFee = GetMerchantFee(priceWithSpread, merchantMarkup.LpPercent);
+            double lpFee = GetMerchantFee(priceWithSpread, merchantMarkup.Percent);
 
-            double lpPips = GetMerchantPips(merchantMarkup.LpPips);
+            double lpPips = GetMerchantPips(merchantMarkup.Pips);
 
             double fee = GetMarkupFeePerRequest(priceWithSpread, markupPercent);
 
@@ -142,16 +178,16 @@ namespace Lykke.Service.PayInternal.Services
             {
                 case PriceCalculationMethod.ByAsk: return ask;
                 case PriceCalculationMethod.ByBid: return bid;
-                default: throw new UnexpectedPriceCalculationMethod(method);
+                default: throw new UnexpectedPriceCalculationMethodException(method);
             }
         }
 
-        public double GetSpread(double originalPrice, double deltaSpreadPercent)
+        public double GetSpread(double originalPrice, decimal deltaSpreadPercent)
         {
             if (deltaSpreadPercent < 0)
-                throw new NegativeValueException((decimal) deltaSpreadPercent);
+                throw new NegativeValueException(deltaSpreadPercent);
 
-            return originalPrice * deltaSpreadPercent / 100;
+            return originalPrice * (double) deltaSpreadPercent / 100;
         }
 
         public double GetPriceWithSpread(double originalPrice, double spread, PriceCalculationMethod method)
@@ -160,13 +196,13 @@ namespace Lykke.Service.PayInternal.Services
             {
                 case PriceCalculationMethod.ByBid: return originalPrice - spread;
                 case PriceCalculationMethod.ByAsk: return originalPrice + spread;
-                default: throw new UnexpectedPriceCalculationMethod(method);
+                default: throw new UnexpectedPriceCalculationMethodException(method);
             }
         }
 
-        public double GetMerchantFee(double originalPrice, double merchantPercent)
+        public double GetMerchantFee(double originalPrice, decimal merchantPercent)
         {
-            var percent = merchantPercent < 0 ? _lpMarkupSettings.Percent : merchantPercent;
+            var percent = merchantPercent < 0 ? _lpMarkupSettings.Percent : (double) merchantPercent;
 
             return originalPrice * percent / 100;
         }
@@ -208,7 +244,7 @@ namespace Lykke.Service.PayInternal.Services
             {
                 case PriceCalculationMethod.ByBid: return (decimal) originalPrice - delta;
                 case PriceCalculationMethod.ByAsk: return (decimal) originalPrice + delta;
-                default: throw new UnexpectedPriceCalculationMethod(method);
+                default: throw new UnexpectedPriceCalculationMethodException(method);
             }
         }
 
@@ -225,7 +261,7 @@ namespace Lykke.Service.PayInternal.Services
                 case PriceCalculationMethod.ByAsk:
                     result = originalPrice + pairAccuracy.GetMinValue() * (decimal) 0.49;
                     break;
-                default: throw new UnexpectedPriceCalculationMethod(method);
+                default: throw new UnexpectedPriceCalculationMethodException(method);
             }
 
             decimal rounded = Math.Round(result, assetAccuracy);

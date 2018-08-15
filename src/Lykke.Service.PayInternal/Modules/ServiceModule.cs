@@ -1,13 +1,13 @@
 ﻿using System;
-using System.Linq;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Common;
-using Common.Log;
 using Lykke.Bitcoin.Api.Client;
 using Lykke.Service.Assets.Client;
-using Lykke.Service.Assets.Client.Models;
+using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.MarketProfile.Client;
+using Lykke.Service.PayCallback.Client;
+using Lykke.Service.PayHistory.Client;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings;
@@ -18,6 +18,7 @@ using Lykke.Service.PayInternal.Services;
 using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
+using QBitNinja.Client;
 using DbSettings = Lykke.Service.PayInternal.Core.Settings.ServiceSettings.DbSettings;
 
 namespace Lykke.Service.PayInternal.Modules
@@ -26,26 +27,20 @@ namespace Lykke.Service.PayInternal.Modules
     {
         private readonly IReloadingManager<AppSettings> _settings;
         private readonly IReloadingManager<DbSettings> _dbSettings;
-        private readonly ILog _log;
         // NOTE: you can remove it if you don't need to use IServiceCollection extensions to register service specific dependencies
         // ReSharper disable once CollectionNeverUpdated.Local
         private readonly IServiceCollection _services;
 
-        public ServiceModule(IReloadingManager<AppSettings> settings, ILog log)
+        public ServiceModule(IReloadingManager<AppSettings> settings)
         {
             _settings = settings;
             _dbSettings = settings.Nested(x => x.PayInternalService.Db);
-            _log = log;
 
             _services = new ServiceCollection();
         }
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterInstance(_log)
-                .As<ILog>()
-                .SingleInstance();
-
             RegisterServiceClients(builder);
 
             RegisterAppServices(builder);
@@ -76,9 +71,14 @@ namespace Lykke.Service.PayInternal.Modules
                 .As<IShutdownManager>()
                 .SingleInstance();
 
-            builder.RegisterType<AssetsAvailabilityService>()
-                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.AssetsAvailability))
-                .As<IAssetsAvailabilityService>();
+            builder.RegisterType<AssetSettingsService>()
+                .As<IAssetSettingsService>();
+
+            builder.RegisterType<SupervisorMembershipService>()
+                .As<ISupervisorMembershipService>();
+
+            builder.RegisterType<MerchantGroupService>()
+                .As<IMerchantGroupService>();
 
             builder.RegisterType<CalculationService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LpMarkup))
@@ -105,12 +105,52 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<BitcoinApiClient>()
                 .Keyed<IBlockchainApiClient>(BlockchainType.Bitcoin)
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Bitcoin.Network))
                 .SingleInstance();
 
             builder.RegisterType<BlockchainAddressValidator>()
-                .As<IBlockchainAddressValidator>()
-                .WithParameter(
-                    TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Bitcoin.Network));
+                .As<IBlockchainAddressValidator>();
+
+            builder.RegisterType<EthereumApiClient>()
+                .Keyed<IBlockchainApiClient>(BlockchainType.Ethereum)
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum))
+                .SingleInstance();
+
+            builder.RegisterType<EthereumIataApiClient>()
+                .Keyed<IBlockchainApiClient>(BlockchainType.EthereumIata)
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum))
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.RetryPolicy))
+                .SingleInstance();
+
+            builder.RegisterType<LykkeAssetsResolver>()
+                .As<ILykkeAssetsResolver>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.AssetsMap));
+
+            builder.RegisterType<MarkupService>()
+                .As<IMarkupService>();
+
+            builder.RegisterType<BcnSettingsResolver>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain))
+                .As<IBcnSettingsResolver>();
+
+            builder.RegisterType<AutoSettleSettingsResolver>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.AutoSettle))
+                .As<IAutoSettleSettingsResolver>();
+
+            builder.RegisterType<FileService>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Merchant))
+                .As<IFileService>();
+
+            builder.RegisterType<WalletHistoryService>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.RetryPolicy))
+                .As<IWalletHistoryService>();
+
+            builder.RegisterType<WalletBalanceValidator>()
+                .As<IWalletBalanceValidator>();
+
+            builder.RegisterType<ConfirmationsService>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.RetryPolicy))
+                .As<IConfirmationsService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
@@ -123,50 +163,46 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<LykkeMarketProfile>()
                 .As<ILykkeMarketProfile>()
                 .WithParameter("baseUri", new Uri(_settings.CurrentValue.MarketProfileServiceClient.ServiceUrl));
+
+            builder.RegisterInstance<IEthereumCoreAPI>(
+                new EthereumCoreAPI(new Uri(_settings.CurrentValue.EthereumServiceClient.ServiceUrl)));
+
+            builder.RegisterInstance(new QBitNinjaClient(_settings.CurrentValue.NinjaServiceClient.ServiceUrl))
+                .AsSelf();
+
+            builder.RegisterHistoryOperationPublisher(_settings.CurrentValue.PayHistoryServicePublisher);
+
+            builder.RegisterPayHistoryClient(_settings.CurrentValue.PayHistoryServiceClient.ServiceUrl);
+
+            builder.RegisterInvoiceConfirmationPublisher(_settings.CurrentValue.PayInvoiceConfirmationPublisher);
         }
 
         private void RegisterCaches(ContainerBuilder builder)
         {
-            builder.Register(x =>
-            {
-                var assetsService = x.Resolve<IComponentContext>().Resolve<IAssetsService>();
-
-                return new CachedDataDictionary<string, Asset>
-                (
-                    async () => (await assetsService.AssetGetAllAsync()).ToDictionary(itm => itm.Id)
-                );
-            }).SingleInstance();
-
-            builder.Register(x =>
-            {
-                var assetsService = x.Resolve<IComponentContext>().Resolve<IAssetsService>();
-
-                return new CachedDataDictionary<string, AssetPair>(
-                    async () => (await assetsService.AssetPairGetAllAsync()).ToDictionary(itm => itm.Id)
-                );
-            }).SingleInstance();
-
             builder.RegisterType<AssetsLocalCache>()
-                .As<IAssetsLocalCache>();
+                .As<IAssetsLocalCache>()
+                .SingleInstance()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.ExpirationPeriods))
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.RetryPolicy));
         }
 
         private void RegisterRabbitMqPublishers(ContainerBuilder builder)
         {
             builder.RegisterType<WalletEventsPublisher>()
                 .As<IWalletEventsPublisher>()
-                .As<IStartable>()
+                .As<IStopable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
 
             builder.RegisterType<PaymentRequestPublisher>()
                 .As<IPaymentRequestPublisher>()
-                .As<IStartable>()
+                .As<IStopable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
 
             builder.RegisterType<TransactionPublisher>()
                 .As<ITransactionPublisher>()
-                .As<IStartable>()
+                .As<IStopable>()
                 .SingleInstance()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Rabbit));
         }
@@ -175,12 +211,10 @@ namespace Lykke.Service.PayInternal.Modules
         {
             builder.RegisterType<PaymentTxUrlValueResolver>()
                 .AsSelf()
-                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LykkeBlockchainExplorer))
                 .SingleInstance();
 
             builder.RegisterType<RefundTxUrlValueResolver>()
                 .AsSelf()
-                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LykkeBlockchainExplorer))
                 .SingleInstance();
 
             builder.RegisterType<PaymentRequestBcnWalletAddressValueResolver>()
@@ -196,6 +230,14 @@ namespace Lykke.Service.PayInternal.Modules
                 .SingleInstance();
 
             builder.RegisterType<VirtualAddressResolver>()
+                .AsSelf()
+                .SingleInstance();
+
+            builder.RegisterType<AssetIdValueResolver>()
+                .AsSelf()
+                .SingleInstance();
+
+            builder.RegisterType<AssetDisplayIdValueResolver>()
                 .AsSelf()
                 .SingleInstance();
         }

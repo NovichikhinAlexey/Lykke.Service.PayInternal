@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
     <AssemblyName>Lykke.Service.PayInternal.Core</AssemblyName>
     <RootNamespace>Lykke.Service.PayInternal.Core</RootNamespace>
     <Version>1.0.0</Version>
@@ -11,9 +11,11 @@
     <None Remove="Domain\PaymentRequest\**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Lykke.Common" Version="6.5.0" />
-    <PackageReference Include="Lykke.Service.Assets.Client" Version="2.1.0.120" />
-    <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.0.20" />
-    <PackageReference Include="Lykke.SettingsReader" Version="2.3.1" />
+    <PackageReference Include="Lykke.Common" Version="7.0.3" />
+    <PackageReference Include="Lykke.Service.Assets.Client" Version="4.2.0" />
+    <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.1.0" />
+    <PackageReference Include="Lykke.Service.PayCallback.Client" Version="1.0.11" />
+    <PackageReference Include="Lykke.Service.PayHistory.Client" Version="1.0.12" />
+    <PackageReference Include="Lykke.SettingsReader" Version="2.4.1" />
   </ItemGroup>
 </Project>

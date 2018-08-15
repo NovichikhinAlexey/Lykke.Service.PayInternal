@@ -1,6 +1,10 @@
-﻿using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
+﻿using System.Collections.Generic;
+using Lykke.Service.PayHistory.Client;
+using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Core.Settings.SlackNotifications;
 using Lykke.SettingsReader.Attributes;
+using HistoryRabbitMqPublisherSettings = Lykke.Service.PayHistory.Client.Publisher.RabbitMqPublisherSettings;
+using CallBackRabbitMqPublisherSettings = Lykke.Service.PayCallback.Client.InvoiceConfirmation.RabbitMqPublisherSettings;
 
 namespace Lykke.Service.PayInternal.Core.Settings
 {
@@ -12,7 +16,12 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public AssetsServiceClientSettings AssetsServiceClient { get; set; }
         public MarketProfileServiceClientSettings MarketProfileServiceClient { get; set; }
         public NinjaServiceClientSettings NinjaServiceClient { get; set; }
-        public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
+        public EthereumServiceClientSettings EthereumServiceClient { get; set; }
+        public AssetsMapSettings AssetsMap { get; set; }
+        public HistoryRabbitMqPublisherSettings PayHistoryServicePublisher { get; set; }
+        public CallBackRabbitMqPublisherSettings PayInvoiceConfirmationPublisher { get; set; }
+        public PayHistoryServiceClientSettings PayHistoryServiceClient { get; set; }
+		public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
     }
 
     public class BitcoinCoreSettings
@@ -43,5 +52,16 @@ namespace Lykke.Service.PayInternal.Core.Settings
     {
         [HttpCheck("api/isalive", false)]
         public string MonitoringServiceUrl { get; set; }
+    }
+
+    public class EthereumServiceClientSettings
+    {
+        [HttpCheck("api/isalive")]
+        public string ServiceUrl { get; set; }
+    }
+
+    public class AssetsMapSettings
+    {
+        public IDictionary<string, string> Values { get; set; }
     }
 }

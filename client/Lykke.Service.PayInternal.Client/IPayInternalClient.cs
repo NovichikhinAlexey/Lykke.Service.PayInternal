@@ -1,11 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.Asset;
+using Lykke.Service.PayInternal.Client.Models.AssetRates;
+using Lykke.Service.PayInternal.Client.Models.Cashout;
+using Lykke.Service.PayInternal.Client.Models.Exchange;
+using Lykke.Service.PayInternal.Client.Models.Markup;
 using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
+using Lykke.Service.PayInternal.Client.Models.SupervisorMembership;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
+using Lykke.Service.PayInternal.Client.Models.File;
+using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
+using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
+using Lykke.Service.PayInternal.Client.Models.Transactions.Ethereum;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -33,20 +43,20 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request"></param>
         /// <returns></returns>
         Task UpdateTransactionAsync(UpdateTransactionRequest request);
-        
+
         /// <summary>
         /// Returns all merchants.
         /// </summary>
         /// <returns>The collection of merchants.</returns>
         Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync();
-        
+
         /// <summary>
         /// Returns merchant.
         /// </summary>
         /// <param name="merchantId">The merchant id.</param>
         /// <returns>The merchant.</returns>
         Task<MerchantModel> GetMerchantByIdAsync(string merchantId);
-        
+
         /// <summary>
         /// Creates merchant.
         /// </summary>
@@ -89,12 +99,18 @@ namespace Lykke.Service.PayInternal.Client
         Task<OrderModel> ChechoutOrderAsync(ChechoutRequestModel model);
 
         /// <summary>
+        /// Get calculated amount to show amount to pay in paymentAsset
+        /// </summary>
+        /// <param name="model">The request in order to get amount</param>
+        Task<CalculatedAmountResponse> GetCalculatedAmountInfoAsync(GetCalculatedAmountInfoRequest model);
+
+        /// <summary>
         /// Returns merchant payment requests.
         /// </summary>
         /// <param name="merchantId">The merchant id.</param>
         /// <returns>The collection of merchant payment requests.</returns>
         Task<IReadOnlyList<PaymentRequestModel>> GetPaymentRequestsAsync(string merchantId);
-        
+
         /// <summary>
         /// Returns merchant payment request.
         /// </summary>
@@ -117,14 +133,14 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="walletAddress">Wallet address</param>
         /// <returns>The payment request.</returns>
         Task<PaymentRequestModel> GetPaymentRequestByAddressAsync(string walletAddress);
-        
+
         /// <summary>
         /// Creates a payment request and wallet.
         /// </summary>
         /// <param name="model">The payment request creation information.</param>
         /// <returns>The payment request.</returns>
         Task<PaymentRequestModel> CreatePaymentRequestAsync(CreatePaymentRequestModel model);
-        
+
         /// <summary>
         /// Transfers BTC from source addresses with amount provided to destination address without LykkePay fees
         /// </summary>
@@ -158,35 +174,49 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="merchantId"></param>
         /// <param name="type"></param>
         /// <returns></returns>
+        [Obsolete("Use ResolveSettlementAssetsAsync and ResolvePaymentAssetsAsync instead")]
         Task<AvailableAssetsResponse> ResolveAvailableAssetsAsync(string merchantId, AssetAvailabilityType type);
 
         /// <summary>
-        /// Returns general asset availability settings by type
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        Task<AvailableAssetsResponse> GetGeneralAvailableAssetsAsync(AssetAvailabilityType type);
-
-        /// <summary>
-        /// Returns personal asset availability settings
+        /// Returns available settlement assets for merchant
         /// </summary>
         /// <param name="merchantId"></param>
         /// <returns></returns>
-        Task<AvailableAssetsByMerchantResponse> GetPersonalAvailableAssetsAsync(string merchantId);
+        Task<AvailableAssetsResponse> GetAvailableSettlementAssetsAsync(string merchantId);
 
         /// <summary>
-        /// Updates general asset availability settings
+        /// Returns available payment assets for merchant and settlement asset id
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <param name="settlementAssetId"></param>
+        /// <returns></returns>
+        Task<AvailableAssetsResponse> GetAvailablePaymentAssetsAsync(string merchantId, string settlementAssetId);
+
+        /// <summary>
+        /// Returns asset general settings
+        /// </summary>
+        Task<IEnumerable<AssetGeneralSettingsResponse>> GetAssetGeneralSettingsAsync();
+
+        /// <summary>
+        /// Returns merchant asset settings
+        /// </summary>
+        /// <param name="merchantId"></param>
+        /// <returns></returns>
+        Task<AssetMerchantSettingsResponse> GetAssetMerchantSettingsAsync(string merchantId);
+
+        /// <summary>
+        ///  Updates asset general settings
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        Task SetGeneralAvailableAssetsAsync(UpdateAssetAvailabilityRequest request);
+        Task SetAssetGeneralSettingsAsync(UpdateAssetGeneralSettingsRequest request);
 
         /// <summary>
-        /// Updates personal asset availability settings
+        /// Updates merchant asset settings
         /// </summary>
-        /// <param name="request"></param>
+        /// <param name="settingsRequest"></param>
         /// <returns></returns>
-        Task SetPersonalAvailableAssetsAsync(UpdateAssetAvailabilityByMerchantRequest request);
+        Task SetAssetMerchantSettingsAsync(UpdateAssetMerchantSettingsRequest settingsRequest);
 
         /// <summary>
         /// Cancels payment request
@@ -202,5 +232,307 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request"></param>
         /// <returns></returns>
         Task SetWalletExpiredAsync(BlockchainWalletExpiredRequest request);
+
+        /// <summary>
+        /// Returns markup values for merchant and asset pair
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <param name="assetPairId">Asset pair id</param>
+        /// <returns></returns>
+        Task<MarkupResponse> ResolveMarkupByMerchantAsync(string merchantId, string assetPairId);
+
+        /// <summary>
+        /// Returns the default markup values for all asset pairs
+        /// </summary>
+        /// <returns></returns>
+        Task<IReadOnlyList<MarkupResponse>> GetDefaultMarkupsAsync();
+
+        /// <summary>
+        /// Returns the default markup values for asset pair id
+        /// </summary>
+        /// <param name="assetPairId">Asset pair id</param>
+        /// <returns></returns>
+        Task<MarkupResponse> GetDefaultMarkupAsync(string assetPairId);
+
+        /// <summary>
+        /// Updates markup values for asset pair id
+        /// </summary>
+        /// <param name="assetPairId">Asset pair id</param>
+        /// <param name="request">Markup values</param>
+        /// <returns></returns>
+        Task SetDefaultMarkupAsync(string assetPairId, UpdateMarkupRequest request);
+
+        /// <summary>
+        /// Returns all markup values for merchant
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <returns></returns>
+        Task<IReadOnlyList<MarkupResponse>> GetMarkupsForMerchantAsync(string merchantId);
+
+        /// <summary>
+        /// Returns markup value for merchant and asset pair id
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <param name="assetPairId">Asset pair id</param>
+        /// <returns></returns>
+        Task<MarkupResponse> GetMarkupForMerchantAsync(string merchantId, string assetPairId);
+
+        /// <summary>
+        /// Updates markup values for merchant and asset pair
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <param name="assetPairId">Asset pair id</param>
+        /// <param name="request">Markup values</param>
+        /// <returns></returns>
+        Task SetMarkupForMerchantAsync(string merchantId, string assetPairId, UpdateMarkupRequest request);
+
+        /// <summary>
+        /// Creates supervisor membership
+        /// </summary>
+        /// <param name="request">Supervisor membership creation details</param>
+        /// <returns>Supervisor membership details</returns>
+        Task<SupervisorMembershipResponse> AddSupervisorMembershipAsync(AddSupervisorMembershipRequest request);
+
+        /// <summary>
+        /// Returns supervisor membership details for employee
+        /// </summary>
+        /// <param name="employeeId">Employee id</param>
+        /// <returns>Supervisor membership details</returns>
+        Task<SupervisorMembershipResponse> GetSupervisorMembershipAsync(string employeeId);
+
+        /// <summary>
+        /// Updates supervisor membership
+        /// </summary>
+        /// <param name="request">Supervisor membership update details</param>
+        /// <returns></returns>
+        Task UpdateSupervisorMembershipAsync(UpdateSupervisorMembershipRequest request);
+
+        /// <summary>
+        /// Removes supervisor membership for employee
+        /// </summary>
+        /// <param name="employeeId">Employee id</param>
+        /// <returns></returns>
+        Task RemoveSupervisorMembershipAsync(string employeeId);
+
+        /// <summary>
+        /// Creates supervisor membership
+        /// </summary>
+        /// <param name="request">Supervisor membership creation details</param>
+        /// <returns>Supervisor membership details</returns>
+        Task<MerchantsSupervisorMembershipResponse> AddSupervisorMembershipForMerchantsAsync(AddSupervisorMembershipMerchantsRequest request);
+
+        /// <summary>
+        /// Returns supervisor membership details for employee
+        /// </summary>
+        /// <param name="employeeId">Employee id</param>
+        /// <returns>Supervisor membership details</returns>
+        Task<MerchantsSupervisorMembershipResponse> GetSupervisorMembershipWithMerchantsAsync(string employeeId);
+
+        /// <summary>
+        /// Returns a collection of merchant files.
+        /// </summary>
+        /// <param name="merchantId">The merchant id.</param>
+        /// <returns>The collection of file info.</returns>
+        Task<IEnumerable<FileInfoModel>> GetFilesAsync(string merchantId);
+
+        /// <summary>
+        /// Returns file content.
+        /// </summary>
+        /// <param name="merchantId">The merchant id.</param>
+        /// <param name="fileId">The file id.</param>
+        Task<byte[]> GetFileAsync(string merchantId, string fileId);
+
+        /// <summary>
+        /// Get merchant logo url
+        /// </summary>
+        /// <param name="merchantId">The merchant id</param>
+        Task<string> GetMerchantLogoUrl(string merchantId);
+
+        /// <summary>
+        /// Saves file.
+        /// </summary>
+        /// <param name="merchantId">The merchant id.</param>
+        /// <param name="content">The file content.</param>
+        /// <param name="fileName">The file name with extension.</param>
+        /// <param name="contentType">The file mime type.</param>
+        Task UploadFileAsync(string merchantId, byte[] content, string fileName, string contentType);
+
+        /// <summary>
+        /// Deletes file.
+        /// </summary>
+        /// <param name="merchantId">The merchant id.</param>
+        /// <param name="fileId">The file id.</param>
+        Task DeleteFileAsync(string merchantId, string fileId);
+
+        /// <summary>
+        /// Creates merchant group
+        /// </summary>
+        /// <param name="request">Merchant group creation details></param>
+        /// <returns>Merchant group details</returns>
+        Task<MerchantGroupResponse> AddMerchantGroupAsync(AddMerchantGroupRequest request);
+
+        /// <summary>
+        /// Returns merchant group details
+        /// </summary>
+        /// <param name="id">Merchant group id</param>
+        /// <returns>Merchant group details</returns>
+        Task<MerchantGroupResponse> GetMerchantGroupAsync(string id);
+
+        /// <summary>
+        /// Updates merchant group
+        /// </summary>
+        /// <param name="request">Merchant group update details</param>
+        /// <returns></returns>
+        Task UpdateMerchantGroupAsync(UpdateMerchantGroupRequest request);
+
+        /// <summary>
+        /// Deletes merchant group
+        /// </summary>
+        /// <param name="id">Merchant group id</param>
+        /// <returns></returns>
+        Task DeleteMerchantGroupAsync(string id);
+
+        /// <summary>
+        /// Returns list of merchants participating in groups by usage for particular owner (merchant provided)
+        /// </summary>
+        /// <param name="request">Get Merchants by usage request details</param>
+        /// <returns>List of merchants</returns>
+        Task<MerchantsByUsageResponse> GetMerchantsByUsageAsync(GetMerchantsByUsageRequest request);
+
+        /// <summary>
+        /// Returns list of groups where given id is an owner
+        /// </summary>
+        /// <param name="ownerId">Owner id</param>
+        /// <returns></returns>
+        Task<IEnumerable<MerchantGroupResponse>> GetMerchantGroupsByOwnerAsync(string ownerId);
+
+        /// <summary>
+        /// Creates new merchant wallet
+        /// </summary>
+        /// <param name="request">>Merchant wallet creation details</param>
+        /// <returns></returns>
+        Task<MerchantWalletResponse> CreateMerchantWalletAsync(CreateMerchantWalletRequest request);
+
+        /// <summary>
+        /// Deletes merchant wallet
+        /// </summary>
+        /// <param name="merchantWalletId">Merchant wallet id</param>
+        /// <returns></returns>
+        Task DeleteMerchantWalletAsync(string merchantWalletId);
+
+        /// <summary>
+        /// Updates default assets for merchant wallet
+        /// </summary>
+        /// <param name="request">Merchant wallet default assets update details</param>
+        /// <returns></returns>
+        Task SetMerchantWalletDefaultAssetsAsync(UpdateMerchantWalletDefaultAssetsRequest request);
+
+        /// <summary>
+        /// Returns list of merchant wallets
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <returns></returns>
+        Task<IEnumerable<MerchantWalletResponse>> GetMerchantWalletsAsync(string merchantId);
+
+        /// <summary>
+        /// Returns default merchant wallet for given asset and payment direction
+        /// </summary>
+        /// <param name="merchantId">Merchant Id</param>
+        /// <param name="assetId">Asset id</param>
+        /// <param name="paymentDirection">Payment direction</param>
+        /// <returns></returns>
+        Task<MerchantWalletResponse> GetDefaultMerchantWalletAsync(string merchantId, string assetId, PaymentDirection paymentDirection);
+
+        /// <summary>
+        /// Returns balances for all merchant's wallets
+        /// </summary>
+        /// <param name="merchantId">Merchant id</param>
+        /// <returns></returns>
+        Task<IEnumerable<MerchantWalletBalanceResponse>> GetMerchantWalletBalancesAsync(string merchantId);
+
+        /// <summary>
+        /// Adds new rate for given asset pair
+        /// </summary>
+        /// <param name="request">New asset pair request details</param>
+        /// <returns></returns>
+        Task<AssetRateResponse> AddAssetPairRateAsync(AddAssetRateRequest request);
+
+        /// <summary>
+        /// Returns current rate for given asset pair
+        /// </summary>
+        /// <param name="baseAssetId">Base asset id</param>
+        /// <param name="quotingAssetId">Quoting asset id</param>
+        /// <returns></returns>
+        Task<AssetRateResponse> GetCurrentAssetPairRateAsync(string baseAssetId, string quotingAssetId);
+
+        /// <summary>
+        /// Executes payment using default payer merchant's wallet
+        /// </summary>
+        /// <param name="request">Payment details</param>
+        /// <returns></returns>
+        Task PayAsync(PaymentRequest request);
+
+        /// <summary>
+        /// Validates payment using default payer merchant's wallet
+        /// </summary>
+        /// <param name="request">Prepayment request details</param>
+        /// <returns></returns>
+        Task PrePayAsync(PrePaymentRequest request);
+
+        /// <summary>
+        /// Executes exchange
+        /// </summary>
+        /// <param name="request">Exchange operation details</param>
+        /// <returns>Exchange execution result</returns>
+        Task<ExchangeResponse> ExchangeAsync(ExchangeRequest request);
+
+        /// <summary>
+        /// Returns current exchange rate
+        /// </summary>
+        /// <param name="request">PreExchange operation details</param>
+        /// /// <returns>Result of possible exchange execution </returns>
+        Task<ExchangeResponse> PreExchangeAsync(PreExchangeRequest request);
+
+        /// <summary>
+        /// Registers new ethereum inbound transaction
+        /// </summary>
+        /// <param name="request">Transaction registration details</param>
+        /// <returns></returns>
+        Task RegisterEthereumInboundTransactionAsync(RegisterInboundTxModel request);
+
+        /// <summary>
+        /// Registers new ethereum outbound transaction
+        /// </summary>
+        /// <param name="request">Transaction registration details</param>
+        /// <returns></returns>
+        Task RegisterEthereumOutboundTransactionAsync(RegisterOutboundTxModel request);
+
+        /// <summary>
+        /// Marks ethereum outbound transaction as completed
+        /// </summary>
+        /// <param name="request">Transaction identification details</param>
+        /// <returns></returns>
+        Task CompleteEthereumOutboundTransactionAsync(CompleteOutboundTxModel request);
+
+        /// <summary>
+        ///  Marks ethereum outbound transaction as failed
+        /// </summary>
+        /// <param name="request">Transaction identification details</param>
+        /// <returns></returns>
+        Task FailEthereumOutboundTransactionAsync(FailOutboundTxModel request);
+
+        /// <summary>
+        ///  Marks ethereum outbound transaction as complemeted with zero amount
+        /// </summary>
+        /// <param name="request">Transaction identification details</param>
+        /// <returns></returns>
+        Task FailEthereumOutboundTransactionAsync(NotEnoughFundsOutboundTxModel request);
+
+        /// <summary>
+        /// Executes cashout
+        /// </summary>
+        /// <param name="request">Cashout request details</param>
+        /// <returns>Cashout execution result</returns>
+        Task<CashoutResponse> CashoutAsync(CashoutRequest request);
     }
 }

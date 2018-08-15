@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
+using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
@@ -23,26 +25,29 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IWalletEventsPublisher _walletEventsPublisher;
         private readonly ITransactionsService _transactionsService;
         private readonly IBlockchainClientProvider _blockchainClientProvider;
+        private readonly IAssetSettingsService _assetSettingsService;
         private readonly ILog _log;
 
         private const int BatchPieceSize = 15;
 
         public WalletManager(
-            IVirtualWalletService virtualWalletService,
-            IList<BlockchainWalletAllocationPolicy> walletAllocationSettings,
-            IBcnWalletUsageService bcnWalletUsageService,
-            IWalletEventsPublisher walletEventsPublisher,
-            IBlockchainClientProvider blockchainClientProvider, 
-            ITransactionsService transactionsService, 
-            ILog log)
+            [NotNull] IVirtualWalletService virtualWalletService,
+            [NotNull] IList<BlockchainWalletAllocationPolicy> walletAllocationSettings,
+            [NotNull] IBcnWalletUsageService bcnWalletUsageService,
+            [NotNull] IWalletEventsPublisher walletEventsPublisher,
+            [NotNull] IBlockchainClientProvider blockchainClientProvider,
+            [NotNull] ITransactionsService transactionsService,
+            [NotNull] IAssetSettingsService assetSettingsService,
+            [NotNull] ILogFactory logFactory)
         {
-            _virtualWalletService = virtualWalletService;
-            _walletAllocationSettings = walletAllocationSettings;
-            _bcnWalletUsageService = bcnWalletUsageService;
-            _walletEventsPublisher = walletEventsPublisher;
-            _blockchainClientProvider = blockchainClientProvider;
-            _transactionsService = transactionsService;
-            _log = log;
+            _virtualWalletService = virtualWalletService ?? throw new ArgumentNullException(nameof(virtualWalletService));
+            _walletAllocationSettings = walletAllocationSettings ?? throw new ArgumentNullException(nameof(walletAllocationSettings));
+            _bcnWalletUsageService = bcnWalletUsageService ?? throw new ArgumentNullException(nameof(bcnWalletUsageService));
+            _walletEventsPublisher = walletEventsPublisher ?? throw new ArgumentNullException(nameof(walletEventsPublisher));
+            _blockchainClientProvider = blockchainClientProvider ?? throw new ArgumentNullException(nameof(blockchainClientProvider));
+            _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
+            _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
+            _log = logFactory.CreateLog(this);
         }
 
         public async Task<IVirtualWallet> CreateAsync(string merchantId, DateTime dueDate, string assetId = null)
@@ -54,8 +59,7 @@ namespace Lykke.Service.PayInternal.Services
                 wallet = await AddAssetAsync(wallet.MerchantId, wallet.Id, assetId);
             }
 
-            await _log.WriteInfoAsync(nameof(WalletManager), nameof(CreateAsync), wallet.ToJson(),
-                "New virtual wallet created");
+            _log.Info("New virtual wallet created", wallet.ToJson());
 
             return wallet;
         }
@@ -67,7 +71,7 @@ namespace Lykke.Service.PayInternal.Services
             if (virtualWallet == null)
                 throw new WalletNotFoundException(walletId);
 
-            BlockchainType blockchainType = assetId.GetBlockchainType();
+            BlockchainType blockchainType = await _assetSettingsService.GetNetworkAsync(assetId);
 
             IBlockchainApiClient blockchainClient = _blockchainClientProvider.Get(blockchainType);
 
@@ -114,6 +118,21 @@ namespace Lykke.Service.PayInternal.Services
             await _walletEventsPublisher.PublishAsync(walletUsage.WalletAddress, blockchainType, virtualWallet.DueDate);
 
             return updatedWallet;
+        }
+
+        public async Task<IVirtualWallet> EnsureBcnAddressAllocated(string merchantId, string walletId, string assetId)
+        {
+            IVirtualWallet virtualWallet = await _virtualWalletService.GetAsync(merchantId, walletId);
+
+            if (virtualWallet == null)
+                throw new WalletNotFoundException(walletId);
+
+            BlockchainType blockchainType = await _assetSettingsService.GetNetworkAsync(assetId);
+
+            if (virtualWallet.BlockchainWallets.Any(x => x.Blockchain == blockchainType))
+                return virtualWallet;
+
+            return await AddAssetAsync(merchantId, walletId, assetId);
         }
 
         public async Task<IEnumerable<IWalletState>> GetNotExpiredStateAsync()

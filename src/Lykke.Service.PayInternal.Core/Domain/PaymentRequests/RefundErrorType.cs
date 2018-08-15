@@ -1,8 +1,12 @@
-﻿namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
+namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
 {
     /// <summary>
     /// Validation errors for payment request operations 
     /// </summary>
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum RefundErrorType
     {
         /// <summary>

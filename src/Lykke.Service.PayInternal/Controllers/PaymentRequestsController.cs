@@ -1,10 +1,6 @@
 ﻿using AutoMapper;
-using Common;
 using Common.Log;
-using Lykke.Common.Api.Contract.Responses;
-using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
-using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Extensions;
 using Lykke.Service.PayInternal.Filters;
@@ -16,8 +12,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
+using Lykke.Common.Log;
+using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Models;
+using ErrorResponse = Lykke.Common.Api.Contract.Responses.ErrorResponse;
+using Lykke.Service.PayInternal.Core;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -28,26 +29,26 @@ namespace Lykke.Service.PayInternal.Controllers
     public class PaymentRequestsController : Controller
     {
         private readonly IPaymentRequestService _paymentRequestService;
-        private readonly IOrderService _orderService;
-        private readonly ITransactionsService _transactionsService;
-        private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly IRefundService _refundService;
+        private readonly IAssetSettingsService _assetSettingsService;
+        private readonly IPaymentRequestDetailsBuilder _paymentRequestDetailsBuilder;
+        private readonly IMerchantService _merchantService;
         private readonly ILog _log;
 
         public PaymentRequestsController(
-            IPaymentRequestService paymentRequestService,
-            IOrderService orderService,
-            ITransactionsService transactionsService,
-            IAssetsLocalCache assetsLocalCache,
-            IRefundService refundService,
-            ILog log)
+            [NotNull] IPaymentRequestService paymentRequestService,
+            [NotNull] IRefundService refundService,
+            [NotNull] IAssetSettingsService assetSettingsService,
+            [NotNull] ILogFactory logFactory,
+            [NotNull] IPaymentRequestDetailsBuilder paymentRequestDetailsBuilder,
+            [NotNull] IMerchantService merchantService)
         {
-            _paymentRequestService = paymentRequestService;
-            _orderService = orderService;
-            _transactionsService = transactionsService;
-            _assetsLocalCache = assetsLocalCache;
-            _refundService = refundService;
-            _log = log.CreateComponentScope(nameof(PaymentRequestsController));
+            _paymentRequestService = paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
+            _refundService = refundService ?? throw new ArgumentNullException(nameof(refundService));
+            _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
+            _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder ?? throw new ArgumentNullException(nameof(paymentRequestDetailsBuilder));
+            _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
+            _log = logFactory.CreateLog(this);
         }
 
         /// <summary>
@@ -110,41 +111,21 @@ namespace Lykke.Service.PayInternal.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetDetailsAsync(string merchantId, string paymentRequestId)
         {
-            try
-            {
-                IPaymentRequest paymentRequest = await _paymentRequestService.GetAsync(merchantId, paymentRequestId);
+            IPaymentRequest paymentRequest = await _paymentRequestService.GetAsync(merchantId, paymentRequestId);
 
-                if (paymentRequest == null)
-                    return NotFound(ErrorResponse.Create("Could not find payment request"));
+            if (paymentRequest == null)
+                return NotFound(ErrorResponse.Create("Could not find payment request"));
 
-                IOrder order = await _orderService.GetAsync(paymentRequestId, paymentRequest.OrderId);
+            PaymentRequestRefund refundInfo =
+                await _paymentRequestService.GetRefundInfoAsync(paymentRequest.WalletAddress);
 
-                IReadOnlyList<IPaymentRequestTransaction> paymentTransactions =
-                    (await _transactionsService.GetByWalletAsync(paymentRequest.WalletAddress))
-                    .Where(x => x.IsPayment())
-                    .ToList();
+            PaymentRequestDetailsModel model = await _paymentRequestDetailsBuilder.Build<
+                PaymentRequestDetailsModel,
+                PaymentRequestOrderModel,
+                PaymentRequestTransactionModel,
+                PaymentRequestRefundModel>(paymentRequest, refundInfo);
 
-                PaymentRequestRefund refund =
-                    await _paymentRequestService.GetRefundInfoAsync(paymentRequest.WalletAddress);
-
-                var model = Mapper.Map<PaymentRequestDetailsModel>(paymentRequest);
-                model.Order = Mapper.Map<PaymentRequestOrderModel>(order);
-                model.Transactions = Mapper.Map<List<PaymentRequestTransactionModel>>(paymentTransactions);
-                model.Refund = Mapper.Map<PaymentRequestRefundModel>(refund);
-
-                return Ok(model);
-            }
-            catch (Exception ex)
-            {
-                await _log.WriteErrorAsync(nameof(GetDetailsAsync),
-                    new
-                    {
-                        MerchantId = merchantId,
-                        PaymentRequestId = paymentRequestId
-                    }.ToJson(), ex);
-
-                throw;
-            }
+            return Ok(model);
         }
 
         /// <summary>
@@ -183,33 +164,43 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("PaymentRequestsCreate")]
         [ProducesResponseType(typeof(PaymentRequestModel), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
         public async Task<IActionResult> CreateAsync([FromBody] CreatePaymentRequestModel model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ErrorResponse().AddErrors(ModelState));
 
-            if (await _assetsLocalCache.GetAssetByIdAsync(model.SettlementAssetId) == null)
-                return BadRequest(ErrorResponse.Create("Settlement asset doesn't exist"));
-
-            if (await _assetsLocalCache.GetAssetByIdAsync(model.PaymentAssetId) == null)
-                return BadRequest(ErrorResponse.Create("Payment asset doesn't exist"));
-
-            if (await _assetsLocalCache.GetAssetPairAsync(model.PaymentAssetId, model.SettlementAssetId) == null)
-                return BadRequest(ErrorResponse.Create("Asset pair doesn't exist"));
-
             try
             {
+                IReadOnlyList<string> settlementAssets =
+                    await _assetSettingsService.ResolveSettlementAsync(model.MerchantId);
+
+                if (!settlementAssets.Contains(model.SettlementAssetId))
+                    return BadRequest(ErrorResponse.Create("Settlement asset is not available"));
+
+                IReadOnlyList<string> paymentAssets =
+                    await _assetSettingsService.ResolvePaymentAsync(model.MerchantId, model.SettlementAssetId);
+
+                if (!paymentAssets.Contains(model.PaymentAssetId))
+                    return BadRequest(ErrorResponse.Create("Payment asset is not available"));
+
                 var paymentRequest = Mapper.Map<PaymentRequest>(model);
 
                 IPaymentRequest createdPaymentRequest = await _paymentRequestService.CreateAsync(paymentRequest);
 
                 return Ok(Mapper.Map<PaymentRequestModel>(createdPaymentRequest));
             }
-            catch (Exception exception)
+            catch (AssetUnknownException e)
             {
-                await _log.WriteErrorAsync(nameof(CreateAsync), model.ToJson(), exception);
+                _log.Error(e, new {e.Asset});
 
-                throw;
+                return BadRequest(ErrorResponse.Create($"Asset {e.Asset} can't be resolved"));
+            }
+            catch (AssetNetworkNotDefinedException e)
+            {
+                _log.Error(e, new {e.AssetId});
+
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
 
@@ -233,20 +224,31 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(Mapper.Map<RefundResponseModel>(refundResult));
             }
-            catch (Exception ex)
+            catch (RefundOperationFailedException e)
             {
-                await _log.WriteErrorAsync(nameof(RefundAsync), request.ToJson(), ex);
+                _log.Error(e, new {errors = e.TransferErrors});
+            }
+            catch (AssetUnknownException e)
+            {
+                _log.Error(e, new {e.Asset});
+            }
+            catch (AssetNetworkNotDefinedException e)
+            {
+                _log.Error(e, new {e.AssetId});
+            }
+            catch (Exception e)
+            {
+                _log.Error(e, request);
 
-                if (ex is RefundValidationException validationEx)
+                if (e is RefundValidationException validationEx)
                 {
-                    await _log.WriteErrorAsync(nameof(RefundAsync),
-                        new {errorType = validationEx.ErrorType.ToString()}.ToJson(), validationEx);
+                    _log.Error(e, new {validationEx.ErrorType});
 
                     return BadRequest(new RefundErrorModel {Code = validationEx.ErrorType});
                 }
-
-                return BadRequest(new RefundErrorModel {Code = RefundErrorType.Unknown});
             }
+
+            return BadRequest(new RefundErrorModel {Code = RefundErrorType.Unknown});
         }
 
         /// <summary>
@@ -269,35 +271,229 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return NoContent();
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                await _log.WriteErrorAsync(nameof(CancelAsync), new
+                _log.Error(e, new
                 {
                     merchantId,
                     paymentRequestId
-                }.ToJson(), ex);
+                });
 
-                if (ex is PaymentRequestNotFoundException notFoundEx)
+                if (e is PaymentRequestNotFoundException notFoundEx)
                 {
-                    await _log.WriteErrorAsync(nameof(CancelAsync), new
+                    _log.Error(notFoundEx, new
                     {
                         notFoundEx.WalletAddress,
                         notFoundEx.MerchantId,
                         notFoundEx.PaymentRequestId
-                    }.ToJson(), notFoundEx);
+                    });
 
                     return NotFound(ErrorResponse.Create(notFoundEx.Message));
                 }
 
-                if (ex is NotAllowedStatusException notAllowedEx)
+                if (e is NotAllowedStatusException notAllowedEx)
                 {
-                    await _log.WriteErrorAsync(nameof(CancelAsync),
-                        new {status = notAllowedEx.Status.ToString()}.ToJson(), notAllowedEx);
+                    _log.Error(notAllowedEx,
+                        new {status = notAllowedEx.Status.ToString()});
 
                     return BadRequest(ErrorResponse.Create(notAllowedEx.Message));
                 }
 
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Validates payment using default payer merchant's wallet
+        /// </summary>
+        /// <param name="request">Payment details</param>
+        /// <response code="204">Validated successfully</response>
+        /// <response code="400">Insufficient funds</response>
+        /// <response code="404">Payment request, merchant, payer merchant, default wallet or payment request wallet not found</response>
+        /// <response code="501">Asset network support not implemented</response>
+        [HttpPost]
+        [Route("paymentrequests/prePayment")]
+        [SwaggerOperation(nameof(PrePay))]
+        [ProducesResponseType(typeof(void), (int)HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotImplemented)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ValidateModel]
+        public async Task<IActionResult> PrePay([FromBody] PrePaymentModel request)
+        {
+            IMerchant merchant = await _merchantService.GetAsync(request.MerchantId);
+
+            if (merchant == null)
+                return NotFound(ErrorResponse.Create("Merchant not found"));
+
+            IMerchant payer = await _merchantService.GetAsync(request.PayerMerchantId);
+
+            if (payer == null)
+                return NotFound(ErrorResponse.Create("Payer merchant not found"));
+
+            try
+            {
+                await _paymentRequestService.PrePayAsync(Mapper.Map<PaymentCommand>(request));
+
+                return NoContent();
+            }
+            catch (InsufficientFundsException e)
+            {
+                _log.Error(e, new
+                {
+                    e.AssetId,
+                    e.WalletAddress
+                });
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (PaymentRequestNotFoundException e)
+            {
+                _log.Error(e, new
+                {
+                    e.PaymentRequestId,
+                    e.MerchantId,
+                    e.WalletAddress
+                });
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (AssetNetworkNotDefinedException e)
+            {
+                _log.Error(e, new { e.AssetId });
+
+                return StatusCode((int)HttpStatusCode.NotImplemented, ErrorResponse.Create(e.Message));
+            }
+            catch (MultipleDefaultMerchantWalletsException e)
+            {
+                _log.Error(e, new
+                {
+                    e.MerchantId,
+                    e.AssetId,
+                    e.PaymentDirection
+                });
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (DefaultMerchantWalletNotFoundException e)
+            {
+                _log.Error(e, new
+                {
+                    e.MerchantId,
+                    e.AssetId,
+                    e.PaymentDirection
+                });
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (WalletNotFoundException e)
+            {
+                _log.Error(e, new {e.WalletAddress});
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+        }
+
+        /// <summary>
+        /// Executes payment using default payer merchant's wallet
+        /// </summary>
+        /// <param name="request">Payment details</param>
+        /// <response code="204">Payment executed successfully</response>
+        /// <response code="400">Payment failed</response>
+        /// <response code="404">Payment request, merchant, default wallet, payment request wallet not found or couldn't get payment request lock</response>
+        /// <response code="501">Asset network support not implemented</response>
+        [HttpPost]
+        [Route("paymentrequests/payment")]
+        [SwaggerOperation(nameof(Pay))]
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotImplemented)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ValidateModel]
+        public async Task<IActionResult> Pay([FromBody] PaymentModel request)
+        {
+            IMerchant merchant = await _merchantService.GetAsync(request.MerchantId);
+
+            if (merchant == null)
+                return NotFound(ErrorResponse.Create("Merchant not found"));
+
+            IMerchant payer = await _merchantService.GetAsync(request.PayerMerchantId);
+
+            if (payer == null)
+                return NotFound(ErrorResponse.Create("Payer merchant not found"));
+
+            try
+            {
+                await _paymentRequestService.PayAsync(Mapper.Map<PaymentCommand>(request));
+
+                return NoContent();
+            }
+            catch (InsufficientFundsException e)
+            {
+                _log.Error(e, new
+                {
+                    e.AssetId,
+                    e.WalletAddress
+                });
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (PaymentRequestNotFoundException e)
+            {
+                _log.Error(e, new
+                {
+                    e.PaymentRequestId,
+                    e.MerchantId,
+                    e.WalletAddress
+                });
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (AssetNetworkNotDefinedException e)
+            {
+                _log.Error(e, new {e.AssetId});
+
+                return StatusCode((int) HttpStatusCode.NotImplemented, ErrorResponse.Create(e.Message));
+            }
+            catch (MultipleDefaultMerchantWalletsException e)
+            {
+                _log.Error(e, new
+                {
+                    e.MerchantId,
+                    e.AssetId,
+                    e.PaymentDirection
+                });
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (DefaultMerchantWalletNotFoundException e)
+            {
+                _log.Error(e, new
+                {
+                    e.MerchantId,
+                    e.AssetId,
+                    e.PaymentDirection
+                });
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (WalletNotFoundException e)
+            {
+                _log.Error(e, new {e.WalletAddress});
+
+                return NotFound(ErrorResponse.Create(e.Message));
+            }
+            catch (PaymentOperationFailedException e)
+            {
+                _log.Error(e, new {errors = e.TransferErrors});
+
+                return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (DistributedLockAcquireException e)
+            {
+                _log.Error(e, new {e.Key});
+
+                return BadRequest(ErrorResponse.Create(e.Message));
             }
         }
     }

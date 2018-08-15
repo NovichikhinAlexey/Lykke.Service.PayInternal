@@ -14,16 +14,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
     public class PaymentRequestTransactionRepository : IPaymentRequestTransactionRepository
     {
         private readonly INoSQLTableStorage<PaymentRequestTransactionEntity> _storage;
-        private readonly INoSQLTableStorage<AzureIndex> _indexByTransactionIdStorage;
+        private readonly INoSQLTableStorage<AzureIndex> _indexByIdentityStorage;
         private readonly INoSQLTableStorage<AzureIndex> _indexByDueDateStorage;
 
         public PaymentRequestTransactionRepository(
             INoSQLTableStorage<PaymentRequestTransactionEntity> storage,
-            INoSQLTableStorage<AzureIndex> indexByTransactionIdStorage,
+            INoSQLTableStorage<AzureIndex> indexByIdentityStorage,
             INoSQLTableStorage<AzureIndex> indexByDueDateStorage)
         {
             _storage = storage;
-            _indexByTransactionIdStorage = indexByTransactionIdStorage;
+            _indexByIdentityStorage = indexByIdentityStorage;
             _indexByDueDateStorage = indexByDueDateStorage;
         }
 
@@ -34,13 +34,14 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
 
             await _storage.InsertOrMergeAsync(entity);
 
-            AzureIndex indexByTransactionId = PaymentRequestTransactionEntity.IndexByTransactionId.Create(entity);
+            AzureIndex indexByIdentity = PaymentRequestTransactionEntity.IndexByIdentity.Create(entity);
 
-            await _indexByTransactionIdStorage.InsertOrMergeAsync(indexByTransactionId);
+            await _indexByIdentityStorage.InsertOrMergeAsync(indexByIdentity);
 
             AzureIndex indexByDueDate = PaymentRequestTransactionEntity.IndexByDueDate.Create(entity);
 
-            await _indexByDueDateStorage.InsertOrMergeAsync(indexByDueDate);
+            if (indexByDueDate != null)
+                await _indexByDueDateStorage.InsertOrMergeAsync(indexByDueDate);
 
             return Mapper.Map<PaymentRequestTransaction>(entity);
         }
@@ -54,12 +55,11 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             return Mapper.Map<IEnumerable<PaymentRequestTransaction>>(entities).ToList();
         }
 
-        public async Task<IPaymentRequestTransaction> GetByIdAsync(string transactionId,
-            BlockchainType blockchain, string walletAddress)
+        public async Task<IPaymentRequestTransaction> GetByIdAsync(BlockchainType blockchain, TransactionIdentityType identityType, string identity, string walletAddress)
         {
-            AzureIndex index = await _indexByTransactionIdStorage.GetDataAsync(
-                PaymentRequestTransactionEntity.IndexByTransactionId.GeneratePartitionKey(transactionId, blockchain),
-                PaymentRequestTransactionEntity.IndexByTransactionId.GenerateRowKey(walletAddress));
+            AzureIndex index = await _indexByIdentityStorage.GetDataAsync(
+                PaymentRequestTransactionEntity.IndexByIdentity.GeneratePartitionKey(blockchain, identityType, identity),
+                PaymentRequestTransactionEntity.IndexByIdentity.GenerateRowKey(walletAddress));
 
             if (index == null) return null;
 
@@ -68,10 +68,10 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             return Mapper.Map<PaymentRequestTransaction>(entity);
         }
 
-        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetByTransactionIdAsync(string transactionId, BlockchainType blockchain)
+        public async Task<IReadOnlyList<IPaymentRequestTransaction>> GetByBcnIdentityAsync(BlockchainType blockchain, TransactionIdentityType identityType, string identity)
         {
-            IEnumerable<AzureIndex> indecies = await _indexByTransactionIdStorage.GetDataAsync(
-                PaymentRequestTransactionEntity.IndexByTransactionId.GeneratePartitionKey(transactionId, blockchain));
+            IEnumerable<AzureIndex> indecies = await _indexByIdentityStorage.GetDataAsync(
+                PaymentRequestTransactionEntity.IndexByIdentity.GeneratePartitionKey(blockchain, identityType, identity));
 
             IEnumerable<PaymentRequestTransactionEntity> entities = await _storage.GetDataAsync(indecies);
 
@@ -100,21 +100,24 @@ namespace Lykke.Service.PayInternal.AzureRepositories.Transaction
             return Mapper.Map<IEnumerable<PaymentRequestTransaction>>(entities).ToList();
         }
 
-        public async Task UpdateAsync(IPaymentRequestTransaction transaction)
+        public async Task<IPaymentRequestTransaction> UpdateAsync(IPaymentRequestTransaction transaction)
         {
-            await _storage.MergeAsync(
+            PaymentRequestTransactionEntity entity = await _storage.MergeAsync(
                 PaymentRequestTransactionEntity.ByWalletAddress.GeneratePartitionKey(transaction.WalletAddress),
-                PaymentRequestTransactionEntity.ByWalletAddress.GenerateRowKey(transaction.TransactionId),
-                entity =>
+                PaymentRequestTransactionEntity.ByWalletAddress.GenerateRowKey(transaction.Blockchain, transaction.IdentityType, transaction.Identity),
+                e =>
                 {
-                    entity.Amount = transaction.Amount;
-                    entity.BlockId = transaction.BlockId;
-                    entity.Confirmations = transaction.Confirmations;
-                    entity.FirstSeen = transaction.FirstSeen;
-                    entity.PaymentRequestId = transaction.PaymentRequestId;
+                    e.TransactionId = transaction.TransactionId;
+                    e.Amount = transaction.Amount;
+                    e.BlockId = transaction.BlockId;
+                    e.Confirmations = transaction.Confirmations;
+                    e.FirstSeen = transaction.FirstSeen;
+                    e.PaymentRequestId = transaction.PaymentRequestId;
 
-                    return entity;
+                    return e;
                 });
+
+            return Mapper.Map<PaymentRequestTransaction>(entity);
         }
     }
 }

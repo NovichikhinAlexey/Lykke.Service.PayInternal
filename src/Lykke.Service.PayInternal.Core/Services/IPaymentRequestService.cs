@@ -22,8 +22,12 @@ namespace Lykke.Service.PayInternal.Core.Services
 
         Task UpdateStatusAsync(string walletAddress, PaymentRequestStatusInfo statusInfo = null);
 
-        Task UpdateStatusByTransactionAsync(string transactionId, BlockchainType blockchain);
-
         Task HandleExpiredAsync();
+
+        Task<PaymentResult> PrePayAsync(PaymentCommand cmd);
+
+        Task<PaymentResult> PayAsync(PaymentCommand cmd);
+
+        Task<SettlementResult> SettleAsync(string merchantId, string paymentRequestId);
     }
 }

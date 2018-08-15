@@ -4,7 +4,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
 {
     public interface ICreateTransactionCommand
     {
-        string TransactionId { get; set; }
+        string Hash { get; set; }
         string WalletAddress { get; set; }
         string[] SourceWalletAddresses { get; set; }
         decimal Amount { get; set; }
@@ -16,5 +16,8 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
         DateTime? DueDate { get; set; }
         TransactionType Type { get; set; }
         string TransferId { get; set; }
+        TransactionIdentityType IdentityType { get; set; }
+        string Identity { get; set; }
+        string ContextData { get; set; }
     }
 }
