@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AutoMapper;
@@ -138,7 +139,7 @@ namespace Lykke.Service.PayInternal
                 });
                 app.UseStaticFiles();
 
-                appLifetime.ApplicationStarted.Register(StartApplication);
+                appLifetime.ApplicationStarted.Register(() => StartApplication().GetAwaiter().GetResult());
                 appLifetime.ApplicationStopping.Register(StopApplication);
                 appLifetime.ApplicationStopped.Register(CleanUp);
             }
@@ -149,7 +150,7 @@ namespace Lykke.Service.PayInternal
             }
         }
 
-        private void StartApplication()
+        private async Task StartApplication()
         {
             try
             {
@@ -160,7 +161,7 @@ namespace Lykke.Service.PayInternal
                 HealthNotifier.Notify("Started");
 #if !DEBUG
                 if (!string.IsNullOrEmpty(_monitoringServiceUrl))
-                    await AutoRegistrationInMonitoring.RegisterAsync(Configuration, _monitoringServiceUrl, Log);
+                    await Configuration.RegisterInMonitoringServiceAsync(_monitoringServiceUrl, HealthNotifier);
 #endif
             }
             catch (Exception ex)
