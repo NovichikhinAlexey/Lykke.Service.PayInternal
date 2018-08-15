@@ -9,7 +9,7 @@ namespace Lykke.Service.PayInternal.Models.Wallets
         public string WalletAddress { get; set; }
 
         [Required]
-        [EnumDataType(typeof(BlockchainType), ErrorMessage = "Invalid value, possible values are: None, Bitcoin, Ethereum")]
+        [EnumDataType(typeof(BlockchainType), ErrorMessage = "Invalid value, possible values are: Bitcoin, Ethereum, EthereumIata")]
         public BlockchainType Blockchain { get; set; }
     }
 }

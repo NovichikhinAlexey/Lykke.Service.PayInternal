@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using Lykke.Service.PayInternal.Validation;
+using LykkePay.Common.Validation;
 
 namespace Lykke.Service.PayInternal.Models.SupervisorMembership
 {
@@ -28,7 +28,7 @@ namespace Lykke.Service.PayInternal.Models.SupervisorMembership
         /// </summary>
         [Required]
         [RowKey]
-        [NotEmptyCollection]
+        [Validation.NotEmptyCollection]
         public IEnumerable<string> MerchantGroups { get; set; }
     }
 }

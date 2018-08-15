@@ -18,7 +18,6 @@ using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Polly;
-using LogExtensions = Lykke.Service.PayInternal.Core.LogExtensions;
 
 namespace Lykke.Service.PayInternal.Services
 {

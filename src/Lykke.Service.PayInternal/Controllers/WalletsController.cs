@@ -4,10 +4,11 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
+using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.Wallets;
+using LykkePay.Common.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -43,7 +44,16 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> SetExpired([FromBody] BlockchainWalletExpiredRequest request)
         {
-            bool isValid = await _blockchainAddressValidator.Execute(request.WalletAddress, request.Blockchain);
+            bool isValid;
+
+            try
+            {
+                isValid = await _blockchainAddressValidator.Execute(request.WalletAddress, request.Blockchain);
+            }
+            catch (BlockchainTypeNotSupported)
+            {
+                isValid = true;
+            }
 
             if (!isValid)
                 return BadRequest(ErrorResponse.Create("Wallet address is not valid"));

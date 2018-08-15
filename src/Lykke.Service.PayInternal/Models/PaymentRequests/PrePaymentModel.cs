@@ -1,5 +1,5 @@
-﻿using Lykke.Service.PayInternal.Validation;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using LykkePay.Common.Validation;
 
 namespace Lykke.Service.PayInternal.Models.PaymentRequests
 {

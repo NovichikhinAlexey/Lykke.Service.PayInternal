@@ -2,7 +2,6 @@
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
@@ -15,6 +14,7 @@ using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Models.SupervisorMembership;
 using Lykke.Service.PayInternal.Core;
+using LykkePay.Common.Validation;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
