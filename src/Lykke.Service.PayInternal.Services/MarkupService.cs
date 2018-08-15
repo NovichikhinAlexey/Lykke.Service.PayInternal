@@ -94,10 +94,16 @@ namespace Lykke.Service.PayInternal.Services
 
         private async Task SetDeltaSpread(IMarkup markup)
         {
+            string assetPairId = GetVolatilityAssetPairId(markup);
+            if (string.IsNullOrEmpty(assetPairId))
+            {
+                return;
+            }
+
             VolatilityModel volatilityModel = await _payVolatilityClient.GetDailyVolatilityAsync(markup.AssetPairId);
             if (volatilityModel != null)
             {
-                markup.DeltaSpread = volatilityModel.HighPriceVolatilityShield;
+                SetDeltaSpread(markup, volatilityModel);
             }
         }
 
@@ -106,11 +112,32 @@ namespace Lykke.Service.PayInternal.Services
             var volatilityModels = (await _payVolatilityClient.GetDailyVolatilitiesAsync()).ToDictionary(v=>v.AssetPairId,StringComparer.OrdinalIgnoreCase);
             foreach (var markup in markups)
             {
-                if (volatilityModels.TryGetValue(markup.AssetPairId, out var volatilityModel))
+                string assetPairId = GetVolatilityAssetPairId(markup);
+                if (string.IsNullOrEmpty(assetPairId))
                 {
-                    markup.DeltaSpread = volatilityModel.HighPriceVolatilityShield;
+                    continue;
+                }
+
+                if (volatilityModels.TryGetValue(assetPairId, out var volatilityModel))
+                {
+                    SetDeltaSpread(markup, volatilityModel);
                 }
             }
+        }
+
+        private void SetDeltaSpread(IMarkup markup, VolatilityModel volatilityModel)
+        {
+            markup.DeltaSpread = volatilityModel.HighPriceVolatilityShield;
+        }
+
+        private string GetVolatilityAssetPairId(IMarkup markup)
+        {
+            if (!string.IsNullOrEmpty(markup?.PriceAssetPairId))
+            {
+                return markup.PriceAssetPairId;
+            }
+
+            return markup?.AssetPairId;
         }
     }
 }
