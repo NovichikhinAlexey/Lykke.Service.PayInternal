@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common.Log;
@@ -11,8 +12,8 @@ using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Orders;
+using LykkePay.Common.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -50,7 +51,10 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("OrdersGetByPaymentRequestId")]
         [ProducesResponseType(typeof(OrderModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NotFound)]
-        public async Task<IActionResult> GetAsync(string paymentRequestId, string orderId)
+        [ValidateModel]
+        public async Task<IActionResult> GetAsync(
+            [Required, RowKey] string paymentRequestId, 
+            [Required, RowKey] string orderId)
         {
             IOrder order = await _orderService.GetAsync(paymentRequestId, orderId);
 
@@ -112,6 +116,17 @@ namespace Lykke.Service.PayInternal.Controllers
                 });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (PaymentRequestNotFoundException e)
+            {
+                _log.Error(e, new
+                {
+                    e.MerchantId,
+                    e.PaymentRequestId,
+                    e.WalletAddress
+                });
+
+                return NotFound(ErrorResponse.Create(e.Message));
             }
         }
 

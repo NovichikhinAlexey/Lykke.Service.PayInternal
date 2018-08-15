@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using JetBrains.Annotations;
 using Lykke.Service.PayInternal.Validation;
+using LykkePay.Common.Validation;
 
 namespace Lykke.Service.PayInternal.Models.Cashout
 {

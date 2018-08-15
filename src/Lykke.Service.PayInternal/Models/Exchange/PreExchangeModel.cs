@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using Lykke.Service.PayInternal.Validation;
+using LykkePay.Common.Validation;
 
 namespace Lykke.Service.PayInternal.Models.Exchange
 {

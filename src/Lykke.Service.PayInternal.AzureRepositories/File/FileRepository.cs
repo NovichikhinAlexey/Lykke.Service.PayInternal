@@ -38,7 +38,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories.File
 
         public async Task DeleteAsync(string id)
         {
-            await _storage.DelBlobAsync(ContainerName, id);
+            await _storage.DeleteThrowNotFound(ContainerName, id);
         }
     }
 }

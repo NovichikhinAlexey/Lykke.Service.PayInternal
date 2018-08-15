@@ -9,12 +9,12 @@ using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Transactions;
 using Lykke.Service.PayInternal.Services.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Lykke.Service.PayInternal.Core;
+using LykkePay.Common.Validation;
 
 namespace Lykke.Service.PayInternal.Controllers
 {

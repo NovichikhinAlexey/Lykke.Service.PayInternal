@@ -7,8 +7,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Threading.Tasks;
+using Lykke.Common.Api.Contract.Responses;
+using LykkePay.Common.Validation;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -21,6 +24,7 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             _fileService = fileService;
         }
+
         /// <summary>
         /// Returns a collection of merchant files.
         /// </summary>
@@ -30,13 +34,15 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpGet]
         [Route("{merchantId}")]
         [SwaggerOperation("FileGetAll")]
-        [ProducesResponseType(typeof(IEnumerable<FileInfoModel>), (int)HttpStatusCode.OK)]
-        public async Task<IActionResult> GetAllAsync(string merchantId)
+        [ProducesResponseType(typeof(IEnumerable<FileInfoModel>), (int) HttpStatusCode.OK)]
+        [ValidateModel]
+        public async Task<IActionResult> GetAllAsync([Required, RowKey] string merchantId)
         {
             IEnumerable<FileInfo> fileInfos = await _fileService.GetInfoAsync(merchantId);
 
             return Ok(Mapper.Map<List<FileInfoModel>>(fileInfos));
         }
+
         /// <summary>
         /// Returns file content.
         /// </summary>
@@ -48,8 +54,11 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpGet]
         [Route("{merchantId}/{fileId}")]
         [SwaggerOperation("FileGetContent")]
-        [ProducesResponseType(typeof(byte[]), (int)HttpStatusCode.OK)]
-        public async Task<IActionResult> GetContentAsync(string merchantId, string fileId)
+        [ProducesResponseType(typeof(byte[]), (int) HttpStatusCode.OK)]
+        [ValidateModel]
+        public async Task<IActionResult> GetContentAsync(
+            [Required, RowKey] string merchantId,
+            [Required, RowKey] string fileId)
         {
             FileInfo fileInfo = await _fileService.GetInfoAsync(merchantId, fileId);
 
@@ -70,9 +79,10 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpGet]
         [Route("logo/{merchantId}")]
         [SwaggerOperation(nameof(GetMerchantLogoUrl))]
-        [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        public async Task<IActionResult> GetMerchantLogoUrl(string merchantId)
+        [ProducesResponseType(typeof(string), (int) HttpStatusCode.OK)]
+        [ProducesResponseType((int) HttpStatusCode.NotFound)]
+        [ValidateModel]
+        public async Task<IActionResult> GetMerchantLogoUrl([Required, RowKey] string merchantId)
         {
             try
             {
@@ -94,9 +104,10 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [Route("{merchantId}")]
         [SwaggerOperation("FileUpload")]
-        [ProducesResponseType((int)HttpStatusCode.NoContent)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> UploadAsync(string merchantId, IFormFile file)
+        [ProducesResponseType((int) HttpStatusCode.NoContent)]
+        [ProducesResponseType((int) HttpStatusCode.BadRequest)]
+        [ValidateModel]
+        public async Task<IActionResult> UploadAsync([Required, RowKey] string merchantId, IFormFile file)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("Invalid file");
@@ -115,10 +126,21 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpDelete]
         [Route("{merchantId}/{fileId}")]
         [SwaggerOperation("FileDelete")]
-        [ProducesResponseType((int)HttpStatusCode.NoContent)]
-        public async Task<IActionResult> DeleteAsync(string merchantId, string fileId)
+        [ProducesResponseType(typeof(void), (int) HttpStatusCode.NoContent)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
+        public async Task<IActionResult> DeleteAsync(
+            [Required, RowKey] string merchantId, 
+            [Required] string fileId)
         {
-            await _fileService.DeleteAsync(merchantId, fileId);
+            try
+            {
+                await _fileService.DeleteAsync(merchantId, fileId);
+            }
+            catch (Core.Exceptions.KeyNotFoundException)
+            {
+                return NotFound(ErrorResponse.Create("File not found"));
+            }
 
             return NoContent();
         }
