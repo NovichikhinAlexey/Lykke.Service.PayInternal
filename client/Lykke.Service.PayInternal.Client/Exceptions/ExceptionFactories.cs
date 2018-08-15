@@ -12,5 +12,8 @@ namespace Lykke.Service.PayInternal.Client.Exceptions
 
         public static Func<ErrorResponse, ApiException, DefaultErrorResponseException> CreateDefaultException =>
             (error, apiException) => new DefaultErrorResponseException(error, apiException);
+
+        public static Func<CreatePaymentRequestError, ApiException, CreatePaymentRequestResponseException> CreatePaymentRequestException =>
+            (error, apiException) => new CreatePaymentRequestResponseException(error, apiException);
     }
 }

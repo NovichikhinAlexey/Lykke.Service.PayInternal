@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Validation;
+using LykkePay.Common.Validation;
 
 namespace Lykke.Service.PayInternal.Models.MerchantGroups
 {

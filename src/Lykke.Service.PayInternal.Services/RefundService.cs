@@ -70,8 +70,18 @@ namespace Lykke.Service.PayInternal.Services
 
             IPaymentRequestTransaction tx = paymentTxs.Single();
 
-            bool isValidAddress = string.IsNullOrWhiteSpace(destinationWalletAddress) ||
-                                  await _blockchainAddressValidator.Execute(destinationWalletAddress, tx.Blockchain);
+            bool isValidAddress;
+
+            try
+            {
+                isValidAddress = string.IsNullOrWhiteSpace(destinationWalletAddress) ||
+                                 await _blockchainAddressValidator.Execute(destinationWalletAddress, tx.Blockchain);
+            }
+            catch (BlockchainTypeNotSupported)
+            {
+                isValidAddress = true;
+            }
+
             if (!isValidAddress)
                 throw new RefundValidationException(RefundErrorType.InvalidDestinationAddress);
 

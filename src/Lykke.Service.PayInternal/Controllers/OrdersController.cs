@@ -1,17 +1,20 @@
-﻿using System.Net;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common.Log;
+using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
-using Lykke.Service.PayInternal.Filters;
 using Lykke.Service.PayInternal.Models.Orders;
+using LykkePay.Common.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -22,15 +25,18 @@ namespace Lykke.Service.PayInternal.Controllers
     {
         private readonly IPaymentRequestService _paymentRequestService;
         private readonly IOrderService _orderService;
+        private readonly IMerchantService _merchantService;
         private readonly ILog _log;
 
         public OrdersController(
-            IPaymentRequestService paymentRequestService,
-            IOrderService orderService,
-            ILogFactory logFactory)
+            [NotNull] IPaymentRequestService paymentRequestService,
+            [NotNull] IOrderService orderService,
+            [NotNull] ILogFactory logFactory, 
+            [NotNull] IMerchantService merchantService)
         {
             _paymentRequestService = paymentRequestService;
             _orderService = orderService;
+            _merchantService = merchantService;
             _log = logFactory.CreateLog(this);
         }
 
@@ -46,7 +52,10 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("OrdersGetByPaymentRequestId")]
         [ProducesResponseType(typeof(OrderModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(void), (int) HttpStatusCode.NotFound)]
-        public async Task<IActionResult> GetAsync(string paymentRequestId, string orderId)
+        [ValidateModel]
+        public async Task<IActionResult> GetAsync(
+            [Required, RowKey] string paymentRequestId, 
+            [Required, RowKey] string orderId)
         {
             IOrder order = await _orderService.GetAsync(paymentRequestId, orderId);
 
@@ -67,11 +76,17 @@ namespace Lykke.Service.PayInternal.Controllers
         [HttpPost]
         [Route("orders")]
         [SwaggerOperation("OrdersChechout")]
-        [ProducesResponseType(typeof(OrderModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(OrderModel), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ValidateModel]
         public async Task<IActionResult> ChechoutAsync([FromBody] ChechoutRequestModel model)
         {
+            IMerchant merchant = await _merchantService.GetAsync(model.MerchantId);
+
+            if (merchant == null)
+                return NotFound(ErrorResponse.Create("Merchant not found"));
+
             try
             {
                 IPaymentRequest paymentRequest =
@@ -102,6 +117,17 @@ namespace Lykke.Service.PayInternal.Controllers
                 });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (PaymentRequestNotFoundException e)
+            {
+                _log.Error(e, new
+                {
+                    e.MerchantId,
+                    e.PaymentRequestId,
+                    e.WalletAddress
+                });
+
+                return NotFound(ErrorResponse.Create(e.Message));
             }
         }
 

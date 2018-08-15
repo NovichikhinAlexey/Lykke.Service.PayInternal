@@ -29,5 +29,26 @@ namespace Lykke.Service.PayInternal.AzureRepositories
                 throw;
             }
         }
+
+        public static async Task DeleteThrowNotFound(this IBlobStorage storage, string container, string key)
+        {
+            const int notFound = 404;
+
+            try
+            {
+                await storage.DelBlobAsync(container, key);
+            }
+            catch (StorageException exception)
+            {
+                if (exception.RequestInformation != null &&
+                    exception.RequestInformation.HttpStatusCode == notFound &&
+                    exception.RequestInformation.ExtendedErrorInformation.ErrorCode == "BlobNotFound")
+                {
+                    throw new KeyNotFoundException("Blob not found", exception);
+                }
+
+                throw;
+            }
+        }
     }
 }

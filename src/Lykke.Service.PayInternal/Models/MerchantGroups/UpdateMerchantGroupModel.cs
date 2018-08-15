@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
-using Lykke.Service.PayInternal.Validation;
+using LykkePay.Common.Validation;
 
 namespace Lykke.Service.PayInternal.Models.MerchantGroups
 {
@@ -27,7 +27,7 @@ namespace Lykke.Service.PayInternal.Models.MerchantGroups
         /// </summary>
         [Required]
         [RowKey(ErrorMessage = "Invalid characters used or value is empty")]
-        [NotEmptyCollection(ErrorMessage = "The collection contains no elements")]
+        [Validation.NotEmptyCollection(ErrorMessage = "The collection contains no elements")]
         public IEnumerable<string> Merchants { get; set; }
 
         /// <summary>

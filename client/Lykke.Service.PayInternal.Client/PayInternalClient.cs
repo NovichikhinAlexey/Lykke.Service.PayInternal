@@ -159,7 +159,7 @@ namespace Lykke.Service.PayInternal.Client
 
         public Task<PaymentRequestModel> CreatePaymentRequestAsync(CreatePaymentRequestModel model)
         {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.CreateAsync(model));
+            return _runner.RunAsync(() => _paymentRequestsApi.CreateAsync(model), ExceptionFactories.CreatePaymentRequestException);
         }
         
         public Task<BtcTransferResponse> BtcFreeTransferAsync(BtcFreeTransferRequest request)
