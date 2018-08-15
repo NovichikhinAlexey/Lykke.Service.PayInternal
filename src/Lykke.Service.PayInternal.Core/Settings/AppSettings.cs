@@ -2,6 +2,7 @@
 using Lykke.Service.PayHistory.Client;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Core.Settings.SlackNotifications;
+using Lykke.Service.PayVolatility.Client;
 using Lykke.SettingsReader.Attributes;
 using HistoryRabbitMqPublisherSettings = Lykke.Service.PayHistory.Client.Publisher.RabbitMqPublisherSettings;
 using CallBackRabbitMqPublisherSettings = Lykke.Service.PayCallback.Client.InvoiceConfirmation.RabbitMqPublisherSettings;
@@ -21,6 +22,8 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public HistoryRabbitMqPublisherSettings PayHistoryServicePublisher { get; set; }
         public CallBackRabbitMqPublisherSettings PayInvoiceConfirmationPublisher { get; set; }
         public PayHistoryServiceClientSettings PayHistoryServiceClient { get; set; }
+        public PayVolatilityServiceClientSettings PayVolatilityServiceClient { get; set; }
+
         public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
     }
 
