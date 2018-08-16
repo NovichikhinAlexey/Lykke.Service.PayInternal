@@ -24,7 +24,7 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public PayHistoryServiceClientSettings PayHistoryServiceClient { get; set; }
         public PayVolatilityServiceClientSettings PayVolatilityServiceClient { get; set; }
 
-        public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
+		public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
     }
 
     public class BitcoinCoreSettings
