@@ -131,7 +131,7 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> DeleteAsync(
             [Required, RowKey] string merchantId, 
-            [Required] string fileId)
+            [Required, RowKey] string fileId)
         {
             try
             {
