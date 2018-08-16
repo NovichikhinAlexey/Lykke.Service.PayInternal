@@ -69,7 +69,7 @@ namespace Lykke.Service.PayInternal.Services
                 priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(merchantMarkup.PriceAssetPairId);
 
                 IAssetPairRate assetPairRate =
-                    await _assetRatesService.GetCurrentRate(priceAssetPair.BaseAssetId, priceAssetPair.QuotingAssetId);
+                    await _assetRatesService.GetCurrentRateAsync(priceAssetPair.BaseAssetId, priceAssetPair.QuotingAssetId);
 
                 _log.Info($"Price method: {merchantMarkup.PriceMethod.ToString()}");
 
@@ -98,7 +98,7 @@ namespace Lykke.Service.PayInternal.Services
 
                 try
                 {
-                    IAssetPairRate assetPairRate = await _assetRatesService.GetCurrentRate(baseAssetId, quotingAssetId);
+                    IAssetPairRate assetPairRate = await _assetRatesService.GetCurrentRateAsync(baseAssetId, quotingAssetId);
 
                     askPrice = assetPairRate.AskPrice;
 
