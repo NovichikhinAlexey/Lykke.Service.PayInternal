@@ -57,14 +57,14 @@ namespace Lykke.Service.PayInternal.Services
             if (primaryExpPeriod > extendedExpPeriod)
                 throw new OrderExpirationSettingsInconsistentException(primaryExpPeriod, extendedExpPeriod);
 
-            IEnumerable<string> inconsistensAssets = _appSettings.AssetsMap.Values
+            IEnumerable<string> inconsistentAssets = _appSettings.AssetsMap.Values
                 .GroupBy(x => x.Value)
                 .Where(g => g.Count() > 1)
                 .Select(g => g.Key)
                 .ToList();
 
-            if (inconsistensAssets.Any())
-                throw new AssetsMapSettingsInconsistencyException(inconsistensAssets);
+            if (inconsistentAssets.Any())
+                throw new AssetsMapSettingsInconsistencyException(inconsistentAssets);
 
             _log.Info("Settings checked successfully.");
 
