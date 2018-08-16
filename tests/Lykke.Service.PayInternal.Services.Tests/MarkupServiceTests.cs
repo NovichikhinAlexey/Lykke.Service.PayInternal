@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayVolatility.Client;
+using Lykke.Service.PayVolatility.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -14,13 +17,28 @@ namespace Lykke.Service.PayInternal.Services.Tests
     public class MarkupServiceTests
     {
         private Mock<IMarkupRepository> _markupRepositoryMock;
+        private Mock<IPayVolatilityClient> _payVolatilityClientMock;
         private IMarkupService _markupService;
 
         [TestInitialize]
         public void Initialize()
         {
             _markupRepositoryMock = SetUpFakeRepository();
-            _markupService = new MarkupService(_markupRepositoryMock.Object);
+            _payVolatilityClientMock = SetUpPayVolatilityClient();
+            _markupService = new MarkupService(_markupRepositoryMock.Object, _payVolatilityClientMock.Object);
+        }
+
+        public Mock<IPayVolatilityClient> SetUpPayVolatilityClient()
+        {
+            var mock = new Mock<IPayVolatilityClient>();
+
+            mock.Setup(o => o.GetDailyVolatilityAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => null);
+
+            mock.Setup(o => o.GetDailyVolatilitiesAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => new List<VolatilityModel>());
+
+            return mock;
         }
 
         public Mock<IMarkupRepository> SetUpFakeRepository()
