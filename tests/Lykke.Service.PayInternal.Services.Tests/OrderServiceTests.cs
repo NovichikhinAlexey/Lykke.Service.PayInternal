@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Lykke.Logs;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
-using Lykke.Service.PayInternal.Core.Domain.Order;
+using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
-using Lykke.Service.PayInternal.Services.Domain;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Order = Lykke.Service.PayInternal.Services.Domain.Order;
 
 namespace Lykke.Service.PayInternal.Services.Tests
 {
@@ -53,13 +53,13 @@ namespace Lykke.Service.PayInternal.Services.Tests
                 .ReturnsAsync((IOrder o) => o)
                 .Callback((IOrder o) => orders.Add(o));
 
-            mock.Setup(o => o.GetAsync(It.IsAny<string>(), It.IsAny<string>()))
+            mock.Setup(o => o.GetByPaymentRequestAsync(It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync((string paymentRequestId, string orderId) =>
                 {
                     return orders.SingleOrDefault(x => x.PaymentRequestId == paymentRequestId && x.Id == orderId);
                 });
 
-            mock.Setup(o => o.GetAsync(It.IsAny<string>()))
+            mock.Setup(o => o.GetByPaymentRequestAsync(It.IsAny<string>()))
                 .ReturnsAsync((string paymentRequestId) =>
                 {
                     return orders.Where(x => x.PaymentRequestId == paymentRequestId).ToList();
