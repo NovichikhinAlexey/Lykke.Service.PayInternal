@@ -139,7 +139,17 @@ namespace Lykke.Service.PayInternal
                 });
                 app.UseStaticFiles();
 
-                appLifetime.ApplicationStarted.Register(() => StartApplication().GetAwaiter().GetResult());
+                appLifetime.ApplicationStarted.Register(() =>
+                {
+                    try
+                    {
+                        StartApplication().GetAwaiter().GetResult();
+                    }
+                    catch (Exception)
+                    {
+                        appLifetime.StopApplication();
+                    }
+                });
                 appLifetime.ApplicationStopping.Register(StopApplication);
                 appLifetime.ApplicationStopped.Register(CleanUp);
             }
