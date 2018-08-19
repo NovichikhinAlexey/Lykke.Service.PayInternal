@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Core.Domain;
-using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 
