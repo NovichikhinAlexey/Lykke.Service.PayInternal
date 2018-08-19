@@ -8,6 +8,7 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
@@ -110,7 +111,7 @@ namespace Lykke.Service.PayInternal.Services
             return createdOrder;
         }
 
-        private async Task<(string AssetPairId, decimal PaymentAmount, decimal Rate)> GetPaymentInfoAsync(string settlementAssetId, string paymentAssetId, decimal amount, string merchantId, RequestMarkup requestMarkup)
+        public virtual async Task<(string AssetPairId, decimal PaymentAmount, decimal Rate)> GetPaymentInfoAsync(string settlementAssetId, string paymentAssetId, decimal amount, string merchantId, IRequestMarkup requestMarkup)
         {
             IMerchant merchant = await _merchantRepository.GetAsync(merchantId);
 

@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Lykke.Logs;
+using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Order;
+using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Services.Domain;
@@ -173,6 +175,113 @@ namespace Lykke.Service.PayInternal.Services.Tests
             Assert.AreNotEqual(resolvedActualOrder1, resolvedActualOrder2);
             Assert.AreEqual(actualOrder1, resolvedActualOrder1);
             Assert.AreEqual(actualOrder2, resolvedActualOrder2);
+        }
+
+        [TestMethod]
+        public async Task GetLatestOrCreateAsync_NotForcing_NotExpiredDueDate_ReturnsActual()
+        {
+            IPaymentRequest paymentRequest = new PaymentRequest
+            {
+                Id = "SomePaymentRequestId"
+            };
+
+            IOrder actualOrder = await _orderRepositoryMock.Object.InsertAsync(new Order
+            {
+                CreatedDate = DateTime.UtcNow.AddDays(-1),
+                DueDate = DateTime.UtcNow.AddDays(1),
+                ExtendedDueDate = DateTime.UtcNow.AddDays(2),
+                PaymentRequestId = paymentRequest.Id
+            });
+
+            IOrder resolvedOrder = await _orderService.GetLatestOrCreateAsync(paymentRequest);
+
+            Assert.IsNotNull(actualOrder);
+            Assert.IsNotNull(resolvedOrder);
+            Assert.AreEqual(actualOrder, resolvedOrder);
+        }
+
+        [TestMethod]
+        public async Task GetLatestOrCreateAsync_NotForcing_ExpiredDueDate_ReturnsActual()
+        {
+            IPaymentRequest paymentRequest = new PaymentRequest
+            {
+                Id = "SomePaymentRequestId"
+            };
+
+            IOrder actualOrder = await _orderRepositoryMock.Object.InsertAsync(new Order
+            {
+                CreatedDate = DateTime.UtcNow.AddDays(-2),
+                DueDate = DateTime.UtcNow.AddDays(-1),
+                ExtendedDueDate = DateTime.UtcNow.AddDays(1),
+                PaymentRequestId = paymentRequest.Id
+            });
+
+            IOrder resolvedOrder = await _orderService.GetLatestOrCreateAsync(paymentRequest);
+
+            Assert.IsNotNull(actualOrder);
+            Assert.IsNotNull(resolvedOrder);
+            Assert.AreEqual(actualOrder, resolvedOrder);
+        }
+
+        [TestMethod]
+        public async Task GetLatestOrCreateAsync_ExpiredDueDate_ExpiredExtendedDueDate_CreatesNewOrder()
+        {
+            const string btcUsd = "BTCUSD";
+
+            const decimal paymentAmount = 100;
+
+            const decimal rate = 10;
+
+            var partiallyMockedOrderService = new Mock<OrderService>(
+                _orderRepositoryMock.Object,
+                _merchantRepositoryMock.Object,
+                _calculationServiceMock.Object,
+                EmptyLogFactory.Instance,
+                new OrderExpirationPeriodsSettings
+                {
+                    Primary = TimeSpan.FromDays(1),
+                    Extended = TimeSpan.FromDays(2)
+                },
+                _markupServiceMock.Object,
+                _lykkeAssetsResolverMock.Object)
+            {
+                CallBase = true
+            };
+
+            partiallyMockedOrderService.Setup(
+                    o => o.GetPaymentInfoAsync(
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<decimal>(),
+                        It.IsAny<string>(),
+                        It.IsAny<IRequestMarkup>()))
+                .ReturnsAsync(() => (btcUsd, paymentAmount, rate));
+
+            IPaymentRequest paymentRequest = new PaymentRequest
+            {
+                Id = "SomePaymentRequestId"
+            };
+
+            IOrder dueOrder = await _orderRepositoryMock.Object.InsertAsync(new Order
+            {
+                CreatedDate = DateTime.UtcNow.AddDays(-3),
+                DueDate = DateTime.UtcNow.AddDays(-2),
+                ExtendedDueDate = DateTime.UtcNow.AddDays(-1),
+                PaymentRequestId = paymentRequest.Id
+            });
+
+            IOrder actualOrder = await partiallyMockedOrderService.Object.GetLatestOrCreateAsync(paymentRequest);
+
+            Assert.IsNotNull(dueOrder);
+            Assert.IsNotNull(actualOrder);
+            Assert.AreNotEqual(dueOrder, actualOrder);
+            Assert.IsTrue(DateTime.UtcNow < actualOrder.DueDate);
+            Assert.IsTrue(DateTime.UtcNow < actualOrder.ExtendedDueDate);
+            Assert.IsTrue(actualOrder.DueDate < actualOrder.ExtendedDueDate);
+            Assert.IsTrue(actualOrder.CreatedDate < actualOrder.DueDate);
+            Assert.AreEqual(actualOrder.AssetPairId, btcUsd);
+            Assert.AreEqual(actualOrder.PaymentAmount, paymentAmount);
+            Assert.AreEqual(actualOrder.ExchangeRate, rate);
         }
     }
 }
