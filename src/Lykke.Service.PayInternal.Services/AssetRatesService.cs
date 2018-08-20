@@ -48,7 +48,7 @@ namespace Lykke.Service.PayInternal.Services
                 Mapper.Map<AssetPairRate>(cmd.ApplyAccuracy(settings.Accuracy)));
         }
 
-        public async Task<IAssetPairRate> GetCurrentRate(string baseAssetId, string quotingAssetId)
+        public async Task<IAssetPairRate> GetCurrentRateAsync(string baseAssetId, string quotingAssetId)
         {
             if (await _assetPairSettingsService.GetAsync(baseAssetId, quotingAssetId) != null)
             {
