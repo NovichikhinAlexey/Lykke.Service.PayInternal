@@ -37,7 +37,6 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IDistributedLocksService _checkoutLocksService;
         private readonly ITransactionPublisher _transactionPublisher;
         private readonly IWalletBalanceValidator _walletBalanceValidator;
-        private readonly RetryPolicySettings _retryPolicySettings;
         private readonly IAutoSettleSettingsResolver _autoSettleSettingsResolver;
         private readonly IAssetSettingsService _assetSettingsService;
         private readonly ILog _log;
@@ -77,7 +76,6 @@ namespace Lykke.Service.PayInternal.Services
             _transactionPublisher = transactionPublisher ?? throw new ArgumentNullException(nameof(transactionPublisher));
             _checkoutLocksService = checkoutLocksService ?? throw new ArgumentNullException(nameof(checkoutLocksService));
             _walletBalanceValidator = walletBalanceValidator ?? throw new ArgumentNullException(nameof(walletBalanceValidator));
-            _retryPolicySettings = retryPolicySettings ?? throw new ArgumentNullException(nameof(retryPolicySettings));
             _autoSettleSettingsResolver = autoSettleSettingsResolver ?? throw new ArgumentNullException(nameof(autoSettleSettingsResolver));
             _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
 
@@ -86,7 +84,7 @@ namespace Lykke.Service.PayInternal.Services
                 .Or<SettlementOperationFailedException>()
                 .Or<SettlementOperationPartiallyFailedException>()
                 .WaitAndRetryAsync(
-                    _retryPolicySettings.SettlementAttempts,
+                    retryPolicySettings.SettlementAttempts,
                     attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
                     (ex, timespan) => _log.Error(ex, "Settlement with retry"));
 
@@ -95,7 +93,7 @@ namespace Lykke.Service.PayInternal.Services
                 .Or<PaymentOperationFailedException>()
                 .Or<PaymentOperationPartiallyFailedException>()
                 .WaitAndRetryAsync(
-                    _retryPolicySettings.DefaultAttempts,
+                    retryPolicySettings.DefaultAttempts,
                     attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
                     (ex, timespan) => _log.Error(ex, "Payment with retry"));
         }
