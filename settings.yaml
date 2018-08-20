@@ -138,6 +138,13 @@
     ExchangeName:
       settings-key: PayInvoiceConfirmationExchangeName
       types: [Tag]
+  PayInvoiceConfirmationPublisher:
+    ConnectionString:
+      settings-key: GeneralRabbitMqConnectionString
+      types: [RabbitMq,Tag]
+    ExchangeName:
+      settings-key: PayInvoiceConfirmationExchangeName
+      types: [Tag]
   SlackNotifications:
     AzureQueue:
       ConnectionString:
