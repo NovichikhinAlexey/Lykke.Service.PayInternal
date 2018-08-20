@@ -7,6 +7,6 @@ namespace Lykke.Service.PayInternal.Core.Services
     {
         Task<IAssetPairRate> AddAsync(AddAssetPairRateCommand cmd);
 
-        Task<IAssetPairRate> GetCurrentRate(string baseAssetId, string quotingAssetId);
+        Task<IAssetPairRate> GetCurrentRateAsync(string baseAssetId, string quotingAssetId);
     }
 }

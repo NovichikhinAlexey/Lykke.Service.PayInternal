@@ -74,7 +74,7 @@ namespace Lykke.Service.PayInternal.Services
             if (await _assetSettingsService.GetNetworkAsync(cmd.DestAssetId) != network)
                 throw new ExchangeOperationNotSupportedException("Assets are being served by different blockchains");
 
-            IAssetPairRate rate = await _assetRatesService.GetCurrentRate(cmd.SourceAssetId, cmd.DestAssetId);
+            IAssetPairRate rate = await _assetRatesService.GetCurrentRateAsync(cmd.SourceAssetId, cmd.DestAssetId);
 
             if (cmd.ExpectedRate != null && rate.BidPrice != cmd.ExpectedRate)
             {
@@ -197,7 +197,7 @@ namespace Lykke.Service.PayInternal.Services
 
             string hotwallet = _bcnSettingsResolver.GetExchangeHotWallet(network);
 
-            IAssetPairRate rate = await _assetRatesService.GetCurrentRate(cmd.SourceAssetId, cmd.DestAssetId);
+            IAssetPairRate rate = await _assetRatesService.GetCurrentRateAsync(cmd.SourceAssetId, cmd.DestAssetId);
 
             decimal exchangeAmount = cmd.SourceAmount * rate.BidPrice;
 

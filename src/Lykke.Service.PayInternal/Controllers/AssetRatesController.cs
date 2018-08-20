@@ -123,7 +123,7 @@ namespace Lykke.Service.PayInternal.Controllers
                 if (await _assetsLocalCache.GetAssetByIdAsync(lykkeQuotingAssetId) == null)
                     return NotFound(ErrorResponse.Create("Quoting asset not found"));
 
-                IAssetPairRate rate = await _assetRatesService.GetCurrentRate(lykkeBaseAssetId, lykkeQuotingAssetId);
+                IAssetPairRate rate = await _assetRatesService.GetCurrentRateAsync(lykkeBaseAssetId, lykkeQuotingAssetId);
 
                 if (rate == null)
                     return NotFound(ErrorResponse.Create("Rate not found"));
