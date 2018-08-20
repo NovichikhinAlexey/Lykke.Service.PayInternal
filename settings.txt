@@ -79,6 +79,9 @@
 	"PayHistoryServiceClient": {
 		"ServiceUrl": "${PayHistoryServiceUrl}:[Tag]"
 	},
+	"PayVolatilityServiceClient": {
+		"ServiceUrl": "${PayVolatilityServiceUrl}:[Tag]"
+	},
 	"PayHistoryServicePublisher": {
 		"ConnectionString": "${GeneralRabbitMqConnectionString}:[RabbitMq,Tag]",
 		"ExchangeName": "${PayHistoryExchangeName}:[Tag]"
