@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace Lykke.Service.PayInternal.Models.Transfers
+namespace Lykke.Service.PayInternal.Core.Domain.Transfer
 {
-    public class BtcTransferResponse
+    public class BtcTransferTransactionResult
     {
-        public string TransactionId { get; set; }
+        public Guid TransactionId { get; set; }
 
         public string Transaction { get; set; }
 

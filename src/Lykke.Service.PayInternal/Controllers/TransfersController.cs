@@ -46,9 +46,9 @@ namespace Lykke.Service.PayInternal.Controllers
         {
             try
             {
-                string transactionId = await _btcTransferService.ExecuteAsync(Mapper.Map<BtcTransfer>(request));
+                var result = await _btcTransferService.ExecuteAsync(Mapper.Map<BtcTransfer>(request));
 
-                return Ok(new BtcTransferResponse {TransactionId = transactionId});
+                return Ok(Mapper.Map<BtcTransferResponse>(result));
             }
             catch (TransferException e)
             {
