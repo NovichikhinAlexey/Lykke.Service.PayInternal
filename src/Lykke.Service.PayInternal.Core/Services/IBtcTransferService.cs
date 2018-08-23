@@ -5,6 +5,6 @@ namespace Lykke.Service.PayInternal.Core.Services
 {
     public interface IBtcTransferService
     {
-        Task<string> ExecuteAsync(BtcTransfer transfer);
+        Task<BtcTransferTransactionResult> ExecuteAsync(BtcTransfer transfer);
     }
 }
