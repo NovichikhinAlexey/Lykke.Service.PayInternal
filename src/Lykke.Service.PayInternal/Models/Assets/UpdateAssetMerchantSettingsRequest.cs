@@ -12,7 +12,6 @@ namespace Lykke.Service.PayInternal.Models.Assets
         public string SettlementAssets { get; set; }
 
         [Required]
-        [MerchantExists]
         public string MerchantId { get; set; }
     }
 }

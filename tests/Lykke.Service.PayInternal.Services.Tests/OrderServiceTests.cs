@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Lykke.Logs;
 using Lykke.Service.PayInternal.Core.Domain;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Services;
@@ -19,7 +18,6 @@ namespace Lykke.Service.PayInternal.Services.Tests
     public class OrderServiceTests
     {
         private Mock<IOrderRepository> _orderRepositoryMock;
-        private Mock<IMerchantRepository> _merchantRepositoryMock;
         private Mock<ICalculationService> _calculationServiceMock;
         private Mock<IMarkupService> _markupServiceMock;
         private Mock<ILykkeAssetsResolver> _lykkeAssetsResolverMock;
@@ -30,14 +28,12 @@ namespace Lykke.Service.PayInternal.Services.Tests
         public void Initialize()
         {
             _orderRepositoryMock = SetUpOrderRepository();
-            _merchantRepositoryMock = new Mock<IMerchantRepository>();
             _calculationServiceMock = new Mock<ICalculationService>();
             _markupServiceMock = new Mock<IMarkupService>();
             _lykkeAssetsResolverMock = new Mock<ILykkeAssetsResolver>();
 
             _orderService = new OrderService(
                 _orderRepositoryMock.Object,
-                _merchantRepositoryMock.Object,
                 _calculationServiceMock.Object,
                 EmptyLogFactory.Instance,
                 new OrderExpirationPeriodsSettings(),
@@ -234,7 +230,6 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             var partiallyMockedOrderService = new Mock<OrderService>(
                 _orderRepositoryMock.Object,
-                _merchantRepositoryMock.Object,
                 _calculationServiceMock.Object,
                 EmptyLogFactory.Instance,
                 new OrderExpirationPeriodsSettings

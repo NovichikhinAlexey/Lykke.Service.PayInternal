@@ -13,7 +13,6 @@ using System.Net;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Models;
 using ErrorResponse = Lykke.Common.Api.Contract.Responses.ErrorResponse;
@@ -32,7 +31,6 @@ namespace Lykke.Service.PayInternal.Controllers
         private readonly IRefundService _refundService;
         private readonly IAssetSettingsService _assetSettingsService;
         private readonly IPaymentRequestDetailsBuilder _paymentRequestDetailsBuilder;
-        private readonly IMerchantService _merchantService;
         private readonly ILog _log;
 
         public PaymentRequestsController(
@@ -40,15 +38,12 @@ namespace Lykke.Service.PayInternal.Controllers
             [NotNull] IRefundService refundService,
             [NotNull] IAssetSettingsService assetSettingsService,
             [NotNull] ILogFactory logFactory,
-            [NotNull] IPaymentRequestDetailsBuilder paymentRequestDetailsBuilder,
-            [NotNull] IMerchantService merchantService,
-			[NotNull] ILykkeAssetsResolver lykkeAssetsResolver)
+            [NotNull] IPaymentRequestDetailsBuilder paymentRequestDetailsBuilder)
         {
             _paymentRequestService = paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
             _refundService = refundService ?? throw new ArgumentNullException(nameof(refundService));
             _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
             _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder ?? throw new ArgumentNullException(nameof(paymentRequestDetailsBuilder));
-            _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
             _log = logFactory.CreateLog(this);
         }
 
@@ -177,12 +172,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> CreateAsync([FromBody] CreatePaymentRequestModel model)
         {
-            IMerchant merchant = await _merchantService.GetAsync(model.MerchantId);
-
-            if (merchant == null)
-                return NotFound(new PaymentRequestErrorModel
-                    {Code = CreatePaymentRequestErrorType.RequestValidationCommonError});
-
             try
             {
                 IReadOnlyList<string> settlementAssets =
@@ -341,16 +330,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> PrePay([FromBody] PrePaymentModel request)
         {
-            IMerchant merchant = await _merchantService.GetAsync(request.MerchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Merchant not found"));
-
-            IMerchant payer = await _merchantService.GetAsync(request.PayerMerchantId);
-
-            if (payer == null)
-                return NotFound(ErrorResponse.Create("Payer merchant not found"));
-
             try
             {
                 await _paymentRequestService.PrePayAsync(Mapper.Map<PaymentCommand>(request));
@@ -432,16 +411,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> Pay([FromBody] PaymentModel request)
         {
-            IMerchant merchant = await _merchantService.GetAsync(request.MerchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Merchant not found"));
-
-            IMerchant payer = await _merchantService.GetAsync(request.PayerMerchantId);
-
-            if (payer == null)
-                return NotFound(ErrorResponse.Create("Payer merchant not found"));
-
             try
             {
                 await _paymentRequestService.PayAsync(Mapper.Map<PaymentCommand>(request));

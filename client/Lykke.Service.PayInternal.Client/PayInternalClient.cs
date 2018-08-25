@@ -97,34 +97,32 @@ namespace Lykke.Service.PayInternal.Client
 
         public Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync()
         {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetAllAsync());
+            throw new NotImplementedException("Use PayMerchant client instea");
         }
         
         public Task<MerchantModel> GetMerchantByIdAsync(string merchantId)
         {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetByIdAsync(merchantId));
+            throw new NotImplementedException("Use PayMerchant client instea");
         }
 
         public Task<MerchantModel> CreateMerchantAsync(CreateMerchantRequest request)
         {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.CreateAsync(request));
+            throw new NotImplementedException("Use PayMerchant client instea");
         }
 
         public Task UpdateMerchantAsync(UpdateMerchantRequest request)
         {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.UpdateAsync(request));
+            throw new NotImplementedException("Use PayMerchant client instea");
         }
 
         public Task SetMerchantPublicKeyAsync(string merchantId, byte[] content)
         {
-            var streamPart = new StreamPart(new MemoryStream(content), "public.key");
-
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.SetPublicKeyAsync(merchantId, streamPart));
+            throw new NotImplementedException("Use PayMerchant client instea");
         }
 
         public Task DeleteMerchantAsync(string merchantId)
         {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.DeleteAsync(merchantId));
+            throw new NotImplementedException("Use PayMerchant client instea");
         }
         
         public Task<OrderModel> GetOrderAsync(string merchantId, string paymentRequestId)

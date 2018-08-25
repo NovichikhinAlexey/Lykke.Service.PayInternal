@@ -16,7 +16,6 @@ namespace Lykke.Service.PayInternal.Models.Cashout
         /// </summary>
         [Required]
         [RowKey]
-        [MerchantExists]
         public string MerchantId { get; set; }
 
         /// <summary>

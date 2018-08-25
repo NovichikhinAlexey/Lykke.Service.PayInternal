@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Lykke.Service.PayInternal.Core.Domain.Groups;
-using Lykke.Service.PayInternal.Validation;
 using LykkePay.Common.Validation;
 
 namespace Lykke.Service.PayInternal.Models.MerchantGroups
@@ -15,7 +14,6 @@ namespace Lykke.Service.PayInternal.Models.MerchantGroups
         /// </summary>
         [Required]
         [RowKey(ErrorMessage = "Invalid characters used or value is empty")]
-        [MerchantExists]
         public string MerchantId { get; set; }
 
         /// <summary>

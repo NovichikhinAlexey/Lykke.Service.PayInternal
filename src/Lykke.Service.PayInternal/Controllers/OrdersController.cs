@@ -7,7 +7,6 @@ using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -24,18 +23,15 @@ namespace Lykke.Service.PayInternal.Controllers
     {
         private readonly IPaymentRequestService _paymentRequestService;
         private readonly IOrderService _orderService;
-        private readonly IMerchantService _merchantService;
         private readonly ILog _log;
 
         public OrdersController(
             [NotNull] IPaymentRequestService paymentRequestService,
             [NotNull] IOrderService orderService,
-            [NotNull] ILogFactory logFactory, 
-            [NotNull] IMerchantService merchantService)
+            [NotNull] ILogFactory logFactory)
         {
             _paymentRequestService = paymentRequestService;
             _orderService = orderService;
-            _merchantService = merchantService;
             _log = logFactory.CreateLog(this);
         }
 
@@ -81,11 +77,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> ChechoutAsync([FromBody] ChechoutRequestModel model)
         {
-            IMerchant merchant = await _merchantService.GetAsync(model.MerchantId);
-
-            if (merchant == null)
-                return NotFound(ErrorResponse.Create("Merchant not found"));
-
             try
             {
                 IPaymentRequest paymentRequest =

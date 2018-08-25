@@ -15,7 +15,6 @@ namespace Lykke.Service.PayInternal.Models.Exchange
         /// </summary>
         [Required]
         [RowKey]
-        [MerchantExists]
         public string MerchantId { get; set; }
 
         /// <summary>

@@ -10,7 +10,6 @@ using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -24,7 +23,6 @@ namespace Lykke.Service.PayInternal.Services
     public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepository;
-        private readonly IMerchantRepository _merchantRepository;
         private readonly ICalculationService _calculationService;
         private readonly IMarkupService _markupService;
         private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
@@ -33,7 +31,6 @@ namespace Lykke.Service.PayInternal.Services
 
         public OrderService(
             [NotNull] IOrderRepository orderRepository,
-            [NotNull] IMerchantRepository merchantRepository,
             [NotNull] ICalculationService calculationService,
             [NotNull] ILogFactory logFactory,
             [NotNull] OrderExpirationPeriodsSettings orderExpirationPeriods,
@@ -41,7 +38,6 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _orderRepository = orderRepository;
-            _merchantRepository = merchantRepository;
             _calculationService = calculationService;
             _log = logFactory.CreateLog(this);
             _orderExpirationPeriods = orderExpirationPeriods;
@@ -113,11 +109,6 @@ namespace Lykke.Service.PayInternal.Services
 
         public virtual async Task<(string AssetPairId, decimal PaymentAmount, decimal Rate)> GetPaymentInfoAsync(string settlementAssetId, string paymentAssetId, decimal amount, string merchantId, IRequestMarkup requestMarkup)
         {
-            IMerchant merchant = await _merchantRepository.GetAsync(merchantId);
-
-            if (merchant == null)
-                throw new MerchantNotFoundException(merchantId);
-
             string lykkePaymentAssetId = await _lykkeAssetsResolver.GetLykkeId(paymentAssetId);
 
             string lykkeSettlementAssetId = await _lykkeAssetsResolver.GetLykkeId(settlementAssetId);
@@ -128,7 +119,7 @@ namespace Lykke.Service.PayInternal.Services
 
             try
             {
-                merchantMarkup = await _markupService.ResolveAsync(merchant.Id, assetPairId);
+                merchantMarkup = await _markupService.ResolveAsync(merchantId, assetPairId);
             }
             catch (MarkupNotFoundException e)
             {

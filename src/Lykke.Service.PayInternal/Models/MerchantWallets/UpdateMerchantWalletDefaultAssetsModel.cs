@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Lykke.Service.PayInternal.Core;
-using Lykke.Service.PayInternal.Validation;
 using LykkePay.Common.Validation;
 
 namespace Lykke.Service.PayInternal.Models.MerchantWallets
@@ -16,7 +15,6 @@ namespace Lykke.Service.PayInternal.Models.MerchantWallets
         /// </summary>
         [Required]
         [RowKey]
-        [MerchantExists]
         public string MerchantId { get; set; }
 
         /// <summary>

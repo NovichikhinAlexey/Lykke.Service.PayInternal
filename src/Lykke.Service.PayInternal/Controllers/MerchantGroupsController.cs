@@ -19,21 +19,19 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
+    //todo: move to PayMerchant service
     [Route("api/merchantGroups")]
     public class MerchantGroupsController : Controller
     {
         private readonly IMerchantGroupService _merchantGroupService;
-        private readonly IMerchantService _merchantService;
         private readonly ILog _log;
 
         public MerchantGroupsController(
             [NotNull] IMerchantGroupService merchantGroupService,
-            [NotNull] IMerchantService merchantService,
             [NotNull] ILogFactory logFactory)
         {
             _merchantGroupService =
                 merchantGroupService ?? throw new ArgumentNullException(nameof(merchantGroupService));
-            _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
             _log = logFactory.CreateLog(this);
         }
 
@@ -53,12 +51,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> Add([FromBody] AddMerchantGroupModel request)
         {
-            foreach (string requestMerchant in request.Merchants)
-            {
-                if (await _merchantService.GetAsync(requestMerchant) == null)
-                    return NotFound(ErrorResponse.Create($"Merchant [{requestMerchant}] not found"));
-            }
-
             try
             {
                 IMerchantGroup group = await _merchantGroupService.CreateAsync(Mapper.Map<MerchantGroup>(request));
@@ -117,12 +109,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> Update([FromBody] UpdateMerchantGroupModel request)
         {
-            foreach (string requestMerchant in request.Merchants)
-            {
-                if (await _merchantService.GetAsync(requestMerchant) == null)
-                    return NotFound(ErrorResponse.Create($"Merchant [{requestMerchant}] not found"));
-            }
-
             try
             {
                 await _merchantGroupService.UpdateAsync(Mapper.Map<MerchantGroup>(request));
