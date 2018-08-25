@@ -9,7 +9,6 @@ using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Domain.Cashout;
 using Lykke.Service.PayInternal.Core.Domain.Exchange;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
 using Lykke.Service.PayInternal.Core.Domain.Order;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
@@ -30,7 +29,6 @@ using Lykke.Service.PayInternal.Models.PaymentRequests;
 using Lykke.Service.PayInternal.Models.SupervisorMembership;
 using Lykke.Service.PayInternal.Models.Transactions.Ethereum;
 using Lykke.Service.PayInternal.Models.Transfers;
-using Lykke.Service.PayInternal.Services.Domain;
 using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.Service.PayInternal.Models.Cashout;
 
@@ -40,15 +38,6 @@ namespace Lykke.Service.PayInternal.Mapping
     {
         public AutoMapperProfile()
         {
-            CreateMap<IMerchant, MerchantModel>(MemberList.Source);
-
-            CreateMap<CreateMerchantRequest, Merchant>(MemberList.Destination)
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.PublicKey, opt => opt.Ignore());
-
-            CreateMap<UpdateMerchantRequest, Merchant>(MemberList.Destination)
-                .ForMember(dest => dest.PublicKey, opt => opt.Ignore());
-
             CreateMap<AddSupervisorMembershipModel, SupervisorMembership>(MemberList.Destination);
 
             CreateMap<UpdateSupervisorMembershipModel, SupervisorMembership>(MemberList.Destination);

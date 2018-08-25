@@ -48,6 +48,7 @@ namespace Lykke.Service.PayInternal.Client
         /// Returns all merchants.
         /// </summary>
         /// <returns>The collection of merchants.</returns>
+        [Obsolete("Use PayMerchant client instead")]
         Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync();
 
         /// <summary>
@@ -55,6 +56,7 @@ namespace Lykke.Service.PayInternal.Client
         /// </summary>
         /// <param name="merchantId">The merchant id.</param>
         /// <returns>The merchant.</returns>
+        [Obsolete("Use PayMerchant client instead")]
         Task<MerchantModel> GetMerchantByIdAsync(string merchantId);
 
         /// <summary>
@@ -62,12 +64,14 @@ namespace Lykke.Service.PayInternal.Client
         /// </summary>
         /// <param name="request">The merchant create request.</param>
         /// <returns>The created merchant.</returns>
+        [Obsolete("Use PayMerchant client instead")]
         Task<MerchantModel> CreateMerchantAsync(CreateMerchantRequest request);
 
         /// <summary>
         /// Updates a merchant.
         /// </summary>
         /// <param name="request">The merchant update request.</param>
+        [Obsolete("Use PayMerchant client instead")]
         Task UpdateMerchantAsync(UpdateMerchantRequest request);
 
         /// <summary>
@@ -75,12 +79,14 @@ namespace Lykke.Service.PayInternal.Client
         /// </summary>
         /// <param name="merchantId">The merchant id.</param>
         /// <param name="content">The content of public key file.</param>
+        [Obsolete("Use PayMerchant client instead")]
         Task SetMerchantPublicKeyAsync(string merchantId, byte[] content);
 
         /// <summary>
         /// Deletes a merchant.
         /// </summary>
         /// <param name="merchantId">The merchan id.</param>
+        [Obsolete("Use PayMerchant client instead")]
         Task DeleteMerchantAsync(string merchantId);
 
         /// <summary>

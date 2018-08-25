@@ -3,11 +3,9 @@ using AutoMapper;
 using Lykke.Service.PayInternal.AzureRepositories.Asset;
 using Lykke.Service.PayInternal.AzureRepositories.AssetPair;
 using Lykke.Service.PayInternal.AzureRepositories.Markup;
-using Lykke.Service.PayInternal.AzureRepositories.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.PaymentRequest;
 using Lykke.Service.PayInternal.AzureRepositories.Transaction;
 using Lykke.Service.PayInternal.AzureRepositories.Transfer;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.AzureRepositories.Wallet;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
@@ -47,9 +45,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories
 
             CreateMap<TransferEntity, Core.Domain.Transfer.Transfer>(MemberList.Destination);
 
-            CreateMap<IMerchant, MerchantEntity>(MemberList.Source)
-                .ForSourceMember(src => src.Id, opt => opt.Ignore());
-
             CreateMap<VirtualWalletEntity, VirtualWallet>(MemberList.Destination);
 
             CreateMap<BcnWalletUsageEntity, BcnWalletUsage>(MemberList.Destination);
@@ -85,7 +80,7 @@ namespace Lykke.Service.PayInternal.AzureRepositories
 
             CreateMap<IMerchantWallet, MerchantWalletEntity>(MemberList.Source)
                 .ForMember(dest => dest.Id, opt => opt.Ignore());
-;
+
             CreateMap<MerchantWalletEntity, Core.Domain.MerchantWallet.MerchantWallet>(MemberList.Destination);
 
             CreateMap<IAssetPairRate, AssetPairRateEntity>(MemberList.Source);

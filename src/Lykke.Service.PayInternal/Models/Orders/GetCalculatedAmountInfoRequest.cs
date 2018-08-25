@@ -17,7 +17,6 @@ namespace Lykke.Service.PayInternal.Models.Orders
         public decimal Amount { get; set; }
 
         [Required]
-        [MerchantExists]
         public string MerchantId { get; set; }
     }
 }

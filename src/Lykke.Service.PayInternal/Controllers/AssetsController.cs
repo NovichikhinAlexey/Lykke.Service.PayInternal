@@ -9,7 +9,6 @@ using Lykke.Common.Log;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Asset;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Models.Assets;
@@ -25,21 +24,18 @@ namespace Lykke.Service.PayInternal.Controllers
     {
         private readonly IAssetSettingsService _assetSettingsService;
         private readonly IAssetsLocalCache _assetsLocalCache;
-        private readonly IMerchantService _merchantService;
         private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
 
         public AssetsController(
             [NotNull] IAssetSettingsService assetSettingsService,
             [NotNull] IAssetsLocalCache assetsLocalCache,
-            [NotNull] IMerchantService merchantService,
             [NotNull] ILogFactory logFactory,
             [NotNull] ILykkeAssetsResolver lykkeAssetsResolver)
         {
             _assetSettingsService =
                 assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
-            _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
             _log = logFactory.CreateLog(this);
             _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
         }
@@ -120,11 +116,6 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-                if (merchant == null)
-                    return NotFound(ErrorResponse.Create("Merchant not found"));
-
                 IAssetMerchantSettings personal = await _assetSettingsService.GetByMerchantAsync(merchantId);
 
                 return Ok(Mapper.Map<AssetMerchantSettingsResponse>(personal));

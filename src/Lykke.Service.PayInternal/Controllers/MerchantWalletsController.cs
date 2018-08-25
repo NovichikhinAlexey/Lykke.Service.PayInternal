@@ -9,7 +9,6 @@ using Lykke.Common.Api.Contract.Responses;
 using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Domain.MerchantWallet;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -24,21 +23,18 @@ namespace Lykke.Service.PayInternal.Controllers
     public class MerchantWalletsController : Controller
     {
         private readonly IMerchantWalletService _merchantWalletService;
-        private readonly IMerchantService _merchantService;
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly ILykkeAssetsResolver _lykkeAssetsResolver;
         private readonly ILog _log;
 
         public MerchantWalletsController(
             [NotNull] IMerchantWalletService merchantWalletService,
-            [NotNull] IMerchantService merchantService,
             [NotNull] IAssetsLocalCache assetsLocalCache,
             [NotNull] ILykkeAssetsResolver lykkeAssetsResolver,
             [NotNull] ILogFactory logFactory)
         {
             _merchantWalletService =
                 merchantWalletService ?? throw new ArgumentNullException(nameof(merchantWalletService));
-            _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
             _lykkeAssetsResolver = lykkeAssetsResolver ?? throw new ArgumentNullException(nameof(lykkeAssetsResolver));
             _log = logFactory.CreateLog(this);
@@ -213,11 +209,6 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-                if (merchant == null)
-                    return NotFound(ErrorResponse.Create("Merchant not found"));
-
                 IReadOnlyList<IMerchantWallet> wallets = await _merchantWalletService.GetByMerchantAsync(merchantId);
 
                 return Ok(Mapper.Map<IEnumerable<MerchantWalletResponse>>(wallets));
@@ -262,11 +253,6 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-                if (merchant == null)
-                    return NotFound(ErrorResponse.Create("Merchant not found"));
-
                 string lykkeAssetId = await _lykkeAssetsResolver.GetLykkeId(assetId);
 
                 if (await _assetsLocalCache.GetAssetByIdAsync(lykkeAssetId) == null)
@@ -344,11 +330,6 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-                if (merchant == null)
-                    return NotFound(ErrorResponse.Create("Merchant not found"));
-
                 IReadOnlyList<MerchantWalletBalanceLine> balances =
                     await _merchantWalletService.GetBalancesAsync(merchantId);
 
