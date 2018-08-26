@@ -16,9 +16,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.SettingsReader;
-using Lykke.Service.PayInternal.AzureRepositories.MerchantGroup;
 using Lykke.Service.PayInternal.AzureRepositories.SupervisorMembership;
-using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 using Lykke.Service.PayInternal.Core.Domain.File;
 using Lykke.Service.PayInternal.AzureRepositories.File;
@@ -52,7 +50,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories
         
         protected override void Load(ContainerBuilder builder)
         {
-            const string merchantGroupsTableName = "MerchantGroups";
             const string supervisorTableName = "Supervisors";
             const string paymentRequestsTableName = "PaymentRequests";
             const string ordersTableName = "Orders";
@@ -66,15 +63,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             const string merchantFilesTableName = "MerchantFiles";
             const string merchantWalletsTableName = "MerchantWallets";
             const string assetPairRatesTableName = "AssetPairRates";
-
-            builder.Register(c =>
-                    new MerchantGroupRepository(
-                        AzureTableStorage<MerchantGroupEntity>.Create(_merchantsConnectionString,
-                            merchantGroupsTableName, c.Resolve<ILogFactory>()),
-                        AzureTableStorage<AzureIndex>.Create(_merchantsConnectionString, merchantGroupsTableName,
-                            c.Resolve<ILogFactory>())))
-                .As<IMerchantGroupRepository>()
-                .SingleInstance();
 
             builder.Register(c => new SupervisorMembershipRepository(
                     AzureTableStorage<SupervisorMembershipEntity>.Create(_merchantsConnectionString,

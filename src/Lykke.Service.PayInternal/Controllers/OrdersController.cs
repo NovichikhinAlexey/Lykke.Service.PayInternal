@@ -145,12 +145,6 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 return Ok(calculatedAmountInfo);
             }
-            catch (MerchantNotFoundException e)
-            {
-                _log.Error(e, new {e.MerchantId});
-
-                return BadRequest(ErrorResponse.Create(e.Message));
-            }
             catch (AssetUnknownException e)
             {
                 _log.Error(e, new {e.Asset});

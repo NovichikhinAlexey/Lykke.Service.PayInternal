@@ -13,9 +13,7 @@ using Lykke.Service.PayInternal.Core.Domain.Orders;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
-using Lykke.Service.PayInternal.AzureRepositories.MerchantGroup;
 using Lykke.Service.PayInternal.AzureRepositories.SupervisorMembership;
-using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 using Lykke.Service.PayInternal.AzureRepositories.File;
 using Lykke.Service.PayInternal.AzureRepositories.MerchantWallet;
@@ -67,10 +65,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories
             >(MemberList.Destination).ForMember(dest => dest.MerchantGroups,
                 opt => opt.MapFrom(src => src.MerchantGroups.Split(Constants.Separator, StringSplitOptions.None)));
 
-            CreateMap<IMerchantGroup, MerchantGroupEntity>(MemberList.Source)
-                .ForMember(dest => dest.Id, opt => opt.Ignore());
-
-            CreateMap<MerchantGroupEntity, Core.Domain.Groups.MerchantGroup>(MemberList.Destination);
                 
             CreateMap<IOrder, OrderEntity>(MemberList.Source)
                 .ForMember(dest => dest.Id, opt => opt.Ignore());

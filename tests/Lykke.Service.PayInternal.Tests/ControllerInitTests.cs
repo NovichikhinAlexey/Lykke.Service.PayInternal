@@ -18,8 +18,6 @@ namespace Lykke.Service.PayInternal.Tests
     [TestClass]
     public class ControllerInitTests
     {
-        public const string DefaultConfigurationKey = "SettingsUrl";
-
         [TestInitialize]
         public void Initialize()
         {
@@ -58,11 +56,11 @@ namespace Lykke.Service.PayInternal.Tests
 
             var configuration = configBuilder.Build();
 
-            configuration[DefaultConfigurationKey] = configuration["SettingsUrlForApiTests"];
+            configuration["SettingsUrl"] = configuration["SettingsUrlForApiTests"];
 
             var builder = new ContainerBuilder();
 
-            var appSettings = configuration.LoadSettings<AppSettings>(DefaultConfigurationKey, true);
+            var appSettings = configuration.LoadSettings<AppSettings>(options => {});
 
             builder.RegisterInstance(Logs.EmptyLogFactory.Instance)
                 .As<ILogFactory>()

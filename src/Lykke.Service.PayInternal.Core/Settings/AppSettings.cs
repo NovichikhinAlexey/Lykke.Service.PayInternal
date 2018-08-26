@@ -2,6 +2,7 @@
 using Lykke.Service.PayHistory.Client;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Core.Settings.SlackNotifications;
+using Lykke.Service.PayMerchant.Client;
 using Lykke.Service.PayVolatility.Client;
 using Lykke.SettingsReader.Attributes;
 using HistoryRabbitMqPublisherSettings = Lykke.Service.PayHistory.Client.Publisher.RabbitMqPublisherSettings;
@@ -23,8 +24,8 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public CallBackRabbitMqPublisherSettings PayInvoiceConfirmationPublisher { get; set; }
         public PayHistoryServiceClientSettings PayHistoryServiceClient { get; set; }
         public PayVolatilityServiceClientSettings PayVolatilityServiceClient { get; set; }
-
 		public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
+        public PayMerchantServiceClientSettings PayMerchantServiceClient { get; set; }
     }
 
     public class BitcoinCoreSettings
@@ -53,7 +54,7 @@ namespace Lykke.Service.PayInternal.Core.Settings
 
     public class MonitoringServiceClientSettings
     {
-        [HttpCheck("api/isalive", false)]
+        [HttpCheck("api/isalive")]
         public string MonitoringServiceUrl { get; set; }
     }
 

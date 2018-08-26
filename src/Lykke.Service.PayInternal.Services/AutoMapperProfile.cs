@@ -8,7 +8,6 @@ using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.AssetPair;
 using Lykke.Service.PayInternal.Core.Domain.Confirmations;
-using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.History;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
@@ -19,6 +18,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Context;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Services.Domain;
 using Lykke.Service.PayInternal.Services.Mapping;
+using Lykke.Service.PayMerchant.Client.Models;
 using DateTimeUtils = Lykke.Service.PayInternal.Core.DateTimeUtils;
 
 namespace Lykke.Service.PayInternal.Services
@@ -86,13 +86,6 @@ namespace Lykke.Service.PayInternal.Services
                 .ForMember(dest => dest.Percent, opt => opt.MapFrom(src => src.MarkupPercent))
                 .ForMember(dest => dest.Pips, opt => opt.MapFrom(src => src.MarkupPips))
                 .ForMember(dest => dest.FixedFee, opt => opt.MapFrom(src => src.MarkupFixedFee));
-
-            CreateMap<IMerchantsSupervisorMembership, MerchantGroup>(MemberList.Destination)
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.DisplayName, opt => opt.Ignore())
-                .ForMember(dest => dest.MerchantGroupUse, opt => opt.UseValue(MerchantGroupUse.Supervising))
-                .ForMember(dest => dest.Merchants, opt => opt.MapFrom(src => string.Join(Constants.Separator, src.Merchants)))
-                .ForMember(dest => dest.OwnerId, opt => opt.MapFrom(src => src.MerchantId));
 
             CreateMap<AddAssetPairRateCommand, AssetPairRate>(MemberList.Destination)
                 .ForMember(dest => dest.CreatedOn, opt => opt.MapFrom(src => DateTime.UtcNow));

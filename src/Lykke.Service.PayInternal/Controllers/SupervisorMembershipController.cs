@@ -21,17 +21,13 @@ namespace Lykke.Service.PayInternal.Controllers
     public class SupervisorMembershipController : Controller
     {
         private readonly ISupervisorMembershipService _supervisorMembershipService;
-        private readonly IMerchantGroupService _merchantGroupService;
         private readonly ILog _log;
 
         public SupervisorMembershipController(
             [NotNull] ISupervisorMembershipService supervisorMembershipService,
-            [NotNull] ILogFactory logFactory,
-            [NotNull] IMerchantGroupService merchantGroupService)
+            [NotNull] ILogFactory logFactory)
         {
-            _supervisorMembershipService = supervisorMembershipService ??
-                                           throw new ArgumentNullException(nameof(supervisorMembershipService));
-            _merchantGroupService = merchantGroupService ?? throw new ArgumentNullException(nameof(merchantGroupService));
+            _supervisorMembershipService = supervisorMembershipService ?? throw new ArgumentNullException(nameof(supervisorMembershipService));
             _log = logFactory.CreateLog(this);
         }
         
@@ -48,16 +44,9 @@ namespace Lykke.Service.PayInternal.Controllers
         [SwaggerOperation("AddMembership")]
         [ProducesResponseType(typeof(SupervisorMembershipResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
         [ValidateModel]
         public async Task<IActionResult> Add([FromBody] AddSupervisorMembershipModel request)
         {
-            foreach (string groupId in request.MerchantGroups)
-            {
-                if (await _merchantGroupService.GetAsync(groupId) == null)
-                    return NotFound(ErrorResponse.Create($"Merchant group [{groupId}] not found"));
-            }
-
             try
             {
                 ISupervisorMembership membership =
@@ -119,12 +108,6 @@ namespace Lykke.Service.PayInternal.Controllers
         [ValidateModel]
         public async Task<IActionResult> Update([FromBody] UpdateSupervisorMembershipModel request)
         {
-            foreach (string groupId in request.MerchantGroups)
-            {
-                if (await _merchantGroupService.GetAsync(groupId) == null)
-                    return NotFound(ErrorResponse.Create($"Merchant group [{groupId}] not found"));
-            }
-
             try
             {
                 await _supervisorMembershipService.UpdateAsync(Mapper.Map<SupervisorMembership>(request));
