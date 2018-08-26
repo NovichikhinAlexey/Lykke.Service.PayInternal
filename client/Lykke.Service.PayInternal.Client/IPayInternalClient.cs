@@ -6,14 +6,12 @@ using Lykke.Service.PayInternal.Client.Models.AssetRates;
 using Lykke.Service.PayInternal.Client.Models.Cashout;
 using Lykke.Service.PayInternal.Client.Models.Exchange;
 using Lykke.Service.PayInternal.Client.Models.Markup;
-using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
 using Lykke.Service.PayInternal.Client.Models.SupervisorMembership;
 using Lykke.Service.PayInternal.Client.Models.Transactions;
 using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Lykke.Service.PayInternal.Client.Models.File;
-using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
 using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
 using Lykke.Service.PayInternal.Client.Models.Transactions.Ethereum;
 
@@ -43,51 +41,6 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request"></param>
         /// <returns></returns>
         Task UpdateTransactionAsync(UpdateTransactionRequest request);
-
-        /// <summary>
-        /// Returns all merchants.
-        /// </summary>
-        /// <returns>The collection of merchants.</returns>
-        [Obsolete("Use PayMerchant client instead")]
-        Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync();
-
-        /// <summary>
-        /// Returns merchant.
-        /// </summary>
-        /// <param name="merchantId">The merchant id.</param>
-        /// <returns>The merchant.</returns>
-        [Obsolete("Use PayMerchant client instead")]
-        Task<MerchantModel> GetMerchantByIdAsync(string merchantId);
-
-        /// <summary>
-        /// Creates merchant.
-        /// </summary>
-        /// <param name="request">The merchant create request.</param>
-        /// <returns>The created merchant.</returns>
-        [Obsolete("Use PayMerchant client instead")]
-        Task<MerchantModel> CreateMerchantAsync(CreateMerchantRequest request);
-
-        /// <summary>
-        /// Updates a merchant.
-        /// </summary>
-        /// <param name="request">The merchant update request.</param>
-        [Obsolete("Use PayMerchant client instead")]
-        Task UpdateMerchantAsync(UpdateMerchantRequest request);
-
-        /// <summary>
-        /// Sets merchant public key.
-        /// </summary>
-        /// <param name="merchantId">The merchant id.</param>
-        /// <param name="content">The content of public key file.</param>
-        [Obsolete("Use PayMerchant client instead")]
-        Task SetMerchantPublicKeyAsync(string merchantId, byte[] content);
-
-        /// <summary>
-        /// Deletes a merchant.
-        /// </summary>
-        /// <param name="merchantId">The merchan id.</param>
-        [Obsolete("Use PayMerchant client instead")]
-        Task DeleteMerchantAsync(string merchantId);
 
         /// <summary>
         /// Returns an order by id.
@@ -369,48 +322,6 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="merchantId">The merchant id.</param>
         /// <param name="fileId">The file id.</param>
         Task DeleteFileAsync(string merchantId, string fileId);
-
-        /// <summary>
-        /// Creates merchant group
-        /// </summary>
-        /// <param name="request">Merchant group creation details></param>
-        /// <returns>Merchant group details</returns>
-        Task<MerchantGroupResponse> AddMerchantGroupAsync(AddMerchantGroupRequest request);
-
-        /// <summary>
-        /// Returns merchant group details
-        /// </summary>
-        /// <param name="id">Merchant group id</param>
-        /// <returns>Merchant group details</returns>
-        Task<MerchantGroupResponse> GetMerchantGroupAsync(string id);
-
-        /// <summary>
-        /// Updates merchant group
-        /// </summary>
-        /// <param name="request">Merchant group update details</param>
-        /// <returns></returns>
-        Task UpdateMerchantGroupAsync(UpdateMerchantGroupRequest request);
-
-        /// <summary>
-        /// Deletes merchant group
-        /// </summary>
-        /// <param name="id">Merchant group id</param>
-        /// <returns></returns>
-        Task DeleteMerchantGroupAsync(string id);
-
-        /// <summary>
-        /// Returns list of merchants participating in groups by usage for particular owner (merchant provided)
-        /// </summary>
-        /// <param name="request">Get Merchants by usage request details</param>
-        /// <returns>List of merchants</returns>
-        Task<MerchantsByUsageResponse> GetMerchantsByUsageAsync(GetMerchantsByUsageRequest request);
-
-        /// <summary>
-        /// Returns list of groups where given id is an owner
-        /// </summary>
-        /// <param name="ownerId">Owner id</param>
-        /// <returns></returns>
-        Task<IEnumerable<MerchantGroupResponse>> GetMerchantGroupsByOwnerAsync(string ownerId);
 
         /// <summary>
         /// Creates new merchant wallet

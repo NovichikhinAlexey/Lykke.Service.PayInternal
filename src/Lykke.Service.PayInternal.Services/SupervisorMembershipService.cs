@@ -7,34 +7,35 @@ using AutoMapper;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
-using Lykke.Service.PayInternal.AzureRepositories;
-using Lykke.Service.PayInternal.Core.Domain.Groups;
 using Lykke.Service.PayInternal.Core.Domain.SupervisorMembership;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using KeyNotFoundException = Lykke.Service.PayInternal.Core.Exceptions.KeyNotFoundException;
 using Lykke.Service.PayInternal.Core;
+using Lykke.Service.PayMerchant.Client;
+using Lykke.Service.PayMerchant.Client.Models;
 
 namespace Lykke.Service.PayInternal.Services
 {
     public class SupervisorMembershipService : ISupervisorMembershipService
     {
         private readonly ISupervisorMembershipRepository _supervisorMembershipRepository;
-        private readonly IMerchantGroupService _merchantGroupService;
+        private readonly IPayMerchantClient _payMerchantClient;
         private readonly ILog _log;
         
         public SupervisorMembershipService(
             [NotNull] ISupervisorMembershipRepository supervisorMembershipRepository,
             [NotNull] ILogFactory logFactory, 
-            [NotNull] IMerchantGroupService merchantGroupService)
+            [NotNull] IPayMerchantClient payMerchantClient)
         {
             _supervisorMembershipRepository = supervisorMembershipRepository ?? throw new ArgumentNullException(nameof(supervisorMembershipRepository));
-            _merchantGroupService = merchantGroupService ?? throw new ArgumentNullException(nameof(merchantGroupService));
+            _payMerchantClient = payMerchantClient ?? throw new ArgumentNullException(nameof(payMerchantClient));
             _log = logFactory.CreateLog(this);
         }
 
         public async Task<IMerchantsSupervisorMembership> AddAsync(IMerchantsSupervisorMembership src)
         {
-            IMerchantGroup merchantGroup = await _merchantGroupService.CreateAsync(Mapper.Map<MerchantGroup>(src));
+            MerchantGroupResponse merchantGroup =
+                await _payMerchantClient.GroupsApi.AddGroupAsync(Mapper.Map<AddMerchantGroupRequest>(src));
 
             try
             {
@@ -50,7 +51,7 @@ namespace Lykke.Service.PayInternal.Services
                 {
                     MerchantId = membership.MerchantId,
                     EmployeeId = membership.EmployeeId,
-                    Merchants = merchantGroup.Merchants.Split(Constants.Separator)
+                    Merchants = merchantGroup.Merchants
                 };
             }
             catch (DuplicateKeyException ex)
@@ -58,7 +59,7 @@ namespace Lykke.Service.PayInternal.Services
                 _log.Error(ex, src);
 
                 if (merchantGroup != null)
-                    await _merchantGroupService.DeleteAsync(merchantGroup.Id);
+                    await _payMerchantClient.GroupsApi.DeleteGroupAsync(merchantGroup.Id);
 
                 throw new SupervisorMembershipAlreadyExistsException(src.EmployeeId);
             }
@@ -79,10 +80,10 @@ namespace Lykke.Service.PayInternal.Services
 
                 foreach (string merchantGroupId in membership.MerchantGroups)
                 {
-                    IMerchantGroup merchantGroup = await _merchantGroupService.GetAsync(merchantGroupId);
+                    MerchantGroupResponse merchantGroup = await _payMerchantClient.GroupsApi.GetGroupAsync(merchantGroupId);
 
                     if (merchantGroup != null)
-                        merchants.AddRange(merchantGroup.Merchants.Split(Constants.Separator));
+                        merchants.AddRange(merchantGroup.Merchants);
                 }
 
                 return new MerchantsSupervisorMembership

@@ -16,6 +16,7 @@ using Lykke.Service.PayInternal.PeriodicalHandlers;
 using Lykke.Service.PayInternal.Rabbit.Publishers;
 using Lykke.Service.PayInternal.Services;
 using Lykke.Service.PayInternal.Services.Mapping;
+using Lykke.Service.PayMerchant.Client;
 using Lykke.Service.PayVolatility.Client;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
@@ -77,9 +78,6 @@ namespace Lykke.Service.PayInternal.Modules
 
             builder.RegisterType<SupervisorMembershipService>()
                 .As<ISupervisorMembershipService>();
-
-            builder.RegisterType<MerchantGroupService>()
-                .As<IMerchantGroupService>();
 
             builder.RegisterType<CalculationService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.LpMarkup))
@@ -178,6 +176,8 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterInvoiceConfirmationPublisher(_settings.CurrentValue.PayInvoiceConfirmationPublisher);
 
             builder.RegisterCachedPayVolatilityClient(_settings.CurrentValue.PayVolatilityServiceClient, null);
+
+            builder.RegisterPayMerchantClient(_settings.CurrentValue.PayMerchantServiceClient, null);
         }
 
         private void RegisterCaches(ContainerBuilder builder)
