@@ -9,7 +9,6 @@ using Lykke.Common.Log;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
-using Lykke.Service.PayInternal.Core.Domain.Merchant;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayInternal.Models.Markups;
@@ -24,19 +23,16 @@ namespace Lykke.Service.PayInternal.Controllers
     public class MarkupsController : Controller
     {
         private readonly IMarkupService _markupService;
-        private readonly IMerchantService _merchantService;
         private readonly IAssetsLocalCache _assetsLocalCache;
         private readonly ILog _log;
 
         public MarkupsController(
             [NotNull] IMarkupService markupService,
             [NotNull] ILogFactory logFactory,
-            [NotNull] IMerchantService merchantService,
             [NotNull] IAssetsLocalCache assetsLocalCache)
         {
             _markupService = markupService ?? throw new ArgumentNullException(nameof(markupService));
             _log = logFactory.CreateLog(this);
-            _merchantService = merchantService ?? throw new ArgumentNullException(nameof(merchantService));
             _assetsLocalCache = assetsLocalCache ?? throw new ArgumentNullException(nameof(assetsLocalCache));
         }
 
@@ -144,11 +140,6 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-                if (merchant == null)
-                    return NotFound(ErrorResponse.Create("Merchant not found"));
-
                 IReadOnlyList<IMarkup> markups = await _markupService.GetForMerchantAsync(merchantId);
 
                 return Ok(Mapper.Map<IEnumerable<MarkupResponse>>(markups));
@@ -183,11 +174,6 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-                if (merchant == null)
-                    return NotFound(ErrorResponse.Create("Merchant not found"));
-
                 IMarkup markup = await _markupService.GetForMerchantAsync(merchantId, assetPairId);
 
                 if (markup == null) return NotFound(ErrorResponse.Create("Markup has not been set"));
@@ -227,11 +213,6 @@ namespace Lykke.Service.PayInternal.Controllers
 
             try
             {
-                IMerchant merchant = await _merchantService.GetAsync(merchantId);
-
-                if (merchant == null)
-                    return NotFound(ErrorResponse.Create("Merchant not found"));
-
                 if (!string.IsNullOrEmpty(request.PriceAssetPairId))
                 {
                     AssetPair priceAssetPair = await _assetsLocalCache.GetAssetPairByIdAsync(request.PriceAssetPairId);

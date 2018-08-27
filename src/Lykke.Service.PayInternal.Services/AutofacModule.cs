@@ -37,9 +37,6 @@ namespace Lykke.Service.PayInternal.Services
         
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<MerchantService>()
-                .As<IMerchantService>();
-
             builder.RegisterType<RefundService>()
                 .As<IRefundService>()
                 .WithParameter(TypedParameter.From(_expirationPeriods.Refund));

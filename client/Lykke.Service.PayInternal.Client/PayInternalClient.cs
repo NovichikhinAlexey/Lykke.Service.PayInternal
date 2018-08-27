@@ -10,7 +10,6 @@ using Lykke.Service.PayInternal.Client.Models.AssetRates;
 using Lykke.Service.PayInternal.Client.Models.Cashout;
 using Lykke.Service.PayInternal.Client.Models.Exchange;
 using Lykke.Service.PayInternal.Client.Models.Markup;
-using Lykke.Service.PayInternal.Client.Models.Merchant;
 using Lykke.Service.PayInternal.Client.Models.Order;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
 using Lykke.Service.PayInternal.Client.Models.SupervisorMembership;
@@ -19,7 +18,6 @@ using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Microsoft.Extensions.PlatformAbstractions;
 using Refit;
 using Lykke.Service.PayInternal.Client.Models.File;
-using Lykke.Service.PayInternal.Client.Models.MerchantGroups;
 using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
 using Lykke.Service.PayInternal.Client.Models.Transactions.Ethereum;
 
@@ -90,38 +88,6 @@ namespace Lykke.Service.PayInternal.Client
             return _runner.RunWithDefaultErrorHandlingAsync(() => _payInternalApi.UpdateTransactionAsync(request));
         }
 
-        public Task<IReadOnlyList<MerchantModel>> GetMerchantsAsync()
-        {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetAllAsync());
-        }
-        
-        public Task<MerchantModel> GetMerchantByIdAsync(string merchantId)
-        {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetByIdAsync(merchantId));
-        }
-
-        public Task<MerchantModel> CreateMerchantAsync(CreateMerchantRequest request)
-        {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.CreateAsync(request));
-        }
-
-        public Task UpdateMerchantAsync(UpdateMerchantRequest request)
-        {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.UpdateAsync(request));
-        }
-
-        public Task SetMerchantPublicKeyAsync(string merchantId, byte[] content)
-        {
-            var streamPart = new StreamPart(new MemoryStream(content), "public.key");
-
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.SetPublicKeyAsync(merchantId, streamPart));
-        }
-
-        public Task DeleteMerchantAsync(string merchantId)
-        {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.DeleteAsync(merchantId));
-        }
-        
         public Task<OrderModel> GetOrderAsync(string merchantId, string paymentRequestId)
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.GetByIdAsync(merchantId, paymentRequestId));
@@ -323,36 +289,6 @@ namespace Lykke.Service.PayInternal.Client
         public async Task DeleteFileAsync(string merchantId, string fileId)
         {
             await _runner.RunWithDefaultErrorHandlingAsync(() => _filesApi.DeleteAsync(merchantId, fileId));
-        }
-
-        public Task<MerchantGroupResponse> AddMerchantGroupAsync(AddMerchantGroupRequest request)
-        {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.AddGroupAsync(request));
-        }
-
-        public Task<MerchantGroupResponse> GetMerchantGroupAsync(string id)
-        {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetGroupAsync(id));
-        }
-
-        public Task UpdateMerchantGroupAsync(UpdateMerchantGroupRequest request)
-        {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.UpdateGroupAsync(request));
-        }
-
-        public Task DeleteMerchantGroupAsync(string id)
-        {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.DeleteGroupAsync(id));
-        }
-
-        public Task<MerchantsByUsageResponse> GetMerchantsByUsageAsync(GetMerchantsByUsageRequest request)
-        {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetMerchantsByUsageAsync(request));
-        }
-
-        public Task<IEnumerable<MerchantGroupResponse>> GetMerchantGroupsByOwnerAsync(string ownerId)
-        {
-            return _runner.RunWithDefaultErrorHandlingAsync(() => _merchantsApi.GetGroupsByOwnerAsync(ownerId));
         }
 
         public Task<MerchantWalletResponse> CreateMerchantWalletAsync(CreateMerchantWalletRequest request)
