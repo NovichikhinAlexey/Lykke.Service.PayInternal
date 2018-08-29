@@ -32,10 +32,10 @@ namespace Lykke.Service.PayInternal.Services.Tests
         {
             var mock = new Mock<IPayVolatilityClient>();
 
-            mock.Setup(o => o.GetDailyVolatilityAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            mock.Setup(o => o.Volatility.GetDailyVolatilityAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(() => null);
 
-            mock.Setup(o => o.GetDailyVolatilitiesAsync(It.IsAny<CancellationToken>()))
+            mock.Setup(o => o.Volatility.GetDailyVolatilitiesAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(() => new List<VolatilityModel>());
 
             return mock;
