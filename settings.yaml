@@ -161,7 +161,7 @@ PayInvoiceConfirmationPublisher:
         settings-key: GeneralRabbitMqConnectionString
         types: [ RabbitMq, Tag ]
     ExchangeName: 
-        types: PayInvoiceConfirmationExchangeName
+        settings-key: PayInvoiceConfirmationExchangeName
         types: [ Tag ]
             
 PayVolatilityServiceClient:
