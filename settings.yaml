@@ -168,7 +168,12 @@ PayVolatilityServiceClient:
     ServiceUrl:
         settings-key: PayVolatilityServiceUrl
         types: [Tag]
-            
+
+PayMerchantServiceClient:
+    ServiceUrl:
+        settings-key: PayMerchantServiceUrl
+        types: [Tag]
+        
 MonitoringServiceClient:
   MonitoringServiceUrl:
     settings-key: MonitoringServiceUrl
