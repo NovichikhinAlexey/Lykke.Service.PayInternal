@@ -100,7 +100,7 @@ namespace Lykke.Service.PayInternal.Services
                 return;
             }
 
-            VolatilityModel volatilityModel = await _payVolatilityClient.GetDailyVolatilityAsync(assetPairId);
+            VolatilityModel volatilityModel = await _payVolatilityClient.Volatility.GetDailyVolatilityAsync(assetPairId);
             if (volatilityModel != null)
             {
                 SetDeltaSpread(markup, volatilityModel);
@@ -109,7 +109,7 @@ namespace Lykke.Service.PayInternal.Services
 
         private async Task SetDeltaSpread(IEnumerable<IMarkup> markups)
         {
-            var volatilityModels = (await _payVolatilityClient.GetDailyVolatilitiesAsync()).ToDictionary(v=>v.AssetPairId,StringComparer.OrdinalIgnoreCase);
+            var volatilityModels = (await _payVolatilityClient.Volatility.GetDailyVolatilitiesAsync()).ToDictionary(v=>v.AssetPairId,StringComparer.OrdinalIgnoreCase);
             foreach (var markup in markups)
             {
                 string assetPairId = GetVolatilityAssetPairId(markup);
