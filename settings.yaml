@@ -168,6 +168,9 @@ PayVolatilityServiceClient:
     ServiceUrl:
         settings-key: PayVolatilityServiceUrl
         types: [Tag]
+    CachePeriod:
+        settings-key: PayVolatilityCachePeriod
+        types: [Tag]
 
 PayMerchantServiceClient:
     ServiceUrl:
