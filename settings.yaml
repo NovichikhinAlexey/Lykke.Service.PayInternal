@@ -1,163 +1,191 @@
-  PayInternalService:
-    AutoSettle:
-      AssetsToMakePartialAutoSettle:
-        settings-key: PayInternalService-AutoSettle-AssetsToMakePartialAutoSettle
-        types: [JsonArray,Tag]
-      AssetsToSettleToMerchantWallet:
-        settings-key: PayInternalService-AutoSettle-AssetsToSettleToMerchantWallet
-        types: [JsonArray,Tag]
-      BitcoinAutoSettleWalletAddress:
-        settings-key: PayInternalService-AutoSettle-BitcoinAutoSettleWalletAddress
-        types: [Tag]
-      EthereumAutoSettleWalletAddress:
-        settings-key: PayInternalService-AutoSettle-EthereumAutoSettleWalletAddress
-        types: [Tag]
+PayInternalService: 
     Db:
-      LogsConnString:
-        settings-key: LogsConnString
-        types: [AzureTableStorage,Tag]
-      MerchantWalletConnString:
-        settings-key: MerchantConnString
-        types: [AzureTableStorage,Tag]
-      MerchantOrderConnString:
-        settings-key: MerchantConnString
-        types: [AzureTableStorage,Tag]
-      MerchantConnString:
-        settings-key: MerchantConnString
-        types: [AzureTableStorage,Tag]
-      PaymentRequestConnString:
-        settings-key: MerchantConnString
-        types: [AzureTableStorage,Tag]
-      TransferConnString:
-        settings-key: MerchantConnString
-        types: [AzureTableStorage,Tag]
+        LogsConnString:
+            settings-key: LykkePayLogsConnString
+            types: [ AzureTableStorage, Tag ]
+        MerchantWalletConnString: 
+            settings-key: LykkePayMerchantDataConnString
+            types: [ AzureTableStorage, Tag ]
+        MerchantOrderConnString: 
+            settings-key: LykkePayMerchantDataConnString
+            types: [ AzureTableStorage, Tag ]
+        MerchantConnString: 
+            settings-key: LykkePayMerchantDataConnString
+            types: [ AzureTableStorage, Tag ]
+        PaymentRequestConnString: 
+            settings-key: LykkePayMerchantDataConnString
+            types: [ AzureTableStorage, Tag ]
+        TransferConnString: 
+            settings-key: LykkePayMerchantDataConnString
+            types: [ AzureTableStorage, Tag ]
+    AutoSettle:
+        AssetsToMakePartialAutoSettle: 
+            settings-key: PayInternalService-AutoSettle-AssetsToMakePartialAutoSettle
+            types: [ JsonArray, Tag ]
+        AssetsToSettleToMerchantWallet: 
+            settings-key: PayInternalService-AutoSettle-AssetsToSettleToMerchantWallet
+            types: [ JsonArray, Tag ]
+        BitcoinAutoSettleWalletAddress: 
+            settings-key: PayInternalService-AutoSettle-BitcoinAutoSettleWalletAddress
+            types: [ Tag ]
+        EthereumAutoSettleWalletAddress: 
+            settings-key: PayInternalService-AutoSettle-EthereumAutoSettleWalletAddress
+            types: [ Tag ]
     LpMarkup:
-      Percent:
-        settings-key: PayInternalService-LpMarkup-Percent
-      Pips:
-        settings-key: PayInternalService-LpMarkup-Pips
-    Rabbit:
-      ConnectionString:
-        settings-key: GeneralRabbitMqConnectionString
-        types: [RabbitMq,Tag]
-      WalletsExchangeName:
-        settings-key: LykkePay-WalletsExchangeName
-        types: [Tag]
-      PaymentRequestsExchangeName:
-        settings-key: LykkePay-PaymentRequestsExchangeName
-        types: [Tag]
-      TransactionUpdatesExchangeName:
-        settings-key: LykkePay-TransactionUpdatesExchangeName
-        types: [Tag]
-      TansferRequestsExchangeName:
-        settings-key: LykkePay-TansferRequestsExchangeName
-        types: [Tag]
-    ExpirationPeriods:
-      settings-key: PayInternalService-ExpirationPeriods
-      types: [Json]
-    JobPeriods:
-      PaymentRequestExpirationHandling:
-        settings-key: PayInternalService-PaymentRequestExpirationHandling
-    DataEncriptionPassword:
-      settings-key: PayInternalService-DataEncriptionPassword
-      types: [Tag]
-    TransactionConfirmationCount:
-      settings-key: PayInternalService-TransactionConfirmationCount
-    Blockchain:
-      WalletAllocationPolicy:
-        Policies:
-          settings-key: PayInternalService-Blockchain-WalletAllocationPolicy-Policies
-          types: [JsonArray,Tag]
-      Ethereum:
-        settings-key: PayInternalService-Blockchain-Ethereum
-        types: [Json,Tag]
-      Bitcoin:
-        settings-key: PayInternalService-Blockchain-Bitcoin
-        types: [Json,Tag]
-    AssetPairsLocalStorage:
-      AssetPairs:
-        settings-key: PayInternalService-AssetPairsLocalStorage-AssetPairs
-        types: [JsonArray]
-    CacheSettings:
-      RedisConfiguration:
-        settings-key: RedisConfiguration
-      PaymentLocksCacheKeyPattern:
-        settings-key: PayInternalService-PaymentLocksCacheKeyPattern
-        types: [Tag]
-      CheckoutLocksCacheKeyPattern:
-        settings-key: PayInternalService-CheckoutLocksCacheKeyPattern
-        types: [Tag]
-    Merchant:
-      LogoSize:
-        settings-key: PayInternalService-Merchant-LogoSize
-    RetryPolicy:
-      DefaultAttempts:
-        settings-key: PayInternalService-RetryPolicy-DefaultAttempts
-      SettlementAttempts:
-        settings-key: PayInternalService-RetryPolicy-SettlementAttempts
-  AssetsMap:
-    Values:
-      settings-key: LykkePay-AssetsMap-Values
-      types: [Json]
-    InvoiceCreationPairs:
-      settings-key: LykkePay-AssetsMap-InvoiceCreationPairs
-      types: [Json]
-  AssetsServiceClient:
+        Percent: 
+            settings-key: PayInternalService-LpMarkup-Percent
+            types: [ Tag ]
+        Pips: 
+            settings-key: PayInternalService-LpMarkup-Pips
+            types: [ Tag ]
+    Rabbit: 
+        ConnectionString: 
+            settings-key: RabbitPay
+            types: [ RabbitMq, Tag ]
+        WalletsExchangeName: 
+            settings-key: PayInternalService-WalletsExchangeName
+            types: [ Tag ]
+        PaymentRequestsExchangeName: 
+            settings-key: PayInternalService-PaymentRequestsExchangeName
+            types: [ Tag ]
+        TransactionUpdatesExchangeName: 
+            settings-key: PayInternalService-TransactionUpdatesExchangeName
+            types: [ Tag ]
+        TansferRequestsExchangeName: 
+            settings-key: PayInternalService-TansferRequestsExchangeName
+            types: [ Tag ]
+    ExpirationPeriods: 
+        settings-key: PayInternalService-ExpirationPeriods
+        types: [ Json, Tag ]
+    JobPeriods: 
+        PaymentRequestExpirationHandling: 
+            settings-key: PayInternalService-PaymentRequestExpirationHandling
+            types: [ Tag ]
+    DataEncriptionPassword: 
+        settings-key: PayInternalService-DataEncriptionPassword
+        types: [ Tag ]
+    TransactionConfirmationCount: 
+        settings-key: PayInternalService-TransactionConfirmationCount
+        types: [ Tag ]
+    Blockchain: 
+        WalletAllocationPolicy: 
+            Policies: 
+                settings-key: PayInternalService-Blockchain-WalletAllocationPolicy-Policies
+                types: [ JsonArray, Tag ]
+        Ethereum: 
+            settings-key: PayInternalService-Blockchain-Ethereum
+            types: [ Json, Tag ]
+        Bitcoin: 
+            settings-key: PayInternalService-Blockchain-Bitcoin
+            types: [ Json, Tag ]
+    AssetPairsLocalStorage: 
+        AssetPairs: 
+            settings-key: PayInternalService-AssetPairsLocalStorage-AssetPairs
+            types: [ JsonArray, Tag ]
+    CacheSettings: 
+        RedisConfiguration: 
+            settings-key: RedisConfiguration
+            types: [ Tag ]
+        PaymentLocksCacheKeyPattern: 
+            settings-key: PayInternalService-PaymentLocksCacheKeyPattern
+            types: [ Tag ]
+        CheckoutLocksCacheKeyPattern: 
+            settings-key: PayInternalService-CheckoutLocksCacheKeyPattern
+            types: [ Tag ]
+    Merchant: 
+        LogoSize: 
+            settings-key: PayInternalService-Merchant-LogoSize
+            types: [ Tag ]
+    RetryPolicy: 
+        DefaultAttempts: 
+            settings-key: PayInternalService-RetryPolicy-DefaultAttempts
+            types: [ Tag ]
+        SettlementAttempts: 
+            settings-key: PayInternalService-RetryPolicy-SettlementAttempts
+            types: [ Tag ]
+
+AssetsMap: 
+    Values: 
+        settings-key: LykkePay-AssetsMap-Values
+        types: [ Json, Tag ]
+    InvoiceCreationPairs: 
+        settings-key: LykkePay-AssetsMap-InvoiceCreationPairs
+        types: [ Json, Tag ]
+
+AssetsServiceClient: 
     ServiceUrl:
-      settings-key: AssetsServiceUrl
-    ExpirationPeriod:
-      settings-key: AssetsServiceExpirationPeriod
-  BitCoinCore:
+        settings-key: AssetsServiceUrl
+        types: [ Tag ]
+    ExpirationPeriod: 
+        settings-key: AssetsServiceExpirationPeriod
+        types: [ Tag ]
+
+BitCoinCore: 
     BitcoinCoreApiUrl:
-      settings-key: BitcoinApiServiceUrl
-      types: [Tag]
-  EthereumServiceClient:
+        settings-key: BitcoinApiServiceUrl
+        types: [ Tag ]
+
+EthereumServiceClient: 
+    ServiceUrl: 
+        settings-key: EthereumApiServiceUrl
+        types: [ Tag ]
+    HotwalletAddress: 
+        settings-key: EthereumApiHotwalletAddress
+        types: [ Tag ]
+    
+MarketProfileServiceClient: 
+    ServiceUrl: 
+        settings-key: MarketProfileServiceUrl
+        types: [ Tag ]
+
+NinjaServiceClient: 
+    ServiceUrl: 
+        settings-key: NinjaServiceUrl
+        types: [ Tag ]
+
+PayHistoryServiceClient: 
+    ServiceUrl: 
+        settings-key: PayHistoryServiceUrl
+        types: [ Tag ]
+
+PayHistoryServicePublisher: 
+    ConnectionString: 
+        settings-key: RabbitPay
+        types: [ RabbitMq, Tag ]
+    ExchangeName: 
+        settings-key: PayHistoryExchangeName
+        types: [Tag]
+
+PayInvoiceConfirmationPublisher: 
+    ConnectionString: 
+        settings-key: RabbitPay
+        types: [ RabbitMq, Tag ]
+    ExchangeName: 
+        settings-key: PayInvoiceConfirmationExchangeName
+        types: [ Tag ]
+            
+PayVolatilityServiceClient:
     ServiceUrl:
-      settings-key: EthereumApiServiceUrl
-    HotwalletAddress:
-      settings-key: EthereumApiHotwalletAddress
-  MarketProfileServiceClient:
-    ServiceUrl:
-      settings-key: MarketProfileServiceUrl
-  NinjaServiceClient:
-    ServiceUrl:
-      settings-key: NinjaServiceUrl
-      types: [Tag]
-  PayHistoryServiceClient:
-    ServiceUrl:
-      settings-key: PayHistoryServiceUrl
-      types: [Tag]
-  PayVolatilityServiceClient:
-    ServiceUrl:
-      settings-key: PayVolatilityServiceUrl
-      types: [Tag]
-  PayHistoryServicePublisher:
-    ConnectionString:
-      settings-key: GeneralRabbitMqConnectionString
-      types: [RabbitMq,Tag]
-    ExchangeName:
-      settings-key: PayInvoiceConfirmationExchangeName
-      types: [Tag]
-  PayInvoiceConfirmationPublisher:
-    ConnectionString:
-      settings-key: GeneralRabbitMqConnectionString
-      types: [RabbitMq,Tag]
-    ExchangeName:
-      settings-key: PayInvoiceConfirmationExchangeName
-      types: [Tag]
-  SlackNotifications:
-    AzureQueue:
-      ConnectionString:
-        settings-key: SlackNotificationsConnString
-        types: [AzureTableStorage]
-      QueueName: slack-notifications
-    ThrottlingLimitSeconds:
-      settings-key: SlackNotificationsThrottlingLimit
-  MonitoringServiceClient:
-    MonitoringServiceUrl:
-      settings-key: MonitoringServiceUrl
-  PayMerchantServiceClient:
+        settings-key: PayVolatilityServiceUrl
+        types: [Tag]
+    CachePeriod:
+        settings-key: PayVolatilityCachePeriod
+        types: [Tag]
+
+PayMerchantServiceClient:
     ServiceUrl:
         settings-key: PayMerchantServiceUrl
         types: [Tag]
-      
+        
+MonitoringServiceClient:
+  MonitoringServiceUrl:
+    settings-key: MonitoringServiceUrl
+
+SlackNotifications:
+  AzureQueue:
+    ConnectionString:
+      settings-key: SlackNotificationsConnString
+      types: [ AzureTableStorage ]
+    QueueName:
+      settings-key: SlackQueueName
+      types: [ AzureTableStorage ]
