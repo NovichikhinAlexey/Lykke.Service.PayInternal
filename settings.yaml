@@ -1,22 +1,22 @@
 PayInternalService: 
     Db:
         LogsConnString:
-            settings-key: PayInternalService-LogsConnString
+            settings-key: LykkePayLogsConnString
             types: [ AzureTableStorage, Tag ]
         MerchantWalletConnString: 
-            settings-key: PayInternalService-MerchantWalletConnString
+            settings-key: LykkePayMerchantDataConnString
             types: [ AzureTableStorage, Tag ]
         MerchantOrderConnString: 
-            settings-key: PayInternalService-MerchantOrderConnString
+            settings-key: LykkePayMerchantDataConnString
             types: [ AzureTableStorage, Tag ]
         MerchantConnString: 
-            settings-key: PayInternalService-MerchantConnString
+            settings-key: LykkePayMerchantDataConnString
             types: [ AzureTableStorage, Tag ]
         PaymentRequestConnString: 
-            settings-key: PayInternalService-PaymentRequestConnString
+            settings-key: LykkePayMerchantDataConnString
             types: [ AzureTableStorage, Tag ]
         TransferConnString: 
-            settings-key: PayInternalService-TransferConnString
+            settings-key: LykkePayMerchantDataConnString
             types: [ AzureTableStorage, Tag ]
     AutoSettle:
         AssetsToMakePartialAutoSettle: 
@@ -40,7 +40,7 @@ PayInternalService:
             types: [ Tag ]
     Rabbit: 
         ConnectionString: 
-            settings-key: GeneralRabbitMqConnectionString
+            settings-key: RabbitPay
             types: [ RabbitMq, Tag ]
         WalletsExchangeName: 
             settings-key: PayInternalService-WalletsExchangeName
@@ -150,7 +150,7 @@ PayHistoryServiceClient:
 
 PayHistoryServicePublisher: 
     ConnectionString: 
-        settings-key: GeneralRabbitMqConnectionString
+        settings-key: RabbitPay
         types: [ RabbitMq, Tag ]
     ExchangeName: 
         settings-key: PayHistoryExchangeName
@@ -158,7 +158,7 @@ PayHistoryServicePublisher:
 
 PayInvoiceConfirmationPublisher: 
     ConnectionString: 
-        settings-key: GeneralRabbitMqConnectionString
+        settings-key: RabbitPay
         types: [ RabbitMq, Tag ]
     ExchangeName: 
         settings-key: PayInvoiceConfirmationExchangeName
@@ -180,6 +180,7 @@ PayMerchantServiceClient:
 MonitoringServiceClient:
   MonitoringServiceUrl:
     settings-key: MonitoringServiceUrl
+    types: [ Tag ]
 
 SlackNotifications:
   AzureQueue:
