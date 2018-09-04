@@ -61,9 +61,6 @@ PayInternalService:
         PaymentRequestExpirationHandling: 
             settings-key: PayInternalService-PaymentRequestExpirationHandling
             types: [ Tag ]
-    DataEncriptionPassword: 
-        settings-key: PayInternalService-DataEncriptionPassword
-        types: [ Tag ]
     TransactionConfirmationCount: 
         settings-key: PayInternalService-TransactionConfirmationCount
         types: [ Tag ]
@@ -129,9 +126,6 @@ EthereumServiceClient:
     ServiceUrl: 
         settings-key: EthereumApiServiceUrl
         types: [ Tag ]
-    HotwalletAddress: 
-        settings-key: EthereumApiHotwalletAddress
-        types: [ Tag ]
     
 MarketProfileServiceClient: 
     ServiceUrl: 
@@ -180,6 +174,7 @@ PayMerchantServiceClient:
 MonitoringServiceClient:
   MonitoringServiceUrl:
     settings-key: MonitoringServiceUrl
+    types: [Tag]
 
 SlackNotifications:
   AzureQueue:
