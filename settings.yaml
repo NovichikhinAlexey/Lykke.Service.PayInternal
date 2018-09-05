@@ -3,9 +3,6 @@ PayInternalService:
         LogsConnString:
             settings-key: LykkePayLogsConnString
             types: [ AzureTableStorage, Tag ]
-        MerchantWalletConnString: 
-            settings-key: LykkePayMerchantDataConnString
-            types: [ AzureTableStorage, Tag ]
         MerchantOrderConnString: 
             settings-key: LykkePayMerchantDataConnString
             types: [ AzureTableStorage, Tag ]
@@ -61,9 +58,6 @@ PayInternalService:
         PaymentRequestExpirationHandling: 
             settings-key: PayInternalService-PaymentRequestExpirationHandling
             types: [ Tag ]
-    DataEncriptionPassword: 
-        settings-key: PayInternalService-DataEncriptionPassword
-        types: [ Tag ]
     TransactionConfirmationCount: 
         settings-key: PayInternalService-TransactionConfirmationCount
         types: [ Tag ]
@@ -128,9 +122,6 @@ BitCoinCore:
 EthereumServiceClient: 
     ServiceUrl: 
         settings-key: EthereumApiServiceUrl
-        types: [ Tag ]
-    HotwalletAddress: 
-        settings-key: EthereumApiHotwalletAddress
         types: [ Tag ]
     
 MarketProfileServiceClient: 
