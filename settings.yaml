@@ -123,9 +123,6 @@ EthereumServiceClient:
     ServiceUrl: 
         settings-key: EthereumApiServiceUrl
         types: [ Tag ]
-    HotwalletAddress: 
-        settings-key: EthereumApiHotwalletAddress
-        types: [ Tag ]
     
 MarketProfileServiceClient: 
     ServiceUrl: 
