@@ -201,7 +201,8 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.Order, opt => opt.Ignore())
                 .ForMember(dest => dest.WalletAddress,
                     opt => opt.ResolveUsing<PaymentRequestBcnWalletAddressValueResolver>())
-                .ForSourceMember(src => src.ExternalOrderId, opt => opt.Ignore());
+                .ForSourceMember(src => src.ExternalOrderId, opt => opt.Ignore())
+                .ForSourceMember(src => src.Initiator, opt => opt.Ignore());
 
             CreateMap<IOrder, PaymentRequestOrder>(MemberList.Source)
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())
