@@ -6,6 +6,7 @@ using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayMerchant.Client;
 using Lykke.Service.PayVolatility.Client;
 using Lykke.Service.PayVolatility.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -18,6 +19,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
     {
         private Mock<IMarkupRepository> _markupRepositoryMock;
         private Mock<IPayVolatilityClient> _payVolatilityClientMock;
+        private Mock<IPayMerchantClient> _payMerchantClientMock;
         private IMarkupService _markupService;
 
         [TestInitialize]
@@ -25,7 +27,12 @@ namespace Lykke.Service.PayInternal.Services.Tests
         {
             _markupRepositoryMock = SetUpFakeRepository();
             _payVolatilityClientMock = SetUpPayVolatilityClient();
-            _markupService = new MarkupService(_markupRepositoryMock.Object, _payVolatilityClientMock.Object);
+            _payMerchantClientMock = SetUpPayMerchantClient();
+
+            _markupService = new MarkupService(
+                _markupRepositoryMock.Object, 
+                _payVolatilityClientMock.Object, 
+                _payMerchantClientMock.Object);
         }
 
         public Mock<IPayVolatilityClient> SetUpPayVolatilityClient()
@@ -37,6 +44,16 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             mock.Setup(o => o.Volatility.GetDailyVolatilitiesAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(() => new List<VolatilityModel>());
+
+            return mock;
+        }
+
+        public Mock<IPayMerchantClient> SetUpPayMerchantClient()
+        {
+            var mock = new Mock<IPayMerchantClient>();
+
+            mock.Setup(o => o.Settings.GetVolatilitySettingsAsync(It.IsAny<string>()))
+                .ReturnsAsync(() => null);
 
             return mock;
         }
