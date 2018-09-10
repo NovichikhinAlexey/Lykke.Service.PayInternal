@@ -24,10 +24,10 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="7.0.1" />
     <PackageReference Include="Lykke.Bitcoin.Api.Client" Version="1.0.23" />
-    <PackageReference Include="Lykke.Common" Version="7.0.3" />
+    <PackageReference Include="Lykke.Common" Version="7.0.4" />
     <PackageReference Include="Lykke.Common.ApiLibrary" Version="1.10.1" />
-    <PackageReference Include="Lykke.Logs" Version="5.2.0" />
-	<PackageReference Include="Lykke.MonitoringServiceApiCaller" Version="1.6.2" />    
+    <PackageReference Include="Lykke.Logs" Version="6.0.0" />
+	<PackageReference Include="Lykke.MonitoringServiceApiCaller" Version="1.6.4" />    
 	<PackageReference Include="Lykke.Service.Assets.Client" Version="4.4.0" />
     <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.1.0" />
     <PackageReference Include="Lykke.Service.PayHistory.Client" Version="1.0.12" />
