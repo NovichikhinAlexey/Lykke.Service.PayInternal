@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.ApiLibrary.Exceptions;
 using Lykke.Service.PayInternal.AzureRepositories;
+using Common.Log;
+using Lykke.Common.Log;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -22,15 +24,18 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IMarkupRepository _markupRepository;
         private readonly IPayVolatilityClient _payVolatilityClient;
         private readonly IPayMerchantClient _payMerchantClient;
+        private readonly ILog _log;
 
         public MarkupService(
             [NotNull] IMarkupRepository markupRepository, 
             [NotNull] IPayVolatilityClient payVolatilityClient, 
-            [NotNull] IPayMerchantClient payMerchantClient)
+            [NotNull] IPayMerchantClient payMerchantClient,
+            [NotNull] ILogFactory logFactory)
         {
             _markupRepository = markupRepository;
             _payVolatilityClient = payVolatilityClient;
             _payMerchantClient = payMerchantClient;
+            _log = logFactory.CreateLog(this);
         }
 
         public Task<IMarkup> SetDefaultAsync(string assetPairId, string priceAssetPairId, PriceMethod priceMethod, IMarkupValue markupValue)
@@ -143,7 +148,18 @@ namespace Lykke.Service.PayInternal.Services
 
         private async Task SetDeltaSpread(IEnumerable<IMarkup> markups)
         {
-            var volatilityModels = (await _payVolatilityClient.Volatility.GetDailyVolatilitiesAsync()).ToDictionary(v=>v.AssetPairId,StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, VolatilityModel> volatilityModels;
+            try
+            {
+                volatilityModels = (await _payVolatilityClient.Volatility.GetDailyVolatilitiesAsync())
+                    .ToDictionary(v => v.AssetPairId, StringComparer.OrdinalIgnoreCase);
+            }
+            catch (Refit.ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                _log.Critical(ex,"There are no volatility for last days.");
+                return;
+            }
+
             foreach (var markup in markups)
             {
                 string assetPairId = GetVolatilityAssetPairId(markup);
