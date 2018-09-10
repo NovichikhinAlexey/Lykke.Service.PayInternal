@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Lykke.Common.ApiLibrary.Exceptions;
 using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
@@ -182,7 +183,7 @@ namespace Lykke.Service.PayInternal.Services
 
                 return response?.ZeroCoverageAssetPairs.Split(Constants.Separator).ToList() ?? new List<string>();
             }
-            catch (Refit.ApiException e) when (e.StatusCode == HttpStatusCode.NotFound)
+            catch (ClientApiException e) when (e.HttpStatusCode == HttpStatusCode.NotFound)
             {
                 return new List<string>();
             }
