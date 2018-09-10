@@ -180,7 +180,7 @@ namespace Lykke.Service.PayInternal.Services
                 VolatilitySettingsResponse response =
                     await _payMerchantClient.Settings.GetVolatilitySettingsAsync(merchantId);
 
-                return response.ZeroCoverageAssetPairs.Split(Constants.Separator).ToList();
+                return response?.ZeroCoverageAssetPairs.Split(Constants.Separator).ToList() ?? new List<string>();
             }
             catch (Refit.ApiException e) when (e.StatusCode == HttpStatusCode.NotFound)
             {
