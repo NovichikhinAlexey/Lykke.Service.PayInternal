@@ -108,6 +108,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
 
         public string Initiator { get; set; }
 
+        public string SettlementErrorDescription { get; set; }
+
         public DateTime? PaidDate
         {
             get => _paidDate;
