@@ -125,7 +125,8 @@ namespace Lykke.Service.PayInternal.Modules
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.AssetsMap));
 
             builder.RegisterType<MarkupService>()
-                .As<IMarkupService>();
+                .As<IMarkupService>()
+                .WithParameter("volatilityAssetPairs", _settings.CurrentValue.PayVolatilityServiceClient.AssetPairs);
 
             builder.RegisterType<BcnSettingsResolver>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain))
