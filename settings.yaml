@@ -162,6 +162,9 @@ PayVolatilityServiceClient:
     CachePeriod:
         settings-key: PayVolatilityCachePeriod
         types: [Tag]
+    AssetPairs: 
+        settings-key: PayVolatilityService-AssetPairs
+        types: [Tag]
 
 PayMerchantServiceClient:
     ServiceUrl:
