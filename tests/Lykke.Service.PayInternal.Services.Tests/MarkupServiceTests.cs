@@ -2,6 +2,8 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Lykke.Common.Log;
+using Lykke.Logs;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -32,7 +34,8 @@ namespace Lykke.Service.PayInternal.Services.Tests
             _markupService = new MarkupService(
                 _markupRepositoryMock.Object, 
                 _payVolatilityClientMock.Object, 
-                _payMerchantClientMock.Object);
+                _payMerchantClientMock.Object,
+                LogFactory.Create());
         }
 
         public Mock<IPayVolatilityClient> SetUpPayVolatilityClient()
