@@ -22,6 +22,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
         private Mock<IMarkupRepository> _markupRepositoryMock;
         private Mock<IPayVolatilityClient> _payVolatilityClientMock;
         private Mock<IPayMerchantClient> _payMerchantClientMock;
+        private readonly string[] _volatilityAssetPairs = new[] { "BTCUSD", "BTCLKK" };
         private IMarkupService _markupService;
 
         [TestInitialize]
@@ -35,6 +36,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
                 _markupRepositoryMock.Object, 
                 _payVolatilityClientMock.Object, 
                 _payMerchantClientMock.Object,
+                _volatilityAssetPairs,
                 LogFactory.Create());
         }
 

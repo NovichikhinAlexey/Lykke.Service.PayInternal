@@ -24,17 +24,20 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IMarkupRepository _markupRepository;
         private readonly IPayVolatilityClient _payVolatilityClient;
         private readonly IPayMerchantClient _payMerchantClient;
+        private readonly string[] _volatilityAssetPairs;
         private readonly ILog _log;
 
         public MarkupService(
             [NotNull] IMarkupRepository markupRepository, 
             [NotNull] IPayVolatilityClient payVolatilityClient, 
             [NotNull] IPayMerchantClient payMerchantClient,
+            [NotNull] string[] volatilityAssetPairs,
             [NotNull] ILogFactory logFactory)
         {
             _markupRepository = markupRepository;
             _payVolatilityClient = payVolatilityClient;
             _payMerchantClient = payMerchantClient;
+            _volatilityAssetPairs = volatilityAssetPairs;
             _log = logFactory.CreateLog(this);
         }
 
@@ -75,14 +78,14 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<IReadOnlyList<IMarkup>> GetDefaultsAsync()
         {
             var markups = await _markupRepository.GetByIdentityAsync(MarkupIdentityType.None, string.Empty);
-            await SetDeltaSpread(markups);
+            await SetDeltaSpreadAsync(markups);
             return markups;
         }
 
         public async Task<IMarkup> GetDefaultAsync(string assetPairId)
         {
             var markup = await _markupRepository.GetByIdentityAsync(MarkupIdentityType.None, string.Empty, assetPairId);
-            await SetDeltaSpread(markup);
+            await SetDeltaSpreadAsync(markup);
             return markup;
         }
 
@@ -100,7 +103,7 @@ namespace Lykke.Service.PayInternal.Services
                 }
                 else
                 {
-                    await SetDeltaSpread(markup);
+                    await SetDeltaSpreadAsync(markup);
                 }
             }
 
@@ -119,7 +122,7 @@ namespace Lykke.Service.PayInternal.Services
                 }
                 else
                 {
-                    await SetDeltaSpread(markup);
+                    await SetDeltaSpreadAsync(markup);
                 }
             }
 
@@ -134,48 +137,41 @@ namespace Lykke.Service.PayInternal.Services
                    throw new MarkupNotFoundException(merchantId, assetPairId);
         }
 
-        private async Task SetDeltaSpread(IMarkup markup)
+        private async Task SetDeltaSpreadAsync(IMarkup markup)
         {
             string assetPairId = GetVolatilityAssetPairId(markup);
-            if (string.IsNullOrEmpty(assetPairId))
+            if (string.IsNullOrEmpty(assetPairId) 
+                || !_volatilityAssetPairs.Contains(assetPairId, StringComparer.OrdinalIgnoreCase))
             {
                 return;
             }
 
-            VolatilityModel volatilityModel = await _payVolatilityClient.Volatility.GetDailyVolatilityAsync(assetPairId);
+            VolatilityModel volatilityModel;
+            try
+            {
+                volatilityModel = await _payVolatilityClient.Volatility.GetDailyVolatilityAsync(assetPairId);
+            }
+            catch (Refit.ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                _log.Critical(ex, $"There are no volatility of {assetPairId} for last days.");
+                return;
+            }
+
             if (volatilityModel != null)
             {
                 SetDeltaSpread(markup, volatilityModel);
             }
         }
 
-        private async Task SetDeltaSpread(IEnumerable<IMarkup> markups)
+        private Task SetDeltaSpreadAsync(IEnumerable<IMarkup> markups)
         {
-            Dictionary<string, VolatilityModel> volatilityModels;
-            try
-            {
-                volatilityModels = (await _payVolatilityClient.Volatility.GetDailyVolatilitiesAsync())
-                    .ToDictionary(v => v.AssetPairId, StringComparer.OrdinalIgnoreCase);
-            }
-            catch (Refit.ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-            {
-                _log.Critical(ex,"There are no volatility for last days.");
-                return;
-            }
-
+            var tasks = new List<Task>();
             foreach (var markup in markups)
             {
-                string assetPairId = GetVolatilityAssetPairId(markup);
-                if (string.IsNullOrEmpty(assetPairId))
-                {
-                    continue;
-                }
-
-                if (volatilityModels.TryGetValue(assetPairId, out var volatilityModel))
-                {
-                    SetDeltaSpread(markup, volatilityModel);
-                }
+                tasks.Add(SetDeltaSpreadAsync(markup));
             }
+
+            return Task.WhenAll(tasks);
         }
 
         private void SetDeltaSpread(IMarkup markup, VolatilityModel volatilityModel)

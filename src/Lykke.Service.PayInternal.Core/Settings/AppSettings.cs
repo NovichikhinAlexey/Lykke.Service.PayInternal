@@ -23,7 +23,7 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public HistoryRabbitMqPublisherSettings PayHistoryServicePublisher { get; set; }
         public CallBackRabbitMqPublisherSettings PayInvoiceConfirmationPublisher { get; set; }
         public PayHistoryServiceClientSettings PayHistoryServiceClient { get; set; }
-        public PayVolatilityServiceClientSettings PayVolatilityServiceClient { get; set; }
+        public ExtendedPayVolatilityServiceClientSettings PayVolatilityServiceClient { get; set; }
 		public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
         public PayMerchantServiceClientSettings PayMerchantServiceClient { get; set; }
     }
@@ -67,5 +67,10 @@ namespace Lykke.Service.PayInternal.Core.Settings
     public class AssetsMapSettings
     {
         public IDictionary<string, string> Values { get; set; }
+    }
+
+    public class ExtendedPayVolatilityServiceClientSettings : PayVolatilityServiceClientSettings
+    {
+        public string[] AssetPairs { get; set; }
     }
 }
