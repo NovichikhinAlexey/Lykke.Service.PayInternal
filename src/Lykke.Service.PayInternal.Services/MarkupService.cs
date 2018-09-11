@@ -103,7 +103,7 @@ namespace Lykke.Service.PayInternal.Services
                 }
                 else
                 {
-                    await SetDeltaSpread(markup);
+                    await SetDeltaSpreadAsync(markup);
                 }
             }
 
@@ -122,7 +122,7 @@ namespace Lykke.Service.PayInternal.Services
                 }
                 else
                 {
-                    await SetDeltaSpread(markup);
+                    await SetDeltaSpreadAsync(markup);
                 }
             }
 
