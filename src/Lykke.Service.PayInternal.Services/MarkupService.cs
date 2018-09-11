@@ -106,13 +106,16 @@ namespace Lykke.Service.PayInternal.Services
         {
             var markup = await _markupRepository.GetByIdentityAsync(MarkupIdentityType.Merchant, merchantId, assetPairId);
 
-            if ((await GetZeroCoverageAssetPairsAsync(merchantId)).Contains(assetPairId))
+            if (markup != null)
             {
-                markup.DeltaSpread = 0;
-            }
-            else
-            {
-                await SetDeltaSpread(markup);
+                if ((await GetZeroCoverageAssetPairsAsync(merchantId)).Contains(assetPairId))
+                {
+                    markup.DeltaSpread = 0;
+                }
+                else
+                {
+                    await SetDeltaSpread(markup);
+                }
             }
 
             return markup;
