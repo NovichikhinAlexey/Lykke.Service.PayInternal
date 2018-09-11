@@ -4,6 +4,7 @@ using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Core.Settings.SlackNotifications;
 using Lykke.Service.PayMerchant.Client;
 using Lykke.Service.PayTransferValidation.Client;
+using Lykke.Service.PaySettlement.Contracts.Settings;
 using Lykke.Service.PayVolatility.Client;
 using Lykke.SettingsReader.Attributes;
 using HistoryRabbitMqPublisherSettings = Lykke.Service.PayHistory.Client.Publisher.RabbitMqPublisherSettings;
@@ -29,6 +30,7 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public PayMerchantServiceClientSettings PayMerchantServiceClient { get; set; }
         public BlockchainWalletsSettings BlockchainWalletsServiceClient { get; set; }
         public PayTransferValidationServiceClientSettings PayTransferValidationServiceClient { get; set; }
+        public PaySettlementCqrsSettings PaySettlementCqrs { get; set; }
     }
 
     public class BitcoinCoreSettings
