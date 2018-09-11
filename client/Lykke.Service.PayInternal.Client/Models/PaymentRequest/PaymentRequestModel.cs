@@ -95,5 +95,10 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         /// Gets ot sets the initiator of payment request creation (PublicAPI, InvoiceService)
         /// </summary>
         public string Initiator { get; set; }
+
+        /// <summary>
+        /// Gets ot sets the error which occured on settlement
+        /// </summary>
+        public string SettlementErrorDescription { get; set; }
     }
 }
