@@ -57,5 +57,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
                      ProcessingError == PaymentRequestProcessingError.PaymentAmountBelow ||
                      ProcessingError == PaymentRequestProcessingError.PaymentExpired);
         }
+
+        public string Initiator { get; set; }
     }
 }

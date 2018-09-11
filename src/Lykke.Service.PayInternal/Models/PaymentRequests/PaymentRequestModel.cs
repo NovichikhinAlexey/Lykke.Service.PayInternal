@@ -40,5 +40,7 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         public PaymentRequestProcessingError ProcessingError { get; set; }
 
         public DateTime Timestamp { get; set; }
+
+        public string Initiator { get; set; }
     }
 }

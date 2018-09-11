@@ -90,5 +90,10 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         /// Gets or sets the error occurred during processing payment request.
         /// </summary>
         public PaymentRequestProcessingError ProcessingError { get; set; }
+
+        /// <summary>
+        /// Gets ot sets the initiator of payment request creation (PublicAPI, InvoiceService)
+        /// </summary>
+        public string Initiator { get; set; }
     }
 }
