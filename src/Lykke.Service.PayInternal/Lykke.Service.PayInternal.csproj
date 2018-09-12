@@ -26,7 +26,9 @@
     <PackageReference Include="Lykke.Bitcoin.Api.Client" Version="1.0.23" />
     <PackageReference Include="Lykke.Common" Version="7.0.4" />
     <PackageReference Include="Lykke.Common.ApiLibrary" Version="1.10.1" />
+    <PackageReference Include="Lykke.Cqrs" Version="5.1.0" />
     <PackageReference Include="Lykke.Logs" Version="6.0.0" />
+    <PackageReference Include="Lykke.Messaging.RabbitMq" Version="2.1.0" />
 	<PackageReference Include="Lykke.MonitoringServiceApiCaller" Version="1.6.4" />    
 	<PackageReference Include="Lykke.Service.Assets.Client" Version="4.4.0" />
     <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.1.0" />

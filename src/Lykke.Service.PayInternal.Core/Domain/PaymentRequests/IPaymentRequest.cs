@@ -49,5 +49,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
         bool StatusValidForSettlement();
 
         string Initiator { get; set; }
+
+        string SettlementErrorDescription { get; set; }
     }
 }
