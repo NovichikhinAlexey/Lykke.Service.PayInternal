@@ -35,7 +35,7 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<IMerchantsSupervisorMembership> AddAsync(IMerchantsSupervisorMembership src)
         {
             MerchantGroupResponse merchantGroup =
-                await _payMerchantClient.GroupsApi.AddGroupAsync(Mapper.Map<AddMerchantGroupRequest>(src));
+                await _payMerchantClient.Groups.AddGroupAsync(Mapper.Map<AddMerchantGroupRequest>(src));
 
             try
             {
@@ -59,7 +59,7 @@ namespace Lykke.Service.PayInternal.Services
                 _log.Error(ex, src);
 
                 if (merchantGroup != null)
-                    await _payMerchantClient.GroupsApi.DeleteGroupAsync(merchantGroup.Id);
+                    await _payMerchantClient.Groups.DeleteGroupAsync(merchantGroup.Id);
 
                 throw new SupervisorMembershipAlreadyExistsException(src.EmployeeId);
             }
@@ -80,7 +80,7 @@ namespace Lykke.Service.PayInternal.Services
 
                 foreach (string merchantGroupId in membership.MerchantGroups)
                 {
-                    MerchantGroupResponse merchantGroup = await _payMerchantClient.GroupsApi.GetGroupAsync(merchantGroupId);
+                    MerchantGroupResponse merchantGroup = await _payMerchantClient.Groups.GetGroupAsync(merchantGroupId);
 
                     if (merchantGroup != null)
                         merchants.AddRange(merchantGroup.Merchants);

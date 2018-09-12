@@ -1,11 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
+using Lykke.Common.ApiLibrary.Exceptions;
+using Lykke.Service.PayInternal.AzureRepositories;
 using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayMerchant.Client;
+using Lykke.Service.PayMerchant.Client.Models;
 using Lykke.Service.PayVolatility.Client;
 using Lykke.Service.PayVolatility.Models;
 
@@ -15,11 +21,16 @@ namespace Lykke.Service.PayInternal.Services
     {
         private readonly IMarkupRepository _markupRepository;
         private readonly IPayVolatilityClient _payVolatilityClient;
+        private readonly IPayMerchantClient _payMerchantClient;
 
-        public MarkupService(IMarkupRepository markupRepository, IPayVolatilityClient payVolatilityClient)
+        public MarkupService(
+            [NotNull] IMarkupRepository markupRepository, 
+            [NotNull] IPayVolatilityClient payVolatilityClient, 
+            [NotNull] IPayMerchantClient payMerchantClient)
         {
             _markupRepository = markupRepository;
             _payVolatilityClient = payVolatilityClient;
+            _payMerchantClient = payMerchantClient;
         }
 
         public Task<IMarkup> SetDefaultAsync(string assetPairId, string priceAssetPairId, PriceMethod priceMethod, IMarkupValue markupValue)
@@ -73,14 +84,40 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<IReadOnlyList<IMarkup>> GetForMerchantAsync(string merchantId)
         {
             var markups = await _markupRepository.GetByIdentityAsync(MarkupIdentityType.Merchant, merchantId);
-            await SetDeltaSpread(markups);
+
+            List<string> zeroCoverageAssetPairs = await GetZeroCoverageAssetPairsAsync(merchantId);
+
+            foreach (var markup in markups)
+            {
+                if (zeroCoverageAssetPairs.Contains(markup.AssetPairId))
+                {
+                    markup.DeltaSpread = 0;
+                }
+                else
+                {
+                    await SetDeltaSpread(markup);
+                }
+            }
+
             return markups;
         }
 
         public async Task<IMarkup> GetForMerchantAsync(string merchantId, string assetPairId)
         {
             var markup = await _markupRepository.GetByIdentityAsync(MarkupIdentityType.Merchant, merchantId, assetPairId);
-            await SetDeltaSpread(markup);
+
+            if (markup != null)
+            {
+                if ((await GetZeroCoverageAssetPairsAsync(merchantId)).Contains(assetPairId))
+                {
+                    markup.DeltaSpread = 0;
+                }
+                else
+                {
+                    await SetDeltaSpread(markup);
+                }
+            }
+
             return markup;
         }
 
@@ -138,6 +175,21 @@ namespace Lykke.Service.PayInternal.Services
             }
 
             return markup?.AssetPairId;
+        }
+
+        private async Task<List<string>> GetZeroCoverageAssetPairsAsync(string merchantId)
+        {
+            try
+            {
+                VolatilitySettingsResponse response =
+                    await _payMerchantClient.Settings.GetVolatilitySettingsAsync(merchantId);
+
+                return response?.ZeroCoverageAssetPairs.Split(Constants.Separator).ToList() ?? new List<string>();
+            }
+            catch (ClientApiException e) when (e.HttpStatusCode == HttpStatusCode.NotFound)
+            {
+                return new List<string>();
+            }
         }
     }
 }
