@@ -55,19 +55,19 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetNetworkNotDefinedException e)
             {
-                _log.Error(e, new {e.AssetId});
+                _log.ErrorWithDetails(e, new {e.AssetId});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (InvalidOperationException e)
             {
-                _log.Error(e, request);
+                _log.ErrorWithDetails(e, request);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (InsufficientFundsException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.WalletAddress,
                     e.AssetId
@@ -77,13 +77,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (CashoutOperationFailedException e)
             {
-                _log.Error(e, new {errors = e.TransferErrors});
+                _log.ErrorWithDetails(e, new {errors = e.TransferErrors});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (MultipleDefaultMerchantWalletsException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.AssetId,
                     e.MerchantId,
@@ -94,7 +94,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (DefaultMerchantWalletNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.AssetId,
                     e.MerchantId,
@@ -105,7 +105,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MerchantWalletOwnershipException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.WalletAddress
@@ -115,7 +115,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (CashoutHotwalletNotDefinedException e)
             {
-                _log.Error(e, new {e.Blockchain});
+                _log.ErrorWithDetails(e, new {e.Blockchain});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }

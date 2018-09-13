@@ -64,7 +64,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (PaymentRequestNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.WalletAddress,
@@ -75,13 +75,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (UnexpectedAssetException e)
             {
-                _log.Error(e, new {e.AssetId,});
+                _log.ErrorWithDetails(e, new {e.AssetId,});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (BlockchainWalletNotLinkedException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Blockchain,
                     e.WalletAddress
@@ -113,7 +113,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (TransactionNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Blockchain,
                     e.IdentityType,
@@ -125,7 +125,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (PaymentRequestNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.WalletAddress,
@@ -136,7 +136,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (BlockchainWalletNotLinkedException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Blockchain,
                     e.WalletAddress

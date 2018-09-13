@@ -21,14 +21,12 @@ using Lykke.Service.PayVolatility.Client;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 using QBitNinja.Client;
-using DbSettings = Lykke.Service.PayInternal.Core.Settings.ServiceSettings.DbSettings;
 
 namespace Lykke.Service.PayInternal.Modules
 {
     public class ServiceModule : Module
     {
         private readonly IReloadingManager<AppSettings> _settings;
-        private readonly IReloadingManager<DbSettings> _dbSettings;
         // NOTE: you can remove it if you don't need to use IServiceCollection extensions to register service specific dependencies
         // ReSharper disable once CollectionNeverUpdated.Local
         private readonly IServiceCollection _services;
@@ -36,13 +34,14 @@ namespace Lykke.Service.PayInternal.Modules
         public ServiceModule(IReloadingManager<AppSettings> settings)
         {
             _settings = settings;
-            _dbSettings = settings.Nested(x => x.PayInternalService.Db);
 
             _services = new ServiceCollection();
         }
 
         protected override void Load(ContainerBuilder builder)
         {
+            RegisterSettings(builder);
+
             RegisterServiceClients(builder);
 
             RegisterAppServices(builder);
@@ -250,6 +249,13 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<PaymentRequestExpiraitonHandler>()
                 .As<IPaymentRequestExpirationHandler>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.JobPeriods.PaymentRequestExpirationHandling))
+                .SingleInstance();
+        }
+
+        private void RegisterSettings(ContainerBuilder builder)
+        {
+            builder.RegisterInstance(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum)
+                .AsSelf()
                 .SingleInstance();
         }
     }

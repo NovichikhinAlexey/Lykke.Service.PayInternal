@@ -33,7 +33,7 @@ namespace Lykke.Service.PayInternal.Mapping
             }
             catch (WalletNotFoundException e)
             {
-                _log.Error(e, new {e.WalletAddress});
+                _log.ErrorWithDetails(e, new {e.WalletAddress});
 
                 throw;
             }

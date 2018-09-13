@@ -73,7 +73,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
@@ -114,7 +114,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
@@ -146,7 +146,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
@@ -182,7 +182,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
@@ -232,7 +232,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value

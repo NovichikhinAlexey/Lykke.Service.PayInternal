@@ -66,7 +66,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     merchantId,
                     network,
@@ -85,7 +85,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException e)
             {
-                _log.Error(e, new {merchantWalletId});
+                _log.ErrorWithDetails(e, new {merchantWalletId});
 
                 throw new MerchantWalletIdNotFoundException(merchantWalletId);
             }
@@ -111,7 +111,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     merchantId,
                     network,
@@ -170,7 +170,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException e)
             {
-                _log.Error(e, new {merchantWalletId});
+                _log.ErrorWithDetails(e, new {merchantWalletId});
 
                 throw new MerchantWalletIdNotFoundException(merchantWalletId);
             }
@@ -184,7 +184,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     network,
                     walletAddress

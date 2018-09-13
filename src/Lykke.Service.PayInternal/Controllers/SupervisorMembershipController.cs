@@ -56,7 +56,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (SupervisorMembershipAlreadyExistsException e)
             {
-                _log.Error(e, new {e.EmployeeId});
+                _log.ErrorWithDetails(e, new {e.EmployeeId});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
@@ -84,7 +84,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
@@ -116,7 +116,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (SupervisorMembershipNotFoundException e)
             {
-                _log.Error(e, new {e.EmployeeId});
+                _log.ErrorWithDetails(e, new {e.EmployeeId});
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
@@ -143,13 +143,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (SupervisorMembershipNotFoundException e)
             {
-                _log.Error(e, new {e.EmployeeId});
+                _log.ErrorWithDetails(e, new {e.EmployeeId});
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
@@ -182,7 +182,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (SupervisorMembershipAlreadyExistsException e)
             {
-                _log.Error(e, new {e.EmployeeId});
+                _log.ErrorWithDetails(e, new {e.EmployeeId});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
@@ -208,7 +208,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
