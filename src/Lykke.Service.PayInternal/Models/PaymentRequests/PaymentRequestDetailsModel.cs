@@ -35,7 +35,7 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         
         public string WalletAddress { get; set; }
         
-        [EnumDataType(typeof(PaymentRequestStatus), ErrorMessage = "Invalid value, possible values are: None, New, Cancelled, InProcess, Confirmed, RefundInProgress, Refunded, Error")]
+        [EnumDataType(typeof(PaymentRequestStatus), ErrorMessage = "Invalid value, possible values are: None, New, Cancelled, InProcess, Confirmed, RefundInProgress, Refunded, Error, SettlementInProgress, SettlementError, Settled")]
         public PaymentRequestStatus Status { get; set; }
         
         public decimal PaidAmount { get; set; }
