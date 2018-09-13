@@ -59,13 +59,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (LykkeOperationOrderNotFoundException e)
             {
-                _log.Error(e, new {e.OperationId});
+                _log.ErrorWithDetails(e, new {e.OperationId});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (PaymentRequestNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.WalletAddress,
