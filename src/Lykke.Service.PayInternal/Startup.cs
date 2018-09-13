@@ -94,6 +94,7 @@ namespace Lykke.Service.PayInternal
                     appSettings.CurrentValue.PayInternalService.RetryPolicy));
 
                 builder.RegisterModule(new ServiceModule(appSettings));
+                builder.RegisterModule(new CqrsModule(appSettings));
 
                 builder.Populate(services);
 
