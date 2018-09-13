@@ -123,7 +123,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (MarkupNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.AssetPairId
@@ -144,13 +144,13 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (MarketPriceZeroException e)
             {
-                _log.Error(e, new { e.PriceType });
+                _log.ErrorWithDetails(e, new { e.PriceType });
 
                 throw;
             }
             catch (UnexpectedAssetPairPriceMethodException e)
             {
-                _log.Error(e, new { e.PriceMethod });
+                _log.ErrorWithDetails(e, new { e.PriceMethod });
 
                 throw;
             }

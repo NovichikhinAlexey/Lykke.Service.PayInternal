@@ -78,13 +78,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException e)
             {
-                _log.Error(e, new {e.Asset});
+                _log.ErrorWithDetails(e, new {e.Asset});
 
                 return NotFound(ErrorResponse.Create($"Asset not found [{e.Asset}]"));
             }
             catch (AssetPairRateStorageNotSupportedException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.BaseAssetId,
                     e.QuotingAssetId
@@ -136,13 +136,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException e)
             {
-                _log.Error(e, new {e.Asset});
+                _log.ErrorWithDetails(e, new {e.Asset});
 
                 return NotFound(ErrorResponse.Create($"Asset not found [{e.Asset}]"));
             }
             catch (AssetPairUnknownException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.BaseAssetId,
                     e.QuotingAssetId
@@ -153,7 +153,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (UnrecognizedApiResponse e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     baseAssetId,
                     quotingAssetId

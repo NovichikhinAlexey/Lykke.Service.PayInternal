@@ -232,23 +232,23 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (RefundOperationFailedException e)
             {
-                _log.Error(e, new {errors = e.TransferErrors});
+                _log.ErrorWithDetails(e, new {errors = e.TransferErrors});
             }
             catch (AssetUnknownException e)
             {
-                _log.Error(e, new {e.Asset});
+                _log.ErrorWithDetails(e, new {e.Asset});
             }
             catch (AssetNetworkNotDefinedException e)
             {
-                _log.Error(e, new {e.AssetId});
+                _log.ErrorWithDetails(e, new {e.AssetId});
             }
             catch (Exception e)
             {
-                _log.Error(e, request);
+                _log.ErrorWithDetails(e, request);
 
                 if (e is RefundValidationException validationEx)
                 {
-                    _log.Error(e, new {validationEx.ErrorType});
+                    _log.ErrorWithDetails(e, new {validationEx.ErrorType});
 
                     return BadRequest(new RefundErrorModel {Code = validationEx.ErrorType});
                 }
@@ -282,7 +282,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (Exception e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     merchantId,
                     paymentRequestId
@@ -290,7 +290,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 if (e is PaymentRequestNotFoundException notFoundEx)
                 {
-                    _log.Error(notFoundEx, new
+                    _log.ErrorWithDetails(notFoundEx, new
                     {
                         notFoundEx.WalletAddress,
                         notFoundEx.MerchantId,
@@ -302,7 +302,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
                 if (e is NotAllowedStatusException notAllowedEx)
                 {
-                    _log.Error(notAllowedEx,
+                    _log.ErrorWithDetails(notAllowedEx,
                         new {status = notAllowedEx.Status.ToString()});
 
                     return BadRequest(ErrorResponse.Create(notAllowedEx.Message));
@@ -338,7 +338,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InsufficientFundsException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.AssetId,
                     e.WalletAddress
@@ -348,7 +348,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (PaymentRequestNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.PaymentRequestId,
                     e.MerchantId,
@@ -359,13 +359,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetNetworkNotDefinedException e)
             {
-                _log.Error(e, new { e.AssetId });
+                _log.ErrorWithDetails(e, new { e.AssetId });
 
                 return StatusCode((int)HttpStatusCode.NotImplemented, ErrorResponse.Create(e.Message));
             }
             catch (MultipleDefaultMerchantWalletsException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.AssetId,
@@ -376,7 +376,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (DefaultMerchantWalletNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.AssetId,
@@ -387,7 +387,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (WalletNotFoundException e)
             {
-                _log.Error(e, new {e.WalletAddress});
+                _log.ErrorWithDetails(e, new {e.WalletAddress});
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
@@ -419,7 +419,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InsufficientFundsException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.AssetId,
                     e.WalletAddress
@@ -429,7 +429,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (PaymentRequestNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.PaymentRequestId,
                     e.MerchantId,
@@ -440,13 +440,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetNetworkNotDefinedException e)
             {
-                _log.Error(e, new {e.AssetId});
+                _log.ErrorWithDetails(e, new {e.AssetId});
 
                 return StatusCode((int) HttpStatusCode.NotImplemented, ErrorResponse.Create(e.Message));
             }
             catch (MultipleDefaultMerchantWalletsException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.AssetId,
@@ -457,7 +457,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (DefaultMerchantWalletNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.AssetId,
@@ -468,19 +468,19 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (WalletNotFoundException e)
             {
-                _log.Error(e, new {e.WalletAddress});
+                _log.ErrorWithDetails(e, new {e.WalletAddress});
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (PaymentOperationFailedException e)
             {
-                _log.Error(e, new {errors = e.TransferErrors});
+                _log.ErrorWithDetails(e, new {errors = e.TransferErrors});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (DistributedLockAcquireException e)
             {
-                _log.Error(e, new {e.Key});
+                _log.ErrorWithDetails(e, new {e.Key});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }

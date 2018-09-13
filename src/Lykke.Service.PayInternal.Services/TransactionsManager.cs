@@ -28,6 +28,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IWalletHistoryService _walletHistoryService;
         private readonly IConfirmationsService _confirmationsService;
         private readonly int _transactionConfirmationCount;
+        private readonly IBcnWalletUsageService _bcnWalletUsageService;
         private readonly ILog _log;
 
         public TransactionsManager(
@@ -36,13 +37,15 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] ILogFactory logFactory, 
             [NotNull] IWalletHistoryService walletHistoryService, 
             int transactionConfirmationCount, 
-            [NotNull] IConfirmationsService confirmationsService)
+            [NotNull] IConfirmationsService confirmationsService, 
+            [NotNull] IBcnWalletUsageService bcnWalletUsageService)
         {
             _transactionsService = transactionsService ?? throw new ArgumentNullException(nameof(transactionsService));
             _paymentRequestService = paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
             _walletHistoryService = walletHistoryService ?? throw new ArgumentNullException(nameof(walletHistoryService));
             _transactionConfirmationCount = transactionConfirmationCount;
             _confirmationsService = confirmationsService ?? throw new ArgumentNullException(nameof(confirmationsService));
+            _bcnWalletUsageService = bcnWalletUsageService ?? throw new ArgumentNullException(nameof(bcnWalletUsageService));
             _log = logFactory.CreateLog(this);
         }
 
@@ -92,6 +95,8 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task RegisterInboundAsync(RegisterInTxCommand cmd)
         {
+            await ValidateWalletAddressHosterAsync(cmd.ToAddress, cmd.Blockchain);
+
             var txs = (await _transactionsService.GetByBcnIdentityAsync(
                     cmd.Blockchain,
                     cmd.IdentityType,
@@ -401,6 +406,26 @@ namespace Lykke.Service.PayInternal.Services
                 default:
                     throw new UnexpectedWorkflowTypeException(cmd.WorkflowType);
             }
+        }
+
+        #endregion
+
+        #region Validation
+
+        /// <summary>
+        /// Checks if transaction update is supposed to be processed by current instance of service since
+        /// there is a division between different networks
+        /// </summary>
+        /// <param name="walletAddress">Blockchain wallet address</param>
+        /// <param name="blockchain">Blockchain type</param>
+        /// <returns></returns>
+        // todo: The division should be a matter of settings but not runtime processing
+        private async Task ValidateWalletAddressHosterAsync(string walletAddress, BlockchainType blockchain)
+        {
+            string virtualAddress = await _bcnWalletUsageService.ResolveOccupierAsync(walletAddress, blockchain);
+
+            if (string.IsNullOrEmpty(virtualAddress))
+                throw new WalletAddressProcessingHostException(walletAddress, blockchain);
         }
 
         #endregion

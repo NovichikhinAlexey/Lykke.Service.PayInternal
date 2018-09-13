@@ -38,7 +38,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (WalletAddressValidationException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     Blockchain = e.Blockchain.ToString(),
                     e.Address
@@ -48,7 +48,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (UnrecognizedApiResponse e)
             {
-                _log.Error(e, new {e.ResponseType});
+                _log.ErrorWithDetails(e, new {e.ResponseType});
 
                 throw;
             }

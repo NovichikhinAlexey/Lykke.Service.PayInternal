@@ -54,25 +54,25 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetNetworkNotDefinedException e)
             {
-                _log.Error(e, new {e.AssetId});
+                _log.ErrorWithDetails(e, new {e.AssetId});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (ExchangeOperationNotSupportedException e)
             {
-                _log.Error(e, request);
+                _log.ErrorWithDetails(e, request);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (InvalidOperationException e)
             {
-                _log.Error(e, request);
+                _log.ErrorWithDetails(e, request);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (AssetPairUnknownException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.BaseAssetId,
                     e.QuotingAssetId
@@ -82,7 +82,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InsufficientFundsException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.WalletAddress,
                     e.AssetId
@@ -92,13 +92,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (ExchangeOperationFailedException e)
             {
-                _log.Error(e, new {errors = e.TransferErrors});
+                _log.ErrorWithDetails(e, new {errors = e.TransferErrors});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (ExchangeRateChangedException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.CurrentRate,
                     request.ExpectedRate
@@ -108,7 +108,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MultipleDefaultMerchantWalletsException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.AssetId,
                     e.MerchantId,
@@ -119,7 +119,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (DefaultMerchantWalletNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.AssetId,
                     e.MerchantId,
@@ -130,7 +130,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MerchantWalletOwnershipException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.WalletAddress
@@ -163,13 +163,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidOperationException e)
             {
-                _log.Error(e, request);
+                _log.ErrorWithDetails(e, request);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (AssetPairUnknownException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.BaseAssetId,
                     e.QuotingAssetId
@@ -179,13 +179,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (ExchangeOperationNotSupportedException e)
             {
-                _log.Error(e, request);
+                _log.ErrorWithDetails(e, request);
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (MultipleDefaultMerchantWalletsException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.AssetId,
                     e.MerchantId,
@@ -196,7 +196,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (DefaultMerchantWalletNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.AssetId,
                     e.MerchantId,
@@ -207,7 +207,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InsufficientFundsException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.WalletAddress,
                     e.AssetId

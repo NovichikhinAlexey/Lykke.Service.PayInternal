@@ -221,7 +221,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (ValidationException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Details,
                     e.Rule,

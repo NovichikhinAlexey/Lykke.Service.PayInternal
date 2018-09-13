@@ -11,6 +11,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Common;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Models.Transactions.Ethereum;
 using LykkePay.Common.Validation;
 using Microsoft.AspNetCore.Mvc;
@@ -22,14 +23,17 @@ namespace Lykke.Service.PayInternal.Controllers
     public class EthereumTransactionsController : Controller
     {
         private readonly IEthereumTransactionsManager _ethTransactionsManager;
+        private readonly EthereumBlockchainSettings _ethereumSettings;
         private readonly ILog _log;
 
         public EthereumTransactionsController(
             [NotNull] IEthereumTransactionsManager ethTransactionsManager,
-            [NotNull] ILogFactory logFactory)
+            [NotNull] ILogFactory logFactory, 
+            [NotNull] EthereumBlockchainSettings ethereumSettings)
         {
             _ethTransactionsManager =
                 ethTransactionsManager ?? throw new ArgumentNullException(nameof(ethTransactionsManager));
+            _ethereumSettings = ethereumSettings ?? throw new ArgumentNullException(nameof(ethereumSettings));
             _log = logFactory.CreateLog(this);
         }
 
@@ -56,37 +60,43 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MerchantWalletNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.Network,
                     e.WalletAddress
-                });
+                }.ToDetails());
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (PaymentRequestNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.WalletAddress,
                     e.MerchantId,
                     e.PaymentRequestId
-                });
+                }.ToDetails());
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (UnexpectedWorkflowTypeException e)
             {
-                _log.Error(e, new {e.WorkflowType});
+                _log.ErrorWithDetails(e, $"WorkflowType = {e.WorkflowType.ToString()}");
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (UnexpectedTransactionTypeException e)
             {
-                _log.Error(e, new {e.TransactionType});
+                _log.ErrorWithDetails(e, $"TransactionType ={e.TransactionType.ToString()}");
 
                 return BadRequest(ErrorResponse.Create(e.Message));
+            }
+            catch (WalletAddressProcessingHostException e)
+            {
+                ConditionalLog(e, request.ToDetails());
+
+                return Ok();
             }
         }
 
@@ -115,18 +125,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (OutboundTransactionsNotFound e)
             {
-                _log.Error(e, new
-                {
-                    e.Blockchain,
-                    e.Identity,
-                    e.IdentityType
-                });
+                ConditionalLog(e, request.ToDetails());
 
-                return NotFound(ErrorResponse.Create(e.Message));
+                return Ok();
             }
             catch (UnexpectedTransactionTypeException e)
             {
-                _log.Error(e, new {e.TransactionType});
+                _log.ErrorWithDetails(e, $"TransactionType = {e.TransactionType.ToString()}");
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
@@ -157,39 +162,34 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MerchantWalletNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.Network,
                     e.WalletAddress
-                });
+                }.ToDetails());
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (OutboundTransactionsNotFound e)
             {
-                _log.Error(e, new
-                {
-                    e.Blockchain,
-                    e.Identity,
-                    e.IdentityType
-                });
+                ConditionalLog(e, request.ToDetails());
 
-                return NotFound(ErrorResponse.Create(e.Message));
+                return Ok();
             }
             catch (UnexpectedTransactionTypeException e)
             {
-                _log.Error(e, new {e.TransactionType});
+                _log.ErrorWithDetails(e, $"TransactionType = {e.TransactionType.ToString()}");
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (InsufficientFundsException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.AssetId,
                     e.WalletAddress
-                });
+                }.ToDetails());
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
@@ -219,18 +219,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (OutboundTransactionsNotFound e)
             {
-                _log.Error(e, new
-                {
-                    e.Blockchain,
-                    e.Identity,
-                    e.IdentityType
-                });
+                ConditionalLog(e, request.ToDetails());
 
-                return NotFound(ErrorResponse.Create(e.Message));
+                return Ok();
             }
             catch (UnexpectedTransactionTypeException e)
             {
-                _log.Error(e, new {e.TransactionType});
+                _log.ErrorWithDetails(e, $"TransactionType = {e.TransactionType.ToString()}");
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
@@ -261,20 +256,31 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (OutboundTransactionsNotFound e)
             {
-                _log.Error("NotEnoughFundsOutboundTx", e, new
-                {
-                    e.Blockchain,
-                    e.Identity,
-                    e.IdentityType
-                });
+                ConditionalLog(e, request.ToDetails());
 
-                return NotFound(ErrorResponse.Create(e.Message));
+                return Ok();
             }
             catch (UnexpectedTransactionTypeException e)
             {
-                _log.Error("NotEnoughFundsOutboundTx", e, new {e.TransactionType});
+                _log.ErrorWithDetails("NotEnoughFundsOutboundTx", e, $"TransactoinType = {e.TransactionType.ToString()}");
 
                 return BadRequest(ErrorResponse.Create(e.Message));
+            }
+        }
+
+        private void ConditionalLog(Exception e, object context)
+        {
+            switch (_ethereumSettings.EventsProcessingHostMismatchLevel)
+            {
+                case LogLevel.Info:
+                    _log.Info(e.Message, context);
+                    break;
+                case LogLevel.Warning:
+                    _log.Warning(e.Message, context: context);
+                    break;
+                case LogLevel.Error:
+                    _log.Error(e, context: context);
+                    break;
             }
         }
     }
