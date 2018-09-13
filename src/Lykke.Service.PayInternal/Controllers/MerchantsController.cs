@@ -68,7 +68,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
@@ -78,7 +78,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MarkupNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.AssetPairId
@@ -110,7 +110,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
@@ -154,7 +154,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
@@ -164,7 +164,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException e)
             {
-                _log.Error(e, new { e.Asset });
+                _log.ErrorWithDetails(e, new { e.Asset });
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }

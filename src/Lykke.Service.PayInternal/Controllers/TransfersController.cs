@@ -52,7 +52,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (TransferException e)
             {
-                _log.Error(e, new {e.Code});
+                _log.ErrorWithDetails(e, new {e.Code});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }

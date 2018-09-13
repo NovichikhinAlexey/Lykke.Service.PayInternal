@@ -71,19 +71,19 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidOperationException e)
             {
-                _log.Error(e, request);
+                _log.ErrorWithDetails(e, request);
 
                 return NotFound(ErrorResponse.Create(e.Message));
             }
             catch (WalletAddressAllocationException e)
             {
-                _log.Error(e, new {e.Blockchain});
+                _log.ErrorWithDetails(e, new {e.Blockchain});
 
                 return StatusCode((int) HttpStatusCode.BadGateway);
             }
             catch (UnrecognizedApiResponse e)
             {
-                _log.Error(e, new {e.ResponseType});
+                _log.ErrorWithDetails(e, new {e.ResponseType});
 
                 return StatusCode((int) HttpStatusCode.BadGateway);
             }
@@ -110,13 +110,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MerchantWalletIdNotFoundException e)
             {
-                _log.Error(e, new {e.MerchantWalletId});
+                _log.ErrorWithDetails(e, new {e.MerchantWalletId});
 
                 return NotFound(ErrorResponse.Create("Merchant wallet not found"));
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
@@ -175,13 +175,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException e)
             {
-                _log.Error(e, new {e.Asset});
+                _log.ErrorWithDetails(e, new {e.Asset});
 
                 return NotFound(ErrorResponse.Create($"Asset not found [{e.Asset}]"));
             }
             catch (MerchantWalletNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.Network,
@@ -215,7 +215,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
@@ -265,7 +265,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
@@ -275,19 +275,19 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException e)
             {
-                _log.Error(e, new {e.Asset});
+                _log.ErrorWithDetails(e, new {e.Asset});
 
                 return NotFound(ErrorResponse.Create($"Asset not found [{e.Asset}]"));
             }
             catch (AssetNetworkNotDefinedException e)
             {
-                _log.Error(e, new {e.AssetId});
+                _log.ErrorWithDetails(e, new {e.AssetId});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (MultipleDefaultMerchantWalletsException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.AssetId,
@@ -298,7 +298,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (DefaultMerchantWalletNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.AssetId,
@@ -337,7 +337,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (WalletAddressBalanceException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Blockchain,
                     e.Address
@@ -347,7 +347,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidRowKeyValueException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.Variable,
                     e.Value
@@ -357,7 +357,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (InvalidOperationException e)
             {
-                _log.Error(e, new {merchantId});
+                _log.ErrorWithDetails(e, new {merchantId});
 
                 return StatusCode((int) HttpStatusCode.NotImplemented, ErrorResponse.Create(e.Message));
             }

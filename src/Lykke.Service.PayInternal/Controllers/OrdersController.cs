@@ -89,19 +89,19 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException e)
             {
-                _log.Error(e, new {e.Asset});
+                _log.ErrorWithDetails(e, new {e.Asset});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (AssetNetworkNotDefinedException e)
             {
-                _log.Error(e, new {e.AssetId});
+                _log.ErrorWithDetails(e, new {e.AssetId});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (MarkupNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.AssetPairId
@@ -111,7 +111,7 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (PaymentRequestNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.PaymentRequestId,
@@ -148,13 +148,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (AssetUnknownException e)
             {
-                _log.Error(e, new {e.Asset});
+                _log.ErrorWithDetails(e, new {e.Asset});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (MarkupNotFoundException e)
             {
-                _log.Error(e, new
+                _log.ErrorWithDetails(e, new
                 {
                     e.MerchantId,
                     e.AssetPairId
@@ -164,13 +164,13 @@ namespace Lykke.Service.PayInternal.Controllers
             }
             catch (MarketPriceZeroException e)
             {
-                _log.Error(e, new {e.PriceType});
+                _log.ErrorWithDetails(e, new {e.PriceType});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }
             catch (UnexpectedAssetPairPriceMethodException e)
             {
-                _log.Error(e, new {e.PriceMethod});
+                _log.ErrorWithDetails(e, new {e.PriceMethod});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
             }

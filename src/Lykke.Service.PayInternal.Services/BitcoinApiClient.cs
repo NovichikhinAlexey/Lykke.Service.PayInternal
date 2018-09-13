@@ -138,7 +138,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (Exception e)
             {
-                _log.Error(e, new {address});
+                _log.ErrorWithDetails(e, new {address});
             }
 
             return new List<BlockchainBalanceResult> {balanceResult};

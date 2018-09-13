@@ -104,6 +104,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public string ExchangeHotWalletAddress { get; set; }
         public string CashoutHotWalletAddress { get; set; }
         public BlockchainExplorerSettings BlockchainExplorer { get; set; }
+        public LogLevel EventsProcessingHostMismatchLevel { get; set; }
     }
 
     public class AssetPairSetting {
@@ -128,5 +129,13 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
     {
         public int DefaultAttempts { get; set; }
         public int SettlementAttempts { get; set; }
+    }
+
+    public enum LogLevel
+    {
+        None = 0,
+        Info,
+        Warning,
+        Error
     }
 }

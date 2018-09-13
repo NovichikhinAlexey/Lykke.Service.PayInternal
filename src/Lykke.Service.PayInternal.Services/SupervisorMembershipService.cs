@@ -56,7 +56,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (DuplicateKeyException ex)
             {
-                _log.Error(ex, src);
+                _log.ErrorWithDetails(ex, src);
 
                 if (merchantGroup != null)
                     await _payMerchantClient.Groups.DeleteGroupAsync(merchantGroup.Id);
@@ -105,7 +105,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException ex)
             {
-                _log.Error(ex, src);
+                _log.ErrorWithDetails(ex, src);
 
                 throw new SupervisorMembershipNotFoundException(src.EmployeeId);
             }
@@ -119,7 +119,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (DuplicateKeyException ex)
             {
-                _log.Error(ex, src);
+                _log.ErrorWithDetails(ex, src);
 
                 throw new SupervisorMembershipAlreadyExistsException(src.EmployeeId);
             }
@@ -133,7 +133,7 @@ namespace Lykke.Service.PayInternal.Services
             }
             catch (KeyNotFoundException ex)
             {
-                _log.Error(ex, new {employeeId});
+                _log.ErrorWithDetails(ex, new {employeeId});
 
                 throw new SupervisorMembershipNotFoundException(employeeId);
             }

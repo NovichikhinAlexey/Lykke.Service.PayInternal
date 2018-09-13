@@ -8,21 +8,26 @@ namespace Lykke.Service.PayInternal.Core
 {
     public static class LogExtensions
     {
-        public static void Error(
+        public static string ToDetails(this object src)
+        {
+            return $"details: {src?.ToJson()}";
+        }
+
+        public static void ErrorWithDetails(
             [NotNull] this ILog log,
             [CanBeNull] Exception exception = null,
             [CanBeNull] object context = null)
         {
-            log.Error(exception, null, $"details: {context?.ToJson()}");
+            log.Error(exception, context.ToDetails());
         }
 
-        public static void Error(
+        public static void ErrorWithDetails(
             [NotNull] this ILog log,
             [NotNull] string process,
             [CanBeNull] Exception exception = null,
             [CanBeNull] object context = null)
         {
-            log.Error(process, exception, null, $"details: {context?.ToJson()}");
+            log.Error(process, exception, context.ToDetails());
         }
     }
 }
