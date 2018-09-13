@@ -44,5 +44,20 @@
         /// Refund error
         /// </summary>
         public const string RefundError = "REFUND_ERROR";
+
+        /// <summary>
+        /// Payment request is accepted to settlement.
+        /// </summary>
+        public const string SettlementInProgress = "SETTLEMENT_INPROGRESS";
+
+        /// <summary>
+        ///  An error occurred during settlement processing.
+        /// </summary>
+        public const string SettlementError = "SETTLEMENT_ERROR";
+
+        /// <summary>
+        /// Payment request is settled.
+        /// </summary>
+        public const string Settled = "SETTLEMENT_SETTLED";
     }
 }
