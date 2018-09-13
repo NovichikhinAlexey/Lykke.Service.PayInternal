@@ -95,6 +95,7 @@ namespace Lykke.Service.PayInternal
                     appSettings.CurrentValue.PayInternalService.BilTransitionPeriodEnabled));
 
                 builder.RegisterModule(new ServiceModule(appSettings));
+                builder.RegisterModule(new CqrsModule(appSettings));
 
                 builder.Populate(services);
 
