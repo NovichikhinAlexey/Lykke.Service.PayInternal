@@ -61,3 +61,4 @@ node_modules
 
 appsettings.json
 Lykke.Service.PayInternal.Client.xml
+src/Lykke.Service.PayInternal/PayInternal.json

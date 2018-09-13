@@ -109,9 +109,6 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<BlockchainAddressValidator>()
                 .As<IBlockchainAddressValidator>();
 
-            builder.RegisterType<MarkupService>()
-                .As<IMarkupService>();
-
             builder.RegisterType<EthereumApiClient>()
                 .Keyed<IBlockchainApiClient>(BlockchainType.Ethereum)
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Ethereum))
@@ -130,6 +127,10 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<LykkeOffchainApiClient>()
                 .Keyed<IBlockchainApiClient>(BlockchainType.Lykke)
                 .SingleInstance();
+
+            builder.RegisterType<MarkupService>()
+                .As<IMarkupService>()
+                .WithParameter("volatilityAssetPairs", _settings.CurrentValue.PayVolatilityServiceClient.AssetPairs);
 
             builder.RegisterType<BcnSettingsResolver>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain))

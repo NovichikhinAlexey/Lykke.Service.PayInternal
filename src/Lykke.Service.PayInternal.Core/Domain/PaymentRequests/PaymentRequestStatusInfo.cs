@@ -12,17 +12,20 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
 
         public DateTime? Date { get; set; }
 
+        public string SettlementErrorDescription { get; set; }
+
         public static PaymentRequestStatusInfo Confirmed(decimal paid, DateTime date)
         {
             return new PaymentRequestStatusInfo
             {
                 Status = PaymentRequestStatus.Confirmed,
                 Amount = paid,
-                Date =  date
+                Date = date
             };
         }
 
-        public static PaymentRequestStatusInfo Error(PaymentRequestProcessingError processingError, decimal paid, DateTime? date)
+        public static PaymentRequestStatusInfo Error(PaymentRequestProcessingError processingError, decimal paid,
+            DateTime? date)
         {
             return new PaymentRequestStatusInfo
             {
