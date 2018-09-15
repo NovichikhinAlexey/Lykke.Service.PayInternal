@@ -43,7 +43,7 @@ PayInternalService:
             settings-key: PayInternalService-WalletsExchangeName
             types: [ Tag ]
         PaymentRequestsExchangeName: 
-            settings-key: PayInternalService-PaymentRequestsExchangeName
+            settings-key: LykkePay-PaymentRequestsExchangeName
             types: [ Tag ]
         TransactionUpdatesExchangeName: 
             settings-key: PayInternalService-TransactionUpdatesExchangeName
@@ -173,7 +173,7 @@ PayInvoiceConfirmationPublisher:
         settings-key: RabbitPay
         types: [ RabbitMq, Tag ]
     ExchangeName: 
-        settings-key: PayInvoiceConfirmationExchangeName
+        settings-key: LykkePay-InvoiceConfirmationExchangeName
         types: [ Tag ]
             
 PayVolatilityServiceClient:

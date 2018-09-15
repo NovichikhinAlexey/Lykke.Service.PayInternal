@@ -18,7 +18,7 @@ namespace Lykke.Service.PayInternal.Core
             [CanBeNull] Exception exception = null,
             [CanBeNull] object context = null)
         {
-            log.Error(exception, null, context.ToDetails());
+            log.Error(exception, context.ToDetails());
         }
 
         public static void ErrorWithDetails(
@@ -27,7 +27,7 @@ namespace Lykke.Service.PayInternal.Core
             [CanBeNull] Exception exception = null,
             [CanBeNull] object context = null)
         {
-            log.Error(process, exception, null, context.ToDetails());
+            log.Error(process, exception, context.ToDetails());
         }
     }
 }
