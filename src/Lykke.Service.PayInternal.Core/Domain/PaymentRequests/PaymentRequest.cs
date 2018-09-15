@@ -20,11 +20,11 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
 
         public DateTime DueDate { get; set; }
 
-        public double MarkupPercent { get; set; }
+        public decimal MarkupPercent { get; set; }
 
         public int MarkupPips { get; set; }
 
-        public double MarkupFixedFee { get; set; }
+        public decimal MarkupFixedFee { get; set; }
 
         public string WalletAddress { get; set; }
 

@@ -18,7 +18,7 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
 
         public string OrderId { get; set; }
         
-        public double Amount { get; set; }
+        public decimal Amount { get; set; }
         
         public string SettlementAssetId { get; set; }
         
@@ -26,18 +26,18 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         
         public DateTime DueDate { get; set; }
         
-        public double MarkupPercent { get; set; }
+        public decimal MarkupPercent { get; set; }
         
         public int MarkupPips { get; set; }
 
-        public double MarkupFixedFee { get; set; }
+        public decimal MarkupFixedFee { get; set; }
         
         public string WalletAddress { get; set; }
         
         [JsonConverter(typeof(StringEnumConverter))]
         public PaymentRequestStatus Status { get; set; }
         
-        public double PaidAmount { get; set; }
+        public decimal PaidAmount { get; set; }
         
         public DateTime? PaidDate { get; set; }
 

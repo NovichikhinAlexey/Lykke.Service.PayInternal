@@ -42,7 +42,7 @@ namespace Lykke.Service.PayInternal.Services
             _log.Info("Rate calculation",
                 $"Calculation details: {new {baseAssetId, quotingAssetId, amount, requestMarkup, merchantMarkup, rate}.ToJson()}");
 
-            decimal result = (amount + (decimal) requestMarkup.FixedFee + merchantMarkup.FixedFee) / rate;
+            decimal result = (amount + requestMarkup.FixedFee + merchantMarkup.FixedFee) / rate;
 
             Asset baseAsset = await _assetsLocalCache.GetAssetByIdAsync(baseAssetId);
 
@@ -54,7 +54,7 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<decimal> GetRateAsync(
             string baseAssetId, 
             string quotingAssetId,
-            double markupPercent,
+            decimal markupPercent,
             int markupPips,
             IMarkup merchantMarkup)
         {
@@ -116,7 +116,7 @@ namespace Lykke.Service.PayInternal.Services
 
             int pairAccuracy = priceAssetPair?.Accuracy ?? assetPair?.Accuracy ?? baseAsset.Accuracy;
 
-            return CalculatePrice((double) askPrice, (double) bidPrice, pairAccuracy, baseAsset.Accuracy, markupPercent,
+            return CalculatePrice(askPrice, bidPrice, pairAccuracy, baseAsset.Accuracy, markupPercent,
                 markupPips, PriceCalculationMethod.ByBid, merchantMarkup);
         }
 
@@ -141,29 +141,29 @@ namespace Lykke.Service.PayInternal.Services
         }
 
         public decimal CalculatePrice(
-            double askPrice, 
-            double bidPrice,
+            decimal askPrice, 
+            decimal bidPrice,
             int pairAccuracy,
             int assetAccuracy,
-            double markupPercent,
+            decimal markupPercent,
             int markupPips,
             PriceCalculationMethod priceValueType,
             IMarkup merchantMarkup)
         {
             _log.Info($"Rate calculation, askPrice = {askPrice}, bidPrice = {bidPrice}");
 
-            double originalPrice =
+            decimal originalPrice =
                 GetOriginalPriceByMethod(bidPrice, askPrice, priceValueType);
 
-            double spread = GetSpread(originalPrice, merchantMarkup.DeltaSpread);
+            decimal spread = GetSpread(originalPrice, merchantMarkup.DeltaSpread);
 
-            double priceWithSpread = GetPriceWithSpread(originalPrice, spread, priceValueType);
+            decimal priceWithSpread = GetPriceWithSpread(originalPrice, spread, priceValueType);
 
-            double lpFee = GetMerchantFee(priceWithSpread, merchantMarkup.Percent);
+            decimal lpFee = GetMerchantFee(priceWithSpread, merchantMarkup.Percent);
 
-            double lpPips = GetMerchantPips(merchantMarkup.Pips);
+            decimal lpPips = GetMerchantPips(merchantMarkup.Pips);
 
-            double fee = GetMarkupFeePerRequest(priceWithSpread, markupPercent);
+            decimal fee = GetMarkupFeePerRequest(priceWithSpread, markupPercent);
 
             decimal delta = GetDelta(spread, lpFee, fee, lpPips, markupPips, pairAccuracy);
 
@@ -172,7 +172,7 @@ namespace Lykke.Service.PayInternal.Services
             return GetRoundedPrice(result, pairAccuracy, assetAccuracy, priceValueType);
         }
 
-        public double GetOriginalPriceByMethod(double bid, double ask, PriceCalculationMethod method)
+        public decimal GetOriginalPriceByMethod(decimal bid, decimal ask, PriceCalculationMethod method)
         {
             switch (method)
             {
@@ -182,15 +182,15 @@ namespace Lykke.Service.PayInternal.Services
             }
         }
 
-        public double GetSpread(double originalPrice, decimal deltaSpreadPercent)
+        public decimal GetSpread(decimal originalPrice, decimal deltaSpreadPercent)
         {
             if (deltaSpreadPercent < 0)
                 throw new NegativeValueException(deltaSpreadPercent);
 
-            return originalPrice * (double) deltaSpreadPercent / 100;
+            return originalPrice * deltaSpreadPercent / 100;
         }
 
-        public double GetPriceWithSpread(double originalPrice, double spread, PriceCalculationMethod method)
+        public decimal GetPriceWithSpread(decimal originalPrice, decimal spread, PriceCalculationMethod method)
         {
             switch (method)
             {
@@ -200,50 +200,50 @@ namespace Lykke.Service.PayInternal.Services
             }
         }
 
-        public double GetMerchantFee(double originalPrice, decimal merchantPercent)
+        public decimal GetMerchantFee(decimal originalPrice, decimal merchantPercent)
         {
-            var percent = merchantPercent < 0 ? _lpMarkupSettings.Percent : (double) merchantPercent;
+            var percent = merchantPercent < 0 ? _lpMarkupSettings.Percent : merchantPercent;
 
             return originalPrice * percent / 100;
         }
 
-        public double GetMerchantPips(double merchantPips)
+        public decimal GetMerchantPips(decimal merchantPips)
         {
             return merchantPips < 0 ? _lpMarkupSettings.Pips : merchantPips;
         }
 
-        public double GetMarkupFeePerRequest(double originalPrice, double markupPercentPerPerquest)
+        public decimal GetMarkupFeePerRequest(decimal originalPrice, decimal markupPercentPerPerquest)
         {
             if (markupPercentPerPerquest < 0)
-                throw new NegativeValueException((decimal) markupPercentPerPerquest);
+                throw new NegativeValueException(markupPercentPerPerquest);
 
             return originalPrice * markupPercentPerPerquest / 100;
         }
 
         public decimal GetDelta(
-            double spread,
-            double lpFee,
-            double markupFee,
-            double lpPips,
-            double markupPips,
+            decimal spread,
+            decimal lpFee,
+            decimal markupFee,
+            decimal lpPips,
+            decimal markupPips,
             int accuracy)
         {
-            double totalFee = lpFee + markupFee;
+            decimal totalFee = lpFee + markupFee;
 
-            double totalPips = lpPips + markupPips;
+            decimal totalPips = lpPips + markupPips;
 
             return
-                (decimal) spread +
-                (decimal) totalFee +
-                (decimal) totalPips * accuracy.GetMinValue();
+                spread +
+                totalFee +
+                totalPips * accuracy.GetMinValue();
         }
 
-        public decimal GetPriceWithDelta(double originalPrice, decimal delta, PriceCalculationMethod method)
+        public decimal GetPriceWithDelta(decimal originalPrice, decimal delta, PriceCalculationMethod method)
         {
             switch (method)
             {
-                case PriceCalculationMethod.ByBid: return (decimal) originalPrice - delta;
-                case PriceCalculationMethod.ByAsk: return (decimal) originalPrice + delta;
+                case PriceCalculationMethod.ByBid: return originalPrice - delta;
+                case PriceCalculationMethod.ByAsk: return originalPrice + delta;
                 default: throw new UnexpectedPriceCalculationMethodException(method);
             }
         }

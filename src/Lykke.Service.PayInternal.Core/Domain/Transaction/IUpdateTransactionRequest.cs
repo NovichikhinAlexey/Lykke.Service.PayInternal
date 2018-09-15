@@ -6,7 +6,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.Transaction
     {
         string Hash { get; set; }
 
-        double Amount { get; set; }
+        decimal Amount { get; set; }
 
         int Confirmations { get; set; }
 

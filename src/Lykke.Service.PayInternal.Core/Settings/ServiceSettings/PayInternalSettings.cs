@@ -36,8 +36,8 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
 
     public class LpMarkupSettings
     {
-        public double Percent { get; set; }
-        public double Pips { get; set; }
+        public decimal Percent { get; set; }
+        public decimal Pips { get; set; }
     }
 
     public class BlockchainExplorerSettings
