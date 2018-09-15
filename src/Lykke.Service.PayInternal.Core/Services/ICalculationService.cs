@@ -8,26 +8,26 @@ namespace Lykke.Service.PayInternal.Core.Services
     {
         Task<decimal> GetAmountAsync(string baseAssetId, string quotingAssetId, decimal amount, IRequestMarkup requestMarkup, IMarkup merchantMarkup);
 
-        Task<decimal> GetRateAsync(string baseAssetId, string quotingAssetId, double markupPercent, int markupPips, IMarkup merchantMarkup);
+        Task<decimal> GetRateAsync(string baseAssetId, string quotingAssetId, decimal markupPercent, int markupPips, IMarkup merchantMarkup);
 
         Task<AmountFullFillmentStatus> CalculateBtcAmountFullfillmentAsync(decimal plan, decimal fact);
 
-        decimal CalculatePrice(double askPrice, double bidPrice, int pairAccuracy, int assetAccuracy, double markupPercent, int markupPips, PriceCalculationMethod priceValueType, IMarkup merchantMarkup);
+        decimal CalculatePrice(decimal askPrice, decimal bidPrice, int pairAccuracy, int assetAccuracy, decimal markupPercent, int markupPips, PriceCalculationMethod priceValueType, IMarkup merchantMarkup);
 
-        double GetOriginalPriceByMethod(double bid, double ask, PriceCalculationMethod method);
+        decimal GetOriginalPriceByMethod(decimal bid, decimal ask, PriceCalculationMethod method);
 
-        double GetSpread(double originalPrice, decimal deltaSpreadPercent);
+        decimal GetSpread(decimal originalPrice, decimal deltaSpreadPercent);
 
-        double GetPriceWithSpread(double originalPrice, double spread, PriceCalculationMethod method);
+        decimal GetPriceWithSpread(decimal originalPrice, decimal spread, PriceCalculationMethod method);
 
-        double GetMerchantFee(double originalPrice, decimal merchantPercent);
+        decimal GetMerchantFee(decimal originalPrice, decimal merchantPercent);
 
-        double GetMerchantPips(double merchantPips);
+        decimal GetMerchantPips(decimal merchantPips);
 
-        double GetMarkupFeePerRequest(double originalPrice, double markupPercentPerPerquest);
+        decimal GetMarkupFeePerRequest(decimal originalPrice, decimal markupPercentPerPerquest);
 
-        decimal GetDelta(double spread, double lpFee, double markupFee, double lpPips, double markupPips, int accuracy);
+        decimal GetDelta(decimal spread, decimal lpFee, decimal markupFee, decimal lpPips, decimal markupPips, int accuracy);
 
-        decimal GetPriceWithDelta(double originalPrice, decimal delta, PriceCalculationMethod method);
+        decimal GetPriceWithDelta(decimal originalPrice, decimal delta, PriceCalculationMethod method);
     }
 }

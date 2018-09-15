@@ -2,9 +2,9 @@
 {
     public interface IRequestMarkup
     {
-        double FixedFee { get; set; }
+        decimal FixedFee { get; set; }
 
-        double Percent { get; set; }
+        decimal Percent { get; set; }
 
         int Pips { get; set; }
     }

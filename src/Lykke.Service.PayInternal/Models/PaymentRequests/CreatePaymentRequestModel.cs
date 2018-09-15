@@ -52,7 +52,7 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         /// Gets or sets markup percent
         /// </summary>
         [Required]
-        public double MarkupPercent { get; set; }
+        public decimal MarkupPercent { get; set; }
         
         /// <summary>
         /// Gets or sets markup pips
@@ -64,7 +64,7 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         /// Gets or sets markup fee
         /// </summary>
         [Required]
-        public double MarkupFixedFee { get; set; }
+        public decimal MarkupFixedFee { get; set; }
 
         /// <summary>
         /// Gets ot sets the initiator of payment request creation (PublicAPI, InvoiceService)

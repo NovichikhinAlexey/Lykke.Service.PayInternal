@@ -23,7 +23,7 @@ namespace Lykke.Service.PayInternal.Services.Tests
         private ICalculationService _service;
 
         private const int BtcAccuracy = 8;
-        private const double MerchantPercent = 10;
+        private const decimal MerchantPercent = 10;
         private const int MerchantPips = 20;
 
         [TestInitialize]
@@ -196,10 +196,10 @@ namespace Lykke.Service.PayInternal.Services.Tests
 
             decimal chfAmount = 10;
 
-            var rate = _service.CalculatePrice(assetPairRate.AskPrice, assetPairRate.BidPrice, assetPair.Accuracy,
+            var rate = _service.CalculatePrice((decimal) assetPairRate.AskPrice, (decimal) assetPairRate.BidPrice, assetPair.Accuracy,
                 BtcAccuracy, requestMarkup.Percent, requestMarkup.Pips, PriceCalculationMethod.ByBid, merchantMarkup);
 
-            var btcAmount = (chfAmount + (decimal) requestMarkup.FixedFee + merchantMarkup.FixedFee) / rate;
+            var btcAmount = (chfAmount + requestMarkup.FixedFee + merchantMarkup.FixedFee) / rate;
 
             Assert.IsTrue(Math.Abs(btcAmount - (decimal) 0.00374839) < BtcAccuracy.GetMinValue());
         }
@@ -207,84 +207,84 @@ namespace Lykke.Service.PayInternal.Services.Tests
         [TestMethod]
         public void GetBasePriceByMethod_AskForBid_ReturnsBid()
         {
-            const double bid = double.MinValue;
-            const double ask = double.MaxValue;
+            const decimal bid = decimal.MinValue;
+            const decimal ask = decimal.MaxValue;
 
-            double calculcated = _service.GetOriginalPriceByMethod(bid, ask, PriceCalculationMethod.ByBid);
+            decimal calculated = _service.GetOriginalPriceByMethod(bid, ask, PriceCalculationMethod.ByBid);
 
-            Assert.AreEqual(bid, calculcated);
+            Assert.AreEqual(bid, calculated);
         }
 
         [TestMethod]
         public void GetOriginalPriceByMethod_AskForAsk_ReturnsAsk()
         {
-            const double bid = double.MinValue;
-            const double ask = double.MaxValue;
+            const decimal bid = decimal.MinValue;
+            const decimal ask = decimal.MaxValue;
 
-            double calculcated = _service.GetOriginalPriceByMethod(bid, ask, PriceCalculationMethod.ByAsk);
+            decimal calculated = _service.GetOriginalPriceByMethod(bid, ask, PriceCalculationMethod.ByAsk);
 
-            Assert.AreEqual(ask, calculcated);
+            Assert.AreEqual(ask, calculated);
         }
 
 
         [TestMethod]
         public void GetSpread()
         {
-            Assert.AreEqual(_service.GetSpread(100d, 1m), 1d);
-            Assert.AreEqual(_service.GetSpread(100d, 100m), 100d);
-            Assert.AreEqual(_service.GetSpread(100d, 120m), 120d);
-            Assert.AreEqual(_service.GetSpread(0d, It.IsAny<decimal>()), 0d);
-            Assert.AreEqual(_service.GetSpread(It.IsAny<double>(), 0m), 0d);
+            Assert.AreEqual(_service.GetSpread(100m, 1m), 1m);
+            Assert.AreEqual(_service.GetSpread(100m, 100m), 100m);
+            Assert.AreEqual(_service.GetSpread(100m, 120m), 120m);
+            Assert.AreEqual(_service.GetSpread(0m, It.IsAny<decimal>()), 0m);
+            Assert.AreEqual(_service.GetSpread(It.IsAny<decimal>(), 0m), 0m);
         }
 
         [TestMethod]
         [ExpectedException(typeof(NegativeValueException))]
         public void GetSpread_PercentLessZero_Exception()
         {
-            _service.GetSpread(It.IsAny<double>(), -1m);
+            _service.GetSpread(It.IsAny<decimal>(), -1m);
         }
 
         [TestMethod]
         public void GetPriceWithSpread_CalculateForAsk_CorrectValue()
         {
-            double calculated = _service.GetPriceWithSpread(100d, 1d, PriceCalculationMethod.ByAsk);
+            decimal calculated = _service.GetPriceWithSpread(100m, 1m, PriceCalculationMethod.ByAsk);
 
-            Assert.AreEqual(calculated, 101d);
+            Assert.AreEqual(calculated, 101m);
         }
 
         [TestMethod]
         public void GetPriceWithSpread_CalculateForBid_CorrectValue()
         {
-            double calculated = _service.GetPriceWithSpread(100d, 1d, PriceCalculationMethod.ByBid);
+            decimal calculated = _service.GetPriceWithSpread(100m, 1m, PriceCalculationMethod.ByBid);
 
-            Assert.AreEqual(calculated, 99d);
+            Assert.AreEqual(calculated, 99m);
         }
 
         [TestMethod]
         public void GetMerchantFee_PositivePercent_ProvidedValueUsed()
         {
-            const double originalValue = 100d;
+            const decimal originalValue = 100m;
 
             const decimal merchantPercent = 1m;
 
-            const double merchantPercentFromSettings = MerchantPercent;
+            const decimal merchantPercentFromSettings = MerchantPercent;
 
-            double fee = _service.GetMerchantFee(originalValue, merchantPercent);
+            decimal fee = _service.GetMerchantFee(originalValue, merchantPercent);
 
             Assert.AreNotEqual(merchantPercent, merchantPercentFromSettings);
-            Assert.AreEqual(fee, originalValue * (double) merchantPercent / 100);
+            Assert.AreEqual(fee, originalValue * merchantPercent / 100);
         }
 
         [TestMethod]
         public void GetMerchantFee_NegativePercent_ValueFromSettingsUsed()
         {
-            const double originalValue = 100d;
+            const decimal originalValue = 100m;
 
             const decimal merchantPercent = -1m;
 
-            const double merchantPercentFromSettings = MerchantPercent;
+            const decimal merchantPercentFromSettings = MerchantPercent;
 
-            double fee = _service.GetMerchantFee(originalValue, merchantPercent);
+            decimal fee = _service.GetMerchantFee(originalValue, merchantPercent);
 
             Assert.AreNotEqual(merchantPercent, merchantPercentFromSettings);
             Assert.AreEqual(fee, originalValue * merchantPercentFromSettings / 100);
@@ -293,22 +293,22 @@ namespace Lykke.Service.PayInternal.Services.Tests
         [TestMethod]
         public void GetMerchantFee_ZeroPercent_ProvidedValueUsed()
         {
-            const double originalValue = 100d;
+            const decimal originalValue = 100m;
 
             const decimal merchantPercent = 0m;
 
-            const double merchantPercentFromSettings = MerchantPercent;
+            const decimal merchantPercentFromSettings = MerchantPercent;
 
-            double fee = _service.GetMerchantFee(originalValue, merchantPercent);
+            decimal fee = _service.GetMerchantFee(originalValue, merchantPercent);
 
             Assert.AreNotEqual(merchantPercent, merchantPercentFromSettings);
-            Assert.AreEqual(fee, 0d);
+            Assert.AreEqual(fee, 0m);
         }
 
         [TestMethod]
         public void GetMerchantPips_PositiveValue_ProvidedValueUsed()
         {
-            const double merchantPips = 1d;
+            const decimal merchantPips = 1m;
 
             var pips = _service.GetMerchantPips(merchantPips);
 
@@ -318,9 +318,9 @@ namespace Lykke.Service.PayInternal.Services.Tests
         [TestMethod]
         public void GetMerchantPips_NegativeValue_ValueFromSettingsUsed()
         {
-            const double merchantPips = -1d;
+            const decimal merchantPips = -1m;
 
-            const double merchantPipsFromSettings = MerchantPips;
+            const decimal merchantPipsFromSettings = MerchantPips;
 
             var pips = _service.GetMerchantPips(merchantPips);
 
@@ -331,9 +331,9 @@ namespace Lykke.Service.PayInternal.Services.Tests
         [TestMethod]
         public void GetMerchantPips_ZeroValue_ProvidedValueUsed()
         {
-            const double merchantPips = 0d;
+            const decimal merchantPips = 0m;
 
-            const double merchantPipsFromSettings = MerchantPips;
+            const decimal merchantPipsFromSettings = MerchantPips;
 
             var pips = _service.GetMerchantPips(merchantPips);
 
@@ -344,94 +344,94 @@ namespace Lykke.Service.PayInternal.Services.Tests
         [TestMethod]
         public void GetMarkupFeePerRequest()
         {
-            Assert.AreEqual(_service.GetMarkupFeePerRequest(100d, 10d), 10d);
-            Assert.AreEqual(_service.GetMarkupFeePerRequest(0d, It.IsAny<double>()), 0d);
-            Assert.AreEqual(_service.GetMarkupFeePerRequest(It.IsAny<double>(), 0d), 0d);
-            Assert.AreEqual(_service.GetMarkupFeePerRequest(100d, 120d), 120d);
+            Assert.AreEqual(_service.GetMarkupFeePerRequest(100m, 10m), 10m);
+            Assert.AreEqual(_service.GetMarkupFeePerRequest(0m, It.IsAny<decimal>()), 0m);
+            Assert.AreEqual(_service.GetMarkupFeePerRequest(It.IsAny<decimal>(), 0m), 0m);
+            Assert.AreEqual(_service.GetMarkupFeePerRequest(100m, 120m), 120m);
         }
 
         [TestMethod]
         [ExpectedException(typeof(NegativeValueException))]
         public void GetMarkupFeePerRequest_PercentLessZero_Exception()
         {
-            _service.GetMarkupFeePerRequest(It.IsAny<double>(), -1d);
+            _service.GetMarkupFeePerRequest(It.IsAny<decimal>(), -1m);
         }
 
         [TestMethod]
         public void GetDelta()
         {
-            const double spread = 100d;
+            const decimal spread = 100m;
 
-            const double lpFee = 10d;
+            const decimal lpFee = 10m;
 
-            const double markupFee = 20d;
+            const decimal markupFee = 20m;
 
-            const double lpPips = 30d;
+            const decimal lpPips = 30m;
 
-            const double markupPips = 40d;
+            const decimal markupPips = 40m;
 
             const int accuracy = BtcAccuracy;
 
             decimal calculated = _service.GetDelta(spread, lpFee, markupFee, lpPips, markupPips, accuracy);
 
-            decimal delta = (decimal) (spread + lpFee + markupFee) + (decimal) (lpPips + markupPips) * accuracy.GetMinValue();
+            decimal delta = spread + lpFee + markupFee + (lpPips + markupPips) * accuracy.GetMinValue();
 
             Assert.AreEqual(calculated, delta);
-            Assert.IsTrue(calculated > (decimal) spread);
-            Assert.IsTrue(calculated > (decimal) lpFee);
-            Assert.IsTrue(calculated > (decimal) markupFee);
+            Assert.IsTrue(calculated > spread);
+            Assert.IsTrue(calculated > lpFee);
+            Assert.IsTrue(calculated > markupFee);
         }
 
         [TestMethod]
         public void GetPriceWithDelta_CalculateForAsk_CorrectValue()
         {
-            decimal calculated = _service.GetPriceWithDelta(100d, 10, PriceCalculationMethod.ByAsk);
+            decimal calculated = _service.GetPriceWithDelta(100m, 10m, PriceCalculationMethod.ByAsk);
 
-            Assert.AreEqual(calculated, 110);
+            Assert.AreEqual(calculated, 110m);
         }
 
         [TestMethod]
         public void GetPriceWithDelta_CalculateForBid_CorrectValue()
         {
-            decimal calculated = _service.GetPriceWithDelta(100d, 20, PriceCalculationMethod.ByBid);
+            decimal calculated = _service.GetPriceWithDelta(100m, 20m, PriceCalculationMethod.ByBid);
 
-            Assert.AreEqual(calculated, 80);
+            Assert.AreEqual(calculated, 80m);
         }
 
         [TestMethod]
         public void GetPriceWithDelta_NegativeOriginalPriceByAsk_CorrectValue()
         {
-            decimal calculated = _service.GetPriceWithDelta(-100d, 20, PriceCalculationMethod.ByAsk);
+            decimal calculated = _service.GetPriceWithDelta(-100m, 20m, PriceCalculationMethod.ByAsk);
 
-            Assert.AreEqual(calculated, -80);
+            Assert.AreEqual(calculated, -80m);
         }
 
         [TestMethod]
         public void GetPriceWithDelta_NegativeOriginalPriceByBid_CorrectValue()
         {
-            decimal calculated = _service.GetPriceWithDelta(-100d, 30, PriceCalculationMethod.ByBid);
+            decimal calculated = _service.GetPriceWithDelta(-100m, 30m, PriceCalculationMethod.ByBid);
 
-            Assert.AreEqual(calculated, -130);
+            Assert.AreEqual(calculated, -130m);
         }
 
         [TestMethod]
         public void GetPriceWithDelta_ZeroOriginalPrice_CorrectValue()
         {
-            decimal calculated1 = _service.GetPriceWithDelta(0, 30, PriceCalculationMethod.ByBid);
-            decimal calculated2 = _service.GetPriceWithDelta(0, 40, PriceCalculationMethod.ByAsk);
+            decimal calculated1 = _service.GetPriceWithDelta(0m, 30m, PriceCalculationMethod.ByBid);
+            decimal calculated2 = _service.GetPriceWithDelta(0m, 40m, PriceCalculationMethod.ByAsk);
 
-            Assert.AreEqual(calculated1, -30);
-            Assert.AreEqual(calculated2, 40);
+            Assert.AreEqual(calculated1, -30m);
+            Assert.AreEqual(calculated2, 40m);
         }
 
         [TestMethod]
         public void GetPriceWithDelta_ZeroDelta_CorrectValue()
         {
-            decimal calculated1 = _service.GetPriceWithDelta(100d, 0, PriceCalculationMethod.ByBid);
-            decimal calculated2 = _service.GetPriceWithDelta(200d, 0, PriceCalculationMethod.ByAsk);
+            decimal calculated1 = _service.GetPriceWithDelta(100m, 0m, PriceCalculationMethod.ByBid);
+            decimal calculated2 = _service.GetPriceWithDelta(200m, 0m, PriceCalculationMethod.ByAsk);
 
-            Assert.AreEqual(calculated1, 100);
-            Assert.AreEqual(calculated2, 200);
+            Assert.AreEqual(calculated1, 100m);
+            Assert.AreEqual(calculated2, 200m);
         }
     }
 }

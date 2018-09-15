@@ -49,7 +49,7 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         /// <summary>
         /// Gets or sets the markup percent.
         /// </summary>
-        public double MarkupPercent { get; set; }
+        public decimal MarkupPercent { get; set; }
         
         /// <summary>
         /// Gets or sets the markup pips.
@@ -59,7 +59,7 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         /// <summary>
         /// Gets or sets markup fixed fee
         /// </summary>
-        public double MarkupFixedFee { get; set; }
+        public decimal MarkupFixedFee { get; set; }
         
         /// <summary>
         /// Gets or sets the wallet address.
@@ -74,7 +74,7 @@ namespace Lykke.Service.PayInternal.Client.Models.PaymentRequest
         /// <summary>
         /// Gets or sets the paid amount.
         /// </summary>
-        public double PaidAmount { get; set; }
+        public decimal PaidAmount { get; set; }
         
         /// <summary>
         /// Gets or sets the paid date.
