@@ -4,8 +4,8 @@ namespace Lykke.Service.PayInternal.Services.Domain
 {
     public class RequestMarkup : IRequestMarkup
     {
-        public double FixedFee { get; set; }
-        public double Percent { get; set; }
+        public decimal FixedFee { get; set; }
+        public decimal Percent { get; set; }
         public int Pips { get; set; }
     }
 }
