@@ -154,6 +154,19 @@ namespace Lykke.Service.PayInternal.Services
 
                 throw;
             }
+            catch (ZeroRateException e)
+            {
+                _log.ErrorWithDetails(e, new
+                {
+                    lykkePaymentAssetId,
+                    lykkeSettlementAssetId,
+                    requestMarkup.Percent,
+                    requestMarkup.Pips,
+                    merchantMarkup
+                });
+
+                throw;
+            }
 
             return (assetPairId, paymentAmount, rate);
         }
