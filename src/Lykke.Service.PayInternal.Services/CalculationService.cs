@@ -42,7 +42,10 @@ namespace Lykke.Service.PayInternal.Services
             _log.Info("Rate calculation",
                 $"Calculation details: {new {baseAssetId, quotingAssetId, amount, requestMarkup, merchantMarkup, rate}.ToJson()}");
 
-            decimal result = (amount + (decimal) requestMarkup.FixedFee + merchantMarkup.FixedFee) / rate;
+            if (rate == decimal.Zero)
+                throw new ZeroRateException();
+
+            decimal result = (amount + requestMarkup.FixedFee + merchantMarkup.FixedFee) / rate;
 
             Asset baseAsset = await _assetsLocalCache.GetAssetByIdAsync(baseAssetId);
 
@@ -266,7 +269,7 @@ namespace Lykke.Service.PayInternal.Services
 
             decimal rounded = Math.Round(result, assetAccuracy);
 
-            int mult = (int) Math.Pow(10, assetAccuracy);
+            long mult = (long) Math.Pow(10, assetAccuracy);
 
             decimal ceiled = Math.Ceiling(rounded * mult) / mult;
 
