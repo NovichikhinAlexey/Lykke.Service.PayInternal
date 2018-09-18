@@ -158,10 +158,13 @@ PayInvoiceConfirmationPublisher:
 PayVolatilityServiceClient:
     ServiceUrl:
         settings-key: PayVolatilityServiceUrl
-        types: [Tag]
+        types: [ Tag ]
     CachePeriod:
         settings-key: PayVolatilityCachePeriod
-        types: [Tag]
+        types: [ Tag ]
+    AssetPairs: 
+        settings-key: PayVolatilityService-AssetPairs
+        types: [ JsonArray, Tag ]
 
 PayMerchantServiceClient:
     ServiceUrl:
