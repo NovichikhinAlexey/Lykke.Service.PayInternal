@@ -25,9 +25,7 @@ namespace Lykke.Service.PayInternal.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<SilentChaosKitty>()
-                    .As<IChaosKitty>()
-                    .SingleInstance();
+            RegisterChaosKitty(builder);
 
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>().SingleInstance();
 
@@ -81,6 +79,23 @@ namespace Lykke.Service.PayInternal.Modules
         private void RegisterComponents(ContainerBuilder builder)
         {
             builder.RegisterType<SettlementProjection>();
+        }
+
+        private void RegisterChaosKitty(ContainerBuilder builder)
+        {
+            if (_appSettings.CurrentValue.ChaosKitty != null)
+            {
+                builder.RegisterType<ChaosKitty>()
+                    .WithParameter(TypedParameter.From(_appSettings.CurrentValue.ChaosKitty.StateOfChaos))
+                    .As<IChaosKitty>()
+                    .SingleInstance();
+            }
+            else
+            {
+                builder.RegisterType<SilentChaosKitty>()
+                    .As<IChaosKitty>()
+                    .SingleInstance();
+            }
         }
     }
 }
