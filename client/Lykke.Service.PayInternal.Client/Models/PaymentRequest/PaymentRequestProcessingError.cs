@@ -43,6 +43,41 @@
         /// <summary>
         /// Payment was made after the payment request's due date
         /// </summary>
-        LatePaid
+        LatePaid,
+
+        /// <summary>
+        /// Unknown error was occured on settlement.
+        /// </summary>
+        SettlementUnknown,
+
+        /// <summary>
+        /// Trading bot balance is less then required for settlement exchange.
+        /// </summary>
+        SettlementLowBalanceForExchange,
+
+        /// <summary>
+        /// Trading bot balance is less then required for settlement transfer to merchant.
+        /// </summary>
+        SettlementLowBalanceForTransferToMerchant,
+
+        /// <summary>
+        /// Payment request's merchant is not found.
+        /// </summary>
+        SettlementMerchantNotFound,
+
+        /// <summary>
+        /// There is no enoung liquidity on Lykke Exchange for settlement exchange.
+        /// </summary>
+        SettlementNoLiquidityForExchange,
+
+        /// <summary>
+        /// Market order leads to negative spread for settlement exchange.
+        /// </summary>
+        SettlementExchangeLeadToNegativeSpread,
+
+        /// <summary>
+        /// Can not retrive transaction details about transfer to settlement trading bot.
+        /// </summary>
+        SettlementNoTransactionDetails,
     }
 }

@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
+using Lykke.Common.Chaos;
 using Lykke.Service.PayHistory.Client;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Core.Settings.SlackNotifications;
 using Lykke.Service.PayMerchant.Client;
+using Lykke.Service.PaySettlement.Contracts.Settings;
 using Lykke.Service.PayVolatility.Client;
 using Lykke.SettingsReader.Attributes;
 using HistoryRabbitMqPublisherSettings = Lykke.Service.PayHistory.Client.Publisher.RabbitMqPublisherSettings;
@@ -26,6 +28,10 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public ExtendedPayVolatilityServiceClientSettings PayVolatilityServiceClient { get; set; }
 		public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
         public PayMerchantServiceClientSettings PayMerchantServiceClient { get; set; }
+        public PaySettlementCqrsSettings PaySettlementCqrs { get; set; }
+
+        [Optional]
+        public ChaosSettings ChaosKitty { get; set; }
     }
 
     public class BitcoinCoreSettings

@@ -192,6 +192,17 @@ namespace Lykke.Service.PayInternal.Services
                 .ExecuteAsync(() => TryCheckoutAsync(paymentRequest, force));
         }
 
+        public async Task UpdateStatusAsync(string merchanttId, string paymentRequestId, 
+            PaymentRequestStatusInfo statusInfo = null)
+        {
+            IPaymentRequest paymentRequest = await _paymentRequestRepository.GetAsync(merchanttId, paymentRequestId);
+
+            if (paymentRequest == null)
+                throw new PaymentRequestNotFoundException(merchanttId, paymentRequestId);
+
+            await UpdateStatusAsync(paymentRequest, statusInfo);
+        }
+
         public async Task UpdateStatusAsync(string walletAddress, PaymentRequestStatusInfo statusInfo = null)
         {
             IPaymentRequest paymentRequest = await _paymentRequestRepository.FindAsync(walletAddress);
@@ -199,8 +210,13 @@ namespace Lykke.Service.PayInternal.Services
             if (paymentRequest == null)
                 throw new PaymentRequestNotFoundException(walletAddress);
 
+            await UpdateStatusAsync(paymentRequest, statusInfo);
+        }
+
+        private async Task UpdateStatusAsync(IPaymentRequest paymentRequest, PaymentRequestStatusInfo statusInfo = null)
+        {
             PaymentRequestStatusInfo newStatusInfo =
-                statusInfo ?? await _paymentRequestStatusResolver.GetStatus(walletAddress);
+                statusInfo ?? await _paymentRequestStatusResolver.GetStatus(paymentRequest.WalletAddress);
 
             PaymentRequestStatus previousStatus = paymentRequest.Status;
             PaymentRequestProcessingError previousProcessingError = paymentRequest.ProcessingError;
@@ -208,7 +224,7 @@ namespace Lykke.Service.PayInternal.Services
             paymentRequest.Status = newStatusInfo.Status;
             paymentRequest.PaidDate = newStatusInfo.Date;
             paymentRequest.PaidAmount = newStatusInfo.Amount;
-            paymentRequest.ProcessingError = paymentRequest.Status == PaymentRequestStatus.Error
+            paymentRequest.ProcessingError = (paymentRequest.Status == PaymentRequestStatus.Error || paymentRequest.Status == PaymentRequestStatus.SettlementError)
                 ? newStatusInfo.ProcessingError
                 : PaymentRequestProcessingError.None;
 
