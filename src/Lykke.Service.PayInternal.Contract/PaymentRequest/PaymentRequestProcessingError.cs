@@ -79,5 +79,10 @@
         /// Can not retrive transaction details about transfer to settlement trading bot.
         /// </summary>
         SettlementNoTransactionDetails,
+
+        /// <summary>
+        /// Amount or paid amount is to small for transferring.
+        /// </summary>
+        SettlementLowAmount,
     }
 }
