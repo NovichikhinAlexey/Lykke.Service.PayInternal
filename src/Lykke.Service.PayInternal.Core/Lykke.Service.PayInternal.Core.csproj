@@ -17,7 +17,7 @@
     <PackageReference Include="Lykke.Service.PayCallback.Client" Version="1.0.12" />
     <PackageReference Include="Lykke.Service.PayHistory.Client" Version="1.0.12" />
     <PackageReference Include="Lykke.Service.PayMerchant.Client" Version="1.0.6" />
-    <PackageReference Include="Lykke.Service.PaySettlement.Contracts" Version="1.0.7" />
+    <PackageReference Include="Lykke.Service.PaySettlement.Contracts" Version="1.0.8" />
     <PackageReference Include="Lykke.Service.PayTransferValidation.Client" Version="1.0.3" />
     <PackageReference Include="Lykke.Service.PayVolatility.Client" Version="1.0.5" />
     <PackageReference Include="Lykke.SettingsReader" Version="4.0.1" />

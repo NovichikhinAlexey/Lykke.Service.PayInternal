@@ -42,7 +42,5 @@ namespace Lykke.Service.PayInternal.Models.PaymentRequests
         public DateTime Timestamp { get; set; }
 
         public string Initiator { get; set; }
-
-        public string SettlementErrorDescription { get; set; }
     }
 }

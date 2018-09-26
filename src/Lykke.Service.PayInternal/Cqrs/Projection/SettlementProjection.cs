@@ -2,6 +2,7 @@
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PaySettlement.Contracts.Events;
 using System.Threading.Tasks;
+using AutoMapper;
 
 namespace Lykke.Service.PayInternal.Cqrs.Projection
 {
@@ -38,7 +39,7 @@ namespace Lykke.Service.PayInternal.Cqrs.Projection
                 new PaymentRequestStatusInfo()
                 {
                     Status = PaymentRequestStatus.SettlementError,
-                    SettlementErrorDescription = e.ErrorDescription
+                    ProcessingError = Mapper.Map<PaymentRequestProcessingError>(e.Error)
                 });
         }
     }
