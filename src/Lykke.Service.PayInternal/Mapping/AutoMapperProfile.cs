@@ -27,6 +27,7 @@ using Lykke.Service.PayInternal.Models.Transactions.Ethereum;
 using Lykke.Service.PayInternal.Models.Transfers;
 using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.Service.PayInternal.Models.Cashout;
+using Lykke.Service.PaySettlement.Contracts;
 
 namespace Lykke.Service.PayInternal.Mapping
 {
@@ -122,13 +123,15 @@ namespace Lykke.Service.PayInternal.Mapping
 
             CreateMap<CashoutResult, CashoutResponse>(MemberList.Destination)
                 .ForMember(dest => dest.AssetId,
-                    opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.AssetId));
+                    opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.AssetId));            
 
             CreateEthereumPaymentMaps();
 
             PaymentRequestApiModels();
 
             PaymentRequestMessages();
+
+            CreateSettlementMaps();
         }
 
         private void PaymentRequestApiModels()
@@ -147,8 +150,7 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.ProcessingError, opt => opt.Ignore())
                 .ForMember(dest => dest.Timestamp, opt => opt.Ignore())
                 .ForMember(dest => dest.OrderId, opt => opt.Ignore())
-                .ForMember(dest => dest.ExternalOrderId, opt => opt.MapFrom(src => src.OrderId))
-                .ForMember(dest => dest.SettlementErrorDescription, opt => opt.Ignore());
+                .ForMember(dest => dest.ExternalOrderId, opt => opt.MapFrom(src => src.OrderId));
 
             CreateMap<IPaymentRequest, PaymentRequestDetailsModel>(MemberList.Source)
                 .ForSourceMember(src => src.OrderId, opt => opt.Ignore())
@@ -203,8 +205,7 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.WalletAddress,
                     opt => opt.ResolveUsing<PaymentRequestBcnWalletAddressValueResolver>())
                 .ForSourceMember(src => src.ExternalOrderId, opt => opt.Ignore())
-                .ForSourceMember(src => src.Initiator, opt => opt.Ignore())
-                .ForSourceMember(src => src.SettlementErrorDescription, opt => opt.Ignore());
+                .ForSourceMember(src => src.Initiator, opt => opt.Ignore());
 
             CreateMap<IOrder, PaymentRequestOrder>(MemberList.Source)
                 .ForSourceMember(src => src.MerchantId, opt => opt.Ignore())
@@ -247,6 +248,34 @@ namespace Lykke.Service.PayInternal.Mapping
             CreateMap<NotEnoughFundsOutboundTxRequest, NotEnoughFundsOutTxCommand>(MemberList.Destination);
 
             CreateMap<FailOutboundTxRequest, FailOutTxCommand>(MemberList.Destination);
+        }
+
+        private void CreateSettlementMaps()
+        {
+            CreateMap<SettlementProcessingError, Core.Domain.PaymentRequests.PaymentRequestProcessingError>()
+                .ConvertUsing(value => {
+                    switch (value)
+                    {
+                        case SettlementProcessingError.None:
+                            return Core.Domain.PaymentRequests.PaymentRequestProcessingError.None;
+                        case SettlementProcessingError.Unknown:
+                            return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementUnknown;
+                        case SettlementProcessingError.LowBalanceForExchange:
+                            return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementLowBalanceForExchange;
+                        case SettlementProcessingError.LowBalanceForTransferToMerchant:
+                            return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementLowBalanceForTransferToMerchant;
+                        case SettlementProcessingError.MerchantNotFound:
+                            return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementMerchantNotFound;
+                        case SettlementProcessingError.NoLiquidityForExchange:
+                            return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementNoLiquidityForExchange;
+                        case SettlementProcessingError.ExchangeLeadToNegativeSpread:
+                            return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementExchangeLeadToNegativeSpread;
+                        case SettlementProcessingError.NoTransactionDetails:
+                            return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementNoTransactionDetails;
+                        default:
+                            return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementUnknown;
+                    }
+                });
         }
     }
 }
