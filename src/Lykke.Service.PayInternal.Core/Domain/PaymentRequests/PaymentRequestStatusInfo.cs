@@ -8,7 +8,7 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
 
         public PaymentRequestProcessingError ProcessingError { get; set; }
 
-        public decimal Amount { get; set; }
+        public decimal? Amount { get; set; }
 
         public DateTime? Date { get; set; }
 
