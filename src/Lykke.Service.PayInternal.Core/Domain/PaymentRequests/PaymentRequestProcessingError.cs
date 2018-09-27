@@ -84,5 +84,10 @@
         /// Amount or paid amount is to small for transferring.
         /// </summary>
         SettlementLowAmount,
+
+        /// <summary>
+        /// Exchnage amount (after transfer) is to small for exchanging.
+        /// </summary>
+        SettlementLowExchangeAmount,
     }
 }
