@@ -272,6 +272,10 @@ namespace Lykke.Service.PayInternal.Mapping
                             return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementExchangeLeadToNegativeSpread;
                         case SettlementProcessingError.NoTransactionDetails:
                             return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementNoTransactionDetails;
+                        case SettlementProcessingError.LowAmount:
+                            return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementLowAmount;
+                        case SettlementProcessingError.LowExchangeAmount:
+                            return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementLowExchangeAmount;
                         default:
                             return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementUnknown;
                     }
