@@ -14,6 +14,7 @@ using Lykke.Service.PayInternal.Core.Domain.Transaction;
 using Lykke.Service.PayInternal.Core.Domain.Transaction.Ethereum.Common;
 using Lykke.Service.PayInternal.Core.Domain.Transfer;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
+using Lykke.Service.PayInternal.Cqrs.Commands;
 using Lykke.Service.PayInternal.Models;
 using Lykke.Service.PayInternal.Models.AssetRates;
 using Lykke.Service.PayInternal.Models.Assets;
@@ -28,6 +29,7 @@ using Lykke.Service.PayInternal.Models.Transfers;
 using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.Service.PayInternal.Models.Cashout;
 using Lykke.Service.PaySettlement.Contracts;
+using Lykke.Service.PaySettlement.Contracts.Events;
 
 namespace Lykke.Service.PayInternal.Mapping
 {
@@ -280,6 +282,11 @@ namespace Lykke.Service.PayInternal.Mapping
                             return Core.Domain.PaymentRequests.PaymentRequestProcessingError.SettlementUnknown;
                     }
                 });
+
+            CreateMap<SettlementTransferToMarketQueuedEvent, SettlementInProgressCommand>();
+            CreateMap<SettlementTransferringToMarketEvent, SettlementTransferringToMarketCommand>();
+            CreateMap<SettlementTransferredToMerchantEvent, SettledCommand>();
+            CreateMap<SettlementErrorEvent, SettlementErrorCommand>();
         }
     }
 }
