@@ -49,8 +49,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (txs.Any(x => x.IsSettlement()))
             {
-                //todo: better to have separate status for settlement
-                paymentStatusInfo = await GetStatusForPayment(paymentRequest);
+                paymentStatusInfo = GetStatusForSettlement(paymentRequest, txs);
             } else if (txs.Any(x => x.IsRefund()))
             {
                 paymentStatusInfo = await GetStatusForRefund(paymentRequest);
@@ -64,10 +63,43 @@ namespace Lykke.Service.PayInternal.Services
             return paymentStatusInfo;
         }
 
-        [SuppressMessage("ReSharper", "UnusedParameter.Local")]
-        private Task<PaymentRequestStatusInfo> GetStatusForSettlement(IPaymentRequest paymentRequest)
+        private PaymentRequestStatusInfo GetStatusForSettlement(IPaymentRequest paymentRequest,
+            IReadOnlyList<IPaymentRequestTransaction> txs)
         {
-            throw new TransactionTypeNotSupportedException();
+            var settlementTransactions = txs.Where(tx => tx.IsSettlement()).ToArray();
+
+            //Transactions from PaySettlement service
+            if (settlementTransactions.All(tx =>
+                tx.IdentityType == TransactionIdentityType.Specific && tx.Confirmed(_transactionConfirmationCount)))
+            {
+                return new PaymentRequestStatusInfo() {Status = PaymentRequestStatus.Settled};
+            }
+
+            //Auto settlement transactions from PayInternal service (Must be moved to PaySettlement)
+            if (settlementTransactions.All(tx => tx.Confirmed(_transactionConfirmationCount)))
+            {
+                return new PaymentRequestStatusInfo() {Status = PaymentRequestStatus.Settled};
+            }
+
+            var settlementErrors = new[]
+            {
+                PaymentRequestProcessingError.SettlementUnknown,
+                PaymentRequestProcessingError.SettlementLowBalanceForExchange,
+                PaymentRequestProcessingError.SettlementLowBalanceForTransferToMerchant,
+                PaymentRequestProcessingError.SettlementMerchantNotFound,
+                PaymentRequestProcessingError.SettlementNoLiquidityForExchange,
+                PaymentRequestProcessingError.SettlementExchangeLeadToNegativeSpread,
+                PaymentRequestProcessingError.SettlementNoTransactionDetails,
+                PaymentRequestProcessingError.SettlementLowAmount,
+                PaymentRequestProcessingError.SettlementLowExchangeAmount
+            };
+
+            if (settlementErrors.Contains(paymentRequest.ProcessingError))
+            {
+                return new PaymentRequestStatusInfo() {Status = PaymentRequestStatus.SettlementError};
+            }
+
+            return new PaymentRequestStatusInfo() { Status = PaymentRequestStatus.SettlementInProgress };
         }
 
         private async Task<PaymentRequestStatusInfo> GetStatusForRefund(IPaymentRequest paymentRequest)
