@@ -14,6 +14,7 @@ using Lykke.Service.PayInternal.Client.Models.Wallets;
 using Lykke.Service.PayInternal.Client.Models.File;
 using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
 using Lykke.Service.PayInternal.Client.Models.Transactions.Ethereum;
+using Lykke.Service.PayInternal.Client.Models.Validation;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -451,5 +452,12 @@ namespace Lykke.Service.PayInternal.Client
         /// <param name="request">Cashout request details</param>
         /// <returns>Cashout execution result</returns>
         Task<CashoutResponse> CashoutAsync(CashoutRequest request);
+
+        /// <summary>
+        /// Validates money transfer from temporary deposit addresses
+        /// </summary>
+        /// <param name="request">Validation request details</param>
+        /// <returns></returns>
+        Task<ValidateDepositTransferResult> ValidateDepositTransferAsync(ValidateDepositTransferRequest request);
     }
 }
