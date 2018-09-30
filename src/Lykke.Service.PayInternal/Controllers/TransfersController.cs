@@ -17,17 +17,20 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
-    [Route("api")]
+    [Route("api/transfers")]
     public class TransfersController : Controller
     {
         private readonly IBtcTransferService _btcTransferService;
+        private readonly IDepositValidationService _depositValidationService;
         private readonly ILog _log;
 
         public TransfersController(
             [NotNull] IBtcTransferService btcTransferService, 
-            [NotNull] ILogFactory logFactory)
+            [NotNull] ILogFactory logFactory, 
+            [NotNull] IDepositValidationService depositValidationService)
         {
             _btcTransferService = btcTransferService ?? throw new ArgumentNullException(nameof(btcTransferService));
+            _depositValidationService = depositValidationService ?? throw new ArgumentNullException(nameof(depositValidationService));
             _log = logFactory.CreateLog(this);
         }
 
@@ -37,7 +40,7 @@ namespace Lykke.Service.PayInternal.Controllers
         /// <param name="request"></param>
         /// <returns>List of transaction ids</returns>
         [HttpPost]
-        [Route("transfers/BtcFreeTransfer")]
+        [Route("btcFreeTransfer")]
         [SwaggerOperation("BtcFreeTransfer")]
         [ProducesResponseType(typeof(BtcTransferResponse), (int) HttpStatusCode.OK)]
         [ProducesResponseType(typeof(BtcTransferResponse), (int) HttpStatusCode.BadRequest)]
@@ -55,6 +58,41 @@ namespace Lykke.Service.PayInternal.Controllers
                 _log.ErrorWithDetails(e, new {e.Code});
 
                 return BadRequest(ErrorResponse.Create(e.Message));
+            }
+        }
+
+        /// <summary>
+        /// Validates money transfer from temporary deposit addresses
+        /// </summary>
+        /// <param name="request">Validation request details</param>
+        /// <response code="200">Validation result</response>
+        /// <response code="404">Payment request not found</response>
+        [HttpGet]
+        [Route("depositTransfer/validate")]
+        [SwaggerOperation("ValidateDepositTransfer")]
+        [ProducesResponseType(typeof(ValidateDepositTransferResult), (int) HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int) HttpStatusCode.NotFound)]
+        [ValidateModel]
+        public async Task<IActionResult> ValidateDepositTransferAsync([FromQuery] ValidateDepositTransferRequest request)
+        {
+            var command = Mapper.Map<ValidateDepositTransferCommand>(request);
+
+            try
+            {
+                bool isSuccess = await _depositValidationService.ValidateDepositTransferAsync(command);
+
+                return Ok(new ValidateDepositTransferResult {IsSuccess = isSuccess});
+            }
+            catch (PaymentRequestNotFoundException e)
+            {
+                _log.ErrorWithDetails(e, new
+                {
+                    e.PaymentRequestId,
+                    e.MerchantId,
+                    e.WalletAddress
+                });
+
+                return NotFound(ErrorResponse.Create(e.Message));
             }
         }
     }

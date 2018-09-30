@@ -97,6 +97,9 @@ PayInternalService:
         SettlementAttempts: 
             settings-key: PayInternalService-RetryPolicy-SettlementAttempts
             types: [ Tag ]
+    LykkeWalletClientId:
+        settings-key: LykkePay-LykkeWalletClientId
+        types: [ Tag ]
 
 AssetsMap: 
     Values: 
@@ -184,3 +187,13 @@ SlackNotifications:
     QueueName:
       settings-key: SlackQueueName
       types: [ AzureTableStorage ]
+
+BlockchainWalletsServiceClient:
+    ServiceUrl:
+        settings-key: BlockchainWalletsServiceUrl
+        types: [ Tag ]
+
+PayTransferValidationServiceClient:
+    ServiceUrl:
+        settings-key: PayTransferValidationServiceUrl
+        types: [ Tag ]
