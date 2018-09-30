@@ -20,6 +20,7 @@ using Refit;
 using Lykke.Service.PayInternal.Client.Models.File;
 using Lykke.Service.PayInternal.Client.Models.MerchantWallets;
 using Lykke.Service.PayInternal.Client.Models.Transactions.Ethereum;
+using Lykke.Service.PayInternal.Client.Models.Validation;
 
 namespace Lykke.Service.PayInternal.Client
 {
@@ -391,6 +392,12 @@ namespace Lykke.Service.PayInternal.Client
         public Task<CashoutResponse> CashoutAsync(CashoutRequest request)
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() => _cashoutApi.ExecuteAsync(request));
+        }
+
+        public Task<ValidateDepositTransferResult> ValidateDepositTransferAsync(ValidateDepositTransferRequest request)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() =>
+                _paymentRequestsApi.ValidateDepositTransferAsync(request));
         }
 
         public void Dispose()
