@@ -19,6 +19,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public CacheSettings CacheSettings { get; set; }
         public MerchantSettings Merchant { get; set; }
         public RetryPolicySettings RetryPolicy { get; set; }
+        public string LykkeWalletClientId { get; set; } 
     }
 
     public class AutoSettleSettings

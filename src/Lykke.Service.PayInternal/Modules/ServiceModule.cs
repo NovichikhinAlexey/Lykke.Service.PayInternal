@@ -3,7 +3,9 @@ using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Common;
 using Lykke.Bitcoin.Api.Client;
+using Lykke.Common.Log;
 using Lykke.Service.Assets.Client;
+using Lykke.Service.BlockchainWallets.Client;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.MarketProfile.Client;
 using Lykke.Service.PayCallback.Client;
@@ -17,6 +19,7 @@ using Lykke.Service.PayInternal.Rabbit.Publishers;
 using Lykke.Service.PayInternal.Services;
 using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.Service.PayMerchant.Client;
+using Lykke.Service.PayTransferValidation.Client;
 using Lykke.Service.PayVolatility.Client;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
@@ -154,6 +157,9 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<ConfirmationsService>()
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.RetryPolicy))
                 .As<IConfirmationsService>();
+
+            builder.RegisterType<DepositValidationService>()
+                .As<IDepositValidationService>();
         }
 
         private void RegisterServiceClients(ContainerBuilder builder)
@@ -182,6 +188,15 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterCachedPayVolatilityClient(_settings.CurrentValue.PayVolatilityServiceClient, null);
 
             builder.RegisterPayMerchantClient(_settings.CurrentValue.PayMerchantServiceClient, null);
+
+            builder.Register(ctx =>
+                    new BlockchainWalletsClient(
+                        _settings.CurrentValue.BlockchainWalletsServiceClient.ServiceUrl,
+                        ctx.Resolve<ILogFactory>()))
+                .As<IBlockchainWalletsClient>()
+                .SingleInstance();
+
+            builder.RegisterPayTransferValidationClient(_settings.CurrentValue.PayTransferValidationServiceClient, null);
         }
 
         private void RegisterCaches(ContainerBuilder builder)
