@@ -19,13 +19,6 @@ namespace Lykke.Service.PayInternal.Cqrs.Sagas
         }
 
         [UsedImplicitly]
-        public void Handle(SettlementTransferringToMarketEvent e, ICommandSender commandSender)
-        {
-            commandSender.SendCommand(Mapper.Map<SettlementTransferringToMarketCommand>(e),
-                CqrsModule.InternalBoundedContext);
-        }
-
-        [UsedImplicitly]
         public void Handle(SettlementTransferredToMerchantEvent e, ICommandSender commandSender)
         {
             commandSender.SendCommand(Mapper.Map<SettledCommand>(e),

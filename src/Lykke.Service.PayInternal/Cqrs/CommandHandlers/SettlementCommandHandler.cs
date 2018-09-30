@@ -70,38 +70,6 @@ namespace Lykke.Service.PayInternal.Cqrs.CommandHandlers
         }
 
         [UsedImplicitly]
-        public async Task Handle(SettlementTransferringToMarketCommand command, IEventPublisher publisher)
-        {
-            _log.Info($"Settlement transaction is received: {command.ToJson()}.", new
-            {
-                command.MerchantId,
-                command.PaymentRequestId,
-                command.TransactionHash
-            });
-            IPaymentRequest paymentRequest = await _paymentRequestService.GetAsync(
-                command.MerchantId, command.PaymentRequestId);
-
-            if (paymentRequest == null)
-                throw new PaymentRequestNotFoundException(command.MerchantId, command.PaymentRequestId);
-
-            IPaymentRequestTransaction settlementTx = await _transactionsService.CreateTransactionAsync(
-                new CreateTransactionCommand
-                {
-                    Amount = command.TransactionAmount,
-                    Blockchain = BlockchainType.Bitcoin,
-                    AssetId = command.TransactionAssetId,
-                    WalletAddress = command.DestinationAddress,
-                    DueDate = paymentRequest.DueDate,
-                    IdentityType = TransactionIdentityType.Hash,
-                    Identity = command.TransactionHash,
-                    Confirmations = 0,
-                    Type = TransactionType.Settlement
-                });
-
-            await _transactionPublisher.PublishAsync(settlementTx);
-        }
-
-        [UsedImplicitly]
         public async Task Handle(SettledCommand command, IEventPublisher publisher)
         {
             _log.Info("Settlement is completed.", new { command.MerchantId, command.PaymentRequestId });
