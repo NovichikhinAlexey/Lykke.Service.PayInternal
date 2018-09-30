@@ -106,7 +106,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
                     entity.PaidDate = paymentRequest.PaidDate;
                     entity.ProcessingError = paymentRequest.ProcessingError;
                     entity.Status = paymentRequest.Status;
-                    entity.SettlementErrorDescription = paymentRequest.SettlementErrorDescription;
 
                     return entity;
                 });

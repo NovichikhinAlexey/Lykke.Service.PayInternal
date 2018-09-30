@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Lykke.Common.Chaos;
 using Lykke.Service.PayHistory.Client;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Core.Settings.SlackNotifications;
@@ -31,6 +32,9 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public BlockchainWalletsSettings BlockchainWalletsServiceClient { get; set; }
         public PayTransferValidationServiceClientSettings PayTransferValidationServiceClient { get; set; }
         public PaySettlementCqrsSettings PaySettlementCqrs { get; set; }
+
+        [Optional]
+        public ChaosSettings ChaosKitty { get; set; }
     }
 
     public class BitcoinCoreSettings

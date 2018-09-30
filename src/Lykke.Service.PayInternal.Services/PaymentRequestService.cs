@@ -223,11 +223,15 @@ namespace Lykke.Service.PayInternal.Services
 
             paymentRequest.Status = newStatusInfo.Status;
             paymentRequest.PaidDate = newStatusInfo.Date;
-            paymentRequest.PaidAmount = newStatusInfo.Amount;
-            paymentRequest.ProcessingError = paymentRequest.Status == PaymentRequestStatus.Error
+
+            if (newStatusInfo.Amount.HasValue)
+            {
+                paymentRequest.PaidAmount = newStatusInfo.Amount.Value;
+            }
+
+            paymentRequest.ProcessingError = (paymentRequest.Status == PaymentRequestStatus.Error || paymentRequest.Status == PaymentRequestStatus.SettlementError)
                 ? newStatusInfo.ProcessingError
                 : PaymentRequestProcessingError.None;
-            paymentRequest.SettlementErrorDescription = newStatusInfo.SettlementErrorDescription ?? string.Empty;
 
             await _paymentRequestRepository.UpdateAsync(paymentRequest);
 

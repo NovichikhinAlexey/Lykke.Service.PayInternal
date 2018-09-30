@@ -122,6 +122,11 @@ PaySettlementCqrs:
         settings-key: PaySettlementCqrsCommandsRoute
         types: [ Tag ]
         
+ChaosKitty:
+        StateOfChaos:
+          settings-key: LykkePay-StateOfChaos
+          types: [ Tag ]
+        
 AssetsMap: 
     Values: 
         settings-key: LykkePay-AssetsMap-Values

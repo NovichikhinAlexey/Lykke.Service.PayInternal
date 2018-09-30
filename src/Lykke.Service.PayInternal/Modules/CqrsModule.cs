@@ -6,10 +6,13 @@ using Lykke.Cqrs.Configuration;
 using Lykke.Messaging;
 using Lykke.Messaging.RabbitMq;
 using Lykke.Service.PayInternal.Core.Settings;
-using Lykke.Service.PayInternal.Cqrs.Projection;
 using Lykke.Service.PaySettlement.Contracts.Events;
 using Lykke.SettingsReader;
 using System.Collections.Generic;
+using Lykke.Service.PayInternal.Cqrs.CommandHandlers;
+using Lykke.Service.PayInternal.Cqrs.Commands;
+using Lykke.Service.PayInternal.Cqrs.Sagas;
+using Lykke.Service.PaySettlement.Contracts.Commands;
 
 namespace Lykke.Service.PayInternal.Modules
 {
@@ -17,6 +20,7 @@ namespace Lykke.Service.PayInternal.Modules
     {
         private readonly IReloadingManager<AppSettings> _appSettings;
         public const string InternalBoundedContext = "lykkepay-internal";
+        private const string CommandsRoute = "commands";
 
         public CqrsModule(IReloadingManager<AppSettings> appSettings)
         {
@@ -25,9 +29,7 @@ namespace Lykke.Service.PayInternal.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<SilentChaosKitty>()
-                    .As<IChaosKitty>()
-                    .SingleInstance();
+            RegisterChaosKitty(builder);
 
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>().SingleInstance();
 
@@ -67,12 +69,20 @@ namespace Lykke.Service.PayInternal.Modules
                         environment: _appSettings.CurrentValue.PaySettlementCqrs.Environment)),
 
                     Register.BoundedContext(InternalBoundedContext)
+                        .ListeningCommands(typeof(SettlementInProgressCommand),
+                            typeof(SettledCommand), typeof(SettlementErrorCommand))
+                        .On(CommandsRoute)
+                        .WithCommandsHandler<SettlementCommandHandler>(),
+
+                    Register.Saga<InternalSaga>("lykkepay-internal-saga")
+                        .PublishingCommands(typeof(SettlementInProgressCommand),
+                            typeof(SettledCommand), typeof(SettlementErrorCommand))
+                        .To(InternalBoundedContext).With(CommandsRoute)
                         .ListeningEvents(typeof(SettlementTransferToMarketQueuedEvent),
+                            typeof(SettlementTransferringToMarketEvent),
                             typeof(SettlementTransferredToMerchantEvent), typeof(SettlementErrorEvent))
                         .From(_appSettings.CurrentValue.PaySettlementCqrs.SettlementBoundedContext)
                         .On(_appSettings.CurrentValue.PaySettlementCqrs.EventsRoute)
-                        .WithProjection(ctx.Resolve<SettlementProjection>(), 
-                            _appSettings.CurrentValue.PaySettlementCqrs.SettlementBoundedContext)
                 );
             })
             .As<ICqrsEngine>().SingleInstance().AutoActivate();
@@ -80,7 +90,27 @@ namespace Lykke.Service.PayInternal.Modules
 
         private void RegisterComponents(ContainerBuilder builder)
         {
-            builder.RegisterType<SettlementProjection>();
+            builder.RegisterType<InternalSaga>();
+            builder.RegisterType<SettlementCommandHandler>()
+                .WithParameter("transactionConfirmationCount",
+                    _appSettings.CurrentValue.PayInternalService.TransactionConfirmationCount);
+        }
+
+        private void RegisterChaosKitty(ContainerBuilder builder)
+        {
+            if (_appSettings.CurrentValue.ChaosKitty != null)
+            {
+                builder.RegisterType<ChaosKitty>()
+                    .WithParameter(TypedParameter.From(_appSettings.CurrentValue.ChaosKitty.StateOfChaos))
+                    .As<IChaosKitty>()
+                    .SingleInstance();
+            }
+            else
+            {
+                builder.RegisterType<SilentChaosKitty>()
+                    .As<IChaosKitty>()
+                    .SingleInstance();
+            }
         }
     }
 }
