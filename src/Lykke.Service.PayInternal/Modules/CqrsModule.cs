@@ -70,14 +70,12 @@ namespace Lykke.Service.PayInternal.Modules
 
                     Register.BoundedContext(InternalBoundedContext)
                         .ListeningCommands(typeof(SettlementInProgressCommand),
-                            typeof(SettlementTransferringToMarketCommand),
                             typeof(SettledCommand), typeof(SettlementErrorCommand))
                         .On(CommandsRoute)
                         .WithCommandsHandler<SettlementCommandHandler>(),
 
                     Register.Saga<InternalSaga>("lykkepay-internal-saga")
                         .PublishingCommands(typeof(SettlementInProgressCommand),
-                            typeof(SettlementTransferringToMarketCommand),
                             typeof(SettledCommand), typeof(SettlementErrorCommand))
                         .To(InternalBoundedContext).With(CommandsRoute)
                         .ListeningEvents(typeof(SettlementTransferToMarketQueuedEvent),

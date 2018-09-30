@@ -286,7 +286,6 @@ namespace Lykke.Service.PayInternal.Mapping
                 });
 
             CreateMap<SettlementTransferToMarketQueuedEvent, SettlementInProgressCommand>();
-            CreateMap<SettlementTransferringToMarketEvent, SettlementTransferringToMarketCommand>();
             CreateMap<SettlementTransferredToMerchantEvent, SettledCommand>();
             CreateMap<SettlementErrorEvent, SettlementErrorCommand>();
         }
