@@ -264,7 +264,7 @@ namespace Lykke.Service.PayInternal.Modules
                 .SingleInstance();
 
             builder.RegisterType<BilBlockchainValueResolver>()
-                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.BlockchainIntegrationLayerMapSettings))
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.BlockchainIntegrationLayerMap))
                 .AsSelf()
                 .SingleInstance();
         }

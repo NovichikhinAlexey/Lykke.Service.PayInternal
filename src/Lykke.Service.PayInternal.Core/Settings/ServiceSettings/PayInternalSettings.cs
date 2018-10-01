@@ -20,7 +20,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public MerchantSettings Merchant { get; set; }
         public RetryPolicySettings RetryPolicy { get; set; }
         public string LykkeWalletClientId { get; set; } 
-        public BlockchainMapSettings BlockchainIntegrationLayerMapSettings { get; set; }
+        public BlockchainMapSettings BlockchainIntegrationLayerMap { get; set; }
     }
 
     public class AutoSettleSettings
