@@ -73,9 +73,9 @@ namespace Lykke.Service.PayInternal.Services
                 return false;
             }
 
-            foreach (var algorithmValidationResultModel in validationResult.Results)
+            foreach (var ruleValidationResultModel in validationResult.Results)
             {
-                if (!algorithmValidationResultModel.IsSuccess)
+                if (!ruleValidationResultModel.IsSuccess)
                 {
                     _log.ErrorWithDetails("Deposit transfer validation failed",
                         context: new
@@ -83,8 +83,8 @@ namespace Lykke.Service.PayInternal.Services
                             cmd.WalletAddress,
                             cmd.Blockchain,
                             cmd.TransferAmount,
-                            algorithmValidationResultModel.Rule,
-                            algorithmValidationResultModel.Error
+                            ruleValidationResultModel.Rule,
+                            ruleValidationResultModel.Error
                         });
                 }
             }
