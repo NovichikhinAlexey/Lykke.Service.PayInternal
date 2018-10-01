@@ -1,6 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Lykke.Service.PayInternal.Core;
-using Lykke.Service.PayInternal.Core.Domain;
 using Lykke.Service.PayInternal.Validation;
 
 namespace Lykke.Service.PayInternal.Models.Transfers
@@ -8,14 +6,13 @@ namespace Lykke.Service.PayInternal.Models.Transfers
     /// <summary>
     /// Request details to validate deposit transfer from temporary addresses
     /// </summary>
-    public class ValidateDepositTransferRequest : IBlockchainTypeHolder
+    public class ValidateDepositTransferRequest
     {
         /// <summary>
         /// Gets or sets blockchain type
         /// </summary>
-        [EnumDataType(typeof(BlockchainType), ErrorMessage = "Invalid value, possible values are: Bitcoin, Ethereum")]
         [Required]
-        public BlockchainType Blockchain { get; set; }       
+        public string Blockchain { get; set; }
         
         /// <summary>
         /// Gets or sets blockchain wallet address

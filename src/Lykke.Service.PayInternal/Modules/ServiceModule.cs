@@ -262,6 +262,11 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<AssetDisplayIdValueResolver>()
                 .AsSelf()
                 .SingleInstance();
+
+            builder.RegisterType<BilBlockchainValueResolver>()
+                .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.BlockchainIntegrationLayerMapSettings))
+                .AsSelf()
+                .SingleInstance();
         }
 
         private void RegisterPeriodicalHandlers(ContainerBuilder builder)
