@@ -2,7 +2,6 @@
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
-using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
@@ -33,9 +32,9 @@ namespace Lykke.Service.PayInternal.Mapping
             }
             catch (WalletNotFoundException e)
             {
-                _log.ErrorWithDetails(e, new {e.WalletAddress});
+                _log.Warning(e.Message, e, $"Wallet address = {e.WalletAddress}");
 
-                throw;
+                return string.Empty;
             }
         }
     }

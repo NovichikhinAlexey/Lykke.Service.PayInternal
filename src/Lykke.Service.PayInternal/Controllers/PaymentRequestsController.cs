@@ -64,7 +64,7 @@ namespace Lykke.Service.PayInternal.Controllers
 
             var model = Mapper.Map<List<PaymentRequestModel>>(paymentRequests);
 
-            return Ok(model);
+            return Ok(model.Where(x => !string.IsNullOrEmpty(x.WalletAddress)));
         }
 
         /// <summary>
