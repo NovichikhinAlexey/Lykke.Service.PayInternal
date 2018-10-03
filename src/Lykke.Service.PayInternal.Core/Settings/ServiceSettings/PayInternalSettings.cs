@@ -21,6 +21,7 @@ namespace Lykke.Service.PayInternal.Core.Settings.ServiceSettings
         public RetryPolicySettings RetryPolicy { get; set; }
         public string LykkeWalletClientId { get; set; } 
         public BlockchainMapSettings BlockchainIntegrationLayerMap { get; set; }
+        public bool BilTransitionPeriodEnabled { get; set; }
     }
 
     public class AutoSettleSettings
