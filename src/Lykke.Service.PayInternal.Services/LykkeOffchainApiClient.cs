@@ -18,6 +18,11 @@ namespace Lykke.Service.PayInternal.Services
             throw new System.NotImplementedException();
         }
 
+        public async Task<bool> DeleteAddressAsync(string address)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public async Task<bool> ValidateAddressAsync(string address)
         {
             throw new System.NotImplementedException();
