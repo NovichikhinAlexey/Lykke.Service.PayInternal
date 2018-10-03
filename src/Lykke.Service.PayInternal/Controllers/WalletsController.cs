@@ -2,6 +2,7 @@
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.PayInternal.Core.Domain.Wallet;
 using Lykke.Service.PayInternal.Core.Exceptions;
@@ -17,16 +18,13 @@ namespace Lykke.Service.PayInternal.Controllers
     [Route("api/[controller]")]
     public class WalletsController : Controller
     {
-        private readonly IBcnWalletUsageService _bcnWalletUsageService;
         private readonly IWalletManager _walletManager;
         private readonly IBlockchainAddressValidator _blockchainAddressValidator;
 
         public WalletsController(
-            IBcnWalletUsageService bcnWalletUsageService, 
-            IWalletManager walletManager, 
-            IBlockchainAddressValidator blockchainAddressValidator)
+            [NotNull] IWalletManager walletManager, 
+            [NotNull] IBlockchainAddressValidator blockchainAddressValidator)
         {
-            _bcnWalletUsageService = bcnWalletUsageService;
             _walletManager = walletManager;
             _blockchainAddressValidator = blockchainAddressValidator;
         }
@@ -58,9 +56,9 @@ namespace Lykke.Service.PayInternal.Controllers
             if (!isValid)
                 return BadRequest(ErrorResponse.Create("Wallet address is not valid"));
 
-            bool released = await _bcnWalletUsageService.ReleaseAsync(request.WalletAddress, request.Blockchain);
+            bool success = await _walletManager.EnsureBcnAddressRemoved(request.Blockchain, request.WalletAddress);
 
-            if (released)
+            if (success)
                 return Ok();
 
             return BadRequest(ErrorResponse.Create("Couldn't set wallet as expired"));

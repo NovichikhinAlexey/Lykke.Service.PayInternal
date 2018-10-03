@@ -13,6 +13,8 @@ namespace Lykke.Service.PayInternal.Core.Services
 
         Task<IVirtualWallet> EnsureBcnAddressAllocated(string merchantId, string walletId, string assetId);
 
+        Task<bool> EnsureBcnAddressRemoved(BlockchainType blockchain, string walletAddress);
+
         Task<IEnumerable<IWalletState>> GetNotExpiredStateAsync();
 
         Task<string> ResolveBlockchainAddressAsync(string virtualAddress, string assetId);

@@ -104,6 +104,9 @@ PayInternalService:
         Values: 
             settings-key: LykkePay-BlockchainIntegrationLayerMap-Values
             types: [ Json, Tag ]
+    BilTransitionPeriodEnabled:
+        settings-key: LykkePay-BilTransitionPeriodEnabled
+        types: [ Tag ]
 
 PaySettlementCqrs:
     ConnectionString:
