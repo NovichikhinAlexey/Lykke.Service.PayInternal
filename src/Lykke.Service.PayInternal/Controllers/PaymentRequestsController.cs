@@ -18,6 +18,7 @@ using Lykke.Service.PayInternal.Models;
 using ErrorResponse = Lykke.Common.Api.Contract.Responses.ErrorResponse;
 using Lykke.Service.PayInternal.Core;
 using LykkePay.Common.Validation;
+using Common;
 
 namespace Lykke.Service.PayInternal.Controllers
 {
@@ -45,6 +46,114 @@ namespace Lykke.Service.PayInternal.Controllers
             _assetSettingsService = assetSettingsService ?? throw new ArgumentNullException(nameof(assetSettingsService));
             _paymentRequestDetailsBuilder = paymentRequestDetailsBuilder ?? throw new ArgumentNullException(nameof(paymentRequestDetailsBuilder));
             _log = logFactory.CreateLog(this);
+        }
+
+        /// <summary>
+        /// Gets payment requests by filter
+        /// </summary>
+        /// <param name="merchantId">The merchant id</param>
+        /// <param name="statuses">The statuses (e.g. ?statuses=one&amp;statuses=two)</param>
+        /// <param name="processingErrors">The processing errors (e.g. ?processingErrors=one&amp;processingErrors=two)</param>
+        /// <param name="dateFrom">The date from which to take</param>
+        /// <param name="dateTo">The date until which to take</param>
+        /// <param name="take">The number of records to take</param>
+        /// <response code="200">A collection of invoices.</response>
+        /// <response code="400">Problem occured.</response>
+        [HttpGet]
+        [Route("paymentrequests/paymentsFilter")]
+        [SwaggerOperation(nameof(GetByPaymentsFilter))]
+        [ProducesResponseType(typeof(GetByPaymentsFilterResponse), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ValidateModel]
+        public async Task<IActionResult> GetByPaymentsFilter(
+            [Required] [RowKey] string merchantId,
+            IEnumerable<string> statuses,
+            IEnumerable<string> processingErrors,
+            DateTime? dateFrom,
+            DateTime? dateTo,
+            [Range(1, int.MaxValue)] int? take
+        )
+        {
+
+            var statusesConverted = new List<PaymentRequestStatus>();
+
+            if (statuses != null)
+            {
+                foreach (var status in statuses)
+                {
+                    try
+                    {
+                        statusesConverted.Add(status.Trim().ParseEnum<PaymentRequestStatus>());
+                    }
+                    catch (Exception)
+                    {
+                        return BadRequest(ErrorResponse.Create(
+                            $"PaymentRequestStatus <{status}> is not valid. " +
+                            $"Valid values are: {string.Join(",", Enum.GetNames(typeof(PaymentRequestStatus)))}"));
+                    }
+                }
+            }
+
+            var processingErrorsConverted = new List<PaymentRequestProcessingError>();
+
+            if (processingErrors != null)
+            {
+                foreach (var processingError in processingErrors)
+                {
+                    try
+                    {
+                        processingErrorsConverted.Add(processingError.Trim().ParseEnum<PaymentRequestProcessingError>());
+                    }
+                    catch (Exception)
+                    {
+                        return BadRequest(ErrorResponse.Create(
+                            $"PaymentRequestProcessingError <{processingError}> is not valid. " +
+                            $"Valid values are: {string.Join(",", Enum.GetNames(typeof(PaymentRequestProcessingError)))}"));
+                    }
+                }
+            }
+
+            var paymentRequests = await _paymentRequestService.GetByFilterAsync(new PaymentsFilter
+            {
+                MerchantId = merchantId,
+                Statuses = statusesConverted,
+                ProcessingErrors = processingErrorsConverted,
+                DateFrom = dateFrom,
+                DateTo = dateTo
+            });
+
+            var result = new GetByPaymentsFilterResponse();
+
+            if (take.HasValue)
+            {
+                result.HasMorePaymentRequests = paymentRequests.Count > take.Value;
+                paymentRequests = paymentRequests.OrderByDescending(x => x.Timestamp).Take(take.Value).ToList();
+            }
+            else
+            {
+                paymentRequests = paymentRequests.OrderByDescending(x => x.Timestamp).ToList();
+            }
+
+            result.PaymeentRequests = paymentRequests;
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Gets whether merchant has any payment request
+        /// </summary>
+        /// <param name="merchantId">The merchant id</param>
+        [HttpGet]
+        [Route("paymentrequests/hasAnyPaymentRequest/{merchantId}")]
+        [SwaggerOperation(nameof(HasAnyPaymentRequest))]
+        [ProducesResponseType(typeof(IEnumerable<bool>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ValidateModel]
+        public async Task<IActionResult> HasAnyPaymentRequest([Required] [RowKey] string merchantId)
+        {
+            var result = await _paymentRequestService.HasAnyPaymentRequestAsync(merchantId);
+
+            return Ok(result);
         }
 
         /// <summary>

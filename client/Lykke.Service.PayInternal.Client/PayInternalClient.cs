@@ -103,6 +103,23 @@ namespace Lykke.Service.PayInternal.Client
             return _runner.RunWithDefaultErrorHandlingAsync(() => _ordersApi.GetCalculatedAmountInfoAsync(model));
         }
 
+        public Task<bool> HasAnyPaymentRequestAsync(string merchantId)
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.HasAnyPaymentRequestAsync(merchantId));
+        }
+
+        public Task<GetByPaymentsFilterResponse> GetByPaymentsFilterAsync(
+            string merchantId,
+            IEnumerable<string> statuses,
+            IEnumerable<string> processingErrors,
+            DateTime? dateFrom,
+            DateTime? dateTo,
+            int? take
+        )
+        {
+            return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetByPaymentsFilterAsync(merchantId, statuses, processingErrors, dateFrom, dateTo, take));
+        }
+
         public Task<IReadOnlyList<PaymentRequestModel>> GetPaymentRequestsAsync(string merchantId)
         {
             return _runner.RunWithDefaultErrorHandlingAsync(() => _paymentRequestsApi.GetAllAsync(merchantId));

@@ -7,6 +7,10 @@ namespace Lykke.Service.PayInternal.Core.Services
     public interface IPaymentRequestService
     {
         Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId);
+
+        Task<bool> HasAnyPaymentRequestAsync(string merchantId);
+
+        Task<IReadOnlyList<IPaymentRequest>> GetByFilterAsync(PaymentsFilter paymentsFilter);
         
         Task<IPaymentRequest> GetAsync(string merchantId, string paymentRequestId);
 
