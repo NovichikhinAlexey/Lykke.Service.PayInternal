@@ -8,6 +8,10 @@ namespace Lykke.Service.PayInternal.Core.Domain.PaymentRequests
     {
         Task<IReadOnlyList<IPaymentRequest>> GetAsync(string merchantId);
 
+        Task<bool> HasAnyPaymentRequestAsync(string merchantId);
+
+        Task<IReadOnlyList<IPaymentRequest>> GetByFilterAsync(PaymentsFilter paymentsFilter);
+
         Task<IPaymentRequest> FindAsync(string walletAddress);
 
         Task<IReadOnlyList<IPaymentRequest>> GetByDueDate(DateTime from, DateTime to);
