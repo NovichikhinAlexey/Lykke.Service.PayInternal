@@ -72,6 +72,30 @@ namespace Lykke.Service.PayInternal.Client
         Task<CalculatedAmountResponse> GetCalculatedAmountInfoAsync(GetCalculatedAmountInfoRequest model);
 
         /// <summary>
+        /// Gets whether merchant has any payment request
+        /// </summary>
+        /// <param name="merchantId">The merchant id</param>
+        Task<bool> HasAnyPaymentRequestAsync(string merchantId);
+
+        /// <summary>
+        /// Gets payment requests by filter
+        /// </summary>
+        /// <param name="merchantId">The merchant id</param>
+        /// <param name="statuses">The statuses (e.g. ?statuses=one&amp;statuses=two)</param>
+        /// <param name="processingErrors">The processing errors (e.g. ?processingErrors=one&amp;processingErrors=two)</param>
+        /// <param name="dateFrom">The date from which to take</param>
+        /// <param name="dateTo">The date until which to take</param>
+        /// <param name="take">The number of records to take</param>
+        Task<GetByPaymentsFilterResponse> GetByPaymentsFilterAsync(
+            string merchantId,
+            IEnumerable<string> statuses,
+            IEnumerable<string> processingErrors,
+            DateTime? dateFrom,
+            DateTime? dateTo,
+            int? take
+        );
+
+        /// <summary>
         /// Returns merchant payment requests.
         /// </summary>
         /// <param name="merchantId">The merchant id.</param>

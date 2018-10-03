@@ -103,6 +103,16 @@ namespace Lykke.Service.PayInternal.Services
             return await _paymentRequestRepository.GetAsync(merchantId);
         }
 
+        public async Task<bool> HasAnyPaymentRequestAsync(string merchantId)
+        {
+            return await _paymentRequestRepository.HasAnyPaymentRequestAsync(merchantId);
+        }
+
+        public async Task<IReadOnlyList<IPaymentRequest>> GetByFilterAsync(PaymentsFilter paymentsFilter)
+        {
+            return await _paymentRequestRepository.GetByFilterAsync(paymentsFilter);
+        }
+
         public async Task<IPaymentRequest> GetAsync(string merchantId, string paymentRequestId)
         {
             return await _paymentRequestRepository.GetAsync(merchantId, paymentRequestId);
