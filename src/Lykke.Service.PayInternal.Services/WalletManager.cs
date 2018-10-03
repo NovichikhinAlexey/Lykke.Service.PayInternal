@@ -135,6 +135,15 @@ namespace Lykke.Service.PayInternal.Services
             return await AddAssetAsync(merchantId, walletId, assetId);
         }
 
+        public async Task<bool> EnsureBcnAddressRemoved(BlockchainType blockchain, string walletAddress)
+        {
+            bool released = await _bcnWalletUsageService.ReleaseAsync(walletAddress, blockchain);
+
+            bool removed = await _blockchainClientProvider.Get(blockchain).DeleteAddressAsync(walletAddress);
+
+            return released && removed;
+        }
+
         public async Task<IEnumerable<IWalletState>> GetNotExpiredStateAsync()
         {
             IReadOnlyList<IVirtualWallet> wallets = await _virtualWalletService.GetNotExpiredAsync();
