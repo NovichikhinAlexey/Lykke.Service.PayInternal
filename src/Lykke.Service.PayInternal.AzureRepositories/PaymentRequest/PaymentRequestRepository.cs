@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using AutoMapper;
 using AzureStorage;
 using AzureStorage.Tables.Templates.Index;
+using Lykke.Service.PayInternal.AzureRepositories.Extensions;
+using Lykke.Service.PayInternal.Core;
 using Lykke.Service.PayInternal.Core.Domain.PaymentRequests;
 using Microsoft.WindowsAzure.Storage.Table;
 
@@ -15,6 +17,8 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         private readonly INoSQLTableStorage<PaymentRequestEntity> _storage;
         private readonly INoSQLTableStorage<AzureIndex> _walletAddressIndexStorage;
         private readonly INoSQLTableStorage<AzureIndex> _dueDateIndexStorage;
+        // used only for nameof
+        private const PaymentRequestEntity Entity = null;
 
         public PaymentRequestRepository(
             INoSQLTableStorage<PaymentRequestEntity> storage,
@@ -32,6 +36,55 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
                 = await _storage.GetDataAsync(PaymentRequestEntity.ByMerchant.GeneratePartitionKey(merchantId));
 
             return Mapper.Map<IEnumerable<Core.Domain.PaymentRequests.PaymentRequest>>(paymentRequestEntities).ToList();
+        }
+
+        public async Task<bool> HasAnyPaymentRequestAsync(string merchantId)
+        {
+            var entity = await _storage.GetTopRecordAsync(PaymentRequestEntity.ByMerchant.GeneratePartitionKey(merchantId));
+            return entity != null;
+        }
+
+        public async Task<IReadOnlyList<IPaymentRequest>> GetByFilterAsync(PaymentsFilter paymentsFilter)
+        {
+            var filter = nameof(Entity.PartitionKey)
+                .PropertyEqual(PaymentRequestEntity.ByMerchant.GeneratePartitionKey(paymentsFilter.MerchantId))
+                .And(nameof(Entity.Initiator).PropertyEqual(LykkePayConstants.ApiPaymentRequestInitiator));
+            
+            if(paymentsFilter.Statuses.Any())
+            {
+                var localFilter = string.Empty;
+                foreach (var status in paymentsFilter.Statuses)
+                {
+                    localFilter = localFilter.OrIfNotEmpty(nameof(Entity.Status).PropertyEqual(status.ToString()));
+                }
+                filter = filter.AndIfNotEmpty(localFilter);
+            }
+
+            if(paymentsFilter.ProcessingErrors.Any())
+            {
+                var localFilter = string.Empty;
+                foreach (var processingError in paymentsFilter.ProcessingErrors)
+                {
+                    localFilter = localFilter.OrIfNotEmpty(nameof(Entity.ProcessingError).PropertyEqual(processingError.ToString()));
+                }
+                filter = filter.AndIfNotEmpty(localFilter);
+            }
+
+            if (paymentsFilter.DateFrom.HasValue)
+            {
+                filter = filter.AndIfNotEmpty(nameof(Entity.CreatedOn).DateGreaterThanOrEqual(paymentsFilter.DateFrom.Value));
+            }
+
+            if (paymentsFilter.DateTo.HasValue)
+            {
+                filter = filter.AndIfNotEmpty(nameof(Entity.CreatedOn).DateLessThanOrEqual(paymentsFilter.DateTo.Value));
+            }
+
+            var tableQuery = new TableQuery<PaymentRequestEntity>().Where(filter);
+
+            var result = await _storage.WhereAsync(tableQuery);
+
+            return Mapper.Map<List<Core.Domain.PaymentRequests.PaymentRequest>>(result);
         }
 
         public async Task<IPaymentRequest> GetAsync(string merchantId, string paymentRequestId)

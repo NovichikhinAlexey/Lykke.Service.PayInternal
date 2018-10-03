@@ -1,13 +1,28 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
 using Lykke.Service.PayInternal.Client.Models.Validation;
+using Microsoft.AspNetCore.Mvc;
 using Refit;
 
 namespace Lykke.Service.PayInternal.Client.Api
 {
     internal interface IPaymentRequestsApi
     {
+        [Get("/api/paymentrequests/paymentsFilter")]
+        Task<GetByPaymentsFilterResponse> GetByPaymentsFilterAsync(
+            string merchantId,
+            [Query(CollectionFormat.Multi)] IEnumerable<string> statuses,
+            [Query(CollectionFormat.Multi)] IEnumerable<string> processingErrors,
+            DateTime? dateFrom,
+            DateTime? dateTo,
+            int? take
+        );
+
+        [Get("/api/paymentrequests/hasAnyPaymentRequest/{merchantId}")]
+        Task<bool> HasAnyPaymentRequestAsync(string merchantId);
+
         [Get("/api/merchants/{merchantId}/paymentrequests")]
         Task<IReadOnlyList<PaymentRequestModel>> GetAllAsync(string merchantId);
         
