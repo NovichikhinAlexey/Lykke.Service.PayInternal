@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
-using Microsoft.AspNetCore.Mvc;
 using Refit;
 
 namespace Lykke.Service.PayInternal.Client.Api
