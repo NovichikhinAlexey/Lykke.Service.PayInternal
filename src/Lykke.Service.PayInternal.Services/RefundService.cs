@@ -24,6 +24,7 @@ namespace Lykke.Service.PayInternal.Services
         private readonly TimeSpan _refundExpirationPeriod;
         private readonly ITransactionPublisher _transactionPublisher;
         private readonly IBlockchainAddressValidator _blockchainAddressValidator;
+        private readonly bool _bilTransitionPeriodEnabled;
         private readonly ILog _log;
 
         public RefundService(
@@ -33,7 +34,8 @@ namespace Lykke.Service.PayInternal.Services
             TimeSpan refundExpirationPeriod,
             [NotNull] ITransactionPublisher transactionPublisher,
             [NotNull] ILogFactory logFactory,
-            [NotNull] IBlockchainAddressValidator blockchainAddressValidator)
+            [NotNull] IBlockchainAddressValidator blockchainAddressValidator, 
+            bool bilTransitionPeriodEnabled)
         {
             _paymentRequestService =
                 paymentRequestService ?? throw new ArgumentNullException(nameof(paymentRequestService));
@@ -45,11 +47,15 @@ namespace Lykke.Service.PayInternal.Services
             _log = logFactory.CreateLog(this);
             _blockchainAddressValidator = blockchainAddressValidator ??
                                           throw new ArgumentNullException(nameof(blockchainAddressValidator));
+            _bilTransitionPeriodEnabled = bilTransitionPeriodEnabled;
         }
 
         public async Task<RefundResult> ExecuteAsync(string merchantId, string paymentRequestId,
             string destinationWalletAddress)
         {
+            if (_bilTransitionPeriodEnabled)
+                throw new Exception("Refund is not supported during BIL integration period");
+
             IPaymentRequest paymentRequest =
                 await _paymentRequestService.GetAsync(merchantId, paymentRequestId);
 
