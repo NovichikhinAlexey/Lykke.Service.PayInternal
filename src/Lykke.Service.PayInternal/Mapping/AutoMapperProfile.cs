@@ -28,6 +28,7 @@ using Lykke.Service.PayInternal.Models.Transactions.Ethereum;
 using Lykke.Service.PayInternal.Models.Transfers;
 using Lykke.Service.PayInternal.Services.Mapping;
 using Lykke.Service.PayInternal.Models.Cashout;
+using Lykke.Service.PayInternal.Models.Transactions;
 using Lykke.Service.PaySettlement.Contracts;
 using Lykke.Service.PaySettlement.Contracts.Events;
 
@@ -125,7 +126,12 @@ namespace Lykke.Service.PayInternal.Mapping
 
             CreateMap<CashoutResult, CashoutResponse>(MemberList.Destination)
                 .ForMember(dest => dest.AssetId,
-                    opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.AssetId));            
+                    opt => opt.ResolveUsing<AssetDisplayIdValueResolver, string>(src => src.AssetId));
+
+            CreateMap<IPaymentRequestTransaction, TransactionStateResponse>(MemberList.Destination)
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Identity))
+                .ForMember(dest => dest.WalletAddress,
+                    opt => opt.ResolveUsing<PaymentTxBcnWalletAddressValueResolver>());
 
             CreateMap<ValidateDepositTransferRequest, ValidateDepositRawTransferCommand>(MemberList.Destination)
                 .ForMember(dest => dest.BlockchainWalletAddress, opt => opt.MapFrom(src => src.WalletAddress))
@@ -192,8 +198,8 @@ namespace Lykke.Service.PayInternal.Mapping
                 .ForMember(dest => dest.RefundUrl, opt => opt.Ignore());
 
             CreateMap<IPaymentRequestTransaction, PayTransactionStateResponse>(MemberList.Destination)
-                .ForMember(dest => dest.WalletAddress,
-                    opt => opt.ResolveUsing<PaymentTxBcnWalletAddressValueResolver>());
+                .ForMember(dest => dest.WalletAddress, opt => opt.ResolveUsing<PaymentTxBcnWalletAddressValueResolver>())
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Identity));
 
             CreateMap<IWalletState, WalletStateResponse>(MemberList.Destination);
 
