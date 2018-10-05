@@ -17,8 +17,6 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
         private readonly INoSQLTableStorage<PaymentRequestEntity> _storage;
         private readonly INoSQLTableStorage<AzureIndex> _walletAddressIndexStorage;
         private readonly INoSQLTableStorage<AzureIndex> _dueDateIndexStorage;
-        // used only for nameof
-        private const PaymentRequestEntity Entity = null;
 
         public PaymentRequestRepository(
             INoSQLTableStorage<PaymentRequestEntity> storage,
@@ -46,16 +44,16 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
 
         public async Task<IReadOnlyList<IPaymentRequest>> GetByFilterAsync(PaymentsFilter paymentsFilter)
         {
-            var filter = nameof(Entity.PartitionKey)
+            var filter = nameof(PaymentRequestEntity.PartitionKey)
                 .PropertyEqual(PaymentRequestEntity.ByMerchant.GeneratePartitionKey(paymentsFilter.MerchantId))
-                .And(nameof(Entity.Initiator).PropertyEqual(LykkePayConstants.ApiPaymentRequestInitiator));
+                .And(nameof(PaymentRequestEntity.Initiator).PropertyEqual(LykkePayConstants.ApiPaymentRequestInitiator));
             
             if(paymentsFilter.Statuses.Any())
             {
                 var localFilter = string.Empty;
                 foreach (var status in paymentsFilter.Statuses)
                 {
-                    localFilter = localFilter.OrIfNotEmpty(nameof(Entity.Status).PropertyEqual(status.ToString()));
+                    localFilter = localFilter.OrIfNotEmpty(nameof(PaymentRequestEntity.Status).PropertyEqual(status.ToString()));
                 }
                 filter = filter.AndIfNotEmpty(localFilter);
             }
@@ -65,19 +63,19 @@ namespace Lykke.Service.PayInternal.AzureRepositories.PaymentRequest
                 var localFilter = string.Empty;
                 foreach (var processingError in paymentsFilter.ProcessingErrors)
                 {
-                    localFilter = localFilter.OrIfNotEmpty(nameof(Entity.ProcessingError).PropertyEqual(processingError.ToString()));
+                    localFilter = localFilter.OrIfNotEmpty(nameof(PaymentRequestEntity.ProcessingError).PropertyEqual(processingError.ToString()));
                 }
                 filter = filter.AndIfNotEmpty(localFilter);
             }
 
             if (paymentsFilter.DateFrom.HasValue)
             {
-                filter = filter.AndIfNotEmpty(nameof(Entity.CreatedOn).DateGreaterThanOrEqual(paymentsFilter.DateFrom.Value));
+                filter = filter.AndIfNotEmpty(nameof(PaymentRequestEntity.CreatedOn).DateGreaterThanOrEqual(paymentsFilter.DateFrom.Value));
             }
 
             if (paymentsFilter.DateTo.HasValue)
             {
-                filter = filter.AndIfNotEmpty(nameof(Entity.CreatedOn).DateLessThanOrEqual(paymentsFilter.DateTo.Value));
+                filter = filter.AndIfNotEmpty(nameof(PaymentRequestEntity.CreatedOn).DateLessThanOrEqual(paymentsFilter.DateTo.Value));
             }
 
             var tableQuery = new TableQuery<PaymentRequestEntity>().Where(filter);
