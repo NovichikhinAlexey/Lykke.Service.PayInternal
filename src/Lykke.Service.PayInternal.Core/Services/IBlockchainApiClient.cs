@@ -11,8 +11,6 @@ namespace Lykke.Service.PayInternal.Core.Services
 
         Task<string> CreateAddressAsync();
 
-        Task<bool> DeleteAddressAsync(string address);
-
         Task<bool> ValidateAddressAsync(string address);
 
         Task<IReadOnlyList<BlockchainBalanceResult>> GetBalancesAsync(string address);

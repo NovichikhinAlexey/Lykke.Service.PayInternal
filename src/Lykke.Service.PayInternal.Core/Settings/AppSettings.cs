@@ -29,8 +29,6 @@ namespace Lykke.Service.PayInternal.Core.Settings
         public ExtendedPayVolatilityServiceClientSettings PayVolatilityServiceClient { get; set; }
 		public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
         public PayMerchantServiceClientSettings PayMerchantServiceClient { get; set; }
-        public BlockchainWalletsSettings BlockchainWalletsServiceClient { get; set; }
-        public PayTransferValidationServiceClientSettings PayTransferValidationServiceClient { get; set; }
         public PaySettlementCqrsSettings PaySettlementCqrs { get; set; }
 
         [Optional]
@@ -81,11 +79,5 @@ namespace Lykke.Service.PayInternal.Core.Settings
     public class ExtendedPayVolatilityServiceClientSettings : PayVolatilityServiceClientSettings
     {
         public string[] AssetPairs { get; set; }
-    }
-
-    public class BlockchainWalletsSettings
-    {
-        [HttpCheck("api/isalive")]
-        public string ServiceUrl { get; set; }
     }
 }

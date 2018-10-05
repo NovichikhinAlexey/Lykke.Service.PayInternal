@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.PayInternal.Client.Models.PaymentRequest;
-using Lykke.Service.PayInternal.Client.Models.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Refit;
 
@@ -52,8 +51,5 @@ namespace Lykke.Service.PayInternal.Client.Api
 
         [Post("/api/paymentrequests/prePayment")]
         Task PrePayAsync([Body] PrePaymentRequest request);
-
-        [Get("/api/transfers/depositTransfer/validate")]
-        Task<ValidateDepositTransferResult> ValidateDepositTransferAsync([Query] ValidateDepositTransferRequest request);
     }
 }

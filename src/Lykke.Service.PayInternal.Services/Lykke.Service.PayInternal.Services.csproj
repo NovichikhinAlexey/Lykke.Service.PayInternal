@@ -10,7 +10,6 @@
     <PackageReference Include="Lykke.Common" Version="7.0.4" />
     <PackageReference Include="Lykke.RabbitMqBroker" Version="7.4.0" />
     <PackageReference Include="Lykke.Service.Assets.Client" Version="4.4.0" />
-    <PackageReference Include="Lykke.Service.BlockchainWallets.Client" Version="5.2.3" />
     <PackageReference Include="Lykke.Service.EthereumCore.Client" Version="1.1.12" />
     <PackageReference Include="Lykke.Service.MarketProfile.Client" Version="1.1.0" />
     <PackageReference Include="Lykke.Service.PayCallback.Client" Version="1.0.12" />

@@ -147,12 +147,6 @@ namespace Lykke.Service.PayInternal.Services
             throw new UnrecognizedApiResponse(response?.GetType().FullName);
         }
 
-        //todo: implement once migration to BIL is finished
-        public Task<bool> DeleteAddressAsync(string address)
-        {
-            return Task.FromResult(true);
-        }
-
         public async Task<bool> ValidateAddressAsync(string address)
         {
             object response =

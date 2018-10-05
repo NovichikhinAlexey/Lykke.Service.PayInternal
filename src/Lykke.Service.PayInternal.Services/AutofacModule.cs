@@ -18,7 +18,6 @@ namespace Lykke.Service.PayInternal.Services
         private readonly IReadOnlyList<AssetPairSetting> _assetPairLocalStorageSettings;
         private readonly CacheSettings _cacheSettings;
         private readonly RetryPolicySettings _retryPolicySettings;
-        private readonly bool _bilTransitionPeriodEnabled;
 
         public AutofacModule(
             [NotNull] ExpirationPeriodsSettings expirationPeriods,
@@ -26,8 +25,7 @@ namespace Lykke.Service.PayInternal.Services
             [NotNull] IList<BlockchainWalletAllocationPolicy> walletAllocationSettings, 
             [NotNull] IReadOnlyList<AssetPairSetting> assetPairLocalStorageSettings, 
             [NotNull] CacheSettings cacheSettings, 
-            [NotNull] RetryPolicySettings retryPolicySettings, 
-            bool bilTransitionPeriodEnabled)
+            [NotNull] RetryPolicySettings retryPolicySettings)
         {
             _expirationPeriods = expirationPeriods ?? throw new ArgumentNullException(nameof(expirationPeriods));
             _transactionConfirmationCount = transactionConfirmationCount;
@@ -35,15 +33,13 @@ namespace Lykke.Service.PayInternal.Services
             _assetPairLocalStorageSettings = assetPairLocalStorageSettings ?? throw new ArgumentNullException(nameof(assetPairLocalStorageSettings));
             _cacheSettings = cacheSettings ?? throw new ArgumentNullException(nameof(cacheSettings));
             _retryPolicySettings = retryPolicySettings ?? throw new ArgumentNullException(nameof(retryPolicySettings));
-            _bilTransitionPeriodEnabled = bilTransitionPeriodEnabled;
         }
         
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<RefundService>()
                 .As<IRefundService>()
-                .WithParameter(TypedParameter.From(_expirationPeriods.Refund))
-                .WithParameter(TypedParameter.From(_bilTransitionPeriodEnabled));
+                .WithParameter(TypedParameter.From(_expirationPeriods.Refund));
 
             builder.RegisterType<OrderService>()
                 .WithParameter(TypedParameter.From(_expirationPeriods.Order))

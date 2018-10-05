@@ -91,8 +91,7 @@ namespace Lykke.Service.PayInternal
                     appSettings.CurrentValue.PayInternalService.Blockchain.WalletAllocationPolicy.Policies,
                     appSettings.CurrentValue.PayInternalService.AssetPairsLocalStorage.AssetPairs,
                     appSettings.CurrentValue.PayInternalService.CacheSettings,
-                    appSettings.CurrentValue.PayInternalService.RetryPolicy,
-                    appSettings.CurrentValue.PayInternalService.BilTransitionPeriodEnabled));
+                    appSettings.CurrentValue.PayInternalService.RetryPolicy));
 
                 builder.RegisterModule(new ServiceModule(appSettings));
                 builder.RegisterModule(new CqrsModule(appSettings));
