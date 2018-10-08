@@ -4,7 +4,6 @@ using Lykke.Service.PayHistory.Client;
 using Lykke.Service.PayInternal.Core.Settings.ServiceSettings;
 using Lykke.Service.PayInternal.Core.Settings.SlackNotifications;
 using Lykke.Service.PayMerchant.Client;
-using Lykke.Service.PayTransferValidation.Client;
 using Lykke.Service.PaySettlement.Contracts.Settings;
 using Lykke.Service.PayVolatility.Client;
 using Lykke.SettingsReader.Attributes;
