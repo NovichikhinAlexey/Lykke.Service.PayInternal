@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Lykke.Service.PayInternal.Core.Domain.Markup;
 using Lykke.Service.PayInternal.Core.Exceptions;
 using Lykke.Service.PayInternal.Core.Services;
 using Lykke.Service.PayMerchant.Client;
+using Lykke.Service.PayMerchant.Client.Models;
 using Lykke.Service.PayVolatility.Client;
 using Lykke.Service.PayVolatility.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -58,7 +60,8 @@ namespace Lykke.Service.PayInternal.Services.Tests
             var mock = new Mock<IPayMerchantClient>();
 
             mock.Setup(o => o.Settings.GetVolatilitySettingsAsync(It.IsAny<string>()))
-                .ReturnsAsync(() => null);
+                .ReturnsAsync(() => new VolatilitySettingsResponse
+                    {MerchantId = string.Empty, IsDeltaSpreadFixed = false, ZeroCoverageAssetPairs = String.Empty});
 
             return mock;
         }
