@@ -21,6 +21,12 @@ namespace Lykke.Service.PayInternal.Services
 {
     public class MarkupService : IMarkupService
     {
+        private class MerchantVolatilitySettings
+        {
+            public bool IsDeltaSpreadFixed { get; set; }
+            public List<string> ZeroCoverageAssetPairs { get; set; }
+        }
+
         private readonly IMarkupRepository _markupRepository;
         private readonly IPayVolatilityClient _payVolatilityClient;
         private readonly IPayMerchantClient _payMerchantClient;
@@ -85,7 +91,7 @@ namespace Lykke.Service.PayInternal.Services
         public async Task<IMarkup> GetDefaultAsync(string assetPairId)
         {
             var markup = await _markupRepository.GetByIdentityAsync(MarkupIdentityType.None, string.Empty, assetPairId);
-            await SetDeltaSpreadAsync(markup);
+            await SetDeltaSpreadAsync(markup, false);
             return markup;
         }
 
@@ -93,17 +99,17 @@ namespace Lykke.Service.PayInternal.Services
         {
             var markups = await _markupRepository.GetByIdentityAsync(MarkupIdentityType.Merchant, merchantId);
 
-            List<string> zeroCoverageAssetPairs = await GetZeroCoverageAssetPairsAsync(merchantId);
+            MerchantVolatilitySettings volatilitySettings = await GetVolatilityMerchantSettingsAsync(merchantId);
 
             foreach (var markup in markups)
             {
-                if (zeroCoverageAssetPairs.Contains(markup.AssetPairId))
+                if (volatilitySettings.ZeroCoverageAssetPairs.Contains(markup.AssetPairId))
                 {
                     markup.DeltaSpread = 0;
                 }
                 else
                 {
-                    await SetDeltaSpreadAsync(markup);
+                    await SetDeltaSpreadAsync(markup, volatilitySettings.IsDeltaSpreadFixed);
                 }
             }
 
@@ -114,15 +120,17 @@ namespace Lykke.Service.PayInternal.Services
         {
             var markup = await _markupRepository.GetByIdentityAsync(MarkupIdentityType.Merchant, merchantId, assetPairId);
 
+            MerchantVolatilitySettings volatilitySettings = await GetVolatilityMerchantSettingsAsync(merchantId);
+
             if (markup != null)
             {
-                if ((await GetZeroCoverageAssetPairsAsync(merchantId)).Contains(assetPairId))
+                if (volatilitySettings.ZeroCoverageAssetPairs.Contains(assetPairId))
                 {
                     markup.DeltaSpread = 0;
                 }
                 else
                 {
-                    await SetDeltaSpreadAsync(markup);
+                    await SetDeltaSpreadAsync(markup, volatilitySettings.IsDeltaSpreadFixed);
                 }
             }
 
@@ -137,7 +145,7 @@ namespace Lykke.Service.PayInternal.Services
                    throw new MarkupNotFoundException(merchantId, assetPairId);
         }
 
-        private async Task SetDeltaSpreadAsync(IMarkup markup)
+        private async Task SetDeltaSpreadAsync(IMarkup markup, bool isDeltaSpreadFixed)
         {
             string assetPairId = GetVolatilityAssetPairId(markup);
             if (string.IsNullOrEmpty(assetPairId) 
@@ -159,7 +167,7 @@ namespace Lykke.Service.PayInternal.Services
 
             if (volatilityModel != null)
             {
-                SetDeltaSpread(markup, volatilityModel);
+                SetDeltaSpread(markup, volatilityModel, isDeltaSpreadFixed);
             }
         }
 
@@ -168,15 +176,17 @@ namespace Lykke.Service.PayInternal.Services
             var tasks = new List<Task>();
             foreach (var markup in markups)
             {
-                tasks.Add(SetDeltaSpreadAsync(markup));
+                tasks.Add(SetDeltaSpreadAsync(markup, false));
             }
 
             return Task.WhenAll(tasks);
         }
 
-        private void SetDeltaSpread(IMarkup markup, VolatilityModel volatilityModel)
+        private void SetDeltaSpread(IMarkup markup, VolatilityModel volatilityModel, bool isDeltaSpreadFixed)
         {
-            markup.DeltaSpread = volatilityModel.HighPriceVolatilityShield;
+            markup.DeltaSpread = isDeltaSpreadFixed
+                ? Math.Max(markup.DeltaSpread, volatilityModel.HighPriceVolatilityShield)
+                : volatilityModel.HighPriceVolatilityShield;
         }
 
         private string GetVolatilityAssetPairId(IMarkup markup)
@@ -189,18 +199,26 @@ namespace Lykke.Service.PayInternal.Services
             return markup?.AssetPairId;
         }
 
-        private async Task<List<string>> GetZeroCoverageAssetPairsAsync(string merchantId)
+        private async Task<MerchantVolatilitySettings> GetVolatilityMerchantSettingsAsync(string merchantId)
         {
             try
             {
                 VolatilitySettingsResponse response =
                     await _payMerchantClient.Settings.GetVolatilitySettingsAsync(merchantId);
 
-                return response?.ZeroCoverageAssetPairs.Split(Constants.Separator).ToList() ?? new List<string>();
+                return new MerchantVolatilitySettings
+                {
+                    IsDeltaSpreadFixed = response.IsDeltaSpreadFixed,
+                    ZeroCoverageAssetPairs = response.ZeroCoverageAssetPairs.Split(Constants.Separator).ToList()
+                };
             }
             catch (ClientApiException e) when (e.HttpStatusCode == HttpStatusCode.NotFound)
             {
-                return new List<string>();
+                return new MerchantVolatilitySettings
+                {
+                    IsDeltaSpreadFixed = default(bool),
+                    ZeroCoverageAssetPairs = new List<string>()
+                };
             }
         }
     }
