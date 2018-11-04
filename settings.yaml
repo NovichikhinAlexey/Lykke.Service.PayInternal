@@ -108,6 +108,33 @@ PayInternalService:
         settings-key: LykkePay-BilTransitionPeriodEnabled
         types: [ Tag ]
 
+            
+PaySettlementCqrs:
+    ConnectionString:
+        settings-key: RabbitPay
+        types: [ RabbitMq, Tag ]
+    Environment: 
+        settings-key: PaySettlementCqrsEnvironment
+        types: [ Tag ]
+    Messaging: 
+        settings-key: PaySettlementCqrsMessaging
+    SerializationFormat: 
+        settings-key: PaySettlementCqrsSerializationFormat
+    SettlementBoundedContext: 
+        settings-key: PaySettlementCqrsSettlementBoundedContext
+        types: [ Tag ]
+    EventsRoute: 
+        settings-key: PaySettlementCqrsEventsRoute
+        types: [ Tag ]
+    CommandsRoute: 
+        settings-key: PaySettlementCqrsCommandsRoute
+        types: [ Tag ]
+        
+ChaosKitty:
+        StateOfChaos:
+          settings-key: LykkePay-StateOfChaos
+          types: [ Tag ]
+        
 PaySettlementCqrs:
     ConnectionString:
         settings-key: RabbitPay
