@@ -10,7 +10,7 @@ namespace Lykke.Service.PayInternal.Core.Services
     {
         Task<IOrder> GetAsync(string paymentRequestId, string orderId);
 
-        Task<IOrder> GetActualAsync(string paymentRequestId, DateTime date, decimal paid);
+        Task<IOrder> GetActualAsync(string paymentRequestId, DateTime date, decimal? paid = null);
         
         Task<IOrder> GetLatestOrCreateAsync(IPaymentRequest paymentRequest, bool force = false);
 

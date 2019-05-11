@@ -52,20 +52,23 @@ namespace Lykke.Service.PayInternal.Services
             return await _orderRepository.GetAsync(paymentRequestId, orderId);
         }
 
-        public async Task<IOrder> GetActualAsync(string paymentRequestId, DateTime date, decimal paid)
+        public async Task<IOrder> GetActualAsync(string paymentRequestId, DateTime date, decimal? paid = null)
         {
             if (string.IsNullOrEmpty(paymentRequestId))
                 return null;
 
             IReadOnlyList<IOrder> allOrders = await _orderRepository.GetAsync(paymentRequestId);
 
-            var orderMatchByAmount = allOrders
-                .Where(o => date < o.ExtendedDueDate && decimal.Equals(o.PaymentAmount, paid))
-                .OrderBy(o => o.ExtendedDueDate)
-                .FirstOrDefault();
+            if (paid.HasValue)
+            {
+                var orderMatchByAmount = allOrders
+                    .Where(o => date < o.ExtendedDueDate && decimal.Equals(o.PaymentAmount, paid.Value))
+                    .OrderBy(o => o.ExtendedDueDate)
+                    .FirstOrDefault();
 
-            if (orderMatchByAmount != null)
-                return orderMatchByAmount;
+                if (orderMatchByAmount != null)
+                    return orderMatchByAmount;
+            }
 
             return allOrders
                 .Where(o => date < o.ExtendedDueDate)
