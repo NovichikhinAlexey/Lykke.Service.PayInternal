@@ -151,7 +151,7 @@ namespace Lykke.Service.PayInternal.Services
                 return paymentRequest.GetCurrentStatusInfo();
             }
 
-            IOrder actualOrder = await _orderService.GetActualAsync(paymentRequest.Id, paidDate) ??
+            IOrder actualOrder = await _orderService.GetActualAsync(paymentRequest.Id, paidDate, btcPaid) ??
                                  await _orderService.GetLatestOrCreateAsync(paymentRequest);
 
             if (!allConfirmed)
