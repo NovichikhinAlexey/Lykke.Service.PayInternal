@@ -23,22 +23,19 @@ namespace Lykke.Service.PayInternal.Services
         private readonly ITransactionsService _transactionsService;
         private readonly IOrderService _orderService;
         private readonly ICalculationService _calculationService;
-        private readonly ILog _log;
 
         public PaymentRequestStatusResolver(
             int transactionConfirmationCount,
             IPaymentRequestRepository paymentRequestRepository,
             IOrderService orderService,
             ICalculationService calculationService, 
-            ITransactionsService transactionsService,
-            ILogFactory logFactory)
+            ITransactionsService transactionsService)
         {
             _transactionConfirmationCount = transactionConfirmationCount;
             _paymentRequestRepository = paymentRequestRepository;
             _orderService = orderService;
             _calculationService = calculationService;
             _transactionsService = transactionsService;
-            _log = logFactory.CreateLog(this);
         }
 
         public async Task<PaymentRequestStatusInfo> GetStatus(string walletAddress)
@@ -125,8 +122,6 @@ namespace Lykke.Service.PayInternal.Services
                 return paymentRequest.GetCurrentStatusInfo();
             }
 
-            _log.Info(nameof(GetStatusForPayment), "About to find actual order ...", new {paymentRequest.Id, paidDate, btcPaid}.ToJson());
-            
             IOrder actualOrder = await _orderService.GetActualAsync(paymentRequest.Id, paidDate, btcPaid) ??
                                  await _orderService.GetLatestOrCreateAsync(paymentRequest);
 
