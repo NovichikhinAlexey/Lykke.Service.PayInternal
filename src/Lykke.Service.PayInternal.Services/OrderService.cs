@@ -62,12 +62,6 @@ namespace Lykke.Service.PayInternal.Services
             
             if (paid.HasValue)
             {
-                _log.Info(nameof(GetActualAsync), $"paymentRequestId = [{paymentRequestId}]");
-                _log.Info(nameof(GetActualAsync), $"date = [{date.ToString(CultureInfo.InvariantCulture)}]");
-                _log.Info(nameof(GetActualAsync), $"paid = [{paid.ToString()}]");
-                
-                _log.Info(nameof(GetActualAsync), "All orders", allOrders.ToJson());
-                
                 var orderMatchByAmount = allOrders
                     .Where(o => date < o.ExtendedDueDate && decimal.Equals(o.PaymentAmount, paid.Value))
                     .OrderBy(o => o.ExtendedDueDate)
@@ -75,13 +69,10 @@ namespace Lykke.Service.PayInternal.Services
 
                 if (orderMatchByAmount != null)
                 {
-                    _log.Info(nameof(GetActualAsync), "Order matched by amount", orderMatchByAmount.ToJson());
                     return orderMatchByAmount;
                 }
             }
 
-            _log.Info(nameof(GetActualAsync), "No orders to match by amount only match by date will be used");
-            
             return allOrders
                 .Where(o => date < o.ExtendedDueDate)
                 .OrderBy(o => o.ExtendedDueDate)
