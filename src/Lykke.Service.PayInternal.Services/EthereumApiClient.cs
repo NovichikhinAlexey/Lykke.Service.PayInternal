@@ -185,5 +185,15 @@ namespace Lykke.Service.PayInternal.Services
 
             throw new UnrecognizedApiResponse(response?.GetType().FullName);
         }
+
+        public void SetBalance(string address, decimal balance)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ResetBalance()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

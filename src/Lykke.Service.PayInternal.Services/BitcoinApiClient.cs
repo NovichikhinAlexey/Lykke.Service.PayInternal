@@ -135,9 +135,20 @@ namespace Lykke.Service.PayInternal.Services
             _balances[address] = balance;
         }
 
+        public void ResetBalance()
+        {
+            _balances.Clear();
+        }
+
         public async Task<string> CreateAddressAsync()
         {
-            return _defaultAddresses[_rnd.Next(_defaultAddresses.Length-1)];
+            var list = _defaultAddresses.Where(a => !_balances.ContainsKey(a)).ToArray();
+            if (!list.Any())
+            {
+                ResetBalance();
+                list = _defaultAddresses;
+            }
+            return list[_rnd.Next(list.Length-1)];
         }
 
         public Task<bool> ValidateAddressAsync(string address)
