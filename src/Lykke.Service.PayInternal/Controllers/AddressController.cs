@@ -1,4 +1,5 @@
 ﻿using Lykke.Service.PayInternal.Core.Services;
+using Lykke.Service.PayInternal.Services;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -7,9 +8,9 @@ namespace Lykke.Service.PayInternal.Controllers
     [Route("api/[controller]")]
     public class AddressController : Controller
     {
-        private readonly IBlockchainApiClient _client;
+        private readonly BitcoinApiClient _client;
 
-        public AddressController(IBlockchainApiClient client)
+        public AddressController(BitcoinApiClient client)
         {
             _client = client;
         }

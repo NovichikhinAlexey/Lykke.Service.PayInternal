@@ -104,6 +104,7 @@ namespace Lykke.Service.PayInternal.Modules
             builder.RegisterType<BitcoinApiClient>()
                 .Keyed<IBlockchainApiClient>(BlockchainType.Bitcoin)
                 .WithParameter(TypedParameter.From(_settings.CurrentValue.PayInternalService.Blockchain.Bitcoin.Network))
+                .AsSelf()
                 .SingleInstance();
 
             builder.RegisterType<BlockchainAddressValidator>()
