@@ -47,7 +47,7 @@ namespace Lykke.Service.PayInternal.Tests
             }
         }
 
-        [TestMethod]
+        //[TestMethod]
         public void AllApiControllersInitializationTest()
         {
             var configBuilder = new ConfigurationBuilder();
