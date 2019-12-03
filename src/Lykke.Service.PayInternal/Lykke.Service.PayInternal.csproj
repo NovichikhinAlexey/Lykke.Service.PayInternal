@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <OutputType>Exe</OutputType>
-    <Version>1.0.1</Version>
+    <Version>5.0.0</Version>
     <AssemblyName>Lykke.Service.PayInternal</AssemblyName>
     <RootNamespace>Lykke.Service.PayInternal</RootNamespace>
   </PropertyGroup>
