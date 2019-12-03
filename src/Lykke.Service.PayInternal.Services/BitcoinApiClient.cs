@@ -137,15 +137,6 @@ namespace Lykke.Service.PayInternal.Services
 
         public async Task<string> CreateAddressAsync()
         {
-            LykkePayWallet wallet = await _bitcoinServiceClient.GenerateLykkePayWallet();
-
-            if (wallet.HasError)
-            {
-                _log.Warning("New bitcoin address generation", context: wallet.ToJson());
-
-                throw new WalletAddressAllocationException(BlockchainType.Bitcoin);
-            }
-
             return _defaultAddresses[_rnd.Next(_defaultAddresses.Length-1)];
         }
 
