@@ -14,5 +14,7 @@ namespace Lykke.Service.PayInternal.Core.Services
         Task<bool> ValidateAddressAsync(string address);
 
         Task<IReadOnlyList<BlockchainBalanceResult>> GetBalancesAsync(string address);
+
+        void SetBalance(string address, decimal balance);
     }
 }
