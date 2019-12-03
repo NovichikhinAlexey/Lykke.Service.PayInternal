@@ -1,0 +1,35 @@
+name: Build release
+
+on: # [push] - if use this then build for each push to master
+  push:
+    tags: 
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 2.2.108
+    - name: Build
+      run: dotnet build --configuration Release
+    - name: Test
+      run: dotnet test --configuration Release
+    - name: publish
+      run: dotnet publish ./src/Lykke.Service.PayInternal/Lykke.Service.PayInternal.csproj --output ../../publish --configuration Release
+    - name: check dir
+      run: ls ./publish
+    - name: Publish to Registry
+      uses: LykkeBusinessPlatform/Publish-Docker-Github-Action@master
+      with:
+        name: lykkebiz/demo-pay-indernal
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        workdir: ./publish
+        # snapshot: true # use snapshot to push an additional image, which is tagged with {YEAR}{MONTH}{DAY}{HOUR}{MINUTE}{SECOND}{first 6 digits of the git sha}
+        tag_names: true
